@@ -1,14 +1,11 @@
 require "thread_safe"
 
-module SplitClient
+module SplitIoClient
   # A thread-safe in-memory store suitable for use
-  # with the Faraday caching HTTP client. Uses the
+  # with the Faraday caching HTTP client, uses the
   # Threadsafe gem as the underlying cache.
   #
-  # @see https://github.com/plataformatec/faraday-http-cache
-  # @see https://github.com/ruby-concurrency/thread_safe
-  #
-  class LocalStore < NoMethodError
+  class LocalStore
     #
     # Default constructor
     #
@@ -34,6 +31,13 @@ module SplitClient
     # @return [Object] the value
     def write(key, value)
       @cache[key] = value
+    end
+
+
+    # deletes value from cache by given key
+    # @param key [Object] the cache key
+    def delete(key)
+      @cache[key] = nil
     end
   end
 end

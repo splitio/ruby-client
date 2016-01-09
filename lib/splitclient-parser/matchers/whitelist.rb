@@ -1,4 +1,4 @@
-module SplitClient
+module SplitIoClient
 
   class WhitelistMatcher < NoMethodError
 

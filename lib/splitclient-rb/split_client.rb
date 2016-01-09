@@ -1,11 +1,7 @@
-require "json"
-require "thread"
-require "faraday/http_cache"
-
-module SplitClient
+module SplitIoClient
 
 
-  class SplitIoClient < NoMethodError
+  class SplitClient < NoMethodError
 
     # Creates a new split client instance that connects to split.io API.
     #
@@ -14,12 +10,7 @@ module SplitClient
     # @return [SplitIoClient] split.io client instance
     def initialize(api_key)
 
-      @api_key = api_key
-
-      @api_client = Faraday.new do |builder|
-        builder.use Faraday::HttpCache, store: SplitIoClient.local_store
-        builder.adapter :net_http_persistent
-      end
+      @fetcher = SplitFetcher.new(api_key)
 
     end
 
@@ -76,53 +67,11 @@ module SplitClient
       return Treatments::CONTROL
     end
 
-    def call_api(path)
-      @api_client.get (SplitIoClient.base_api_uri + path) do |req|
-        req.headers["Authorization"] = "Bearer " + @api_key
-        req.options.open_timeout = SplitIoClient.connection_timeout
-        req.options.timeout = SplitIoClient.timeout
-      end
-    end
-
-    def get_splits
-      splits = make_request "/api/splitChanges"
-
-      if res.status / 100 == 2
-        return JSON.parse(splits.body, symbolize_names: true)[:items]
-      else
-        #TODO: log errors
-        #Unexpected result from api call
-      end
-    end
 
     def process(str)
       Treatments::CONTROL
       str = str.downcase
       str
-    end
-
-
-    #self class methods for client configuration
-
-    # @return [int] configuration value for timeout
-    def self.timeout
-      10
-    end
-
-    # @return [int] configuration value for connetion timeout
-    def connection_timeout
-      5
-    end
-
-    # @return [string] configuration value for api uri
-    def self.base_api_uri
-      #"https://sdk.split.io/api/"
-      "http://localhost:8081/api/"
-    end
-
-    # @return [LocalStore] configuration value for local cache store
-    def self.local_store
-      defined?(Rails) && Rails.respond_to?(:cache) ? Rails.cache : LocalStore.new
     end
 
     private :get_treatment_without_exception_handling, :get_experiment_treatment

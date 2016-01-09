@@ -5,7 +5,7 @@ require 'splitclient-rb/version'
 
 Gem::Specification.new do |spec|
   spec.name          = "splitclient-rb"
-  spec.version       = SplitClient::VERSION
+  spec.version       = SplitIoClient::VERSION
   spec.authors       = ["TODO: Write your name"]
   spec.email         = ["TODO: Write your email address"]
 
@@ -36,4 +36,5 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "concurrent-ruby"
   spec.add_runtime_dependency "faraday"
   spec.add_runtime_dependency "faraday-http-cache"
+  spec.add_runtime_dependency "net-http-persistent"
 end

@@ -1,7 +1,7 @@
 require 'spec_helper'
 
-describe SplitClient do
-  subject { SplitClient::SplitIoClient.new('mykey') }
+describe SplitIoClient do
+  subject { SplitIoClient::SplitClient.new('myrandomkey') }
 
   describe '#process' do
     let(:input) { 'New String' }
@@ -11,4 +11,15 @@ describe SplitClient do
       expect(output.downcase).to eq output
     end
   end
+
+  describe '#is_on?' do
+    let(:user_id) { 'my_random_user_id' }
+    let(:feature) { 'my_random_feaure' }
+    let(:output) { subject.is_on?(user_id,key)}
+
+    it 'validates if feature is on' do
+      expect(output).eq? false
+    end
+  end
+
 end
