@@ -15,10 +15,10 @@ describe SplitIoClient do
   describe '#is_on?' do
     let(:user_id) { 'my_random_user_id' }
     let(:feature) { 'my_random_feaure' }
-    let(:output) { subject.is_on?(user_id,key)}
+    let(:output) { subject.is_on?(user_id,feature)}
 
     it 'validates if feature is on' do
-      expect(output).eq? false
+      expect(output).equal? false
     end
   end
 

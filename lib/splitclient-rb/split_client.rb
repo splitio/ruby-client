@@ -8,9 +8,9 @@ module SplitIoClient
     # @param api_key [String] the API key for your split account
     #
     # @return [SplitIoClient] split.io client instance
-    def initialize(api_key)
+    def initialize(api_key, config = SplitConfig.default)
 
-      @fetcher = SplitFetcher.new(api_key)
+      @fetcher = SplitFetcher.new(api_key, config)
 
     end
 
@@ -22,6 +22,7 @@ module SplitIoClient
     # @return [boolean]  true if feature is on, false otherwise
     def is_on?(id, feature)
       result = false
+
       begin
         treatment = get_treatment(id, feature)
         result = !Treatments.is_control?(treatment)
@@ -32,7 +33,7 @@ module SplitIoClient
       result
     end
 
-    # obtains the treatemen for a given feature
+    # obtains the treatment for a given feature
     #
     # @param id [string] user id
     # @param feature [string] name of the feature that is being validated
@@ -60,7 +61,10 @@ module SplitIoClient
 
     def get_treatment_without_exception_handling(id, feature)
       #TODO : complete method
-      Treatments::CONTROL
+
+      parsed_splits = @fetcher.parsed_splits
+      parsed_segments = @fetcher.parsed_segments
+
     end
 
     def get_experiment_treatment(id, experiment)
