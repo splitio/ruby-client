@@ -1,26 +1,9 @@
 module SplitIoClient
 
-  class CombiningMatcher < NoMethodError
+  class Combiners < NoMethodError
 
-    def match?(key)
-      #TODO
-    end
-
-    def and(key)
-      #TODO
-    end
-
-    def equals?(obj)
-      #TODO
-    end
-
-    def hash_code
-      #TODO
-    end
-
-    def to_s
-      #TODO
-    end
+    # Constants to represent treatment values
+    AND = 'AND'
 
   end
 

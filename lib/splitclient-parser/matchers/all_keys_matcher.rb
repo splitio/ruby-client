@@ -24,10 +24,6 @@ module SplitIoClient
 
     end
 
-    def hash_code
-      17
-    end
-
     def to_s
       "in segment all"
     end
