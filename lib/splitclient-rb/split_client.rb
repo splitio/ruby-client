@@ -10,7 +10,8 @@ module SplitIoClient
     # @return [SplitIoClient] split.io client instance
     def initialize(api_key, config = SplitConfig.default)
 
-      @fetcher = SplitFetcher.new(api_key, config)
+      #@fetcher = SplitFetcher.new(api_key, config)
+      @fetcher = SplitFetcher.new('ictlpssmv2rqhqb6b59fumq9lj', config)
 
     end
 
@@ -60,17 +61,15 @@ module SplitIoClient
     end
 
     def get_treatment_without_exception_handling(id, feature)
-      #TODO : complete method
+      @fetcher.parsed_splits.segments = @fetcher.parsed_segments
+      split = @fetcher.parsed_splits.get_split(feature)
 
-      parsed_splits = @fetcher.parsed_splits
-      parsed_segments = @fetcher.parsed_segments
-
+      if split.nil?
+        return Treatments::CONTROL
+      else
+        return @fetcher.parsed_splits.get_split_treatment(id, feature)
+      end
     end
-
-    def get_experiment_treatment(id, experiment)
-      return Treatments::CONTROL
-    end
-
 
     def process(str)
       Treatments::CONTROL
@@ -78,7 +77,17 @@ module SplitIoClient
       str
     end
 
-    private :get_treatment_without_exception_handling, :get_experiment_treatment
+    def test
+      @fetcher.parsed_splits.segments = @fetcher.parsed_segments
+      puts @fetcher.parsed_splits.get_split('new_feature')
+      puts "--------"
+      puts @fetcher.parsed_splits.get_split('new_featurexx')
+      puts "******************"
+      @fetcher.parsed_splits.get_split_treatment(1,'new_feature')
+
+    end
+
+    private :get_treatment_without_exception_handling
 
   end
 

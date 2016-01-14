@@ -37,4 +37,5 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "faraday"
   spec.add_runtime_dependency "faraday-http-cache"
   spec.add_runtime_dependency "net-http-persistent"
+  spec.add_runtime_dependency "murmurhash3"
 end

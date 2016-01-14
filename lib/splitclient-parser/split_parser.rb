@@ -4,6 +4,7 @@ module SplitIoClient
     attr_accessor :since
     attr_accessor :till
     attr_accessor :splits
+    attr_accessor :segments
 
     def initialize
       @splits = {}
@@ -35,6 +36,50 @@ module SplitIoClient
 
       return segment_names.uniq
     end
+
+    def get_split(name)
+      @splits.find{|s| s[:name] == name}
+    end
+
+    def get_split_treatment(id, name)
+      split = get_split(name)
+      conditions = split[:conditions]
+      matcher = nil
+
+      conditions.each do |c|
+        matchers_section = c[:matcherGroup][:matchers]
+        matchers_section.each { |m|
+          puts '=========='
+          matcher = get_matcher_type(m)
+          puts matcher.to_s
+          if matcher.match?(id)
+
+          end
+          puts '=========='
+        } unless matchers_section.nil?
+      end
+    end
+
+    def get_matcher_type(matcher)
+      final_matcher = nil
+
+      case matcher[:matcherType]
+        when 'ALL_KEYS'
+          final_matcher = AllKeysMatcher.new
+        when 'IN_SEGMENT'
+          segment = @segments.get_segment((matcher[:userDefinedSegmentMatcherData])[:segmentName])
+          final_matcher = UserDefinedSegmentMatcher.new(segment)
+        when 'WHITELIST'
+          whitelist = (matcher[:whitelistMatcherData])[:whitelist]
+          final_matcher = WhitelistMatcher.new(whitelist)
+        else
+          #TODO log error invalid matcher type
+      end
+
+      return final_matcher
+
+    end
+
   end
 
 end
