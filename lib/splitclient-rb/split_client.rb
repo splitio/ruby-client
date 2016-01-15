@@ -10,8 +10,7 @@ module SplitIoClient
     # @return [SplitIoClient] split.io client instance
     def initialize(api_key, config = SplitConfig.default)
 
-      #@fetcher = SplitFetcher.new(api_key, config)
-      @fetcher = SplitFetcher.new('ictlpssmv2rqhqb6b59fumq9lj', config)
+      @fetcher = SplitFetcher.new(api_key, config)
 
     end
 
@@ -77,13 +76,13 @@ module SplitIoClient
       str
     end
 
-    def test
+    def test(id, feature)
       @fetcher.parsed_splits.segments = @fetcher.parsed_segments
-      puts @fetcher.parsed_splits.get_split('new_feature')
-      puts "--------"
-      puts @fetcher.parsed_splits.get_split('new_featurexx')
+      #puts @fetcher.parsed_splits.get_split('new_feature')
+      #puts "--------"
+      #puts @fetcher.parsed_splits.get_split('new_featurexx')
       puts "******************"
-      @fetcher.parsed_splits.get_split_treatment(1,'new_feature')
+      @fetcher.parsed_splits.get_split_treatment(id,feature)
 
     end
 

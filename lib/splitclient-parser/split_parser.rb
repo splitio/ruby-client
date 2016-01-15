@@ -47,15 +47,13 @@ module SplitIoClient
       matcher = nil
 
       conditions.each do |c|
+        partitions = c[:partitions]
         matchers_section = c[:matcherGroup][:matchers]
         matchers_section.each { |m|
-          puts '=========='
           matcher = get_matcher_type(m)
-          puts matcher.to_s
           if matcher.match?(id)
-
+             return Splitter.get_treatment(id, split[:seed], partitions) #'true match - running split'
           end
-          puts '=========='
         } unless matchers_section.nil?
       end
     end
