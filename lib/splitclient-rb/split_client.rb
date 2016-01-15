@@ -10,7 +10,8 @@ module SplitIoClient
     # @return [SplitIoClient] split.io client instance
     def initialize(api_key, config = SplitConfig.default)
 
-      @fetcher = SplitFetcher.new(api_key, config)
+      #@fetcher = SplitFetcher.new(api_key, config)
+      @fetcher = SplitFetcher.new('ictlpssmv2rqhqb6b59fumq9lj', config)
 
     end
 
