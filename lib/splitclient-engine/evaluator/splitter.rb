@@ -1,5 +1,3 @@
-require 'murmurhash3'
-
 module SplitIoClient
 
   class Splitter < NoMethodError
@@ -21,26 +19,29 @@ module SplitIoClient
         return (partitions.first())[:treatment]
       end
 
-      hashed_key = MurmurHash3::V32.str_digest(id, seed)
-      number_line = 100#NumberLine.NUMBER_LINE_WITH_100_BUCKETS;
+      return get_treatment_for_key(bucket(hash(id, seed)), partitions)
+    end
 
-      bucket_for_this_key = -1
-
-      for i in 0..number_line do
-        if hashed_key == number_line # <= number_line[i]
-          bucket_for_this_key = i + 1
-          break
-        end
+    def self.hash(key, seed)
+      h = seed;
+      for i in 0..key.length
+        h = 31 * h + key[i]
       end
+      return h
+    end
 
-      buckets_convered_thus_far = 0
+    def self.get_treatment_for_key(bucket, partitions)
+      bucketsCoveredThusFar = 0
       partitions.each do |p|
-        buckets_convered_thus_far += p[:size]
-
-        if buckets_convered_thus_far >= bucket_for_this_key
-          return p[:treatment]
-        end
+        bucketsCoveredThusFar += p[:size]
+        return p[:treatment]if bucketsCoveredThusFar >= bucket
       end
+
+      return Treatments::CONTROL
+    end
+
+    def self.bucket(hash_value)
+      (hash_value % 100).abs + 1
     end
 
   end

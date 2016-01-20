@@ -1,4 +1,4 @@
-require 'splitclient-parser/matchers/combiners'
+require 'splitclient-engine/matchers/combiners'
 
 module SplitIoClient
 
