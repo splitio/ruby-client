@@ -1,3 +1,5 @@
+require "logger"
+
 module SplitIoClient
   #
   # This class manages configuration options for the split client library.
@@ -14,6 +16,7 @@ module SplitIoClient
     # @option opts [Object] :local_store A cache store for the Faraday HTTP caching library. Defaults to the Rails cache in a Rails environment, or a
     # @option opts [Int] :exec_interval (10) The time interval for execution API refresh
     #   thread-safe in-memory store otherwise.
+    # @option opts [Object] :logger a logger to user for messages from the client. Defaults to stdout
     #
     # @return [type] SplitConfig with configuration options
     def initialize(opts = {})
@@ -22,6 +25,7 @@ module SplitIoClient
       @connection_timeout = opts[:connection_timeout] || SplitConfig.default_connection_timeout
       @timeout = opts[:timeout] || SplitConfig.default_timeout
       @exec_interval = opts[:exec_interval] || SplitConfig.default_exec_interval
+      @logger = opts[:logger] || SplitConfig.default_logger
     end
 
     #
@@ -56,6 +60,13 @@ module SplitIoClient
     attr_reader :exec_interval
 
     #
+    # The configured logger. The client library uses the log to
+    # print warning and error messages.
+    #
+    # @return [Logger] The configured logger
+    attr_reader :logger
+
+    #
     # The default split client configuration
     #
     # @return [Config] The default split client configuration.
@@ -86,6 +97,17 @@ module SplitIoClient
     def self.default_exec_interval
       60
     end
+
+    def self.default_logger
+      Logger.new($stdout)
+    end
+
+    def log_found_exception(caller, exn)
+      error_traceback = "#{exn.inspect} #{exn}\n\t#{exn.backtrace.join("\n\t")}"
+      error = "[splitclient-rb] Unexpected exception in #{caller}: #{error_traceback}"
+      @logger.error(error)
+    end
+
 
   end
 end

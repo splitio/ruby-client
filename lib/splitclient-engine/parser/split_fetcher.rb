@@ -17,8 +17,8 @@ module SplitIoClient
 
       @api_key = api_key
       @config = config
-      @parsed_splits = SplitParser.new()
-      @parsed_segments = SegmentParser.new()
+      @parsed_splits = SplitParser.new(@config.logger)
+      @parsed_segments = SegmentParser.new(@config.logger)
 
       @api_client = Faraday.new do |builder|
         builder.use Faraday::HttpCache, store: @config.local_store
@@ -50,9 +50,8 @@ module SplitIoClient
             end
 
             sleep(@config.exec_interval)
-          rescue StandardError => exn
-            #TODO log error for the time being send msg to def output
-            puts exn.to_s
+          rescue StandardError => error
+            @config.log_found_exception(__method__.to_s, error)
           end
         end
       end
@@ -71,11 +70,9 @@ module SplitIoClient
       splits = call_api("/splitChanges", {:since => since})
 
       if splits.status / 100 == 2
-
         return JSON.parse(splits.body, symbolize_names: true)
       else
-        #TODO: log errors
-        puts "Unexpected result from api call"
+        @config.logger.error("Unexpected result from API call")
       end
     end
 
@@ -104,7 +101,7 @@ module SplitIoClient
           segments << segment_content
         else
           #TODO: log errors
-          #Unexpected result from api call
+          @config.logger.error("Unexpected result from API call")
         end
       end
 

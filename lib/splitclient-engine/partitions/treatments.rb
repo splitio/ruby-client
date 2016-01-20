@@ -28,7 +28,7 @@ module SplitIoClient
     # @param type [string] treatment type
     #
     # @return [boolean] true if matches, false otherwise
-    def is_control?(type)
+    def self.is_control?(type)
       return type == CONTROL ? true : false
     end
 

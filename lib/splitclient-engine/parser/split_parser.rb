@@ -6,10 +6,11 @@ module SplitIoClient
     attr_accessor :splits
     attr_accessor :segments
 
-    def initialize
+    def initialize(logger)
       @splits = {}
       @since = -1
       @till = -1
+      @logger = logger
     end
 
     def get_split_names
@@ -71,7 +72,7 @@ module SplitIoClient
           whitelist = (matcher[:whitelistMatcherData])[:whitelist]
           final_matcher = WhitelistMatcher.new(whitelist)
         else
-          #TODO log error invalid matcher type
+          @logger.error("Invalid matcher type")
       end
 
       return final_matcher

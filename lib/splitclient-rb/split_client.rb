@@ -1,3 +1,5 @@
+require "logger"
+
 module SplitIoClient
 
 
@@ -12,6 +14,7 @@ module SplitIoClient
 
       #@fetcher = SplitFetcher.new(api_key, config)
       @fetcher = SplitFetcher.new('ictlpssmv2rqhqb6b59fumq9lj', config)
+      @config = config
 
     end
 
@@ -28,8 +31,8 @@ module SplitIoClient
         treatment = get_treatment(id, feature)
         result = !Treatments.is_control?(treatment)
         return result
-      rescue
-        #TODO: Log error, do not throw exception
+      rescue StandardError => error
+        @config.log_found_exception(__method__.to_s, error)
       end
       result
     end
@@ -41,20 +44,21 @@ module SplitIoClient
     #
     # @return [Treatment]  tretment constant value
     def get_treatment(id, feature)
-      if id.nil?
-        #TODO : log warn for null user id
+      unless id
+        @config.logger.error("user id must be provided")
         return Treatments::CONTROL
       end
 
-      if feature.nil?
+      unless feature
+        @config.logger.error("feature must be provided")
         return Treatments::CONTROL
       end
 
       begin
         treatment = get_treatment_without_exception_handling(id, feature)
         return treatment.nil? ? Treatments::CONTROL : treatment
-      rescue
-        #TODO : log error, do no throw exception
+      rescue StandardError => error
+        @config.log_found_exception(__method__.to_s, error)
       end
 
       return Treatments::CONTROL
@@ -77,6 +81,7 @@ module SplitIoClient
       str
     end
 
+=begin
     def test(id, feature)
       @fetcher.parsed_splits.segments = @fetcher.parsed_segments
       #puts @fetcher.parsed_splits.get_split('new_feature')
@@ -86,6 +91,7 @@ module SplitIoClient
       @fetcher.parsed_splits.get_split_treatment(id,feature)
 
     end
+=end
 
     private :get_treatment_without_exception_handling
 

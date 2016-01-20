@@ -4,9 +4,10 @@ module SplitIoClient
     attr_accessor :segments
     attr_accessor :since
 
-    def initialize
+    def initialize(logger)
       @segments = {}
       @since = -1
+      @logger = logger
     end
 
     def get_segment(name)
