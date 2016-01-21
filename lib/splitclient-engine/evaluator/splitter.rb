@@ -24,8 +24,8 @@ module SplitIoClient
 
     def self.hash(key, seed)
       h = seed;
-      for i in 0..key.length
-        h = 31 * h + key[i]
+      for i in 0..key.length-1
+        h = 31 * h + key[i].ord
       end
       return h
     end

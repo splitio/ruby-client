@@ -2,9 +2,8 @@ require "logger"
 
 module SplitIoClient
 
-
   class SplitClient < NoMethodError
-
+    attr_reader :fetcher
     # Creates a new split client instance that connects to split.io API.
     #
     # @param api_key [String] the API key for your split account
@@ -29,8 +28,7 @@ module SplitIoClient
 
       begin
         treatment = get_treatment(id, feature)
-        result = !Treatments.is_control?(treatment)
-        return result
+        result = Treatments.is_control?(treatment) ? false : true
       rescue StandardError => error
         @config.log_found_exception(__method__.to_s, error)
       end
@@ -60,8 +58,6 @@ module SplitIoClient
       rescue StandardError => error
         @config.log_found_exception(__method__.to_s, error)
       end
-
-      return Treatments::CONTROL
     end
 
     def get_treatment_without_exception_handling(id, feature)
@@ -73,12 +69,6 @@ module SplitIoClient
       else
         return @fetcher.parsed_splits.get_split_treatment(id, feature)
       end
-    end
-
-    def process(str)
-      Treatments::CONTROL
-      str = str.downcase
-      str
     end
 
 =begin

@@ -90,9 +90,11 @@ module SplitIoClient
 
     def get_segments(names)
       segments = []
-      since = @parsed_segments.since
 
       names.each do |name|
+        curr_segment = @parsed_segments.get_segment(name) unless @parsed_segments.nil?
+        since = curr_segment.nil? ? -1 : curr_segment[:since]
+
         segment = call_api("/segmentChanges/" + name, {:since => since})
 
         if segment.status / 100 == 2

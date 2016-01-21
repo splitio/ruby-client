@@ -10,17 +10,13 @@ module SplitIoClient
 
       if obj.nil?
         return false
-      end
-
-      if this.equal?(obj)
+      elsif self.equal?(obj)
+        return true
+      elsif !obj.instance_of?(AllKeysMatcher)
+        return false
+      else
         return true
       end
-
-      if !obj.instance_of?(AllKeysMatcher)
-        return false
-      end
-
-      true
 
     end
 

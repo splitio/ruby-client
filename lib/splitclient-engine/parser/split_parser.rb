@@ -46,6 +46,7 @@ module SplitIoClient
       split = get_split(name)
       conditions = split[:conditions]
       matcher = nil
+      default = Treatments::CONTROL
 
       conditions.each do |c|
         partitions = c[:partitions]
@@ -57,6 +58,8 @@ module SplitIoClient
           end
         } unless matchers_section.nil?
       end
+
+      default
     end
 
     def get_matcher_type(matcher)

@@ -9,7 +9,7 @@ module SplitIoClient
 
     def initialize(combiner, delegates)
       if !delegates.nil?
-        @matcher_list = matcher
+        @matcher_list = delegates
       end
       if !combiner.nil?
         @combiner = combiner
@@ -27,7 +27,6 @@ module SplitIoClient
         else
           #TODO throw error
       end
-      !@matcher.match?(key)
     end
 
     def and_eval(key)
@@ -43,7 +42,7 @@ module SplitIoClient
         return false
       elsif !obj.instance_of?(CombiningMatcher)
         return false
-      elsif this.equal?(obj)
+      elsif self.equal?(obj)
         return true
       else
         return false

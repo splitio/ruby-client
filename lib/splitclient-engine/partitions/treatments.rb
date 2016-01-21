@@ -12,14 +12,14 @@ module SplitIoClient
     # @param type [string] treatment type
     #
     # @return [Treatment] treatment type value
-    def get_type(type)
+    def self.get_type(type)
       case type
         when 'on'
             return ON
         when 'off', 'control'
-            return OFF
-        else
-            #TODO : log invalid treatment type error
+            return CONTROL
+        else # default return off
+            return CONTROL
       end
     end
 
@@ -28,8 +28,8 @@ module SplitIoClient
     # @param type [string] treatment type
     #
     # @return [boolean] true if matches, false otherwise
-    def self.is_control?(type)
-      return type == CONTROL ? true : false
+    def self.is_control?(treatment)
+      get_type(treatment).equal?(CONTROL) ? true : false
     end
 
   end

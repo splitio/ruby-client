@@ -19,7 +19,7 @@ module SplitIoClient
         return false
       elsif !obj.instance_of?(NegationMatcher)
         return false
-      elsif this.equal?(obj)
+      elsif self.equal?(obj)
         return true
       else
         return false
