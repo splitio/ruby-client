@@ -7,14 +7,14 @@ module SplitIoClient
     attr_accessor :segments
 
     def initialize(logger)
-      @splits = {}
+      @splits = []
       @since = -1
       @till = -1
       @logger = logger
     end
 
     def get_split_names
-      feature_names = @splits.map{|s| s[:name]}
+      feature_names = @splits.map{|s| s.name}
     end
 
     def is_empty?
@@ -25,13 +25,12 @@ module SplitIoClient
       segment_names = []
 
       @splits.each { |s|
-        s[:conditions].each { |c|
-          matchers_section = c[:matcherGroup][:matchers]
-          matchers_section.each { |m|
+        s.conditions.each { |c|
+          c.matchers.each { |m|
             m[:userDefinedSegmentMatcherData].each{ |seg, name|
               segment_names << name
             } unless m[:userDefinedSegmentMatcherData].nil?
-          } unless matchers_section.nil?
+          } unless c.matchers.nil?
         }
       }
 
@@ -39,41 +38,39 @@ module SplitIoClient
     end
 
     def get_split(name)
-      @splits.find{|s| s[:name] == name}
+      @splits.find{|s| s.name == name}
     end
 
     def get_split_treatment(id, name)
       split = get_split(name)
-      conditions = split[:conditions]
       matcher = nil
       default = Treatments::CONTROL
 
-      conditions.each do |c|
-        partitions = c[:partitions]
-        matchers_section = c[:matcherGroup][:matchers]
-        matchers_section.each { |m|
-          matcher = get_matcher_type(m)
-          if matcher.match?(id)
-             return Splitter.get_treatment(id, split[:seed], partitions) #'true match - running split'
+      if !split.is_empty? && split.status == 'ACTIVE' && !split.killed?
+        split.conditions.each do |c|
+          if !c.is_empty?
+            matcher = get_matcher_type(c)
+            if matcher.match?(id)
+              return Splitter.get_treatment(id, split.seed, c.partitions) #'true match - running split'
+            end
           end
-        } unless matchers_section.nil?
+        end
       end
 
       default
     end
 
-    def get_matcher_type(matcher)
+    def get_matcher_type(condition)
       final_matcher = nil
 
-      case matcher[:matcherType]
+      case condition.matcher
         when 'ALL_KEYS'
           final_matcher = AllKeysMatcher.new
         when 'IN_SEGMENT'
-          segment = @segments.get_segment((matcher[:userDefinedSegmentMatcherData])[:segmentName])
-          final_matcher = UserDefinedSegmentMatcher.new(segment)
+          segment = @segments.get_segment(condition.matcher_segment)
+          final_matcher = segment.is_empty? ? UserDefinedSegmentMatcher.new(nil) : UserDefinedSegmentMatcher.new(segment)
         when 'WHITELIST'
-          whitelist = (matcher[:whitelistMatcherData])[:whitelist]
-          final_matcher = WhitelistMatcher.new(whitelist)
+          final_matcher = WhitelistMatcher.new(condition.matcher_whitelist)
         else
           @logger.error("Invalid matcher type")
       end

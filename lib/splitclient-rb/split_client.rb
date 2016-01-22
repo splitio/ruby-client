@@ -70,7 +70,6 @@ module SplitIoClient
         return @fetcher.parsed_splits.get_split_treatment(id, feature)
       end
     end
-
 =begin
     def test(id, feature)
       @fetcher.parsed_splits.segments = @fetcher.parsed_segments
@@ -82,7 +81,6 @@ module SplitIoClient
 
     end
 =end
-
     private :get_treatment_without_exception_handling
 
   end

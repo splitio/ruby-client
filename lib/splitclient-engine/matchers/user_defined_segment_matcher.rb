@@ -2,18 +2,16 @@ module SplitIoClient
 
   class UserDefinedSegmentMatcher < NoMethodError
 
-    @segment_name = ''
-    @segment = {}
+    @segment = nil
 
     def initialize(segment)
       if !segment.nil?
         @segment = segment
-        @segment_name = segment[:name]
       end
     end
 
     def match?(key)
-      @segment[:added].include?(key)
+      @segment.added.include?(key)
     end
 
     def equals?(obj)
@@ -29,7 +27,7 @@ module SplitIoClient
     end
 
     def to_s
-      "in segment " + @segment_name
+      "in segment " + @segment.name
     end
 
   end

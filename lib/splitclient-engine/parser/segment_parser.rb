@@ -5,17 +5,17 @@ module SplitIoClient
     attr_accessor :since
 
     def initialize(logger)
-      @segments = {}
+      @segments = []
       @since = -1
       @logger = logger
     end
 
     def get_segment(name)
-      @segments.find{|s| s[:name] == name}
+      @segments.find{|s| s.name == name}
     end
 
     def get_segment_names
-      segment_names = @segments.map{|seg| seg[:name]}
+      segment_names = @segments.map{|seg| seg.name}
     end
 
     def is_empty?

@@ -33,20 +33,29 @@ module SplitIoClient
         loop do
           begin
             #splits fetch
+            splits_arr = []
             data = get_splits(@parsed_splits.since)
+            data[:splits].each do |split|
+              splits_arr << SplitIoClient::Split.new(split)
+            end
+
             if @parsed_splits.is_empty?
-              @parsed_splits.splits = data[:splits]
+              @parsed_splits.splits = splits_arr
             else
-              refresh_splits(data[:splits])
+              refresh_splits(splits_arr)
             end
             @parsed_splits.since = data[:till]
 
             #segments fetcher
+            segments_arr =  []
             segment_data = get_segments(@parsed_splits.get_used_segments)
+            segment_data.each do |segment|
+              segments_arr << SplitIoClient::Segment.new(segment)
+            end
             if @parsed_segments.is_empty?
-              @parsed_segments.segments = segment_data
+              @parsed_segments.segments = segments_arr
             else
-              refresh_segments(segment_data)
+              refresh_segments(segments_arr)
             end
 
             sleep(@config.exec_interval)
@@ -77,23 +86,17 @@ module SplitIoClient
     end
 
     def refresh_splits(splits_arr)
-
-      #data = { splits: [{name: 'uno', value: 'borix'},{name: 'dos', value: 'borix'},{name: 'tres', value: 'borix'}],
-      #         since:-1, till:10 }
-      #splits_arr = [{name: 'cuatro', value: 'borix'},{name: 'tres', value: 'borix-11'}]
-
-      feature_names = splits_arr.map{|s| s[:name]}
-      @parsed_splits.splits.delete_if{|sp| feature_names.include?(sp[:name])}
+      feature_names = splits_arr.map{|s| s.name}
+      @parsed_splits.splits.delete_if{|sp| feature_names.include?(sp.name)}
       @parsed_splits.splits += splits_arr
-
     end
 
     def get_segments(names)
       segments = []
 
       names.each do |name|
-        curr_segment = @parsed_segments.get_segment(name) unless @parsed_segments.nil?
-        since = curr_segment.nil? ? -1 : curr_segment[:since]
+        curr_segment = @parsed_segments.get_segment(name)
+        since = curr_segment.nil? ? -1 : curr_segment.since
 
         segment = call_api("/segmentChanges/" + name, {:since => since})
 
@@ -102,7 +105,6 @@ module SplitIoClient
           @parsed_segments.since = segment_content[:since]
           segments << segment_content
         else
-          #TODO: log errors
           @config.logger.error("Unexpected result from API call")
         end
       end
@@ -111,15 +113,9 @@ module SplitIoClient
     end
 
     def refresh_segments(segments_arr)
-
-      #data = { splits: [{name: 'uno', value: 'borix'},{name: 'dos', value: 'borix'},{name: 'tres', value: 'borix'}],
-      #         since:-1, till:10 }
-      #splits_arr = [{name: 'cuatro', value: 'borix'},{name: 'tres', value: 'borix-11'}]
-
-      segment_names = segments_arr.map{|s| s[:name]}
-      @parsed_segments.segments.delete_if{|seg| segment_names.include?(seg[:name])}
+      segment_names = segments_arr.map{|s| s.name}
+      @parsed_segments.segments.delete_if{|seg| segment_names.include?(seg.name)}
       @parsed_segments.segments += segments_arr
-
     end
 
 

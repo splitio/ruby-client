@@ -7,7 +7,7 @@ module SplitIoClient
         return false
       end
 
-      return (partitions.first())[:size] == 100
+      return (partitions.first()).size == 100
     end
 
     def self.get_treatment(id, seed, partitions)
@@ -16,7 +16,7 @@ module SplitIoClient
       end
 
       if hundred_percent_one_treatment?(partitions)
-        return (partitions.first())[:treatment]
+        return (partitions.first()).treatment
       end
 
       return get_treatment_for_key(bucket(hash(id, seed)), partitions)
@@ -33,8 +33,10 @@ module SplitIoClient
     def self.get_treatment_for_key(bucket, partitions)
       bucketsCoveredThusFar = 0
       partitions.each do |p|
-        bucketsCoveredThusFar += p[:size]
-        return p[:treatment]if bucketsCoveredThusFar >= bucket
+        if !p.is_empty?
+          bucketsCoveredThusFar += p.size
+          return p.treatment if bucketsCoveredThusFar >= bucket
+        end
       end
 
       return Treatments::CONTROL
