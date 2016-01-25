@@ -6,12 +6,12 @@ require 'splitclient-rb/version'
 Gem::Specification.new do |spec|
   spec.name          = "splitclient-rb"
   spec.version       = SplitIoClient::VERSION
-  spec.authors       = ["TODO: Write your name"]
-  spec.email         = ["TODO: Write your email address"]
+  spec.authors       = ["Split Software"]
+  spec.email         = ["Split Software"]
 
-  spec.summary       = %q{TODO: Write a short summary, because Rubygems requires one.}
-  spec.description   = %q{TODO: Write a longer description or delete this line.}
-  spec.homepage      = "TODO: Put your gem's website or public repo URL here."
+  spec.summary       = %q{Summary.}
+  spec.description   = %q{Description.}
+  spec.homepage      = "Split Software."
   spec.license       = "Apache"
 
   # Prevent pushing this gem to RubyGems.org by setting 'allowed_push_host', or
