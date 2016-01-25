@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
 
   spec.summary       = %q{Summary.}
   spec.description   = %q{Description.}
-  spec.homepage      = "Split Software."
+  spec.homepage      = "https://sdk.split.io"
   spec.license       = "Apache"
 
   # Prevent pushing this gem to RubyGems.org by setting 'allowed_push_host', or
