@@ -9,8 +9,8 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Split Software"]
   spec.email         = ["Split Software"]
 
-  spec.summary       = %q{Summary.}
-  spec.description   = %q{Description.}
+  spec.summary       = %q{Ruby client for split SDK.}
+  spec.description   = %q{Ruby client for using split SDK.}
   spec.homepage      = "https://sdk.split.io"
   spec.license       = "Apache"
 
