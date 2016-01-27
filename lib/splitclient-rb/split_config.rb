@@ -14,8 +14,9 @@ module SplitIoClient
     # @option opts [Int] :timeout (10) The read timeout for network connections in seconds.
     # @option opts [Int] :connection_timeout (2) The connect timeout for network connections in seconds.
     # @option opts [Object] :local_store A cache store for the Faraday HTTP caching library. Defaults to the Rails cache in a Rails environment, or a
-    # @option opts [Int] :exec_interval (10) The time interval for execution API refresh
     #   thread-safe in-memory store otherwise.
+    # @option opts [Int] :fetch_interval (60) The time interval for execution API refresh
+    # @option opts [Int] :push_interval (180) The time interval for execution API pushes
     # @option opts [Object] :logger a logger to user for messages from the client. Defaults to stdout
     #
     # @return [type] SplitConfig with configuration options
@@ -24,7 +25,8 @@ module SplitIoClient
       @local_store = opts[:local_store] || SplitConfig.default_local_store
       @connection_timeout = opts[:connection_timeout] || SplitConfig.default_connection_timeout
       @timeout = opts[:timeout] || SplitConfig.default_timeout
-      @exec_interval = opts[:exec_interval] || SplitConfig.default_exec_interval
+      @fetch_interval = opts[:fetch_interval] || SplitConfig.default_fetch_interval
+      @push_interval = opts[:push_interval] || SplitConfig.default_push_interval
       @logger = opts[:logger] || SplitConfig.default_logger
     end
 
@@ -57,7 +59,13 @@ module SplitIoClient
     # The time interval for execution of API refresh calls
     #
     # @return [Int] The time exection interval in seconds.
-    attr_reader :exec_interval
+    attr_reader :fetch_interval
+
+    #
+    # The time interval for execution of API push calls
+    #
+    # @return [Int] The time interval in seconds.
+    attr_reader :push_interval
 
     #
     # The configured logger. The client library uses the log to
@@ -94,8 +102,12 @@ module SplitIoClient
       2
     end
 
-    def self.default_exec_interval
+    def self.default_fetch_interval
       60
+    end
+
+    def self.default_push_interval
+      10
     end
 
     def self.default_logger

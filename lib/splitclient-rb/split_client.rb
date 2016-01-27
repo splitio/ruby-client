@@ -4,6 +4,7 @@ module SplitIoClient
 
   class SplitClient < NoMethodError
     attr_reader :fetcher
+    attr_reader :pusher
     # Creates a new split client instance that connects to split.io API.
     #
     # @param api_key [String] the API key for your split account
@@ -27,8 +28,11 @@ module SplitIoClient
       result = false
 
       begin
+        start = Time.now
         treatment = get_treatment(id, feature)
         result = Treatments.is_control?(treatment) ? false : true
+        @fetcher.impressions.log(id, feature, treatment, Time.now)
+        @fetcher.metrics.time("sdk.is_on", (Time.now-start))
       rescue StandardError => error
         @config.log_found_exception(__method__.to_s, error)
       end

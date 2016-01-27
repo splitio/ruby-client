@@ -7,7 +7,10 @@ require "bundler/vendor/net/http/persistent"
 module SplitIoClient
 
   class SplitFetcher < NoMethodError
-
+    attr_reader :impressions
+    attr_reader :metrics
+    attr_reader :parsed_splits
+    attr_reader :parsed_segments
     # Creates a new split fetcher instance that consumes to split.io APIs
     #
     # @param api_key [String] the API key for your split account
@@ -19,6 +22,8 @@ module SplitIoClient
       @config = config
       @parsed_splits = SplitParser.new(@config.logger)
       @parsed_segments = SegmentParser.new(@config.logger)
+      @impressions = Impressions.new(100)
+      @metrics = Metrics.new(100)
 
       @api_client = Faraday.new do |builder|
         builder.use Faraday::HttpCache, store: @config.local_store
@@ -26,6 +31,7 @@ module SplitIoClient
       end
 
       @consumer = create_api_consumer
+      @producer = create_api_producer
     end
 
     def create_api_consumer
@@ -58,7 +64,7 @@ module SplitIoClient
               refresh_segments(segments_arr)
             end
 
-            sleep(@config.exec_interval)
+            sleep(@config.fetch_interval)
           rescue StandardError => error
             @config.log_found_exception(__method__.to_s, error)
           end
@@ -72,6 +78,16 @@ module SplitIoClient
         req.headers["Authorization"] = "Bearer " + @api_key
         req.options.open_timeout = @config.connection_timeout
         req.options.timeout = @config.timeout
+      end
+    end
+
+    def post_api(path, param)
+      @api_client.post (@config.base_uri + path) do |req|
+        req.headers["Authorization"] = "Bearer " + @api_key
+        req.headers["Content-Type"] = "application/json"
+        req.body = param.to_json
+        req.options.timeout = @config.timeout
+        req.options.open_timeout = @config.connection_timeout
       end
     end
 
@@ -125,6 +141,73 @@ module SplitIoClient
 
     def parsed_segments
       @parsed_segments
+    end
+
+
+    def create_api_producer
+      Thread.new do
+        loop do
+          begin
+            #post captured impressions
+            post_impressions
+            #post captured metrics
+            post_metrics
+            sleep(@config.push_interval)
+          rescue StandardError => error
+            @config.log_found_exception(__method__.to_s, error)
+          end
+        end
+      end
+    end
+
+    def post_impressions
+      if @impressions.queue.empty?
+        @config.logger.info("No impressions to report.")
+      else
+        @impressions.queue.each do |i|
+          filtered = []
+          keys_seen = []
+
+          impressions = i[:impressions]
+          impressions.each do |imp|
+            if keys_seen.include?(imp.key)
+              next
+            end
+            keys_seen << imp.key
+            filtered << imp
+          end
+
+          if filtered.empty?
+            @config.logger.info("No impressions to report post filtering.")
+          else
+            test_impression = {}
+            key_impressions = []
+
+            filtered.each do |f|
+              key_impressions << {keyName: f.key, treatment: f.treatment, time: f.time.to_i}
+            end
+
+            test_impression = { testName: i[:feature], keyImpressions: key_impressions }
+            res = post_api("/testImpressions", test_impression)
+            if res.status / 100 != 2
+              @config.logger.error("Unexpected status code while posting impressions: #{res.status}")
+            end
+          end
+        end
+        @impressions.clear
+      end
+    end
+
+    def post_metrics
+      puts "--- Latencies --- "
+      puts @metrics.latencies.to_s
+      puts "------------------"
+      puts "--- Gauges --- "
+      puts @metrics.gauges.to_s
+      puts "------------------"
+      puts "--- Counters --- "
+      puts @metrics.counts.to_s
+      puts "------------------"
     end
 
   end
