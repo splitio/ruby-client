@@ -27,9 +27,10 @@ module SplitIoClient
         counter_delta.add_delta(delta)
         @counts << {name:counter, delta: counter_delta}
       else
-        counter_delta = counter_hash[:delta]
-        counter_delta.add_delta(delta)
-        counter_hash[:delta].replace(counter_delta)
+        #counter_delta = counter_hash[:delta]
+        #counter_delta.add_delta(delta)
+        #counter_hash[:delta].replace(counter_delta)
+        counter_hash[:delta].add_delta(delta)
       end
     end
 
@@ -66,9 +67,10 @@ module SplitIoClient
         gauge_value.set_value(value)
         @gauges << {name:gauge, value: gauge_value}
       else
-        gauge_value = gauge_hash[:value]
-        gauge_value.set_value(value)
-        gauge_hash[:value].replace(gauge_value)
+        #gauge_value = gauge_hash[:value]
+        #gauge_value.set_value(value)
+        #gauge_hash[:value].replace(gauge_value)
+        gauge_hash[:value].set_value(value)
       end
     end
 

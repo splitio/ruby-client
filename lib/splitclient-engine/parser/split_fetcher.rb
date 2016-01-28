@@ -92,13 +92,24 @@ module SplitIoClient
     end
 
     def get_splits(since)
+      result = nil
+      start = Time.now
+      prefix = "splitChangeFetcher"
+
       splits = call_api("/splitChanges", {:since => since})
 
       if splits.status / 100 == 2
-        return JSON.parse(splits.body, symbolize_names: true)
+        result = JSON.parse(splits.body, symbolize_names: true)
+        @metrics.count(prefix + ".status." + splits.status.to_s, 1)
       else
         @config.logger.error("Unexpected result from API call")
+        @metrics.count(prefix + ".status." + splits.status.to_s, 1)
       end
+
+      latency = (Time.now - start) * 1000.0
+      @metrics.time(prefix + ".time", latency)
+
+      return result
     end
 
     def refresh_splits(splits_arr)
@@ -109,6 +120,8 @@ module SplitIoClient
 
     def get_segments(names)
       segments = []
+      start = Time.now
+      prefix = "segmentChangeFetcher"
 
       names.each do |name|
         curr_segment = @parsed_segments.get_segment(name)
@@ -119,11 +132,16 @@ module SplitIoClient
         if segment.status / 100 == 2
           segment_content = JSON.parse(segment.body, symbolize_names: true)
           @parsed_segments.since = segment_content[:since]
+          @metrics.count(prefix + ".status." + segment.status.to_s, 1)
           segments << segment_content
         else
           @config.logger.error("Unexpected result from API call")
+          @metrics.count(prefix + ".status." + segment.status.to_s, 1)
         end
       end
+
+      latency = (Time.now - start) * 1000.0
+      #@metrics.time(prefix + ".time", latency)
 
       return segments
     end
@@ -164,6 +182,7 @@ module SplitIoClient
       if @impressions.queue.empty?
         @config.logger.info("No impressions to report.")
       else
+        clear = true
         @impressions.queue.each do |i|
           filtered = []
           keys_seen = []
@@ -191,23 +210,64 @@ module SplitIoClient
             res = post_api("/testImpressions", test_impression)
             if res.status / 100 != 2
               @config.logger.error("Unexpected status code while posting impressions: #{res.status}")
+              clear = false
             end
           end
         end
-        @impressions.clear
+        @impressions.clear if clear
       end
     end
 
+
     def post_metrics
-      puts "--- Latencies --- "
-      puts @metrics.latencies.to_s
-      puts "------------------"
-      puts "--- Gauges --- "
-      puts @metrics.gauges.to_s
-      puts "------------------"
-      puts "--- Counters --- "
-      puts @metrics.counts.to_s
-      puts "------------------"
+      clear = true
+      if @metrics.latencies.empty?
+         @config.logger.info("No latencies to report.")
+      else
+         @metrics.latencies.each do |l|
+             metrics_time = {}
+             metrics_time = { name: l[:operation], latencies: l[:latencies] }
+             res = post_api("/metrics/time", metrics_time)
+             if res.status / 100 != 2
+               @config.logger.error("Unexpected status code while posting time metrics: #{res.status}")
+               clear = false
+             end
+         end
+      end
+      @metrics.latencies.clear if clear
+
+      clear = true
+      if @metrics.counts.empty?
+        @config.logger.info("No counts to report.")
+      else
+        @metrics.counts.each do |c|
+          metrics_count = {}
+          metrics_count = { name: c[:name], delta: c[:delta].sum }
+          res = post_api("/metrics/count", metrics_count)
+          if res.status / 100 != 2
+            @config.logger.error("Unexpected status code while posting count metrics: #{res.status}")
+            clear = false
+          end
+        end
+      end
+      @metrics.counts.clear if clear
+
+      clear = true
+      if @metrics.gauges.empty?
+        @config.logger.info("No gauges to report.")
+      else
+        @metrics.gauges.each do |g|
+          metrics_gauge = {}
+          metrics_gauge = { name: g[:name], value: g[:gauge].value }
+          res = post_api("/metrics/gauge", metrics_gauge)
+          if res.status / 100 != 2
+            @config.logger.error("Unexpected status code while posting gauge metrics: #{res.status}")
+            clear = false
+          end
+        end
+      end
+      @metrics.gauges.clear if clear
+
     end
 
   end

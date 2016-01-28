@@ -107,7 +107,7 @@ module SplitIoClient
     end
 
     def self.default_push_interval
-      10
+      180
     end
 
     def self.default_logger

@@ -32,7 +32,8 @@ module SplitIoClient
         treatment = get_treatment(id, feature)
         result = Treatments.is_control?(treatment) ? false : true
         @fetcher.impressions.log(id, feature, treatment, Time.now)
-        @fetcher.metrics.time("sdk.is_on", (Time.now-start))
+        latency = (Time.now - start) * 1000.0
+        @fetcher.metrics.time("sdk.is_on", latency)
       rescue StandardError => error
         @config.log_found_exception(__method__.to_s, error)
       end
