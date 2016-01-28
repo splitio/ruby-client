@@ -5,29 +5,33 @@ module SplitIoClient
     @segment = nil
 
     def initialize(segment)
-      if !segment.nil?
+      unless segment.nil?
         @segment = segment
       end
     end
 
     def match?(key)
-      @segment.added.include?(key)
+      matches = false
+      unless @segment.users.nil?
+        matches = @segment.users.include?(key)
+      end
+      matches
     end
 
     def equals?(obj)
       if obj.nil?
-        return false
+        false
       elsif !obj.instance_of?(UserDefinedSegmentMatcher)
-        return false
+        false
       elsif self.equal?(obj)
-        return true
+        true
       else
-        return false
+        false
       end
     end
 
     def to_s
-      "in segment " + @segment.name
+      'in segment ' + @segment.name
     end
 
   end

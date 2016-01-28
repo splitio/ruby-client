@@ -8,10 +8,10 @@ module SplitIoClient
     @combiner = ''
 
     def initialize(combiner, delegates)
-      if !delegates.nil?
+      unless delegates.nil?
         @matcher_list = delegates
       end
-      if !combiner.nil?
+      unless combiner.nil?
         @combiner = combiner
       end
     end
@@ -34,28 +34,28 @@ module SplitIoClient
       @matcher_list.each do |delegate|
         result &= (delegate.match?(key))
       end
-      return result
+      result
     end
 
     def equals?(obj)
       if obj.nil?
-        return false
+        false
       elsif !obj.instance_of?(CombiningMatcher)
-        return false
+        false
       elsif self.equal?(obj)
-        return true
+        true
       else
-        return false
+        false
       end
     end
 
     def to_s
-      result = ""
+      result = ''
       @matcher_list.each_with_index do |matcher, i|
-         result += matcher.to_s
-         result += " " + @combiner if i != 0
+        result += matcher.to_s
+        result += ' ' + @combiner if i != 0
       end
-      return result
+      result
     end
 
   end

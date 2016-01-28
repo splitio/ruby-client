@@ -14,7 +14,7 @@ module SplitIoClient
     end
 
     def get_split_names
-      feature_names = @splits.map{|s| s.name}
+      @splits.map { |s| s.name }
     end
 
     def is_empty?
@@ -27,28 +27,27 @@ module SplitIoClient
       @splits.each { |s|
         s.conditions.each { |c|
           c.matchers.each { |m|
-            m[:userDefinedSegmentMatcherData].each{ |seg, name|
+            m[:userDefinedSegmentMatcherData].each { |seg, name|
               segment_names << name
             } unless m[:userDefinedSegmentMatcherData].nil?
           } unless c.matchers.nil?
         }
       }
 
-      return segment_names.uniq
+      segment_names.uniq
     end
 
     def get_split(name)
-      @splits.find{|s| s.name == name}
+      @splits.find { |s| s.name == name }
     end
 
     def get_split_treatment(id, name)
       split = get_split(name)
-      matcher = nil
       default = Treatments::CONTROL
 
       if !split.is_empty? && split.status == 'ACTIVE' && !split.killed?
         split.conditions.each do |c|
-          if !c.is_empty?
+          unless c.is_empty?
             matcher = get_matcher_type(c)
             if matcher.match?(id)
               return Splitter.get_treatment(id, split.seed, c.partitions) #'true match - running split'
@@ -72,11 +71,10 @@ module SplitIoClient
         when 'WHITELIST'
           final_matcher = WhitelistMatcher.new(condition.matcher_whitelist)
         else
-          @logger.error("Invalid matcher type")
+          @logger.error('Invalid matcher type')
       end
 
-      return final_matcher
-
+      final_matcher
     end
 
   end

@@ -38,7 +38,7 @@ module SplitIoClient
 
 
     def negate
-      @data[:matcherGroup][:matchers].first[:neagte]
+      @data[:matcherGroup][:matchers].first[:negate]
     end
 
     def partitions
@@ -51,7 +51,7 @@ module SplitIoClient
         partition = SplitIoClient::Partition.new(p)
         partitions_list << partition
       end
-      return partitions_list
+      partitions_list
     end
 
     def is_empty?

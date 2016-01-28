@@ -38,7 +38,7 @@ module SplitIoClient
         condition = SplitIoClient::Condition.new(c)
         conditions_list << condition
       end
-      return conditions_list
+      conditions_list
     end
 
   end

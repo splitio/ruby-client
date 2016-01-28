@@ -5,7 +5,7 @@ module SplitIoClient
     @matcher = nil
 
     def initialize(matcher)
-      if !matcher.nil?
+      unless matcher.nil?
         @matcher = matcher
       end
     end
@@ -16,18 +16,18 @@ module SplitIoClient
 
     def equals?(obj)
       if obj.nil?
-        return false
+        false
       elsif !obj.instance_of?(NegationMatcher)
-        return false
+        false
       elsif self.equal?(obj)
-        return true
+        true
       else
-        return false
+        false
       end
     end
 
     def to_s
-      "not " + @matcher.to_s
+      'not ' + @matcher.to_s
     end
 
   end

@@ -5,7 +5,7 @@ module SplitIoClient
     @whitelist = []
 
     def initialize(whitelist)
-      if !whitelist.nil?
+      unless whitelist.nil?
         @whitelist = whitelist
       end
     end
@@ -16,18 +16,18 @@ module SplitIoClient
 
     def equals?(obj)
       if obj.nil?
-        return false
+        false
       elsif !obj.instance_of?(WhitelistMatcher)
-        return false
+        false
       elsif self.equal?(obj)
-        return true
+        true
       else
-        return false
+        false
       end
     end
 
     def to_s
-      "in segment " + @whitelist.to_s
+      'in segment ' + @whitelist.to_s
     end
 
   end

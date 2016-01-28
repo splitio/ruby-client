@@ -21,11 +21,11 @@ module SplitIoClient
 
       return if (counter.nil? || counter.strip.empty?)
 
-      counter_hash = @counts.find{|c| c[:name] == counter}
+      counter_hash = @counts.find { |c| c[:name] == counter }
       if counter_hash.nil?
-        counter_delta = SumAndCount.new()
+        counter_delta = SumAndCount.new
         counter_delta.add_delta(delta)
-        @counts << {name:counter, delta: counter_delta}
+        @counts << {name: counter, delta: counter_delta}
       else
         #counter_delta = counter_hash[:delta]
         #counter_delta.add_delta(delta)
@@ -40,10 +40,10 @@ module SplitIoClient
         return;
       end
 
-      operation_hash =  @latencies.find{|l| l[:operation] == operation}
+      operation_hash = @latencies.find { |l| l[:operation] == operation }
       if operation_hash.nil?
         latencies_for_op = [time_in_ms]
-        @latencies << {operation:operation, latencies: latencies_for_op}
+        @latencies << {operation: operation, latencies: latencies_for_op}
       else
         latencies_for_op = operation_hash[:latencies]
         if latencies_for_op.size >= @queue_size
@@ -61,11 +61,11 @@ module SplitIoClient
         return
       end
 
-      gauge_hash =  @gauges.find{|g| g[:name] == gauge}
+      gauge_hash = @gauges.find { |g| g[:name] == gauge }
       if gauge_hash.nil?
-        gauge_value = ValueAndCount.new()
+        gauge_value = ValueAndCount.new
         gauge_value.set_value(value)
-        @gauges << {name:gauge, value: gauge_value}
+        @gauges << {name: gauge, value: gauge_value}
       else
         #gauge_value = gauge_hash[:value]
         #gauge_value.set_value(value)
@@ -106,7 +106,7 @@ module SplitIoClient
     end
 
     def set_value(value)
-      @count++
+      @count += 1
       @value = value
     end
 

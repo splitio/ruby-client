@@ -1,4 +1,5 @@
-require "logger"
+require 'logger'
+require 'socket'
 
 module SplitIoClient
   #
@@ -9,7 +10,7 @@ module SplitIoClient
     #
     # Constructor for creating custom split client config
     #
-    # @param opts [Hash] optional hasg with configuration options
+    # @param opts [Hash] optional hash with configuration options
     # @option opts [String] :base_uri ("https://sdk.split.io/api/") The base URL for split API end points
     # @option opts [Int] :timeout (10) The read timeout for network connections in seconds.
     # @option opts [Int] :connection_timeout (2) The connect timeout for network connections in seconds.
@@ -21,13 +22,15 @@ module SplitIoClient
     #
     # @return [type] SplitConfig with configuration options
     def initialize(opts = {})
-      @base_uri = (opts[:base_uri] || SplitConfig.default_base_uri).chomp("/")
+      @base_uri = (opts[:base_uri] || SplitConfig.default_base_uri).chomp('/')
       @local_store = opts[:local_store] || SplitConfig.default_local_store
       @connection_timeout = opts[:connection_timeout] || SplitConfig.default_connection_timeout
       @timeout = opts[:timeout] || SplitConfig.default_timeout
       @fetch_interval = opts[:fetch_interval] || SplitConfig.default_fetch_interval
       @push_interval = opts[:push_interval] || SplitConfig.default_push_interval
       @logger = opts[:logger] || SplitConfig.default_logger
+      @machine_name = SplitConfig.get_hostname
+      @machine_ip = SplitConfig.get_ip
     end
 
     #
@@ -58,7 +61,7 @@ module SplitIoClient
     #
     # The time interval for execution of API refresh calls
     #
-    # @return [Int] The time exection interval in seconds.
+    # @return [Int] The time execution interval in seconds.
     attr_reader :fetch_interval
 
     #
@@ -74,6 +77,9 @@ module SplitIoClient
     # @return [Logger] The configured logger
     attr_reader :logger
 
+    attr_reader :machine_ip
+    attr_reader :machine_name
+
     #
     # The default split client configuration
     #
@@ -84,8 +90,8 @@ module SplitIoClient
 
 
     def self.default_base_uri
-      #"https://sdk.split.io/api/"
-      "http://localhost:8081/api/"
+      #'https://sdk.split.io/api/'
+      'http://localhost:8081/api/'
     end
 
     # @return [LocalStore] configuration value for local cache store
@@ -95,7 +101,7 @@ module SplitIoClient
 
 
     def self.default_timeout
-      10
+      5
     end
 
     def self.default_connection_timeout
@@ -120,6 +126,13 @@ module SplitIoClient
       @logger.error(error)
     end
 
+    def self.get_hostname
+      Socket.gethostname
+    end
+
+    def self.get_ip
+      Socket::getaddrinfo(Socket.gethostname, 'echo', Socket::AF_INET)[0][3]
+    end
 
   end
 end

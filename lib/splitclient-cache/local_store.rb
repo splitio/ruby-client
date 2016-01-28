@@ -1,4 +1,4 @@
-require "thread_safe"
+require 'thread_safe'
 
 module SplitIoClient
   # A thread-safe in-memory store suitable for use
@@ -39,5 +39,7 @@ module SplitIoClient
     def delete(key)
       @cache[key] = nil
     end
+
   end
+
 end

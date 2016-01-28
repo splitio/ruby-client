@@ -11,11 +11,11 @@ module SplitIoClient
     end
 
     def get_segment(name)
-      @segments.find{|s| s.name == name}
+      @segments.find { |s| s.name == name }
     end
 
     def get_segment_names
-      segment_names = @segments.map{|seg| seg.name}
+      @segments.map { |seg| seg.name }
     end
 
     def is_empty?

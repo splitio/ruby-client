@@ -47,16 +47,16 @@ describe SplitIoClient do
     let(:user_2) { 'fake_user_id_2' }
     let(:feature) { 'test_feature' }
 
-    let(:fetcher) { subject.instance_variable_get(:@fetcher)}
+    let(:api_adapter) { subject.instance_variable_get(:@adapter)}
 
     it 'validates the feature is on for all ids' do
-      parsed_segments = fetcher.instance_variable_get(:@parsed_segments)
+      parsed_segments = api_adapter.instance_variable_get(:@parsed_segments)
       parsed_segments.instance_variable_set(:@segments, [segment_1, segment_2])
-      fetcher.instance_variable_set(:@parsed_segments, parsed_segments)
+      api_adapter.instance_variable_set(:@parsed_segments, parsed_segments)
 
-      parsed_splits = fetcher.instance_variable_get(:@parsed_splits)
+      parsed_splits = api_adapter.instance_variable_get(:@parsed_splits)
       parsed_splits.instance_variable_set(:@splits, [split_all_keys_matcher])
-      fetcher.instance_variable_set(:@parsed_splits, parsed_splits)
+      api_adapter.instance_variable_set(:@parsed_splits, parsed_splits)
 
       expect(subject.is_on?(user_1,feature)).to be true
       expect(subject.is_on?(user_2, feature)).to be true
@@ -69,18 +69,20 @@ describe SplitIoClient do
     let(:user_1) { 'fake_user_id_1' }
     let(:feature) { 'new_feature' }
 
-    let(:fetcher) { subject.instance_variable_get(:@fetcher)}
+    let(:api_adapter) { subject.instance_variable_get(:@adapter)}
 
     it 'validates the feature is on for all ids' do
-      parsed_segments = fetcher.instance_variable_get(:@parsed_segments)
+      parsed_segments = api_adapter.instance_variable_get(:@parsed_segments)
       till = segment_1.till
       since = segment_1.since
+      segment_1.refresh_users(["fake_user_id_1", "fake_user_id_2"],[])
+      segment_2.refresh_users(["fake_user_id_3"],[])
       parsed_segments.instance_variable_set(:@segments, [segment_1, segment_2])
-      fetcher.instance_variable_set(:@parsed_segments, parsed_segments)
+      api_adapter.instance_variable_set(:@parsed_segments, parsed_segments)
 
-      parsed_splits = fetcher.instance_variable_get(:@parsed_splits)
+      parsed_splits = api_adapter.instance_variable_get(:@parsed_splits)
       parsed_splits.instance_variable_set(:@splits, [split_segment_matcher])
-      fetcher.instance_variable_set(:@parsed_splits, parsed_splits)
+      api_adapter.instance_variable_set(:@parsed_splits, parsed_splits)
 
       expect(subject.is_on?(user_1,feature)).to be true
     end
@@ -92,16 +94,18 @@ describe SplitIoClient do
     let(:user_1) { 'fake_user_id_3' }
     let(:feature) { 'new_feature' }
 
-    let(:fetcher) { subject.instance_variable_get(:@fetcher)}
+    let(:api_adapter) { subject.instance_variable_get(:@adapter)}
 
     it 'validates the feature is on for all ids' do
-      parsed_segments = fetcher.instance_variable_get(:@parsed_segments)
+      segment_1.refresh_users(["fake_user_id_1", "fake_user_id_2"],[])
+      segment_2.refresh_users(["fake_user_id_3"],[])
+      parsed_segments = api_adapter.instance_variable_get(:@parsed_segments)
       parsed_segments.instance_variable_set(:@segments, [segment_1, segment_2])
-      fetcher.instance_variable_set(:@parsed_segments, parsed_segments)
+      api_adapter.instance_variable_set(:@parsed_segments, parsed_segments)
 
-      parsed_splits = fetcher.instance_variable_get(:@parsed_splits)
+      parsed_splits = api_adapter.instance_variable_get(:@parsed_splits)
       parsed_splits.instance_variable_set(:@splits, [split_segment_matcher])
-      fetcher.instance_variable_set(:@parsed_splits, parsed_splits)
+      api_adapter.instance_variable_set(:@parsed_splits, parsed_splits)
 
       expect(subject.is_on?(user_1,feature)).to be false
     end
@@ -113,13 +117,13 @@ describe SplitIoClient do
       let(:user_1) { 'fake_user_id_1' }
       let(:feature) { 'test_whitelist' }
 
-      let(:fetcher) { subject.instance_variable_get(:@fetcher)}
+      let(:api_adapter) { subject.instance_variable_get(:@adapter)}
 
       it 'validates the feature is on for all ids' do
 
-        parsed_splits = fetcher.instance_variable_get(:@parsed_splits)
+        parsed_splits = api_adapter.instance_variable_get(:@parsed_splits)
         parsed_splits.instance_variable_set(:@splits, [split_whitelist_matcher])
-        fetcher.instance_variable_set(:@parsed_splits, parsed_splits)
+        api_adapter.instance_variable_set(:@parsed_splits, parsed_splits)
 
         expect(subject.is_on?(user_1,feature)).to be true
       end
@@ -131,13 +135,13 @@ describe SplitIoClient do
     let(:user_1) { 'fake_user_id_2' }
     let(:feature) { 'test_whitelist' }
 
-    let(:fetcher) { subject.instance_variable_get(:@fetcher)}
+    let(:api_adapter) { subject.instance_variable_get(:@adapter)}
 
     it 'validates the feature is on for all ids' do
 
-      parsed_splits = fetcher.instance_variable_get(:@parsed_splits)
+      parsed_splits = api_adapter.instance_variable_get(:@parsed_splits)
       parsed_splits.instance_variable_set(:@splits, [split_whitelist_matcher])
-      fetcher.instance_variable_set(:@parsed_splits, parsed_splits)
+      api_adapter.instance_variable_set(:@parsed_splits, parsed_splits)
 
       expect(subject.is_on?(user_1,feature)).to be false
     end

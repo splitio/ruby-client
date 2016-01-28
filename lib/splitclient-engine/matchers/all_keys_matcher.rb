@@ -7,21 +7,19 @@ module SplitIoClient
     end
 
     def equals?(obj)
-
       if obj.nil?
-        return false
+        false
       elsif self.equal?(obj)
-        return true
+        true
       elsif !obj.instance_of?(AllKeysMatcher)
-        return false
+        false
       else
-        return true
+        true
       end
-
     end
 
     def to_s
-      "in segment all"
+      'in segment all'
     end
 
   end

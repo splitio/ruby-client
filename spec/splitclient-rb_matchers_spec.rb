@@ -64,7 +64,10 @@ describe SplitIoClient do
     end
 
     it 'validates true if key match? COMBINING matcher' do
-      expect(combinining_matcher.match?('fake_user_id_1')).to be true
+      segment_1.refresh_users(["fake_user_id_1", "fake_user_id_2"],[])
+      segment_matcher_aux = SplitIoClient::UserDefinedSegmentMatcher.new(segment_1)
+      combinining_matcher_aux = SplitIoClient::CombiningMatcher.new( SplitIoClient::Combiners::AND, [whitelist_matcher, segment_matcher_aux])
+      expect(combinining_matcher_aux.match?('fake_user_id_1')).to be true
     end
 
     it 'validates false if matchers list empty on COMBINING matcher' do

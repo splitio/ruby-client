@@ -4,8 +4,8 @@ module SplitIoClient
 
     # Constants to represent treatment values
     CONTROL = 'control'
-    OFF     = 'off'
-    ON      = 'on'
+    OFF = 'off'
+    ON = 'on'
 
     # get the actual value for the given treatment type
     #
@@ -15,11 +15,11 @@ module SplitIoClient
     def self.get_type(type)
       case type
         when 'on'
-            return ON
+          return ON
         when 'off', 'control'
-            return CONTROL
+          return CONTROL
         else # default return off
-            return CONTROL
+          return CONTROL
       end
     end
 
