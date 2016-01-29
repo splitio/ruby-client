@@ -88,7 +88,10 @@ module SplitIoClient
       SplitConfig.new
     end
 
-
+    #
+    # The default base uri for api calls
+    #
+    # @return [string] The default base uri
     def self.default_base_uri
       'https://sdk.split.io/api/'
     end
@@ -98,37 +101,69 @@ module SplitIoClient
       defined?(Rails) && Rails.respond_to?(:cache) ? Rails.cache : LocalStore.new
     end
 
-
+    #
+    # The default timeout value
+    #
+    # @return [int]
     def self.default_timeout
       5
     end
 
+    #
+    # The default connection timeout value
+    #
+    # @return [int]
     def self.default_connection_timeout
       2
     end
 
+    #
+    # The default fetch interval for splits and segments
+    #
+    # @return [int]
     def self.default_fetch_interval
       60
     end
 
+    #
+    # The default push interval for metrics
+    #
+    # @return [int]
     def self.default_push_interval
       180
     end
 
+    #
+    # The default logger object
+    #
+    # @return [object]
     def self.default_logger
       Logger.new($stdout)
     end
 
+    #
+    # custom logger of exceptions
+    #
+    # @return [void]
     def log_found_exception(caller, exn)
       error_traceback = "#{exn.inspect} #{exn}\n\t#{exn.backtrace.join("\n\t")}"
       error = "[splitclient-rb] Unexpected exception in #{caller}: #{error_traceback}"
       @logger.error(error)
     end
 
+    #
+    # gets the hostname where the sdk gem is running
+    #
+    # @return [string]
     def self.get_hostname
+      if
       Socket.gethostname
     end
 
+    #
+    # gets the ip where the sdk gem is running
+    #
+    # @return [string]
     def self.get_ip
       Socket::getaddrinfo(Socket.gethostname, 'echo', Socket::AF_INET)[0][3]
     end
