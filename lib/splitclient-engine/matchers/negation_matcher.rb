@@ -1,5 +1,8 @@
 module SplitIoClient
 
+  #
+  # class to implement the negation of a matcher
+  #
   class NegationMatcher < NoMethodError
 
     @matcher = nil
@@ -10,10 +13,22 @@ module SplitIoClient
       end
     end
 
+    #
+    # evaluates if the key matches the negation of the matcher
+    #
+    # @param key [string] key value to be matched
+    #
+    # @return [boolean] evaluation of the negation matcher
     def match?(key)
       !@matcher.match?(key)
     end
 
+    #
+    # evaluates if the given object equals the matcher
+    #
+    # @param obj [object] object to be evaluated
+    #
+    # @returns [boolean] true if obj equals the matcher
     def equals?(obj)
       if obj.nil?
         false
@@ -26,6 +41,10 @@ module SplitIoClient
       end
     end
 
+    #
+    # function to print string value for this matcher
+    #
+    # @reutrn [string] string value of this matcher
     def to_s
       'not ' + @matcher.to_s
     end

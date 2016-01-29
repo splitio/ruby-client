@@ -2,9 +2,15 @@ require 'logger'
 
 module SplitIoClient
 
+  #
+  # main class for split client sdk
+  #
   class SplitClient < NoMethodError
+    #
+    # object that acts as an api adapter connector. used to get and post to api endpoints
     attr_reader :adapter
-    attr_reader :pusher
+
+    #
     # Creates a new split client instance that connects to split.io API.
     #
     # @param api_key [String] the API key for your split account
@@ -12,12 +18,12 @@ module SplitIoClient
     # @return [SplitIoClient] split.io client instance
     def initialize(api_key, config = SplitConfig.default)
 
-      #@adapter = SplitAdapter.new(api_key, config)
-      @adapter = SplitAdapter.new('ictlpssmv2rqhqb6b59fumq9lj', config)
+      @adapter = SplitAdapter.new(api_key, config)
       @config = config
 
     end
 
+    #
     # validates if a features should be on or off for the given user id
     #
     # @param id [string] user id
@@ -40,6 +46,7 @@ module SplitIoClient
       result
     end
 
+    #
     # obtains the treatment for a given feature
     #
     # @param id [string] user id
@@ -65,6 +72,13 @@ module SplitIoClient
       end
     end
 
+    #
+    # auxiliary method to get the treatments avoding exceptions
+    #
+    # @param id [string] user id
+    # @param feature [string] name of the feature that is being validated
+    #
+    # @return [Treatment]  tretment constant value
     def get_treatment_without_exception_handling(id, feature)
       @adapter.parsed_splits.segments = @adapter.parsed_segments
       split = @adapter.parsed_splits.get_split(feature)
@@ -76,13 +90,13 @@ module SplitIoClient
       end
     end
 
+    #
+    # method that returns the sdk gem version
+    #
+    # @return [string] version value for this sdk
     def self.sdk_version
       'RubyClientSDK-'+SplitIoClient::VERSION
     end
-
-    #def test()
-    #  @adapter.get_segments(@adapter.parsed_splits.get_used_segments)
-    #end
 
     private :get_treatment_without_exception_handling
 

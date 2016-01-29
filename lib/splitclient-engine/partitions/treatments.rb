@@ -1,5 +1,8 @@
 module SplitIoClient
 
+  #
+  # represents the possible return values for a treatment
+  #
   class Treatments < NoMethodError
 
     # Constants to represent treatment values

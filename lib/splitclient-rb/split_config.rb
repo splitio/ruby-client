@@ -90,8 +90,7 @@ module SplitIoClient
 
 
     def self.default_base_uri
-      #'https://sdk.split.io/api/'
-      'http://localhost:8081/api/'
+      'https://sdk.split.io/api/'
     end
 
     # @return [LocalStore] configuration value for local cache store

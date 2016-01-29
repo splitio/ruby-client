@@ -1,10 +1,19 @@
 require 'splitclient-engine/matchers/combiners'
 
 module SplitIoClient
-
+  #
+  # class to implement the combining matcher
+  #
   class CombiningMatcher < NoMethodError
 
+    #
+    # list of matcher within the combiner
+    #
     @matcher_list = []
+
+    #
+    # combiner value
+    #
     @combiner = ''
 
     def initialize(combiner, delegates)
@@ -16,6 +25,12 @@ module SplitIoClient
       end
     end
 
+    #
+    # evaluates if the key matches the matchers within the combiner
+    #
+    # @param key [string] key value to be matched
+    #
+    # @return [boolean] match value for combiner delegates
     def match?(key)
       if @matcher_list.empty?
         return false
@@ -25,10 +40,16 @@ module SplitIoClient
         when Combiners::AND
           return and_eval(key)
         else
-          #TODO throw error
+          #throws error
       end
     end
 
+    #
+    # auxiliary method to evaluate each of the matchers within the combiner
+    #
+    # @param key [string] key value to be matched
+    #
+    # @return [boolean] match value for combiner delegates
     def and_eval(key)
       result = true
       @matcher_list.each do |delegate|
@@ -37,6 +58,12 @@ module SplitIoClient
       result
     end
 
+    #
+    # evaluates if the given object equals the matcher
+    #
+    # @param obj [object] object to be evaluated
+    #
+    # @returns [boolean] true if obj equals the matcher
     def equals?(obj)
       if obj.nil?
         false
@@ -49,6 +76,10 @@ module SplitIoClient
       end
     end
 
+    #
+    # function to print string value for this matcher
+    #
+    # @reutrn [string] string value of this matcher
     def to_s
       result = ''
       @matcher_list.each_with_index do |matcher, i|

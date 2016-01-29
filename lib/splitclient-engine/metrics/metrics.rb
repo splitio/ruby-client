@@ -1,12 +1,35 @@
 module SplitIoClient
 
+  #
+  # class to handle cached metrics
+  #
   class Metrics < NoMethodError
 
     @counter
     @delta
+
+    #
+    # cached latencies
+    #
+    # @return [object] array of latencies
     attr_accessor :latencies
+
+    #
+    # cached counts
+    #
+    # @return [object] array of counts
     attr_accessor :counts
+
+    #
+    # cached gauges
+    #
+    # @return [object] array of gauges
     attr_accessor :gauges
+
+    #
+    # quese size for cached arrays
+    #
+    # @return [int] queue size
     attr_accessor :queue_size
 
     def initialize(queue_size)
@@ -16,6 +39,13 @@ module SplitIoClient
       @queue_size = queue_size
     end
 
+    #
+    # creates a new entry in the array for cached counts
+    #
+    # @param counter [string] name of the counter
+    # @delta [int] value of the counter
+    #
+    # @return void
     def count(counter, delta)
       return if delta <= 0
 
@@ -27,13 +57,17 @@ module SplitIoClient
         counter_delta.add_delta(delta)
         @counts << {name: counter, delta: counter_delta}
       else
-        #counter_delta = counter_hash[:delta]
-        #counter_delta.add_delta(delta)
-        #counter_hash[:delta].replace(counter_delta)
         counter_hash[:delta].add_delta(delta)
       end
     end
 
+    #
+    # creates a new entry in the array for cached time metrics
+    #
+    # @param operation [string] name of the operation
+    # @time_in_ms [number] time in miliseconds
+    #
+    # @return void
     def time(operation, time_in_ms)
 
       if operation.nil? || operation.empty? || time_in_ms < 0
@@ -56,6 +90,13 @@ module SplitIoClient
       end
     end
 
+    #
+    # creates a new entry in the array for cached gauges
+    #
+    # @param gauge [string] name of the gauge
+    # @value [number] value of the gauge
+    #
+    # @return void
     def gauge(gauge, value)
       if gauge.nil? || gauge.empty?
         return
@@ -67,15 +108,15 @@ module SplitIoClient
         gauge_value.set_value(value)
         @gauges << {name: gauge, value: gauge_value}
       else
-        #gauge_value = gauge_hash[:value]
-        #gauge_value.set_value(value)
-        #gauge_hash[:value].replace(gauge_value)
         gauge_hash[:value].set_value(value)
       end
     end
 
   end
 
+  #
+  # small class to act as DTO for counts
+  #
   class SumAndCount
     attr_reader :count
     attr_reader :sum
@@ -96,6 +137,9 @@ module SplitIoClient
     end
   end
 
+  #
+  # small class to act as DTO for gauges
+  #
   class ValueAndCount
     attr_reader :count
     attr_reader :value

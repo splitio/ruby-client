@@ -1,9 +1,22 @@
 module SplitIoClient
-
+  #
+  # helper class to parse fetched splits
+  #
   class SplitParser < NoMethodError
+    #
+    # since value for splitChanges last fetch
     attr_accessor :since
+
+    #
+    # till value for splitChanges last fetch
     attr_accessor :till
+
+    #
+    # splits data
     attr_accessor :splits
+
+    #
+    # splits segments data
     attr_accessor :segments
 
     def initialize(logger)
@@ -13,14 +26,24 @@ module SplitIoClient
       @logger = logger
     end
 
+    #
+    # gets all the split names retrived from the endpoint
+    #
+    # @return [object] array of split names
     def get_split_names
       @splits.map { |s| s.name }
     end
 
+    #
+    # @return [boolean] true if the splits content is empty false otherwise
     def is_empty?
       @splits.empty? ? true : false
     end
 
+    #
+    # gets all the segment names that are used within the retrieved splits
+    #
+    # @return [object] array of segment names
     def get_used_segments
       segment_names = []
 
@@ -33,14 +56,27 @@ module SplitIoClient
           } unless c.matchers.nil?
         }
       }
-
       segment_names.uniq
     end
 
+    #
+    # gets a split parsed object by name
+    #
+    # @param name [string] name of the split
+    #
+    # @return split [object] split object
     def get_split(name)
       @splits.find { |s| s.name == name }
     end
 
+    #
+    # gets the treatment for the given combination of user key and split name
+    # using all parsed data for the splits
+    #
+    # @param id [string] user key
+    # @param name [string] split name
+    #
+    # @return treatment [object] treatment for this user key, split pair
     def get_split_treatment(id, name)
       split = get_split(name)
       default = Treatments::CONTROL
@@ -59,6 +95,12 @@ module SplitIoClient
       default
     end
 
+    #
+    # gets the matcher type from a condition object
+    #
+    # @param contidion [object] a condition object
+    #
+    # @return matcher [object] the matcher object for the given condition
     def get_matcher_type(condition)
       final_matcher = nil
 

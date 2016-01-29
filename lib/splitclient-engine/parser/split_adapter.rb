@@ -6,12 +6,30 @@ require 'bundler/vendor/net/http/persistent'
 
 module SplitIoClient
 
+  #
+  # acts as an api adapater to connect to split endpoints
+  # uses a configuration object that can be modified when creating the client instance
+  # also, uses safe threads to execute fetches and post give the time execution values from the config
+  #
   class SplitAdapter < NoMethodError
+    #
+    # handler for impressions
     attr_reader :impressions
+
+    #
+    # handler for metrics
     attr_reader :metrics
+
+    #
+    # handler for parsed splits
     attr_reader :parsed_splits
+
+    #
+    # handeler for parsed segments
     attr_reader :parsed_segments
-    # Creates a new split api adapter instance that consumes to split.io APIs
+
+    #
+    # Creates a new split api adapter instance that consumes split api endpoints
     #
     # @param api_key [String] the API key for your split account
     #
@@ -34,11 +52,17 @@ module SplitIoClient
       @producer = create_api_producer
     end
 
+    #
+    # creates a safe thread that will be executing api calls
+    # for fetching splits and segments give the execution time
+    # provided within the configuration
+    #
+    # @return [void]
     def create_api_consumer
       Thread.new do
         loop do
           begin
-            #splits fetch
+            #splits fetcher
             splits_arr = []
             data = get_splits(@parsed_splits.since)
             data[:splits].each do |split|
@@ -73,7 +97,13 @@ module SplitIoClient
       end
     end
 
-
+    #
+    # helper method to execute a get request to the provided endpoint
+    #
+    # @param path [string] api endpoint path
+    # @param params [object] hash of params that will be added to the request
+    #
+    # @return [object] response to the request
     def call_api(path, params = {})
       @api_client.get @config.base_uri + path, params do |req|
         req.headers['Authorization'] = 'Bearer ' + @api_key
@@ -85,6 +115,13 @@ module SplitIoClient
       end
     end
 
+    #
+    # helper method to execute a post request to the provided endpoint
+    #
+    # @param path [string] api endpoint path
+    # @param params [object] hash of params that will be added to the request
+    #
+    # @return [object] response to the request
     def post_api(path, param)
       @api_client.post (@config.base_uri + path) do |req|
         req.headers['Authorization'] = 'Bearer ' + @api_key
@@ -98,6 +135,12 @@ module SplitIoClient
       end
     end
 
+    #
+    # helper method to fetch splits by using the appropriate api endpoint
+    #
+    # @param since [int] since value for the last fetch
+    #
+    # @return splits [object] splits structure in json format
     def get_splits(since)
       result = nil
       start = Time.now
@@ -119,12 +162,24 @@ module SplitIoClient
       result
     end
 
+    #
+    # helper method to refresh splits values after a new fetch with changes
+    #
+    # @param splits_arr [object] array of splits to refresh
+    #
+    # @return [void]
     def refresh_splits(splits_arr)
       feature_names = splits_arr.map { |s| s.name }
       @parsed_splits.splits.delete_if { |sp| feature_names.include?(sp.name) }
       @parsed_splits.splits += splits_arr
     end
 
+    #
+    # helper method to fetch segments by using the appropriate api endpoint
+    #
+    # @param names [object] array of segment names that must be fetched
+    #
+    # @return segments [object] segments structure in json format
     def get_segments(names)
       segments = []
       start = Time.now
@@ -153,6 +208,12 @@ module SplitIoClient
       segments
     end
 
+    #
+    # helper method to refresh segments values after a new fetch with changes
+    #
+    # @param segments_arr [object] array of segments to refresh
+    #
+    # @return [void]
     def refresh_segments(segments_arr)
       segment_names = @parsed_segments.segments.map { |s| s.name }
       segments_arr.each do |s|
@@ -166,15 +227,24 @@ module SplitIoClient
     end
 
 
+    #
+    # @return parsed_splits [object] parsed splits for this adapter
     def parsed_splits
       @parsed_splits
     end
 
+    #
+    # @return parsed_segments [object] parsed segments for this adapter
     def parsed_segments
       @parsed_segments
     end
 
-
+    #
+    # creates a safe thread that will be executing api calls
+    # for posting impressions and metrics given the execution time
+    # provided within the configuration
+    #
+    # @return [void]
     def create_api_producer
       Thread.new do
         loop do
@@ -191,6 +261,11 @@ module SplitIoClient
       end
     end
 
+    #
+    # creates the appropriate json data for the cached impressions values
+    # and then sends them to the appropriate api endpoint with a valid body format
+    #
+    # @return [void]
     def post_impressions
       if @impressions.queue.empty?
         @config.logger.info('No impressions to report.')
@@ -231,7 +306,12 @@ module SplitIoClient
       end
     end
 
-
+    #
+    # creates the appropriate json data for the cached metrics values
+    # include latencies, counts and gauges
+    # and then sends them to the appropriate api endpoint with a valida body format
+    #
+    # @return [void]
     def post_metrics
       clear = true
       if @metrics.latencies.empty?
