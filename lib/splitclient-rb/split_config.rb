@@ -156,7 +156,6 @@ module SplitIoClient
     #
     # @return [string]
     def self.get_hostname
-      if
       Socket.gethostname
     end
 
