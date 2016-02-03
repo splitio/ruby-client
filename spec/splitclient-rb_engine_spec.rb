@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe SplitIoClient do
-  subject { SplitIoClient::SplitClient.new('myrandomkey') }
+  subject { SplitIoClient::SplitClient.new('ictlpssmv2rqhqb6b59fumq9lj',{base_uri: 'http://localhost:8081/api/'}) }
 
   let(:segment_1) { SplitIoClient::Segment.new({:name=>"demo", :added=>["fake_user_id_1", "fake_user_id_2"], :removed=>[], :since=>-1, :till=>1452026108592}) }
   let(:segment_2) { SplitIoClient::Segment.new({:name=>"test_segment", :added=>["fake_user_id_3"], :removed=>[], :since=>-1, :till=>1452026405473}) }

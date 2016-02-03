@@ -16,11 +16,9 @@ module SplitIoClient
     # @param api_key [String] the API key for your split account
     #
     # @return [SplitIoClient] split.io client instance
-    def initialize(api_key, config = SplitConfig.default)
-
-      @adapter = SplitAdapter.new(api_key, config)
-      @config = config
-
+    def initialize(api_key, config = {})
+      @config = SplitConfig.new(config)
+      @adapter = SplitAdapter.new(api_key, @config)
     end
 
     #
