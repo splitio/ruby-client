@@ -156,7 +156,12 @@ module SplitIoClient
     #
     # @return [string]
     def self.get_hostname
-      Socket.gethostname
+      begin
+        Socket.gethostname
+      rescue
+        #unable to get hostname
+        'localhost'
+      end
     end
 
     #
@@ -164,7 +169,12 @@ module SplitIoClient
     #
     # @return [string]
     def self.get_ip
-      Socket::getaddrinfo(Socket.gethostname, 'echo', Socket::AF_INET)[0][3]
+      begin
+        Socket::getaddrinfo(Socket.gethostname, 'echo', Socket::AF_INET)[0][3]
+      rescue
+        #unable to get local ip
+        '127.0.0.0'
+      end
     end
 
   end
