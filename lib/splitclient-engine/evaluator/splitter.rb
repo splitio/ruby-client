@@ -47,11 +47,33 @@ module SplitIoClient
     #
     # @return hash [string] hash value
     def self.hash(key, seed)
-      h = seed
+      h = 0
       for i in 0..key.length-1
-        h = 31 * h + key[i].ord
+        h = to_int32(31 * h + key[i].ord)
       end
-      h
+      h^seed
+    end
+
+    #
+    # misc method to convert ruby number to int 32 since overflow is handled different to java
+    #
+    # @param number [number] ruby number value
+    #
+    # @return [int] returns the int 32 value of the provided number
+    def self.to_int32(number)
+      begin
+        sign = number < 0 ? -1 : 1
+        abs = number.abs
+        return 0 if abs == 0 || abs == Float::INFINITY
+      rescue
+        return 0
+      end
+
+      pos_int = sign * abs.floor
+      int_32bit = pos_int % 2**32
+
+      return int_32bit - 2**32 if int_32bit >= 2**31
+      int_32bit
     end
 
     #
@@ -80,7 +102,7 @@ module SplitIoClient
     #
     # @return bucket [number] bucket number
     def self.bucket(hash_value)
-      (hash_value % 100).abs + 1
+      (hash_value.abs % 100) + 1
     end
 
   end

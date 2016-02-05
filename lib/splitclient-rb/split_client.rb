@@ -149,7 +149,8 @@ module SplitIoClient
       @localhost_mode_features.include?(feature)
     end
 
-    private :get_treatment_without_exception_handling, :is_localhost_mode?
+    private :get_treatment_without_exception_handling, :is_localhost_mode?, :load_localhost_mode_features,
+            :get_localhost_treatment
 
   end
 
