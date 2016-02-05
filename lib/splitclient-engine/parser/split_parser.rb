@@ -75,24 +75,29 @@ module SplitIoClient
     #
     # @param id [string] user key
     # @param name [string] split name
+    # @param default_treatment [string] default treatment value to be returned
     #
     # @return treatment [object] treatment for this user key, split pair
-    def get_split_treatment(id, name)
+    def get_split_treatment(id, name, default_treatment)
       split = get_split(name)
-      default = Treatments::CONTROL
 
       if !split.is_empty? && split.status == 'ACTIVE' && !split.killed?
         split.conditions.each do |c|
           unless c.is_empty?
             matcher = get_matcher_type(c)
             if matcher.match?(id)
-              return Splitter.get_treatment(id, split.seed, c.partitions) #'true match - running split'
+              result = Splitter.get_treatment(id, split.seed, c.partitions) #'true match - running split'
+              if result.nil?
+                return default_treatment
+              else
+                return result
+              end     
             end
           end
         end
       end
 
-      default
+      default_treatment
     end
 
     #

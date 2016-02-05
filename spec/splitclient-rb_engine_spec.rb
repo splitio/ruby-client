@@ -13,16 +13,16 @@ describe SplitIoClient do
   describe '#is_on? returns false on random id and feature' do
     let(:user_id) { 'my_random_user_id' }
     let(:feature) { 'my_random_feaure' }
-    let(:output) { subject.is_on?(user_id,feature)}
+    let(:output) { subject.is_treatment?(user_id,feature,SplitIoClient::Treatments::CONTROL)}
 
     it 'validates the feature is off for id' do
       expect(output).to be false
     end
   end
 
-  describe "#is_on? returns false on null id" do
+  describe "#is_treatment? returns false on null id" do
     let(:feature) { 'my_random_feaure' }
-    let(:output) { subject.is_on?(nil,feature)}
+    let(:output) { subject.is_treatment?(nil,feature, SplitIoClient::Treatments::CONTROL)}
 
     it 'validates the feature is off for id' do
       expect(output).to be false
@@ -31,9 +31,9 @@ describe SplitIoClient do
   end
 
 
-  describe "#is_on? returns false on null feature" do
+  describe "#is_treatment? returns false on null feature" do
     let(:user_id) { 'my_random_user_id' }
-    let(:output) { subject.is_on?(user_id,nil)}
+    let(:output) { subject.is_treatment?(user_id, nil, SplitIoClient::Treatments::CONTROL)}
 
     it 'validates the feature is off for id' do
       expect(output).to be false
@@ -42,7 +42,7 @@ describe SplitIoClient do
   end
 
 
-  describe "#is_on? returns true on feature when using ALL_KEYS matcher" do
+  describe "#is_treatment? returns true on feature when using ALL_KEYS matcher" do
     let(:user_1) { 'fake_user_id_1' }
     let(:user_2) { 'fake_user_id_2' }
     let(:feature) { 'test_feature' }
@@ -58,14 +58,14 @@ describe SplitIoClient do
       parsed_splits.instance_variable_set(:@splits, [split_all_keys_matcher])
       api_adapter.instance_variable_set(:@parsed_splits, parsed_splits)
 
-      expect(subject.is_on?(user_1,feature)).to be true
-      expect(subject.is_on?(user_2, feature)).to be true
+      expect(subject.is_treatment?(user_1, feature, SplitIoClient::Treatments::ON)).to be true
+      expect(subject.is_treatment?(user_2, feature, SplitIoClient::Treatments::ON)).to be true
     end
 
   end
 
 
-  describe "#is_on? returns true on feature when id is IN_SEGMENT" do
+  describe "#is_treatment? returns true on feature when id is IN_SEGMENT" do
     let(:user_1) { 'fake_user_id_1' }
     let(:feature) { 'new_feature' }
 
@@ -84,13 +84,13 @@ describe SplitIoClient do
       parsed_splits.instance_variable_set(:@splits, [split_segment_matcher])
       api_adapter.instance_variable_set(:@parsed_splits, parsed_splits)
 
-      expect(subject.is_on?(user_1,feature)).to be true
+      expect(subject.is_treatment?(user_1, feature, SplitIoClient::Treatments::ON)).to be true
     end
 
   end
 
 
-  describe "#is_on? returns false on feature when id is not IN_SEGMENT" do
+  describe "#is_treatment? returns false on feature when id is not IN_SEGMENT" do
     let(:user_1) { 'fake_user_id_3' }
     let(:feature) { 'new_feature' }
 
@@ -107,13 +107,13 @@ describe SplitIoClient do
       parsed_splits.instance_variable_set(:@splits, [split_segment_matcher])
       api_adapter.instance_variable_set(:@parsed_splits, parsed_splits)
 
-      expect(subject.is_on?(user_1,feature)).to be false
+      expect(subject.is_treatment?(user_1, feature, SplitIoClient::Treatments::CONTROL)).to be false
     end
 
   end
 
 
-  describe "#is_on? returns true on feature when id is WHITELIST" do
+  describe "#is_treatment? returns true on feature when id is WHITELIST" do
       let(:user_1) { 'fake_user_id_1' }
       let(:feature) { 'test_whitelist' }
 
@@ -125,13 +125,13 @@ describe SplitIoClient do
         parsed_splits.instance_variable_set(:@splits, [split_whitelist_matcher])
         api_adapter.instance_variable_set(:@parsed_splits, parsed_splits)
 
-        expect(subject.is_on?(user_1,feature)).to be true
+        expect(subject.is_treatment?(user_1, feature, SplitIoClient::Treatments::ON)).to be true
       end
 
   end
 
 
-  describe "#is_on? returns false on feature when id is NOT WHITELIST" do
+  describe "#is_treatment? returns false on feature when id is NOT WHITELIST" do
     let(:user_1) { 'fake_user_id_2' }
     let(:feature) { 'test_whitelist' }
 
@@ -143,7 +143,7 @@ describe SplitIoClient do
       parsed_splits.instance_variable_set(:@splits, [split_whitelist_matcher])
       api_adapter.instance_variable_set(:@parsed_splits, parsed_splits)
 
-      expect(subject.is_on?(user_1,feature)).to be false
+      expect(subject.is_treatment?(user_1, feature, SplitIoClient::Treatments::CONTROL)).to be false
     end
 
   end

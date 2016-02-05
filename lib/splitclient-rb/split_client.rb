@@ -41,30 +41,26 @@ module SplitIoClient
     end
 
     #
-    # validates if a features should be on or off for the given user id
+    # validates the treatment for the provided user key and feature
     #
     # @param id [string] user id
     # @param feature [string] name of the feature that is being validated
+    # @param treatment [string] value of the treatment for this user key and feature
     #
-    # @return [boolean]  true if feature is on, false otherwise
-    def is_on?(id, feature)
-      result = false
-
+    # @return [boolean] true if the user key has valida treatment, false otherwise
+    def is_treatment?(id, feature, treatment)
+      is_treatment = false
+      
       if is_localhost_mode?
-        result = get_localhost_treatment(feature)
+        is_treatment = get_localhost_treatment(feature)
       else
         begin
-          start = Time.now
-          treatment = get_treatment(id, feature)
-          result = Treatments.is_control?(treatment) ? false : true
-          @adapter.impressions.log(id, feature, treatment, Time.now)
-          latency = (Time.now - start) * 1000.0
-          @adapter.metrics.time('sdk.is_on', latency)
-        rescue StandardError => error
-          @config.log_found_exception(__method__.to_s, error)
-        end
+          is_treatment = (get_treatment(id, feature, '') == treatment)
+        rescue
+          @config.logger.error("MUST NOT throw this error")
+        end  
       end
-      result
+      is_treatment    
     end
 
     #
@@ -72,25 +68,45 @@ module SplitIoClient
     #
     # @param id [string] user id
     # @param feature [string] name of the feature that is being validated
+    # @param default_treatment [string] value for default treatment
     #
     # @return [Treatment]  tretment constant value
-    def get_treatment(id, feature)
+    def get_treatment(id, feature, default_treatment)
       unless id
-        @config.logger.error('user id must be provided')
-        return Treatments::CONTROL
+        @config.logger.warn('id was null for feature: ' + feature)
+        return default_treatment
       end
 
       unless feature
-        @config.logger.error('feature must be provided')
-        return Treatments::CONTROL
+        @config.logger.warn('feature was null for id: ' + id)
+        return default_treatment
       end
 
+      unless default_treatment
+        @config.logger.warn('default treatment was null for id: ' + id)
+        return default_treatment
+      end
+
+      start = Time.now
+      result = nil
+
       begin
-        treatment = get_treatment_without_exception_handling(id, feature)
-        return treatment.nil? ? Treatments::CONTROL : treatment
+        result = get_treatment_without_exception_handling(id, feature, default_treatment)
       rescue StandardError => error
         @config.log_found_exception(__method__.to_s, error)
       end
+
+      result = result.nil? ? default_treatment : result
+
+      begin
+        #@adapter.impressions.log(id, feature, result, (Time.now * 1000.0))
+        latency = (Time.now - start) * 1000.0
+        #@adapter.metrics.time('sdk.get_treatment', latency)
+      rescue StandardError => error
+        @config.log_found_exception(__method__.to_s, error)
+      end
+
+      result
     end
 
     #
@@ -98,16 +114,17 @@ module SplitIoClient
     #
     # @param id [string] user id
     # @param feature [string] name of the feature that is being validated
+    # @param default_treatment [string] value of the default treatment
     #
     # @return [Treatment]  tretment constant value
-    def get_treatment_without_exception_handling(id, feature)
+    def get_treatment_without_exception_handling(id, feature, default_treatment)
       @adapter.parsed_splits.segments = @adapter.parsed_segments
       split = @adapter.parsed_splits.get_split(feature)
 
       if split.nil?
-        return Treatments::CONTROL
+        return default_treatment
       else
-        return @adapter.parsed_splits.get_split_treatment(id, feature)
+        return @adapter.parsed_splits.get_split_treatment(id, feature, default_treatment)
       end
     end
 
@@ -148,9 +165,17 @@ module SplitIoClient
     def get_localhost_treatment(feature)
       @localhost_mode_features.include?(feature)
     end
+    
+    def test
+      seed = 746860149
+      key = '䑉䐴箉⻴鳟郖ꄆ񐠇캜훫џ읷'
+      hash = SplitIoClient::Splitter.hash(key, seed)
+      bucket = SplitIoClient::Splitter.bucket(hash)
+      puts " hash: #{hash} --  bucket: #{bucket}"
+    end  
 
-    private :get_treatment_without_exception_handling, :is_localhost_mode?, :load_localhost_mode_features,
-            :get_localhost_treatment
+    private :get_treatment_without_exception_handling, :is_localhost_mode?,
+            :load_localhost_mode_features, :get_localhost_treatment
 
   end
 
