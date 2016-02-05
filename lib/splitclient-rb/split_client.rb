@@ -166,14 +166,6 @@ module SplitIoClient
       @localhost_mode_features.include?(feature)
     end
     
-    def test
-      seed = 746860149
-      key = '䑉䐴箉⻴鳟郖ꄆ񐠇캜훫џ읷'
-      hash = SplitIoClient::Splitter.hash(key, seed)
-      bucket = SplitIoClient::Splitter.bucket(hash)
-      puts " hash: #{hash} --  bucket: #{bucket}"
-    end  
-
     private :get_treatment_without_exception_handling, :is_localhost_mode?,
             :load_localhost_mode_features, :get_localhost_treatment
 
