@@ -106,12 +106,12 @@ split_client = SplitIoClient::SplitClient.new("your_api_key", options)
 ---
 In your application code you just need to call the is_on? method with the required parameters for key and feature name
 ```ruby
-split_client.is_on?('key','feature_name')
+split_client.is_treatment?('key','feature_name','on')
 ```
 
 For example
 ```ruby
-if split_client.is_on?('employee_user_01','view_main_list')
+if split_client.is_treatment?('employee_user_01','view_main_list','on)
    my_app.display_main_list
 end
 ```
