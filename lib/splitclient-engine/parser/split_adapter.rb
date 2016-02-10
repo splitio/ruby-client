@@ -2,6 +2,7 @@ require 'json'
 require 'thread'
 require 'faraday/http_cache'
 require 'bundler/vendor/net/http/persistent'
+require 'faraday_middleware'
 
 
 module SplitIoClient
@@ -45,6 +46,7 @@ module SplitIoClient
 
       @api_client = Faraday.new do |builder|
         builder.use Faraday::HttpCache, store: @config.local_store
+        builder.use FaradayMiddleware::Gzip
         builder.adapter :net_http_persistent
       end
 
@@ -110,6 +112,7 @@ module SplitIoClient
         req.headers['SplitSDKVersion'] = SplitIoClient::SplitClient.sdk_version
         req.headers['SplitSDKMachineName'] = @config.machine_name
         req.headers['SplitSDKMachineIP'] = @config.machine_ip
+        req.headers['Accept-Encoding'] = 'gzip'
         req.options.open_timeout = @config.connection_timeout
         req.options.timeout = @config.timeout
       end
