@@ -8,7 +8,7 @@ describe SplitIoClient do
 
   describe "#is_treatment? returns localhost mode" do
     let(:user_id) { 'my_random_user_id' }
-    
+
     it 'validates the feature is on for id in local mode' do
       allow(File).to receive(:read).and_return(data)
       expect(subject.is_treatment?(user_id, 'new_feature', SplitIoClient::Treatments::ON)).to be true
@@ -21,4 +21,3 @@ describe SplitIoClient do
 
   end
 end
-
