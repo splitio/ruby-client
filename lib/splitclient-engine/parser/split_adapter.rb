@@ -339,7 +339,7 @@ module SplitIoClient
         @metrics.counts.each do |c|
           metrics_count = {}
           metrics_count = {name: c[:name], delta: c[:delta].sum}
-          res = post_api('/metrics/count', metrics_count)
+          res = post_api('/metrics/counter', metrics_count)
           if res.status / 100 != 2
             @config.logger.error("Unexpected status code while posting count metrics: #{res.status}")
             clear = false

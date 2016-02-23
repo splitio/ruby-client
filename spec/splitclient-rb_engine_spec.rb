@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'securerandom'
 
 describe SplitIoClient do
   subject { SplitIoClient::SplitClient.new('g3q5afinaih7veau8v6n7a7id9',{base_uri: 'http://localhost:8081/api/'}) }
@@ -146,6 +147,36 @@ describe SplitIoClient do
       expect(subject.is_treatment?(user_1, feature, SplitIoClient::Treatments::CONTROL)).to be false
     end
 
+  end
+
+  describe "splitter key assign with 100 treatments and 100K keys" do
+    it "assigns keys to each of 100 treatments following a certain distribution" , :focus => true do
+      partitions = []
+      for i in 1..100
+        partitions << SplitIoClient::Partition.new({treatment: i.to_s, size: i})
+      end
+
+      treatments = Array.new(100, 0)
+      j = 100000 #n
+      k = 0.01 #p
+
+      for i in 0..(j-1)
+        key = SecureRandom.hex(20)
+        treatment = SplitIoClient::Splitter.get_treatment(key, 123, partitions)
+        treatments[treatment.to_i - 1] += 1
+      end
+
+      mean = j*k
+      stddev = Math.sqrt(mean * (1 - k))
+      min = (mean - 4 * stddev).to_i
+      max = (mean + 4 * stddev).to_i
+      range = min..max
+
+      (0..(treatments.length - 1)).each do |i|
+        p "expecting that #{treatments[i]} is in the range #{range.to_s}"
+        expect(range.cover?(treatments[i])).to be true
+      end
+    end
   end
 
 end

@@ -42,7 +42,11 @@ module SplitIoClient
 
     MAX_LATENCY = 7481828
 
-    @latencies = Array.new(BUCKETS.length, 0)
+    attr_accessor :latencies
+
+    def initialize
+      @latencies = Array.new(BUCKETS.length, 0)
+    end
 
     #
     # Increment the internal counter for the bucket this latency falls into.
@@ -51,6 +55,7 @@ module SplitIoClient
     def add_latency_millis(millis)
       index = find_bucket_index(millis * 1000)
       @latencies[index] += 1
+      @latencies
     end
 
     # Increment the internal counter for the bucket this latency falls into.
@@ -58,6 +63,7 @@ module SplitIoClient
     def add_latency_micros(micros)
       index = find_bucket_index(micros)
       @latencies[index] += 1
+      @latencies
     end
 
     # Returns the list of latencies buckets as an array.

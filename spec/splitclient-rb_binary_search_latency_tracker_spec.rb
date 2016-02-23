@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'splitclient-engine/metrics/binary_search_latency_tracker'
 
 describe SplitIoClient do
   subject { SplitIoClient::SplitClient.new('g3q5afinaih7veau8v6n7a7id9',{base_uri: 'http://localhost:8081/api/'}) }
