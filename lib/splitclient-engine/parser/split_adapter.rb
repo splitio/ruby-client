@@ -115,6 +115,7 @@ module SplitIoClient
         req.headers['Accept-Encoding'] = 'gzip'
         req.options.open_timeout = @config.connection_timeout
         req.options.timeout = @config.timeout
+        @config.logger.debug("GET #{@config.base_uri + path}") if @config.debug_enabled
       end
     end
 
@@ -135,6 +136,7 @@ module SplitIoClient
         req.body = param.to_json
         req.options.timeout = @config.timeout
         req.options.open_timeout = @config.connection_timeout
+        @config.logger.debug("POST #{@config.base_uri + path} #{req.body}") if @config.debug_enabled
       end
     end
 
@@ -154,6 +156,8 @@ module SplitIoClient
       if splits.status / 100 == 2
         result = JSON.parse(splits.body, symbolize_names: true)
         @metrics.count(prefix + '.status.' + splits.status.to_s, 1)
+        @config.logger.info("#{result[:splits].length} splits retrieved.")
+        @config.logger.debug("#{result}") if @config.debug_enabled
       else
         @config.logger.error('Unexpected result from API call')
         @metrics.count(prefix + '.status.' + splits.status.to_s, 1)
@@ -198,6 +202,8 @@ module SplitIoClient
           segment_content = JSON.parse(segment.body, symbolize_names: true)
           @parsed_segments.since = segment_content[:till]
           @metrics.count(prefix + '.status.' + segment.status.to_s, 1)
+          @config.logger.info("\'#{segment_content[:name]}\' segment retrieved.")
+          @config.logger.debug("#{segment_content}") if @config.debug_enabled
           segments << segment_content
         else
           @config.logger.error('Unexpected result from API call')
@@ -302,6 +308,9 @@ module SplitIoClient
             if res.status / 100 != 2
               @config.logger.error("Unexpected status code while posting impressions: #{res.status}")
               clear = false
+            else
+              @config.logger.info("Impressions reported.")
+              @config.logger.debug("#{test_impression}")if @config.debug_enabled
             end
           end
         end
@@ -327,6 +336,9 @@ module SplitIoClient
           if res.status / 100 != 2
             @config.logger.error("Unexpected status code while posting time metrics: #{res.status}")
             clear = false
+          else
+            @config.logger.info("Metric time reported.")
+            @config.logger.debug("#{metrics_time}") if @config.debug_enabled
           end
         end
       end
@@ -343,6 +355,9 @@ module SplitIoClient
           if res.status / 100 != 2
             @config.logger.error("Unexpected status code while posting count metrics: #{res.status}")
             clear = false
+          else
+            @config.logger.info("Metric counts reported.")
+            @config.logger.debug("#{metrics_count}") if @config.debug_enabled
           end
         end
       end
@@ -359,6 +374,9 @@ module SplitIoClient
           if res.status / 100 != 2
             @config.logger.error("Unexpected status code while posting gauge metrics: #{res.status}")
             clear = false
+          else
+            @config.logger.info("Metric gauge reported.")
+            @config.logger.debug("#{metrics_gauge}") if @config.debug_enabled
           end
         end
       end
