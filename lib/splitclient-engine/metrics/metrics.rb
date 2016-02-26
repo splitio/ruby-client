@@ -37,6 +37,7 @@ module SplitIoClient
       @counts = []
       @gauges = []
       @queue_size = queue_size
+      @binary_search = SplitIoClient::BinarySearchLatencyTracker.new
     end
 
     #
@@ -76,17 +77,10 @@ module SplitIoClient
 
       operation_hash = @latencies.find { |l| l[:operation] == operation }
       if operation_hash.nil?
-        latencies_for_op = [time_in_ms]
+        latencies_for_op = (operation == 'sdk.get_treatment') ? @binary_search.add_latency_millis(time_in_ms) : [time_in_ms]
         @latencies << {operation: operation, latencies: latencies_for_op}
       else
-        latencies_for_op = operation_hash[:latencies]
-        if latencies_for_op.size >= @queue_size
-          latencies_for_op << time_in_ms
-          operation_hash[:latencies].replace(latencies_for_op)
-        else
-          latencies_for_op << time_in_ms
-          operation_hash[:latencies].replace(latencies_for_op)
-        end
+        latencies_for_op = (operation == 'sdk.get_treatment') ? @binary_search.add_latency_millis(time_in_ms) : operation_hash[:latencies].push(time_in_ms)
       end
     end
 

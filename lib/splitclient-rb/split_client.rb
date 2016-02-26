@@ -50,7 +50,7 @@ module SplitIoClient
     # @return [boolean] true if the user key has valida treatment, false otherwise
     def is_treatment?(id, feature, treatment)
       is_treatment = false
-      
+
       if is_localhost_mode?
         is_treatment = get_localhost_treatment(feature)
       else
@@ -58,9 +58,9 @@ module SplitIoClient
           is_treatment = (get_treatment(id, feature, '') == treatment)
         rescue
           @config.logger.error("MUST NOT throw this error")
-        end  
+        end
       end
-      is_treatment    
+      is_treatment
     end
 
     #
@@ -165,7 +165,7 @@ module SplitIoClient
     def get_localhost_treatment(feature)
       @localhost_mode_features.include?(feature)
     end
-    
+
     private :get_treatment_without_exception_handling, :is_localhost_mode?,
             :load_localhost_mode_features, :get_localhost_treatment
 
