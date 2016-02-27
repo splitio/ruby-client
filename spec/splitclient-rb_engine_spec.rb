@@ -150,15 +150,15 @@ describe SplitIoClient do
   end
 
   describe "splitter key assign with 100 treatments and 100K keys" do
-    it "assigns keys to each of 100 treatments following a certain distribution" , :focus => true do
+    it "assigns keys to each of 100 treatments following a certain distribution" do
       partitions = []
       for i in 1..100
-        partitions << SplitIoClient::Partition.new({treatment: i.to_s, size: i})
+        partitions << SplitIoClient::Partition.new({treatment: i.to_s, size: 1})
       end
 
       treatments = Array.new(100, 0)
-      j = 100000 #n
-      k = 0.01 #p
+      j = 100000
+      k = 0.01
 
       for i in 0..(j-1)
         key = SecureRandom.hex(20)
@@ -173,7 +173,6 @@ describe SplitIoClient do
       range = min..max
 
       (0..(treatments.length - 1)).each do |i|
-        p "expecting that #{treatments[i]} is in the range #{range.to_s}"
         expect(range.cover?(treatments[i])).to be true
       end
     end
