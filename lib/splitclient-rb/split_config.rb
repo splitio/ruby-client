@@ -19,6 +19,7 @@ module SplitIoClient
     # @option opts [Int] :fetch_interval (60) The time interval for execution API refresh
     # @option opts [Int] :push_interval (180) The time interval for execution API pushes
     # @option opts [Object] :logger a logger to user for messages from the client. Defaults to stdout
+    # @option opts [Boolean] :debug_enabled (false) The value for the debug flag
     #
     # @return [type] SplitConfig with configuration options
     def initialize(opts = {})
@@ -29,6 +30,7 @@ module SplitIoClient
       @fetch_interval = opts[:fetch_interval] || SplitConfig.default_fetch_interval
       @push_interval = opts[:push_interval] || SplitConfig.default_push_interval
       @logger = opts[:logger] || SplitConfig.default_logger
+      @debug_enabled = opts[:debug_enabled] || SplitConfig.default_debug
       @machine_name = SplitConfig.get_hostname
       @machine_ip = SplitConfig.get_ip
     end
@@ -76,6 +78,12 @@ module SplitIoClient
     #
     # @return [Logger] The configured logger
     attr_reader :logger
+
+    #
+    # The boolean that represents the state of the debug log level
+    #
+    # @return [Boolean] The value for the debug flag
+    attr_reader :debug_enabled
 
     attr_reader :machine_ip
     attr_reader :machine_name
@@ -139,6 +147,14 @@ module SplitIoClient
     # @return [object]
     def self.default_logger
       Logger.new($stdout)
+    end
+
+    #
+    # The default debug value
+    #
+    # @return [boolean]
+    def self.default_debug
+      false
     end
 
     #
