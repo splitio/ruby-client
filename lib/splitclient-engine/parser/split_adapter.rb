@@ -196,18 +196,22 @@ module SplitIoClient
         curr_segment = @parsed_segments.get_segment(name)
         since = curr_segment.nil? ? -1 : curr_segment.till
 
-        segment = call_api('/segmentChanges/' + name, {:since => since})
+        while true
+          segment = call_api('/segmentChanges/' + name, {:since => since})
 
-        if segment.status / 100 == 2
-          segment_content = JSON.parse(segment.body, symbolize_names: true)
-          @parsed_segments.since = segment_content[:till]
-          @metrics.count(prefix + '.status.' + segment.status.to_s, 1)
-          @config.logger.info("\'#{segment_content[:name]}\' segment retrieved.")
-          @config.logger.debug("#{segment_content}") if @config.debug_enabled
-          segments << segment_content
-        else
-          @config.logger.error('Unexpected result from API call')
-          @metrics.count(prefix + '.status.' + segment.status.to_s, 1)
+          if segment.status / 100 == 2
+            segment_content = JSON.parse(segment.body, symbolize_names: true)
+            @parsed_segments.since = segment_content[:till]
+            @metrics.count(prefix + '.status.' + segment.status.to_s, 1)
+            @config.logger.info("\'#{segment_content[:name]}\' segment retrieved.")
+            @config.logger.debug("#{segment_content}") if @config.debug_enabled
+            segments << segment_content
+          else
+            @config.logger.error('Unexpected result from API call')
+            @metrics.count(prefix + '.status.' + segment.status.to_s, 1)
+          end
+          break if (since.to_i >= @parsed_segments.since.to_i)
+          since = @parsed_segments.since
         end
       end
 
