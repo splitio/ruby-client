@@ -99,9 +99,8 @@ module SplitIoClient
       result = result.nil? ? default_treatment : result
 
       begin
-        #@adapter.impressions.log(id, feature, result, (Time.now * 1000.0))
+        @adapter.impressions.log(id, feature, result, (Time.now.to_f * 1000.0))
         latency = (Time.now - start) * 1000.0
-        #@adapter.metrics.time('sdk.get_treatment', latency)
       rescue StandardError => error
         @config.log_found_exception(__method__.to_s, error)
       end

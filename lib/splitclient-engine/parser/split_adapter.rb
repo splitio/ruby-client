@@ -319,7 +319,7 @@ module SplitIoClient
           clear = false
         else
           @config.logger.info("Impressions reported.")
-          @config.logger.debug("#{test_impression}")if @config.debug_enabled
+          @config.logger.debug("#{test_impression_array}")if @config.debug_enabled
         end
 
         @impressions.clear if clear
