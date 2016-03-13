@@ -91,7 +91,7 @@ module SplitIoClient
                 return default_treatment
               else
                 return result
-              end     
+              end
             end
           end
         end
