@@ -55,7 +55,7 @@ module SplitIoClient
         is_treatment = get_localhost_treatment(feature)
       else
         begin
-          is_treatment = (get_treatment(id, feature, '') == treatment)
+          is_treatment = (get_treatment(id, feature) == treatment)
         rescue
           @config.logger.error("MUST NOT throw this error")
         end
@@ -68,10 +68,9 @@ module SplitIoClient
     #
     # @param id [string] user id
     # @param feature [string] name of the feature that is being validated
-    # @param default_treatment [string] value for default treatment
     #
-    # @return [Treatment]  tretment constant value
-    def get_treatment(id, feature, default_treatment)
+    # @return [Treatment]  treatment constant value
+    def get_treatment(id, feature)
       unless id
         @config.logger.warn('id was null for feature: ' + feature)
         return default_treatment
@@ -82,21 +81,16 @@ module SplitIoClient
         return default_treatment
       end
 
-      unless default_treatment
-        @config.logger.warn('default treatment was null for id: ' + id)
-        return default_treatment
-      end
-
       start = Time.now
       result = nil
 
       begin
-        result = get_treatment_without_exception_handling(id, feature, default_treatment)
+        result = get_treatment_without_exception_handling(id, feature)
       rescue StandardError => error
         @config.log_found_exception(__method__.to_s, error)
       end
 
-      result = result.nil? ? default_treatment : result
+      result = result.nil? ? Treatments::CONTROL : result
 
       begin
         @adapter.impressions.log(id, feature, result, (Time.now.to_f * 1000.0))
@@ -113,16 +107,16 @@ module SplitIoClient
     #
     # @param id [string] user id
     # @param feature [string] name of the feature that is being validated
-    # @param default_treatment [string] value of the default treatment
     #
     # @return [Treatment]  tretment constant value
-    def get_treatment_without_exception_handling(id, feature, default_treatment)
+    def get_treatment_without_exception_handling(id, feature)
       @adapter.parsed_splits.segments = @adapter.parsed_segments
       split = @adapter.parsed_splits.get_split(feature)
 
       if split.nil?
-        return default_treatment
+        return Treatments::CONTROL
       else
+        default_treatment = split.data[:defaultTreatment]
         return @adapter.parsed_splits.get_split_treatment(id, feature, default_treatment)
       end
     end
