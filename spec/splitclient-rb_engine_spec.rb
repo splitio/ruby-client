@@ -43,22 +43,22 @@ describe SplitIoClient do
     end
   end
 
-  describe "#is_treatment? returns false on null id" do
+  describe "#is_treatment? returns true for CONTROL on null id" do
     let(:feature) { 'my_random_feaure' }
     let(:output) { subject.is_treatment?(nil,feature, SplitIoClient::Treatments::CONTROL)}
 
     it 'validates the feature is off for id' do
-      expect(output).to be false
+      expect(output).to be true
     end
 
   end
 
-  describe "#is_treatment? returns false on null feature" do
+  describe "#is_treatment? returns true for CONTROL on null feature" do
     let(:user_id) { 'my_random_user_id' }
     let(:output) { subject.is_treatment?(user_id, nil, SplitIoClient::Treatments::CONTROL)}
 
     it 'validates the feature is off for id' do
-      expect(output).to be false
+      expect(output).to be true
     end
 
   end

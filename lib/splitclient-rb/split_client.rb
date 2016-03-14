@@ -73,12 +73,12 @@ module SplitIoClient
     def get_treatment(id, feature)
       unless id
         @config.logger.warn('id was null for feature: ' + feature)
-        return default_treatment
+        return Treatments::CONTROL
       end
 
       unless feature
         @config.logger.warn('feature was null for id: ' + id)
-        return default_treatment
+        return Treatments::CONTROL
       end
 
       start = Time.now
