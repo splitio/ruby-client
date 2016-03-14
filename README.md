@@ -40,7 +40,7 @@ Ruby client for split software. This is provided as a gem that can be installed 
 ------
 Within your application you need the following
 
-Require the LaunchDarkly client:
+Require the Split client:
 ```ruby
 require 'splitclient-rb'
 ```
@@ -111,7 +111,7 @@ split_client.is_treatment?('key','feature_name','on')
 
 For example
 ```ruby
-if split_client.is_treatment?('employee_user_01','view_main_list','on)
+if split_client.is_treatment?('employee_user_01','view_main_list','on')
    my_app.display_main_list
 end
 ```
@@ -136,10 +136,9 @@ Right now, the code coverage of the gem is at about 95%.
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/splitio/splitclient-rb.
+Bug reports and pull requests are welcome on GitHub at https://github.com/splitio/ruby-client.
 
 
 ## License
 
 The gem is available as open source under the terms of the [Apache License](http://www.apache.org/licenses/).
-
