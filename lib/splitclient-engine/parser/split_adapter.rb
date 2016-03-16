@@ -283,9 +283,9 @@ module SplitIoClient
       if @impressions.queue.empty?
         @config.logger.info('No impressions to report.')
       else
-        clear = true
+        popped_impressions = @impressions.clear
         test_impression_array = []
-        @impressions.queue.each do |i|
+        popped_impressions.each do |i|
           filtered = []
           keys_seen = []
 
@@ -316,13 +316,10 @@ module SplitIoClient
         res = post_api('/testImpressions/bulk', test_impression_array)
         if res.status / 100 != 2
           @config.logger.error("Unexpected status code while posting impressions: #{res.status}")
-          clear = false
         else
           @config.logger.info("Impressions reported.")
           @config.logger.debug("#{test_impression_array}")if @config.debug_enabled
         end
-
-        @impressions.clear if clear
       end
     end
 
