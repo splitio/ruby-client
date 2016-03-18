@@ -1,25 +1,23 @@
 desc "Benchmark the is_treatment? method call"
 
 # Usage:
-# rake benchmark api_key=YOUR_API_KEY base_uri=YOUR_API_BASE_URI user_id=A_USER_ID segment_id=A_SEGMENT_ID default_treatment=A_DEFAULT_TREATMENT
+# rake benchmark [iterations=NUMBER_OF_ITERATIONS] [api_key=YOUR_API_KEY] [base_uri=YOUR_API_BASE_URI] [user_id=A_USER_ID] [feature_id=A_FEATURE_ID]
 task :benchmark do
   require 'benchmark'
   require 'splitclient-rb'
-  p "Usage: rake benchmark [iterations=NUMBER_OF_ITERATIONS] [api_key=YOUR_API_KEY] [base_uri=YOUR_API_BASE_URI]
-  [user_id=A_USER_ID] [segment_id=A_SEGMENT_ID][ default_treatment=A_DEFAULT_TREATMENT]"
+  p "Usage: rake benchmark [iterations=NUMBER_OF_ITERATIONS] [api_key=YOUR_API_KEY] [base_uri=YOUR_API_BASE_URI] [user_id=A_USER_ID] [feature_id=A_FEATURE_ID]"
 
   iterations = ENV['iterations'].nil? ? 1000000 : ENV['iterations'].to_i
-  api_key = ENV['api_key'].nil? ? "7srsoj1bgcs5hh2uitmldnimdgpd6atkn405" : ENV['api_key']
-  base_uri = ENV['base_uri'].nil? ? "http://localhost:8081/api/" : ENV['base_uri']
-  user_id = ENV['user_id'].nil? ? "user_1" : ENV['user_id']
-  segment_id = ENV['segment_id'].nil? ? "test_all" : ENV['segment_id']
-  default_treatment = ENV['default_treatment'].nil? ? "on" : ENV['default_treatment']
+  api_key = ENV['api_key'].nil? ? "42pi6uaekqtnbu4erl5oaroj1spb65el7dak" : ENV['api_key']
+  base_uri = ENV['base_uri'].nil? ? "http://sdk-loadtesting.split.io/api/" : ENV['base_uri']
+  user_id = ENV['user_id'].nil? ? "fake_id_1" : ENV['user_id']
+  feature_id = ENV['feature_id'].nil? ? "sample_feature" : ENV['feature_id']
 
-  split_client = SplitIoClient::SplitClient.new(api_key, {base_uri: base_uri, logger: Logger.new("/dev/null")})
+  split_client = SplitIoClient::SplitClient.new(api_key, {base_uri: base_uri})
   Benchmark.bm do |bm|
     bm.report do
       iterations.times do
-        Benchmark.measure { split_client.is_treatment? user_id, segment_id, default_treatment }
+        Benchmark.measure { split_client.get_treatment user_id, feature_id }
       end
     end
   end
