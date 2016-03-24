@@ -20,7 +20,7 @@ module SplitIoClient
     #
     # @param max [int] max number of cached entries
     def initialize(max)
-      @queue = []
+      @queue = Queue.new
       @max_number_of_keys = max
     end
 
@@ -34,20 +34,8 @@ module SplitIoClient
     #
     # @return void
     def log(id, feature, treatment, time)
-      impressions_hash = @queue.find { |i| i[:feature] == feature }
-      if impressions_hash.nil?
-        impressions = [KeyImpressions.new(id, treatment, time)]
-        @queue << {feature: feature, impressions: impressions}
-      else
-        impressions = impressions_hash[:impressions]
-        if impressions.size >= @max_number_of_keys
-          impressions << KeyImpressions.new(id, treatment, time)
-          impressions_hash[:impressions].replace(impressions)
-        else
-          impressions << KeyImpressions.new(id, treatment, time)
-          impressions_hash[:impressions].replace(impressions)
-        end
-      end
+      impressions = KeyImpressions.new(id, treatment, time)
+      @queue << {feature: feature, impressions: impressions}
     end
 
     #
@@ -55,7 +43,20 @@ module SplitIoClient
     #
     # @returns void
     def clear
-      @queue = []
+      popped_impressions = []
+      begin
+        loop do
+          impression_element = @queue.pop(true)
+          feature_hash = popped_impressions.find { |i| i[:feature] == impression_element[:feature] }
+          if feature_hash.nil?
+            popped_impressions << {feature: impression_element[:feature], impressions: [] << impression_element[:impressions]}
+          else
+            feature_hash[:impressions] << impression_element[:impressions]
+          end
+        end
+      rescue ThreadError
+      end
+      popped_impressions
     end
 
   end
