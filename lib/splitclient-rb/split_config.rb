@@ -12,12 +12,13 @@ module SplitIoClient
     #
     # @param opts [Hash] optional hash with configuration options
     # @option opts [String] :base_uri ("https://sdk.split.io/api/") The base URL for split API end points
-    # @option opts [Int] :timeout (10) The read timeout for network connections in seconds.
+    # @option opts [Int] :read_timeout (10) The read timeout for network connections in seconds.
     # @option opts [Int] :connection_timeout (2) The connect timeout for network connections in seconds.
-    # @option opts [Object] :local_store A cache store for the Faraday HTTP caching library. Defaults to the Rails cache in a Rails environment, or a
-    #   thread-safe in-memory store otherwise.
-    # @option opts [Int] :fetch_interval (60) The time interval for execution API refresh
-    # @option opts [Int] :push_interval (180) The time interval for execution API pushes
+    # @option opts [Object] :local_store A cache store for the Faraday HTTP caching library. Defaults to the Rails cache in a Rails environment, or a thread-safe in-memory store otherwise.
+    # @option opts [Int] :features_refresh_rate The SDK polls Split servers for changes to feature roll-out plans. This parameter controls this polling period in seconds.
+    # @option opts [Int] :segments_refresh_rate
+    # @option opts [Int] :metrics_refresh_rate
+    # @option opts [Int] :impressions_refresh_rate
     # @option opts [Object] :logger a logger to user for messages from the client. Defaults to stdout
     # @option opts [Boolean] :debug_enabled (false) The value for the debug flag
     #
@@ -26,9 +27,11 @@ module SplitIoClient
       @base_uri = (opts[:base_uri] || SplitConfig.default_base_uri).chomp('/')
       @local_store = opts[:local_store] || SplitConfig.default_local_store
       @connection_timeout = opts[:connection_timeout] || SplitConfig.default_connection_timeout
-      @timeout = opts[:timeout] || SplitConfig.default_timeout
-      @fetch_interval = opts[:fetch_interval] || SplitConfig.default_fetch_interval
-      @push_interval = opts[:push_interval] || SplitConfig.default_push_interval
+      @read_timeout = opts[:read_timeout] || SplitConfig.default_read_timeout
+      @features_refresh_rate = opts[:features_refresh_rate] || SplitConfig.default_features_refresh_rate
+      @segments_refresh_rate = opts[:segments_refresh_rate] || SplitConfig.default_segments_refresh_rate
+      @metrics_refresh_rate = opts[:metrics_refresh_rate] || SplitConfig.default_metrics_refresh_rate
+      @impressions_refresh_rate = opts[:impressions_refresh_rate] || SplitConfig.default_impressions_refresh_rate
       @logger = opts[:logger] || SplitConfig.default_logger
       @debug_enabled = opts[:debug_enabled] || SplitConfig.default_debug
       @machine_name = SplitConfig.get_hostname
@@ -49,28 +52,16 @@ module SplitIoClient
     attr_reader :local_store
 
     #
-    # The timeout for network connections in seconds.
+    # The read timeout for network connections in seconds.
     #
     # @return [Int] The timeout in seconds.
-    attr_reader :timeout
+    attr_reader :read_timeout
 
     #
     # The connection timeout for network connections in seconds.
     #
     # @return [Int] The connect timeout in seconds.
     attr_reader :connection_timeout
-
-    #
-    # The time interval for execution of API refresh calls
-    #
-    # @return [Int] The time execution interval in seconds.
-    attr_reader :fetch_interval
-
-    #
-    # The time interval for execution of API push calls
-    #
-    # @return [Int] The time interval in seconds.
-    attr_reader :push_interval
 
     #
     # The configured logger. The client library uses the log to
@@ -87,6 +78,11 @@ module SplitIoClient
 
     attr_reader :machine_ip
     attr_reader :machine_name
+
+    attr_reader :features_refresh_rate
+    attr_reader :segments_refresh_rate
+    attr_reader :metrics_refresh_rate
+    attr_reader :impressions_refresh_rate
 
     #
     # The default split client configuration
@@ -110,10 +106,10 @@ module SplitIoClient
     end
 
     #
-    # The default timeout value
+    # The default read timeout value
     #
     # @return [int]
-    def self.default_timeout
+    def self.default_read_timeout
       5
     end
 
@@ -122,23 +118,23 @@ module SplitIoClient
     #
     # @return [int]
     def self.default_connection_timeout
-      2
+      5
     end
 
-    #
-    # The default fetch interval for splits and segments
-    #
-    # @return [int]
-    def self.default_fetch_interval
+    def self.default_features_refresh_rate
+      30
+    end
+
+    def self.default_segments_refresh_rate
       60
     end
 
-    #
-    # The default push interval for metrics
-    #
-    # @return [int]
-    def self.default_push_interval
-      180
+    def self.default_metrics_refresh_rate
+      60
+    end
+
+    def self.default_impressions_refresh_rate
+      60
     end
 
     #

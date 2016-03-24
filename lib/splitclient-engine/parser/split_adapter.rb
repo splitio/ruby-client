@@ -50,8 +50,10 @@ module SplitIoClient
         builder.adapter :net_http_persistent
       end
 
-      @consumer = create_api_consumer
-      @producer = create_api_producer
+      @splits_consumer = create_splits_api_consumer
+      @segments_consumer = create_segments_api_consumer
+      @metrics_producer = create_metrics_api_producer
+      @impressions_producer = create_impressions_api_producer
     end
 
     #
@@ -60,7 +62,7 @@ module SplitIoClient
     # provided within the configuration
     #
     # @return [void]
-    def create_api_consumer
+    def create_splits_api_consumer
       Thread.new do
         loop do
           begin
@@ -78,6 +80,19 @@ module SplitIoClient
             end
             @parsed_splits.since = data[:till]
 
+            random_interval = randomize_interval @config.features_refresh_rate
+            sleep(random_interval)
+          rescue StandardError => error
+            @config.log_found_exception(__method__.to_s, error)
+          end
+        end
+      end
+    end
+
+    def create_segments_api_consumer
+      Thread.new do
+        loop do
+          begin
             #segments fetcher
             segments_arr = []
             segment_data = get_segments(@parsed_splits.get_used_segments)
@@ -91,7 +106,8 @@ module SplitIoClient
               refresh_segments(segments_arr)
             end
 
-            sleep(@config.fetch_interval)
+            random_interval = randomize_interval @config.segments_refresh_rate
+            sleep(random_interval)
           rescue StandardError => error
             @config.log_found_exception(__method__.to_s, error)
           end
@@ -114,7 +130,7 @@ module SplitIoClient
         req.headers['SplitSDKMachineIP'] = @config.machine_ip
         req.headers['Accept-Encoding'] = 'gzip'
         req.options.open_timeout = @config.connection_timeout
-        req.options.timeout = @config.timeout
+        req.options.timeout = @config.read_timeout
         @config.logger.debug("GET #{@config.base_uri + path}") if @config.debug_enabled
       end
     end
@@ -134,7 +150,7 @@ module SplitIoClient
         req.headers['SplitSDKMachineName'] = @config.machine_name
         req.headers['SplitSDKMachineIP'] = @config.machine_ip
         req.body = param.to_json
-        req.options.timeout = @config.timeout
+        req.options.timeout = @config.read_timeout
         req.options.open_timeout = @config.connection_timeout
         @config.logger.debug("POST #{@config.base_uri + path} #{req.body}") if @config.debug_enabled
       end
@@ -253,20 +269,36 @@ module SplitIoClient
     end
 
     #
-    # creates a safe thread that will be executing api calls
+    # creates two safe threads that will be executing api calls
     # for posting impressions and metrics given the execution time
     # provided within the configuration
     #
-    # @return [void]
-    def create_api_producer
+
+    def create_metrics_api_producer
+      Thread.new do
+        loop do
+          begin
+            #post captured metrics
+            post_metrics
+
+            random_interval = randomize_interval @config.metrics_refresh_rate
+            sleep(random_interval)
+          rescue StandardError => error
+            @config.log_found_exception(__method__.to_s, error)
+          end
+        end
+      end
+    end
+
+    def create_impressions_api_producer
       Thread.new do
         loop do
           begin
             #post captured impressions
             post_impressions
-            #post captured metrics
-            post_metrics
-            sleep(@config.push_interval)
+
+            random_interval = randomize_interval @config.impressions_refresh_rate
+            sleep(random_interval)
           rescue StandardError => error
             @config.log_found_exception(__method__.to_s, error)
           end
@@ -392,5 +424,12 @@ module SplitIoClient
 
     end
 
+    private
+
+    def randomize_interval(interval)
+      @random_generator ||=  Random.new
+      random_factor = @random_generator.rand(50..100)/100.0
+      interval * random_factor
+    end
   end
 end
