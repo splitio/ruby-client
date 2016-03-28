@@ -78,14 +78,20 @@ The following values can be customized
 **connection_timeout** :  timeout for network connections in seconds
 *default value* =   5
 
-**timeout** : timeout for requests in seconds
-*default value* = 2
+**read_timeout** : timeout for requests in seconds
+*default value* = 5
 
-**fetch_interva**l : time interval for execution of fetches in seconds
+**features_refresh_rate** : The SDK polls Split servers for changes to feature roll-out plans. This parameter controls this polling period in seconds
+*default value* = 30
+
+**segments_refresh_rate** : The SDK polls Split servers for changes to segment definitions. This parameter controls this polling period in seconds
 *default value* = 60
 
-**push_interval** : time interval for execution of metric posts in seconds
-*default value* = 180
+**metrics_refresh_rate** : The SDK sends diagnostic metrics to Split servers. This parameters controls this metric flush period in seconds
+*default value* = 60
+
+**impressions_refresh_rate** : The SDK sends information on who got what treatment at what time back to Split servers to power analytics. This parameter controls how often this data is sent to Split servers in seconds
+*default value* = 60
 
 **logger** : default logger for messages and errors
 *default value* : Ruby logger class set to STDOUT
@@ -95,9 +101,11 @@ Example
 options = {base_uri: 'https://my.app.api/',
            local_store: Rails.cache,
            connection_timeout: 10,
-           timeout: 5,
-           fetch_interval: 120,
-           push_interval: 360,
+           read_timeout: 5,
+           features_refresh_rate: 120,
+           segments_refresh_rate: 120,
+           metrics_refresh_rate: 360,
+           impressions_refresh_rate: 360,
            logger: Logger.new('logfile.log')}
 
 split_client = SplitIoClient::SplitClient.new("your_api_key", options)
