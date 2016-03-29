@@ -95,6 +95,9 @@ module SplitIoClient
       begin
         @adapter.impressions.log(id, feature, result, (Time.now.to_f * 1000.0))
         latency = (Time.now - start) * 1000.0
+        if (@adapter.impressions.queue.length >= @adapter.impressions.max_number_of_keys)
+          @adapter.impressions_producer.wakeup
+        end
       rescue StandardError => error
         @config.log_found_exception(__method__.to_s, error)
       end

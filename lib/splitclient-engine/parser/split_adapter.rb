@@ -29,6 +29,8 @@ module SplitIoClient
     # handeler for parsed segments
     attr_reader :parsed_segments
 
+    attr_reader :impressions_producer
+
     #
     # Creates a new split api adapter instance that consumes split api endpoints
     #
@@ -254,7 +256,6 @@ module SplitIoClient
         end
       end
     end
-
 
     #
     # @return parsed_splits [object] parsed splits for this adapter
