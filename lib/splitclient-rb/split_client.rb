@@ -41,29 +41,6 @@ module SplitIoClient
     end
 
     #
-    # validates the treatment for the provided user key and feature
-    #
-    # @param id [string] user id
-    # @param feature [string] name of the feature that is being validated
-    # @param treatment [string] value of the treatment for this user key and feature
-    #
-    # @return [boolean] true if the user key has valida treatment, false otherwise
-    def is_treatment?(id, feature, treatment)
-      is_treatment = false
-
-      if is_localhost_mode?
-        is_treatment = get_localhost_treatment(feature)
-      else
-        begin
-          is_treatment = (get_treatment(id, feature) == treatment)
-        rescue
-          @config.logger.error("MUST NOT throw this error")
-        end
-      end
-      is_treatment
-    end
-
-    #
     # obtains the treatment for a given feature
     #
     # @param id [string] user id
