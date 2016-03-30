@@ -81,25 +81,30 @@ module SplitIoClient
         return Treatments::CONTROL
       end
 
-      start = Time.now
-      result = nil
+      if is_localhost_mode?
+        result = get_localhost_treatment(feature)
+      else
+        start = Time.now
+        result = nil
 
-      begin
-        result = get_treatment_without_exception_handling(id, feature)
-      rescue StandardError => error
-        @config.log_found_exception(__method__.to_s, error)
-      end
-
-      result = result.nil? ? Treatments::CONTROL : result
-
-      begin
-        @adapter.impressions.log(id, feature, result, (Time.now.to_f * 1000.0))
-        latency = (Time.now - start) * 1000.0
-        if (@adapter.impressions.queue.length >= @adapter.impressions.max_number_of_keys)
-          @adapter.impressions_producer.wakeup
+        begin
+          result = get_treatment_without_exception_handling(id, feature)
+        rescue StandardError => error
+          @config.log_found_exception(__method__.to_s, error)
         end
-      rescue StandardError => error
-        @config.log_found_exception(__method__.to_s, error)
+
+        result = result.nil? ? Treatments::CONTROL : result
+
+        begin
+          @adapter.impressions.log(id, feature, result, (Time.now.to_f * 1000.0))
+          latency = (Time.now - start) * 1000.0
+          if (@adapter.impressions.queue.length >= @adapter.impressions.max_number_of_keys)
+            @adapter.impressions_producer.wakeup
+          end
+        rescue StandardError => error
+          @config.log_found_exception(__method__.to_s, error)
+        end
+
       end
 
       result
@@ -145,11 +150,12 @@ module SplitIoClient
     #
     # @returns [void]
     def load_localhost_mode_features
-      splits_file = File.join(Dir.home, ".splits")
+      splits_file = File.join(Dir.home, ".split")
       if File.exists?(splits_file)
         line_num=0
         File.open(splits_file).each do |line|
-          @localhost_mode_features << line.strip unless line.start_with?('#') || line.strip.empty?
+          line_data = line.strip.split(" ")
+          @localhost_mode_features << {feature: line_data[0], treatment: line_data[1]} unless line.start_with?('#') || line.strip.empty?
         end
       end
     end
@@ -159,7 +165,10 @@ module SplitIoClient
     #
     # @return [boolean] true if the feature is available in localhost mode, false otherwise
     def get_localhost_treatment(feature)
-      @localhost_mode_features.include?(feature)
+      localhost_result = Treatments::CONTROL
+      treatment = @localhost_mode_features.select{|h| h[:feature] == feature}.last
+      localhost_result = treatment[:treatment] if !treatment.nil?
+      localhost_result
     end
 
     private :get_treatment_without_exception_handling, :is_localhost_mode?,
