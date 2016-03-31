@@ -1,3 +1,8 @@
+1.0.1
+
+- .splits to .split for local env
+- isTreatment was removed from the API.
+
 1.0.0
 
 - Support multivariate treatment

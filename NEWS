@@ -1,3 +1,9 @@
+1.0.1
+
+isTreatment was removed from the API
+local environment file was removed to match the rest of the SDKs. "split".
+No other major updates for this release.
+
 1.0.0
 
 No news for this release.
