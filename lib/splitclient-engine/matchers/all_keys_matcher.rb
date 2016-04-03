@@ -5,6 +5,12 @@ module SplitIoClient
   #
   class AllKeysMatcher < NoMethodError
 
+    attr_reader :matcher_type
+
+    def initialize
+      @matcher_type = "ALL_KEYS"
+    end
+
     #
     # evaluates if the key matches the matcher
     #

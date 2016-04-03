@@ -5,23 +5,32 @@ module SplitIoClient
   #
   class WhitelistMatcher < NoMethodError
 
+    attr_reader :matcher_type
+
     # variable that contains the keys of the whitelist
     @whitelist = []
 
-    def initialize(whitelist)
-      unless whitelist.nil?
-        @whitelist = whitelist
+    def initialize(whitelist_data)
+      if whitelist_data.instance_of? Array
+        @whitelist = whitelist_data unless whitelist_data.nil?
+      elsif whitelist_data.instance_of? Hash
+        @matcher_type = "ATTR_WHITELIST"
+        @attribute = whitelist_data[:attribute]
+        @whitelist = whitelist_data[:value] unless whitelist_data[:value].nil?
       end
     end
 
-    #
-    # evaluates if the key matches the matcher
-    #
-    # @param key [string] key value to be matched
-    #
-    # @return [boolean] evaluation of the key against the whitelist
-    def match?(key)
-      @whitelist.include?(key)
+    def match?(whitelist_data)
+      matches = false
+      if !(@matcher_type == "ATTR_WHITELIST")
+        matches = @whitelist.include?(whitelist_data)
+      else
+        if (!whitelist_data.nil? && whitelist_data.key?(@attribute.to_sym))
+          value = whitelist_data[@attribute.to_sym]
+          matches = @whitelist.include?(value)
+        end
+      end
+      matches
     end
 
     #

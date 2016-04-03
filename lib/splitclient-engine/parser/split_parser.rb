@@ -78,14 +78,16 @@ module SplitIoClient
     # @param default_treatment [string] default treatment value to be returned
     #
     # @return treatment [object] treatment for this user key, split pair
-    def get_split_treatment(id, name, default_treatment)
+    def get_split_treatment(id, name, default_treatment, attributes = nil)
       split = get_split(name)
+      attribute_matchers = ["ATTR_WHITELIST", "EQUAL_TO", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN_OR_EQUAL_TO", "BETWEEN"]
 
       if !split.is_empty? && split.status == 'ACTIVE' && !split.killed?
         split.conditions.each do |c|
           unless c.is_empty?
             matcher = get_matcher_type(c)
-            if matcher.match?(id)
+            matches = attribute_matchers.include?(matcher.matcher_type) ? matcher.match?(attributes) : matcher.match?(id)
+            if matches
               result = Splitter.get_treatment(id, split.seed, c.partitions) #'true match - running split'
               if result.nil?
                 return default_treatment
@@ -95,6 +97,8 @@ module SplitIoClient
             end
           end
         end
+      elsif !split.is_empty? && split.status == 'ARCHIVED'
+        return Treatments::CONTROL
       end
 
       default_treatment
@@ -117,6 +121,14 @@ module SplitIoClient
           final_matcher = segment.is_empty? ? UserDefinedSegmentMatcher.new(nil) : UserDefinedSegmentMatcher.new(segment)
         when 'WHITELIST'
           final_matcher = WhitelistMatcher.new(condition.matcher_whitelist)
+        when 'EQUAL_TO'
+          final_matcher = EqualToMatcher.new(condition.matcher_equal)
+        when 'GREATER_THAN_OR_EQUAL_TO'
+          final_matcher = GreaterThanOrEqualToMatcher.new(condition.matcher_greater_than_or_equal)
+        when 'LESS_THAN_OR_EQUAL_TO'
+          final_matcher = LessThanOrEqualToMatcher.new(condition.matcher_less_than_or_equal)
+        when 'BETWEEN'
+          final_matcher = BetweenMatcher.new(condition.matcher_between)
         else
           @logger.error('Invalid matcher type')
       end

@@ -47,7 +47,7 @@ module SplitIoClient
     # @param feature [string] name of the feature that is being validated
     #
     # @return [Treatment]  treatment constant value
-    def get_treatment(id, feature)
+    def get_treatment(id, feature, attributes = nil)
       unless id
         @config.logger.warn('id was null for feature: ' + feature)
         return Treatments::CONTROL
@@ -65,7 +65,7 @@ module SplitIoClient
         result = nil
 
         begin
-          result = get_treatment_without_exception_handling(id, feature)
+          result = get_treatment_without_exception_handling(id, feature, attributes)
         rescue StandardError => error
           @config.log_found_exception(__method__.to_s, error)
         end
@@ -94,7 +94,7 @@ module SplitIoClient
     # @param feature [string] name of the feature that is being validated
     #
     # @return [Treatment]  tretment constant value
-    def get_treatment_without_exception_handling(id, feature)
+    def get_treatment_without_exception_handling(id, feature, attributes = nil)
       @adapter.parsed_splits.segments = @adapter.parsed_segments
       split = @adapter.parsed_splits.get_split(feature)
 
@@ -102,7 +102,7 @@ module SplitIoClient
         return Treatments::CONTROL
       else
         default_treatment = split.data[:defaultTreatment]
-        return @adapter.parsed_splits.get_split_treatment(id, feature, default_treatment)
+        return @adapter.parsed_splits.get_split_treatment(id, feature, default_treatment, attributes)
       end
     end
 
