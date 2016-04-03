@@ -5,9 +5,12 @@ module SplitIoClient
   #
   class UserDefinedSegmentMatcher < NoMethodError
 
+    attr_reader :matcher_type
+
     @segment = nil
 
     def initialize(segment)
+      @matcher_type = "IN_SEGMENT"
       unless segment.nil?
         @segment = segment
       end

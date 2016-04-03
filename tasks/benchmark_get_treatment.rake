@@ -1,4 +1,4 @@
-desc "Benchmark the is_treatment? method call in 4 threads"
+desc "Benchmark the get_treatment method call in 4 threads"
 
 # Usage:
 # rake concurrent_benchmark api_key=YOUR_API_KEY base_uri=YOUR_API_BASE_URI [iterations=NUMBER_OF_ITERATIONS] [user_id=A_USER_ID] [feature_id=A_FEATURE_ID]
@@ -34,7 +34,7 @@ def execute
     4.times do |i|
       threads << Thread.new do
         times_per_thread.times do
-          split_client.is_treatment? user_id, feature_id, "on"
+          split_client.get_treatment user_id, feature_id, {attr: 123}
         end
       end
     end

@@ -363,7 +363,6 @@ module SplitIoClient
     #
     # @return [void]
     def post_metrics
-      clear = true
       if @metrics.latencies.empty?
         @config.logger.info('No latencies to report.')
       else
@@ -373,16 +372,14 @@ module SplitIoClient
           res = post_api('/metrics/time', metrics_time)
           if res.status / 100 != 2
             @config.logger.error("Unexpected status code while posting time metrics: #{res.status}")
-            clear = false
           else
             @config.logger.info("Metric time reported.")
             @config.logger.debug("#{metrics_time}") if @config.debug_enabled
           end
         end
       end
-      @metrics.latencies.clear if clear
+      @metrics.latencies.clear
 
-      clear = true
       if @metrics.counts.empty?
         @config.logger.info('No counts to report.')
       else
@@ -392,16 +389,14 @@ module SplitIoClient
           res = post_api('/metrics/counter', metrics_count)
           if res.status / 100 != 2
             @config.logger.error("Unexpected status code while posting count metrics: #{res.status}")
-            clear = false
           else
             @config.logger.info("Metric counts reported.")
             @config.logger.debug("#{metrics_count}") if @config.debug_enabled
           end
         end
       end
-      @metrics.counts.clear if clear
+      @metrics.counts.clear
 
-      clear = true
       if @metrics.gauges.empty?
         @config.logger.info('No gauges to report.')
       else
@@ -411,15 +406,13 @@ module SplitIoClient
           res = post_api('/metrics/gauge', metrics_gauge)
           if res.status / 100 != 2
             @config.logger.error("Unexpected status code while posting gauge metrics: #{res.status}")
-            clear = false
           else
             @config.logger.info("Metric gauge reported.")
             @config.logger.debug("#{metrics_gauge}") if @config.debug_enabled
           end
         end
       end
-      @metrics.gauges.clear if clear
-
+      @metrics.gauges.clear
     end
 
     private

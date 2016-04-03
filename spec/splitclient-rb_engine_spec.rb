@@ -33,6 +33,12 @@ describe SplitIoClient do
          :matchers=>[{:matcherType=>"ALL_KEYS", :negate=>false, :userDefinedSegmentMatcherData=>nil,
            :whitelistMatcherData=>nil}]}, :partitions=>[{:treatment=>"on", :size=>100}]}]}) }
 
+   let(:split_segment_deleted_matcher) { SplitIoClient::Split.new({:orgId=>"cee838c0-b3eb-11e5-855f-4eacec19f7bf", :environment=>"cf2d09f0-b3eb-11e5-855f-4eacec19f7bf",
+      :name=>"new_feature", :trafficTypeId=>"u", :trafficTypeName=>"User", :seed=>-1177551240, :status=>"ARCHIVED",
+       :killed=>false, :defaultTreatment=>"def_test", :conditions=>[{:matcherGroup=>{:combiner=>"AND",
+          :matchers=>[{:matcherType=>"IN_SEGMENT", :negate=>false, :userDefinedSegmentMatcherData=>{:segmentName=>"demo"},
+             :whitelistMatcherData=>nil}]}, :partitions=>[{:treatment=>"on", :size=>100}, {:treatment=>"control", :size=>0}]}]}) }
+
   describe '#get_treatment returns CONTROL on random id and feature' do
     let(:user_id) { 'my_random_user_id' }
     let(:feature) { 'my_random_feaure' }
@@ -63,7 +69,7 @@ describe SplitIoClient do
 
   end
 
-  describe "#get_treatment returns true on feature when using ALL_KEYS matcher" do
+  describe "#get_treatment returns on on feature when using ALL_KEYS matcher" do
     let(:user_1) { 'fake_user_id_1' }
     let(:user_2) { 'fake_user_id_2' }
     let(:feature) { 'test_feature' }
@@ -193,6 +199,20 @@ describe SplitIoClient do
       api_adapter.instance_variable_set(:@parsed_splits, parsed_splits)
 
       expect(subject.get_treatment(user_3, segment_feature)).to eq "def_test"
+    end
+
+    it 'returns control for deleted splits' do
+      allow_any_instance_of(SplitIoClient::SplitParser).to receive(:get_split).with(segment_feature).and_return(split_segment_deleted_matcher)
+
+      parsed_segments = api_adapter.instance_variable_get(:@parsed_segments)
+      parsed_segments.instance_variable_set(:@segments, [segment_1, segment_2])
+      api_adapter.instance_variable_set(:@parsed_segments, parsed_segments)
+
+      parsed_splits = api_adapter.instance_variable_get(:@parsed_splits)
+      parsed_splits.instance_variable_set(:@splits, [split_all_keys_matcher])
+      api_adapter.instance_variable_set(:@parsed_splits, parsed_splits)
+
+      expect(subject.get_treatment(user_3, segment_feature)).to eq "control"
     end
 
   end
