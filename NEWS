@@ -1,3 +1,8 @@
+1.0.2
+
+Support for all the new matchers including: number comparison with >=, <=, =, between; date comparison with is on or before, is on or after, is on, between; attribute value in a defined set of values.
+No other major updates for this release.
+
 1.0.1
 
 isTreatment was removed from the API

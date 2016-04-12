@@ -112,14 +112,14 @@ split_client = SplitIoClient::SplitClient.new("your_api_key", options)
 ```
 ### Execution
 ---
-In your application code you just need to call the is_on? method with the required parameters for key and feature name
+In your application code you just need to call the get_treatment method with the required parameters for key and feature name
 ```ruby
-split_client.is_treatment?('key','feature_name','on')
+split_client.get_treatment('user_id','feature_name', {attr: 'val'})
 ```
 
 For example
 ```ruby
-if split_client.is_treatment?('employee_user_01','view_main_list','on')
+if split_client.get_treatment('employee_user_01','view_main_list', {age: 35})
    my_app.display_main_list
 end
 ```
@@ -132,13 +132,13 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Coverage
 
-The gem uses rspec for unit testing. Under the default `/spec` folder you will find the files for the unit tests and the specs helper file ( spec_helper.rb ). If a new spec file with new unit tests is required you just simply need to create it under the spec foleder and all its test will be executed on the next rspec execution.
+The gem uses rspec for unit testing. Under the default `/spec` folder you will find the files for the unit tests and the specs helper file ( spec_helper.rb ). If a new spec file with new unit tests is required you just simply need to create it under the spec folder and all its test will be executed on the next rspec execution.
 
 To run the suite of unit tests a rake task is provided. It's executed with the following command:
 
 	    $ rake spec
 
-Also, simplecov is used for coverage reporting. After the execution of the rake tastk it will create the `/coverage` folder with coverage reports in pretty HTML format.
+Also, simplecov is used for coverage reporting. After the execution of the rake task it will create the `/coverage` folder with coverage reports in pretty HTML format.
 Right now, the code coverage of the gem is at about 95%.
 
 
