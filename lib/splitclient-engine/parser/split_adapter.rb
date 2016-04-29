@@ -47,7 +47,6 @@ module SplitIoClient
       @metrics = Metrics.new(100)
 
       @api_client = Faraday.new do |builder|
-        builder.use Faraday::HttpCache, store: @config.local_store
         builder.use FaradayMiddleware::Gzip
         builder.adapter :net_http_persistent
       end
