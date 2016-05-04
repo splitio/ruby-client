@@ -7,9 +7,9 @@ module SplitIoClient
     def initialize(attribute_hash)
       @matcher_type = "BETWEEN"
       @attribute = attribute_hash[:attribute]
-      @start_value =  attribute_hash[:start_value]
-      @end_value =  attribute_hash[:end_value]
       @data_type = attribute_hash[:data_type]
+      @start_value = get_formatted_value attribute_hash[:start_value], true
+      @end_value = get_formatted_value attribute_hash[:end_value], true
     end
 
     def match?(attributes)
@@ -33,11 +33,12 @@ module SplitIoClient
     end
 
     private
-    def get_formatted_value(value)
+    def get_formatted_value(value, is_sdk_data = false)
       case @data_type
         when "NUMBER"
           return value
         when "DATETIME"
+          value = value/1000 if is_sdk_data
           return ::Utilities.to_milis_zero_out_from_seconds value
         else
           @logger.error('Invalid data type')

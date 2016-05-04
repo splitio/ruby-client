@@ -7,8 +7,8 @@ module SplitIoClient
     def initialize(attribute_hash)
       @matcher_type = "GREATER_THAN_OR_EQUAL_TO"
       @attribute = attribute_hash[:attribute]
-      @value =  attribute_hash[:value]
       @data_type = attribute_hash[:data_type]
+      @value = get_formatted_value attribute_hash[:value], true
     end
 
     def match?(attributes)
@@ -32,11 +32,12 @@ module SplitIoClient
     end
 
     private
-    def get_formatted_value(value)
+    def get_formatted_value(value, is_sdk_data = false)
       case @data_type
         when "NUMBER"
           return value
         when "DATETIME"
+          value = value/1000 if is_sdk_data # sdk returns already miliseconds, turning to seconds to do a correct zero_our
           return ::Utilities.to_milis_zero_out_from_seconds value
         else
           @logger.error('Invalid data type')
