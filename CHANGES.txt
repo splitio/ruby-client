@@ -1,3 +1,7 @@
+1.0.3
+- fixed refresh rate intervals issue
+- fixed datetime bug for split definitions created directly from api
+
 1.0.2
 - created between_matcher, equal_to_matcher, greater_than_or_equal_to_matcher, less_than_or_equal_to_matcher to support attributes
 - refactored whitelist_matcher to support attributes
