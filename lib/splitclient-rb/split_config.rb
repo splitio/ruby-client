@@ -12,6 +12,7 @@ module SplitIoClient
     #
     # @param opts [Hash] optional hash with configuration options
     # @option opts [String] :base_uri ("https://sdk.split.io/api/") The base URL for split API end points
+    # @option opts [String] :events_uri ("https://events.split.io/api/") The events URL for events end points
     # @option opts [Int] :read_timeout (10) The read timeout for network connections in seconds.
     # @option opts [Int] :connection_timeout (2) The connect timeout for network connections in seconds.
     # @option opts [Object] :local_store A cache store for the Faraday HTTP caching library. Defaults to the Rails cache in a Rails environment, or a thread-safe in-memory store otherwise.
@@ -25,6 +26,7 @@ module SplitIoClient
     # @return [type] SplitConfig with configuration options
     def initialize(opts = {})
       @base_uri = (opts[:base_uri] || SplitConfig.default_base_uri).chomp('/')
+      @events_uri = (opts[:events_uri] || SplitConfig.default_events_uri).chomp('/')
       @local_store = opts[:local_store] || SplitConfig.default_local_store
       @connection_timeout = opts[:connection_timeout] || SplitConfig.default_connection_timeout
       @read_timeout = opts[:read_timeout] || SplitConfig.default_read_timeout
@@ -43,6 +45,12 @@ module SplitIoClient
     #
     # @return [String] The configured base URL for the split API end points
     attr_reader :base_uri
+
+    #
+    # The base URL for split events API end points
+    #
+    # @return [String] The configured URL for the events API end points
+    attr_reader :events_uri
 
     #
     # The store for the Faraday HTTP caching library. Stores should respond to
@@ -98,6 +106,10 @@ module SplitIoClient
     # @return [string] The default base uri
     def self.default_base_uri
       'https://sdk.split.io/api/'
+    end
+
+    def self.default_events_uri
+      'https://events.split.io/api/'
     end
 
     # @return [LocalStore] configuration value for local cache store
