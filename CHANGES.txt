@@ -1,0 +1,18 @@
+1.0.3
+- fixed refresh rate intervals issue
+- fixed datetime bug for split definitions created directly from api
+
+1.0.2
+- created between_matcher, equal_to_matcher, greater_than_or_equal_to_matcher, less_than_or_equal_to_matcher to support attributes
+- refactored whitelist_matcher to support attributes
+- tweaked to drop analytics data if the POST get an error response
+- added condition to return CONTROL on the deleted features
+
+1.0.1
+
+- .splits to .split for local env
+- isTreatment was removed from the API.
+
+1.0.0
+
+- Support multivariate treatment
