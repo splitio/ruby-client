@@ -144,7 +144,7 @@ module SplitIoClient
     #
     # @return [object] response to the request
     def post_api(path, param)
-      @api_client.post (@config.base_uri + path) do |req|
+      @api_client.post (@config.events_uri + path) do |req|
         req.headers['Authorization'] = 'Bearer ' + @api_key
         req.headers['Content-Type'] = 'application/json'
         req.headers['SplitSDKVersion'] = SplitIoClient::SplitClient.sdk_version
@@ -153,7 +153,7 @@ module SplitIoClient
         req.body = param.to_json
         req.options.timeout = @config.read_timeout
         req.options.open_timeout = @config.connection_timeout
-        @config.logger.debug("POST #{@config.base_uri + path} #{req.body}") if @config.debug_enabled
+        @config.logger.debug("POST #{@config.events_uri + path} #{req.body}") if @config.debug_enabled
       end
     end
 
