@@ -22,7 +22,7 @@ module SplitIoClient
     # @param key [string] key value to be matched
     #
     # @return [boolean] evaluation of the key against the segment
-    def match?(key)
+    def match?(key, attributes)
       matches = false
       unless @segment.users.nil?
         matches = @segment.users.include?(key)

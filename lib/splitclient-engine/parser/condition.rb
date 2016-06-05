@@ -16,6 +16,10 @@ module SplitIoClient
       @partitions = set_partitions
     end
 
+    def create_condition_matcher matchers
+      CombiningMatcher.new(combiner, matchers) unless combiner.nil?
+    end
+
     #
     # @return [object] the combiner value for this condition
     def combiner
@@ -34,77 +38,64 @@ module SplitIoClient
       @data[:matcherGroup][:matchers]
     end
 
-    #
-    # @return [object] the segment for this condition in case it has a segment matcher
-    def matcher_segment
-      result = nil
-      if self.matcher == 'IN_SEGMENT'
-        result = (@data[:matcherGroup][:matchers].first[:userDefinedSegmentMatcherData])[:segmentName]
-      end
-      result
+    def matcher_all_keys params
+      AllKeysMatcher.new
     end
 
-    #
-    # @return [object] the whitelist for this condition in case it has a whitelist matcher
-    def matcher_whitelist
-      result = nil
-      if self.matcher == 'WHITELIST'
-        is_user_whitelist = ( (@data[:matcherGroup][:matchers].first[:keySelector]).nil? || (@data[:matcherGroup][:matchers].first[:keySelector])[:attribute].nil? )
-        #is_attribute_whitelist? = !is_user_whitelist?
-        if is_user_whitelist
-          result = (@data[:matcherGroup][:matchers].first[:whitelistMatcherData])[:whitelist]
-        else
-          attribute = (@data[:matcherGroup][:matchers].first[:keySelector])[:attribute]
-          white_list = (@data[:matcherGroup][:matchers].first[:whitelistMatcherData])[:whitelist]
-          result =  {attribute: attribute, value: white_list}
-        end
-      end
-      result
+    #returns UserDefinedSegmentMatcher[object]
+    def matcher_in_segment params
+      matcher = params[:matcher]
+      segments = params[:segments]
+      segment = segments.get_segment(matcher[:userDefinedSegmentMatcherData][:segmentName])
+      segment.is_empty? ? UserDefinedSegmentMatcher.new(nil) : UserDefinedSegmentMatcher.new(segment)
     end
 
-    def matcher_equal
+    #returns WhitelistMatcher[object] the whitelist for this condition in case it has a whitelist matcher
+    def matcher_whitelist params
       result = nil
-      if self.matcher == 'EQUAL_TO'
-        attribute = (@data[:matcherGroup][:matchers].first[:keySelector])[:attribute]
-        value = (@data[:matcherGroup][:matchers].first[:unaryNumericMatcherData])[:value]
-        data_type = (@data[:matcherGroup][:matchers].first[:unaryNumericMatcherData])[:dataType]
-        result = {attribute: attribute, value: value, data_type: data_type}
+      matcher = params[:matcher]
+      is_user_whitelist = ((matcher[:keySelector]).nil? || (matcher[:keySelector])[:attribute].nil?)
+      if is_user_whitelist
+        result = (matcher[:whitelistMatcherData])[:whitelist]
+      else
+        attribute = (matcher[:keySelector])[:attribute]
+        white_list = (matcher[:whitelistMatcherData])[:whitelist]
+        result =  {attribute: attribute, value: white_list}
       end
-      result
+      WhitelistMatcher.new(result)
     end
 
-    def matcher_greater_than_or_equal
-      result = nil
-      if self.matcher == 'GREATER_THAN_OR_EQUAL_TO'
-        attribute = (@data[:matcherGroup][:matchers].first[:keySelector])[:attribute]
-        value = (@data[:matcherGroup][:matchers].first[:unaryNumericMatcherData])[:value]
-        data_type = (@data[:matcherGroup][:matchers].first[:unaryNumericMatcherData])[:dataType]
-        result = {attribute: attribute, value: value, data_type: data_type}
-      end
-      result
+    def matcher_equal_to params
+      matcher = params[:matcher]
+      attribute = (matcher[:keySelector])[:attribute]
+      value = (matcher[:unaryNumericMatcherData])[:value]
+      data_type = (matcher[:unaryNumericMatcherData])[:dataType]
+      EqualToMatcher.new({attribute: attribute, value: value, data_type: data_type})
     end
 
-    def matcher_less_than_or_equal
-      result = nil
-      if self.matcher == 'LESS_THAN_OR_EQUAL_TO'
-        attribute = (@data[:matcherGroup][:matchers].first[:keySelector])[:attribute]
-        value = (@data[:matcherGroup][:matchers].first[:unaryNumericMatcherData])[:value]
-        data_type = (@data[:matcherGroup][:matchers].first[:unaryNumericMatcherData])[:dataType]
-        result = {attribute: attribute, value: value, data_type: data_type}
-      end
-      result
+    def matcher_greater_than_or_equal_to params
+      matcher = params[:matcher]
+      attribute = (matcher[:keySelector])[:attribute]
+      value = (matcher[:unaryNumericMatcherData])[:value]
+      data_type = (matcher[:unaryNumericMatcherData])[:dataType]
+      GreaterThanOrEqualToMatcher.new({attribute: attribute, value: value, data_type: data_type})
     end
 
-    def matcher_between
-      result = nil
-      if self.matcher == 'BETWEEN'
-        attribute = (@data[:matcherGroup][:matchers].first[:keySelector])[:attribute]
-        start_value = (@data[:matcherGroup][:matchers].first[:betweenMatcherData])[:start]
-        end_value = (@data[:matcherGroup][:matchers].first[:betweenMatcherData])[:end]
-        data_type = (@data[:matcherGroup][:matchers].first[:betweenMatcherData])[:dataType]
-        result = {attribute: attribute, start_value: start_value, end_value: end_value, data_type: data_type}
-      end
-      result
+    def matcher_less_than_or_equal_to params
+      matcher = params[:matcher]
+      attribute = (matcher[:keySelector])[:attribute]
+      value = (matcher[:unaryNumericMatcherData])[:value]
+      data_type = (matcher[:unaryNumericMatcherData])[:dataType]
+      LessThanOrEqualToMatcher.new({attribute: attribute, value: value, data_type: data_type})
+    end
+
+    def matcher_between params
+      matcher = params[:matcher]
+      attribute = (matcher[:keySelector])[:attribute]
+      start_value = (matcher[:betweenMatcherData])[:start]
+      end_value = (matcher[:betweenMatcherData])[:end]
+      data_type = (matcher[:betweenMatcherData])[:dataType]
+      BetweenMatcher.new({attribute: attribute, start_value: start_value, end_value: end_value, data_type: data_type})
     end
 
     #
