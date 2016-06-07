@@ -1,3 +1,8 @@
+1.0.4
+
+- added events_uri as config param which defines the metrics post url
+- updated metrics post default endpoint to be https://events.split.io/api/
+
 1.0.3
 - fixed refresh rate intervals issue
 - fixed datetime bug for split definitions created directly from api

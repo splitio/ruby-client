@@ -1,3 +1,7 @@
+1.0.4
+
+Added events_uri config param which is the url where the metrics post are send to.
+
 1.0.3
 
 This version of the gem fixes two minor bugs related to the config option for the refresh rates, as well as an inconsistency for the split definitions that are not created from the web app, but directly from the api instead.
