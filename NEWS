@@ -1,0 +1,22 @@
+1.0.4
+
+Added AND combiner for conditions support. Added events_uri config param which is the url where the metrics post are send to.
+
+1.0.3
+
+This version of the gem fixes two minor bugs related to the config option for the refresh rates, as well as an inconsistency for the split definitions that are not created from the web app, but directly from the api instead.
+
+1.0.2
+
+Support for all the new matchers including: number comparison with >=, <=, =, between; date comparison with is on or before, is on or after, is on, between; attribute value in a defined set of values.
+No other major updates for this release.
+
+1.0.1
+
+isTreatment was removed from the API
+local environment file was removed to match the rest of the SDKs. "split".
+No other major updates for this release.
+
+1.0.0
+
+No news for this release.
