@@ -17,7 +17,7 @@ module SplitIoClient
     # @param key [string] key value to be matched
     #
     # @return [boolean] true for all instances
-    def match?(key)
+    def match?(key, attributes)
       true
     end
 

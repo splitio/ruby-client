@@ -11,7 +11,7 @@ module SplitIoClient
       @value = get_formatted_value attribute_hash[:value], true
     end
 
-    def match?(attributes)
+    def match?(key, attributes)
       matches = false
       if (!attributes.nil? && attributes.key?(@attribute.to_sym))
         param_value = get_formatted_value(attributes[@attribute.to_sym])

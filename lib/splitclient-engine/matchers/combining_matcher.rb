@@ -31,16 +31,17 @@ module SplitIoClient
     # @param key [string] key value to be matched
     #
     # @return [boolean] match value for combiner delegates
-    def match?(key)
+    def match?(key, attributes)
       if @matcher_list.empty?
         return false
       end
 
       case @combiner
         when Combiners::AND
-          return and_eval(key)
+          return and_eval(key, attributes)
         else
-          #throws error
+          @logger.error('Invalid combiner type')
+          return false
       end
     end
 
@@ -50,10 +51,10 @@ module SplitIoClient
     # @param key [string] key value to be matched
     #
     # @return [boolean] match value for combiner delegates
-    def and_eval(key)
+    def and_eval(key, attributes)
       result = true
       @matcher_list.each do |delegate|
-        result &= (delegate.match?(key))
+        result &= delegate.match? key, attributes
       end
       result
     end

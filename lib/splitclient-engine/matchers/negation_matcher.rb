@@ -19,8 +19,8 @@ module SplitIoClient
     # @param key [string] key value to be matched
     #
     # @return [boolean] evaluation of the negation matcher
-    def match?(key)
-      !@matcher.match?(key)
+    def match?(key, attributes)
+      !@matcher.match?(key, attributes)
     end
 
     #

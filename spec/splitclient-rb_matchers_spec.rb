@@ -67,12 +67,12 @@ describe SplitIoClient do
       segment_1.refresh_users(["fake_user_id_1", "fake_user_id_2"],[])
       segment_matcher_aux = SplitIoClient::UserDefinedSegmentMatcher.new(segment_1)
       combinining_matcher_aux = SplitIoClient::CombiningMatcher.new( SplitIoClient::Combiners::AND, [whitelist_matcher, segment_matcher_aux])
-      expect(combinining_matcher_aux.match?('fake_user_id_1')).to be true
+      expect(combinining_matcher_aux.match?('fake_user_id_1',nil)).to be true
     end
 
     it 'validates false if matchers list empty on COMBINING matcher' do
       object = SplitIoClient::CombiningMatcher.new( SplitIoClient::Combiners::AND, [])
-      expect(object.match?('fake_user_id_1')).to be false
+      expect(object.match?('fake_user_id_1', nil)).to be false
     end
 
 
@@ -99,7 +99,7 @@ describe SplitIoClient do
     end
 
     it 'validates the NEGATION matcher does not match a key' do
-      expect(negation_matcher.match?('fake_id')).to be false
+      expect(negation_matcher.match?('fake_id', nil)).to be false
     end
 
 
