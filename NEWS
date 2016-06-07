@@ -1,6 +1,6 @@
 1.0.4
 
-Added events_uri config param which is the url where the metrics post are send to.
+Added AND combiner for conditions support. Added events_uri config param which is the url where the metrics post are send to.
 
 1.0.3
 
