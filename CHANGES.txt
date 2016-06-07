@@ -1,5 +1,6 @@
 1.0.4
 
+- added support for AND combiner on conditions
 - added events_uri as config param which defines the metrics post url
 - updated metrics post default endpoint to be https://events.split.io/api/
 
