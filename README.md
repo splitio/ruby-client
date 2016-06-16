@@ -136,7 +136,9 @@ The gem uses rspec for unit testing. Under the default `/spec` folder you will f
 
 To run the suite of unit tests a rake task is provided. It's executed with the following command:
 
-	    $ rake spec
+```bash
+  $ rake spec
+```
 
 Also, simplecov is used for coverage reporting. After the execution of the rake task it will create the `/coverage` folder with coverage reports in pretty HTML format.
 Right now, the code coverage of the gem is at about 95%.
@@ -146,6 +148,32 @@ Right now, the code coverage of the gem is at about 95%.
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/splitio/ruby-client.
 
+## Gem version publish
+
+To build a new version of the gem, after you have finished the desired changes, documented the CHANGES.txt and the NEWS, as well as named it properly in the version.rb. This steps assume that all of your new cool features and fixes have been merged into development, and into master branches of the ruby-client repo. Once that is ready to go, you will have to run the build command to obtain a .gem file:
+
+```bash
+gem build splitclient-rb.gemspec
+```
+
+That will generate a splitclient-rb-x.x.x.gem file, with the corresponding version information on it.
+To publish this new version of the gem at rubygems.org you must run the following command:
+
+```bash
+gem push splitclient-rb-x.x.x.gem
+```
+
+A valid rubygems username and password will be required.
+
+After this action, the new splitclient-rb-x.x.x version is available for its use from any ruby app.
+
+So for instance in a rails app Gemfile, you could add the:
+
+```ruby
+gem 'splitclient-rb', '~> x.x.x'
+```
+
+line to have the latest version of the gem ready to be used.
 
 ## License
 
