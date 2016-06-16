@@ -13,14 +13,22 @@ module Utilities
   end
 
   def to_milis_zero_out_from_seconds value
-    parsed_value = Time.strptime(value.to_s,'%s').utc
-    zeroed = Time.new(parsed_value.year, parsed_value.month, parsed_value.day, parsed_value.hour, parsed_value.min, 0, 0)
-    zeroed.to_i*1000
+    begin
+      parsed_value = Time.strptime(value.to_s,'%s').utc
+      zeroed = Time.new(parsed_value.year, parsed_value.month, parsed_value.day, parsed_value.hour, parsed_value.min, 0, 0)
+      return zeroed.to_i*1000
+    rescue
+      return -1
+    end
   end
 
   def to_milis_zero_out_from_hour value
-    parsed_value = Time.strptime(value.to_s,'%s').utc
-    zeroed = Time.new(parsed_value.year, parsed_value.month, parsed_value.day, 0, 0, 0, 0)
-    zeroed.to_i*1000
+    begin
+      parsed_value = Time.strptime(value.to_s,'%s').utc
+      zeroed = Time.new(parsed_value.year, parsed_value.month, parsed_value.day, 0, 0, 0, 0)
+      return zeroed.to_i*1000
+    rescue
+      return -1
+    end
   end
 end
