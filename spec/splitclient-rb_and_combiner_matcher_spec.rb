@@ -29,7 +29,7 @@ describe SplitIoClient do
   #else if user is in segment employees
   #then split 0%:V1,0%:V2,100%:V3
 
-  describe "and matcher behaves as expected" , :focus => true do
+  describe "and matcher behaves as expected" do
     let(:user_included) { 'fake_user_id_1' }
     let(:user_excluded) { 'fake_user_id_2' }
     let(:attributes_included) { {custom_attribute: 'argentina', join: 1461380400} }
@@ -94,6 +94,19 @@ describe SplitIoClient do
       api_adapter.instance_variable_set(:@parsed_splits, parsed_splits)
 
       expect(subject.get_treatment(nil, feature, {another: "attribute"})).to eq SplitIoClient::Treatments::CONTROL
+    end
+
+    it 'checks that failing first condition with wrong date format attribute, and matching second returns correct second condition expected result' do
+      parsed_segments = api_adapter.instance_variable_get(:@parsed_segments)
+      parsed_segments.instance_variable_set(:@segments, [segment])
+      api_adapter.instance_variable_set(:@parsed_segments, parsed_segments)
+      segment.refresh_users(["fake_user_id_1"],[])
+
+      parsed_splits = api_adapter.instance_variable_get(:@parsed_splits)
+      parsed_splits.instance_variable_set(:@splits, [split_and_matcher])
+      api_adapter.instance_variable_set(:@parsed_splits, parsed_splits)
+
+      expect(subject.get_treatment(user_included, feature, {custom_attribute: 'argentina', join: "asdasdasd"})).to eq "V3"
     end
   end
 end
