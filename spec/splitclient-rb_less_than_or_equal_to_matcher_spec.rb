@@ -9,6 +9,8 @@ describe SplitIoClient do
 
   let(:split_less_than_or_equal_to_date_matcher) { SplitIoClient::Split.new({:orgId=>"cee838c0-b3eb-11e5-855f-4eacec19f7bf", :environment=>"cf2d09f0-b3eb-11e5-855f-4eacec19f7bf", :name=>"test_feature", :trafficTypeId=>"u", :trafficTypeName=>"User", :seed=>-195840228, :status=>"ACTIVE", :killed=>false, :defaultTreatment=>"default", :conditions=>[{:matcherGroup=>{:combiner=>"AND", :matchers=>[{:keySelector=>{:trafficType=>"user", :attribute=>"created"}, :matcherType=>"LESS_THAN_OR_EQUAL_TO", :negate=>false, :userDefinedSegmentMatcherData=>nil, :whitelistMatcherData=>nil, :unaryNumericMatcherData=>{:dataType=>"DATETIME", :value=>1459468800000}, :betweenMatcherData=>nil}]}, :partitions=>[{:treatment=>"on", :size=>100}, {:treatment=>"off", :size=>0}]}]}) }
 
+  let(:split_less_than_or_equal_to_date_matcher_2) { SplitIoClient::Split.new({:orgId=>nil, :environment=>nil, :trafficTypeId=>nil, :trafficTypeName=>nil, :name=>"RUBY_isOnOrBeforeDateTimeWithAttributeValueThatDoesNotMatch", :seed=>338948780, :status=>"ACTIVE", :killed=>false, :defaultTreatment=>"V1", :conditions=>[{:matcherGroup=>{:combiner=>"AND", :matchers=>[{:keySelector=>{:trafficType=>"user", :attribute=>"join"}, :matcherType=>"LESS_THAN_OR_EQUAL_TO", :negate=>false, :userDefinedSegmentMatcherData=>nil, :whitelistMatcherData=>nil, :unaryNumericMatcherData=>{:dataType=>"DATETIME", :value=>1466205600000}, :betweenMatcherData=>nil}]}, :partitions=>[{:treatment=>"V1", :size=>0}, {:treatment=>"V2", :size=>100}, {:treatment=>"V3", :size=>0}]}]}) }
+
   describe "less than or equal to matcher behaves as expected with number" do
 
     let(:api_adapter) { subject.instance_variable_get(:@adapter)}
@@ -90,6 +92,15 @@ describe SplitIoClient do
       expect(subject.get_treatment(user, feature, missing_key_attributes)).to eq "default"
       expect(subject.get_treatment(user, feature, nil_attributes)).to eq "default"
     end
+
+    it 'validates the treatment is the default for wrongly formed date attribute' do
+      parsed_splits = api_adapter.instance_variable_get(:@parsed_splits)
+      parsed_splits.instance_variable_set(:@splits, [split_less_than_or_equal_to_date_matcher_2])
+      api_adapter.instance_variable_set(:@parsed_splits, parsed_splits)
+
+      expect(subject.get_treatment(user, "RUBY_isOnOrBeforeDateTimeWithAttributeValueThatDoesNotMatch", {join: "fer"})).to eq "V1"
+    end
+
 
   end
 
