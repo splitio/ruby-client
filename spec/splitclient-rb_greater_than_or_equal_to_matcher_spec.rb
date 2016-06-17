@@ -55,6 +55,14 @@ describe SplitIoClient do
       expect(subject.get_treatment(user, feature, non_matching_negative_attributes)).to eq "default"
     end
 
+    it 'validates wrong formatted attribute does not match and returns default treatment' do
+      parsed_splits = api_adapter.instance_variable_get(:@parsed_splits)
+      parsed_splits.instance_variable_set(:@splits, [split_greater_than_or_equal_to_negative_matcher])
+      api_adapter.instance_variable_set(:@parsed_splits, parsed_splits)
+
+      expect(subject.get_treatment(user, feature, {age: "asdasd"})).to eq "default"
+    end
+
   end
 
   describe "greater than or equal to matcher behaves as expected with datetime" do
