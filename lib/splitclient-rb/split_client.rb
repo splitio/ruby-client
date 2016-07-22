@@ -5,7 +5,7 @@ module SplitIoClient
   #
   # main class for split client sdk
   #
-  class SplitClient < NoMethodError
+  class SplitFactory < NoMethodError
 
     #
     # constant that defines the localhost mode

@@ -2,7 +2,7 @@ require 'spec_helper'
 require 'securerandom'
 
 describe SplitIoClient do
-  subject { SplitIoClient::SplitClient.new('111',{base_uri: 'http://localhost:8081/api/', logger: Logger.new("/dev/null")}) }
+  subject { SplitIoClient::SplitFactory.new('111',{base_uri: 'http://localhost:8081/api/', logger: Logger.new("/dev/null")}) }
 
   let(:segment_1) { SplitIoClient::Segment.new({:name=>"demo", :added=>["fake_user_id_1", "fake_user_id_2"],
     :removed=>[], :since=>-1, :till=>1452026108592}) }
@@ -171,7 +171,7 @@ describe SplitIoClient do
 
   end
 
-  describe "SplitClient get_treatment responds correctly" do
+  describe "SplitFactory get_treatment responds correctly" do
     let(:user_1) { 'fake_user_id_1' }
     let(:user_2) { 'fake_user_id_2' }
     let(:user_3) { 'fake_user_id_3' }

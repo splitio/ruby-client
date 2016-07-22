@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe SplitIoClient do
-  subject { SplitIoClient::SplitClient.new('111',{base_uri: 'http://localhost:8081/api/', logger: Logger.new("/dev/null")}) }
+  subject { SplitIoClient::SplitFactory.new('111',{base_uri: 'http://localhost:8081/api/', logger: Logger.new("/dev/null")}) }
 
   let(:split_between_number_matcher) { SplitIoClient::Split.new({:orgId=>"cee838c0-b3eb-11e5-855f-4eacec19f7bf", :environment=>"cf2d09f0-b3eb-11e5-855f-4eacec19f7bf", :name=>"test_feature", :trafficTypeId=>"u", :trafficTypeName=>"User", :seed=>-195840228, :status=>"ACTIVE", :killed=>false, :defaultTreatment=>"default", :conditions=>[{:matcherGroup=>{:combiner=>"AND", :matchers=>[{:keySelector=>{:trafficType=>"user", :attribute=>"income"}, :matcherType=>"BETWEEN", :negate=>false, :userDefinedSegmentMatcherData=>nil, :whitelistMatcherData=>nil, :unaryNumericMatcherData=>nil, :betweenMatcherData=>{:dataType=>"NUMBER", :start=>100, :end=>120}}]}, :partitions=>[{:treatment=>"on", :size=>100}, {:treatment=>"off", :size=>0}, {:treatment=>"default", :size=>0}]}]}) }
 
