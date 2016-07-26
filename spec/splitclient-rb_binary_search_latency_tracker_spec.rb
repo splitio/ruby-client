@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe SplitIoClient do
-  subject { SplitIoClient::SplitClient.new('g3q5afinaih7veau8v6n7a7id9',{base_uri: 'http://localhost:8081/api/'}) }
+  subject { SplitIoClient::SplitFactory.new('g3q5afinaih7veau8v6n7a7id9',{base_uri: 'http://localhost:8081/api/'}).client }
 
   before :each do
     @tracker = SplitIoClient::BinarySearchLatencyTracker.new
