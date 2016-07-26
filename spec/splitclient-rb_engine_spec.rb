@@ -2,7 +2,7 @@ require 'spec_helper'
 require 'securerandom'
 
 describe SplitIoClient do
-  subject { SplitIoClient::SplitFactory.new('111',{base_uri: 'http://localhost:8081/api/', logger: Logger.new("/dev/null")}) }
+  subject { SplitIoClient::SplitFactory.new('111',{base_uri: 'http://localhost:8081/api/', logger: Logger.new("/dev/null")}).client }
 
   let(:segment_1) { SplitIoClient::Segment.new({:name=>"demo", :added=>["fake_user_id_1", "fake_user_id_2"],
     :removed=>[], :since=>-1, :till=>1452026108592}) }
