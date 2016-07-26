@@ -1,5 +1,4 @@
 require 'logger'
-
 module SplitIoClient
 
   #
@@ -156,12 +155,12 @@ module SplitIoClient
     private_constant :SplitClient
 
     def initialize(api_key, config = {})
-      @client = SplitClient.new(api_key, config)
-      self
+      @api_key = api_key
+      @config = config
     end
 
     def client
-      @client
+      @client ||= SplitClient.new(@api_key, @config)
     end
   end
 end
