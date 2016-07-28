@@ -2,10 +2,10 @@ require 'logger'
 module SplitIoClient
 
   #
-  # main class for split client sdk
+  # main class for localhost split client sdk
   #
-  class SplitFactory < NoMethodError
-    class SplitClient < NoMethodError
+  class LocalhostSplitFactory < NoMethodError
+    class LocalhostSplitManager < NoMethodError
       #
       # constant that defines the localhost mode
       LOCALHOST_MODE = 'localhost'
@@ -15,28 +15,62 @@ module SplitIoClient
       attr_reader :adapter
 
       #
+      # Creates a new split manager instance that holds the splits from a given file
+      #
+      # @param splits_file [File] the .split file that contains the splits
+      #
+      # @return [LocalhostSplitIoManager] split.io localhost manager instance
+      def initialize(splits_file)
+        @localhost_mode = true
+        @localhost_mode_features = []
+        load_localhost_mode_features(splits_file)
+      end
+
+      #
+      # method to set localhost mode features by reading the given .splits
+      #
+      # @param splits_file [File] the .split file that contains the splits
+      # @returns [void]
+      def load_localhost_mode_features(splits_file)
+        if File.exists?(splits_file)
+          line_num=0
+          File.open(splits_file).each do |line|
+            line_data = line.strip.split(" ")
+            @localhost_mode_features << {feature: line_data[0], treatment: line_data[1]} unless line.start_with?('#') || line.strip.empty?
+          end
+        end
+        @localhost_mode_features
+      end
+
+      #
+      # method to get the split list from the client
+      #
+      # @returns [object] array of splits
+      def splits
+        @localhost_mode_features
+      end
+    end
+
+    class LocalhostSplitClient < NoMethodError
+      #
+      # constant that defines the localhost mode
+      LOCALHOST_MODE = 'localhost'
+
+      #
       # variables to if the sdk is being used in localhost mode and store the list of features
       attr_reader :localhost_mode
       attr_reader :localhost_mode_features
 
       #
-      # Creates a new split client instance that connects to split.io API.
+      # Creates a new split client instance that reads from the given splits file
       #
-      # @param api_key [String] the API key for your split account
+      # @param splits_file [File] file that contains some splits
       #
-      # @return [SplitIoClient] split.io client instance
-      def initialize(api_key, config = {})
-        @localhost_mode = false
+      # @return [LocalhostSplitIoClient] split.io localhost client instance
+      def initialize(splits_file)
+        @localhost_mode = true
         @localhost_mode_features = []
-
-        @config = SplitConfig.new(config)
-
-        if api_key == LOCALHOST_MODE
-          @localhost_mode = true
-          load_localhost_mode_features
-        else
-          @adapter = SplitAdapter.new(api_key, @config)
-        end
+        load_localhost_mode_features(splits_file)
       end
 
       #
@@ -56,35 +90,9 @@ module SplitIoClient
           @config.logger.warn('feature was null for id: ' + id)
           return Treatments::CONTROL
         end
-
-        if is_localhost_mode?
-          result = get_localhost_treatment(feature)
-        else
-          start = Time.now
-          result = nil
-
-          begin
-            result = get_treatment_without_exception_handling(id, feature, attributes)
-          rescue StandardError => error
-            @config.log_found_exception(__method__.to_s, error)
-          end
-
-          result = result.nil? ? Treatments::CONTROL : result
-
-          begin
-            @adapter.impressions.log(id, feature, result, (Time.now.to_f * 1000.0))
-            latency = (Time.now - start) * 1000.0
-            if (@adapter.impressions.queue.length >= @adapter.impressions.max_number_of_keys)
-              @adapter.impressions_producer.wakeup
-            end
-          rescue StandardError => error
-            @config.log_found_exception(__method__.to_s, error)
-          end
-
-        end
-
-        result
+        result = get_localhost_treatment(feature)
       end
+
 
       #
       # auxiliary method to get the treatments avoding exceptions
@@ -94,15 +102,7 @@ module SplitIoClient
       #
       # @return [Treatment]  tretment constant value
       def get_treatment_without_exception_handling(id, feature, attributes = nil)
-        @adapter.parsed_splits.segments = @adapter.parsed_segments
-        split = @adapter.parsed_splits.get_split(feature)
-
-        if split.nil?
-          return Treatments::CONTROL
-        else
-          default_treatment = split.data[:defaultTreatment]
-          return @adapter.parsed_splits.get_split_treatment(id, feature, default_treatment, attributes)
-        end
+        get_treatment(id, feature, attributes)
       end
 
       #
@@ -118,15 +118,14 @@ module SplitIoClient
       #
       # @return [boolean] True if is in localhost mode, false otherwise
       def is_localhost_mode?
-        @localhost_mode
+        true
       end
 
       #
       # method to set localhost mode features by reading .splits file located at home directory
       #
       # @returns [void]
-      def load_localhost_mode_features
-        splits_file = File.join(Dir.home, ".split")
+      def load_localhost_mode_features(splits_file)
         if File.exists?(splits_file)
           line_num=0
           File.open(splits_file).each do |line|
@@ -152,15 +151,19 @@ module SplitIoClient
 
     end
 
-    private_constant :SplitClient
+    private_constant :LocalhostSplitClient
+    private_constant :LocalhostSplitManager
 
-    def initialize(api_key, config = {})
-      @api_key = api_key
-      @config = config
+    def initialize(splits_file)
+      @splits_file = splits_file
     end
 
     def client
-      @client ||= SplitClient.new(@api_key, @config)
+      @client ||= LocalhostSplitClient.new(@splits_file)
+    end
+
+    def manager
+      @manager ||= LocalhostSplitManager.new(@splits_file)
     end
   end
 end
