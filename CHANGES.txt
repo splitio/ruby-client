@@ -1,3 +1,6 @@
+2.0.0
+- Add Factory for creation of Client and Manager interface.
+
 1.0.4
 
 - added support for AND combiner on conditions
