@@ -1,18 +1,77 @@
 require 'logger'
 module SplitIoClient
-
   #
   # main class for split client sdk
   #
   class SplitFactory < NoMethodError
-    class SplitClient < NoMethodError
+    class SplitManager < NoMethodError
       #
       # constant that defines the localhost mode
       LOCALHOST_MODE = 'localhost'
 
       #
-      # object that acts as an api adapter connector. used to get and post to api endpoints
-      attr_reader :adapter
+      # Creates a new split manager instance that connects to split.io API.
+      #
+      # @param api_key [String] the API key for your split account
+      #
+      # @return [SplitIoManager] split.io client instance
+      def initialize(api_key, config = {}, adapter = nil, localhost_mode = false)
+        @localhost_mode_features = []
+        @config = config
+        @localhost_mode = localhost_mode
+        if @localhost_mode
+          load_localhost_mode_features
+        else
+          @adapter = adapter
+        end
+      end
+
+      #
+      # method to set localhost mode features by reading .splits file located at home directory
+      #
+      # @returns [void]
+      def load_localhost_mode_features
+        splits_file = File.join(Dir.home, ".split")
+        if File.exists?(splits_file)
+          line_num=0
+          File.open(splits_file).each do |line|
+            line_data = line.strip.split(" ")
+            @localhost_mode_features << {feature: line_data[0], treatment: line_data[1]} unless line.start_with?('#') || line.strip.empty?
+          end
+        end
+        @localhost_mode_features
+      end
+
+      #
+      # method to get the split list from the client
+      #
+      # @returns [object] array of splits
+      def splits
+        return load_localhost_mode_features if @localhost_mode
+        if @adapter
+          @adapter.parsed_splits.splits.map do |split|
+            data = split.data
+            treatments = split.data[:conditions] && split.data[:conditions][0][:partitions] \
+            ? split.data[:conditions][0][:partitions].map{ |partition| partition[:treatment] }
+            : []
+            {
+              name: data[:name],
+              traffic_type_name: data[:trafficTypeName],
+              killed: data[:killed],
+              treatments: treatments,
+              change_number: data[:changeNumber]
+            }
+          end
+        else
+          @localhost_mode_features
+        end
+      end
+    end
+
+    class SplitClient < NoMethodError
+      #
+      # constant that defines the localhost mode
+      LOCALHOST_MODE = 'localhost'
 
       #
       # variables to if the sdk is being used in localhost mode and store the list of features
@@ -25,17 +84,17 @@ module SplitIoClient
       # @param api_key [String] the API key for your split account
       #
       # @return [SplitIoClient] split.io client instance
-      def initialize(api_key, config = {})
-        @localhost_mode = false
+      def initialize(api_key, config = {}, adapter = nil, localhost_mode = false)
+        @localhost_mode = localhost_mode
         @localhost_mode_features = []
 
-        @config = SplitConfig.new(config)
+        @config = config
 
         if api_key == LOCALHOST_MODE
           @localhost_mode = true
           load_localhost_mode_features
         else
-          @adapter = SplitAdapter.new(api_key, @config)
+          @adapter = adapter
         end
       end
 
@@ -153,14 +212,34 @@ module SplitIoClient
     end
 
     private_constant :SplitClient
+    private_constant :SplitManager
 
     def initialize(api_key, config = {})
       @api_key = api_key
-      @config = config
+      @config = SplitConfig.new(config)
+      @adapter = api_key != 'localhost' \
+      ? SplitAdapter.new(api_key, @config)
+      : nil
+      @localhost_mode = api_key == 'localhost'
     end
 
     def client
-      @client ||= SplitClient.new(@api_key, @config)
+      @client ||= SplitClient.new(@api_key, @config, @adapter, @localhost_mode)
     end
+
+    def manager
+      @manager ||= SplitManager.new(@api_key, @config, @adapter, @localhost_mode)
+    end
+
+    #
+    # method that returns the sdk gem version
+    #
+    # @return [string] version value for this sdk
+    def self.sdk_version
+      'RubyClientSDK-'+SplitIoClient::VERSION
+    end
+
+    private
+      attr_reader :adapter
   end
 end
