@@ -47,8 +47,15 @@ require 'splitclient-rb'
 
 Create a new split client instance with your API key:
 ```ruby
-split_client = SplitIoClient::SplitFactory.new("your_api_key").client
+factory  = SplitIoClient::SplitFactory.new("your_api_key").client
+split_client = factory.client
 ```
+
+For advance use cases you can also obtain a `manager` instance from the factory.
+```ruby
+manager = factory.manager
+```
+
 ###Ruby on Rails
 ----
 If you're using Ruby on Rails
