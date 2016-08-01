@@ -47,7 +47,7 @@ require 'splitclient-rb'
 
 Create a new split client instance with your API key:
 ```ruby
-split_client = SplitIoClient::SplitClient.new("your_api_key")
+split_client = SplitIoClient::SplitFactory.new("your_api_key").client
 ```
 ###Ruby on Rails
 ----
@@ -55,7 +55,7 @@ If you're using Ruby on Rails
 
 Create an initializer file at config/initializers/splitclient.rb and then initialize the split client :
 ```ruby
-Rails.configuration.split_client = SplitIoClient::SplitClient.new("your_api_key")
+Rails.configuration.split_client = SplitIoClient::SplitFactory.new("your_api_key").client
 ```
 In your controllers, access the client using
 
@@ -108,7 +108,7 @@ options = {base_uri: 'https://my.app.api/',
            impressions_refresh_rate: 360,
            logger: Logger.new('logfile.log')}
 
-split_client = SplitIoClient::SplitClient.new("your_api_key", options)
+split_client = SplitIoClient::SplitFactory.new("your_api_key", options).client
 ```
 ### Execution
 ---
@@ -123,6 +123,25 @@ if split_client.get_treatment('employee_user_01','view_main_list', {age: 35})
    my_app.display_main_list
 end
 ```
+
+Also you can use the split manager:
+
+```ruby
+split_manager = SplitIoClient::SplitFactory.new("your_api_key", options).manager
+```
+
+With the manager you can get a list of your splits by doing:
+
+```ruby
+manager.splits
+```
+
+And you should get something like this:
+
+```bash
+ => [{:name=>"some_feature", :traffic_type_name=>nil, :killed=>false, :treatments=>nil, :change_number=>1469134003507}, {:name=>"another_feature", :traffic_type_name=>nil, :killed=>false, :treatments=>nil, :change_number=>1469134003414}, {:name=>"even_more_features", :traffic_type_name=>nil, :killed=>false, :treatments=>nil, :change_number=>1469133991063}, {:name=>"yet_another_feature", :traffic_type_name=>nil, :killed=>false, :treatments=>nil, :change_number=>1469133757521}]
+ ```
+
 
 ## Development
 

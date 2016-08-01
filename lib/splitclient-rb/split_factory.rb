@@ -39,6 +39,7 @@ module SplitIoClient
             @localhost_mode_features << {feature: line_data[0], treatment: line_data[1]} unless line.start_with?('#') || line.strip.empty?
           end
         end
+        @localhost_mode_features
       end
 
       #
@@ -46,14 +47,19 @@ module SplitIoClient
       #
       # @returns [object] array of splits
       def splits
+        return load_localhost_mode_features if @localhost_mode
         if @adapter
           @adapter.parsed_splits.splits.map do |split|
+            data = split.data
+            treatments = split.data[:conditions] && split.data[:conditions][0][:partitions] \
+            ? split.data[:conditions][0][:partitions].map{ |partition| partition[:treatment] }
+            : []
             {
-              name: split[:name],
-              traffic_type_name: split[:traffiTypeName],
-              killed: split[:killed],
-              treatments: split[:partitions],
-              change_number: split[:changeNumber]
+              name: data[:name],
+              traffic_type_name: data[:trafficTypeName],
+              killed: data[:killed],
+              treatments: treatments,
+              change_number: data[:changeNumber]
             }
           end
         else
@@ -78,8 +84,8 @@ module SplitIoClient
       # @param api_key [String] the API key for your split account
       #
       # @return [SplitIoClient] split.io client instance
-      def initialize(api_key, config = {}, adapter = nil)
-        @localhost_mode = false
+      def initialize(api_key, config = {}, adapter = nil, localhost_mode = false)
+        @localhost_mode = localhost_mode
         @localhost_mode_features = []
 
         @config = config
@@ -214,14 +220,23 @@ module SplitIoClient
       @adapter = api_key != 'localhost' \
       ? SplitAdapter.new(api_key, @config)
       : nil
+      @localhost_mode = api_key == 'localhost'
     end
 
     def client
-      @client ||= SplitClient.new(@api_key, @config, @adapter)
+      @client ||= SplitClient.new(@api_key, @config, @adapter, @localhost_mode)
     end
 
     def manager
-      @manager ||= SplitManager.new(@api_key, @config, @adapter)
+      @manager ||= SplitManager.new(@api_key, @config, @adapter, @localhost_mode)
+    end
+
+    #
+    # method that returns the sdk gem version
+    #
+    # @return [string] version value for this sdk
+    def self.sdk_version
+      'RubyClientSDK-'+SplitIoClient::VERSION
     end
 
     private
