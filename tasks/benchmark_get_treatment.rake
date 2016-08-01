@@ -28,7 +28,7 @@ def execute
 
   threads = []
   times_per_thread = iterations / 4
-  split_client = SplitIoClient::SplitClient.new(api_key, {base_uri: base_uri, logger: Logger.new("/dev/null") })
+  split_client = SplitIoClient::SplitFactory.new(api_key, {base_uri: base_uri, logger: Logger.new("/dev/null").client })
 
   puts Benchmark.measure{
     4.times do |i|

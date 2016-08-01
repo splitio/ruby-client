@@ -70,8 +70,10 @@ module SplitIoClient
             #splits fetcher
             splits_arr = []
             data = get_splits(@parsed_splits.since)
-            data[:splits].each do |split|
-              splits_arr << SplitIoClient::Split.new(split)
+            if data
+              data[:splits].each do |split|
+                splits_arr << SplitIoClient::Split.new(split)
+              end
             end
 
             if @parsed_splits.is_empty?
@@ -126,7 +128,7 @@ module SplitIoClient
     def call_api(path, params = {})
       @api_client.get @config.base_uri + path, params do |req|
         req.headers['Authorization'] = 'Bearer ' + @api_key
-        req.headers['SplitSDKVersion'] = SplitIoClient::SplitClient.sdk_version
+        req.headers['SplitSDKVersion'] = SplitIoClient::SplitFactory.sdk_version
         req.headers['SplitSDKMachineName'] = @config.machine_name
         req.headers['SplitSDKMachineIP'] = @config.machine_ip
         req.headers['Accept-Encoding'] = 'gzip'
@@ -147,7 +149,7 @@ module SplitIoClient
       @api_client.post (@config.events_uri + path) do |req|
         req.headers['Authorization'] = 'Bearer ' + @api_key
         req.headers['Content-Type'] = 'application/json'
-        req.headers['SplitSDKVersion'] = SplitIoClient::SplitClient.sdk_version
+        req.headers['SplitSDKVersion'] = SplitIoClient::SplitFactory.sdk_version
         req.headers['SplitSDKMachineName'] = @config.machine_name
         req.headers['SplitSDKMachineIP'] = @config.machine_ip
         req.body = param.to_json

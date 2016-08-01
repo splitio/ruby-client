@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe SplitIoClient do
-  subject { SplitIoClient::SplitClient.new('111',{base_uri: 'http://localhost:8081/api/', logger: Logger.new("/dev/null")}) }
+  subject { SplitIoClient::SplitFactory.new('111',{base_uri: 'http://localhost:8081/api/', logger: Logger.new("/dev/null")}).client }
 
   let(:segment) { SplitIoClient::Segment.new({:name=>"employees", :added=>["fake_user_id_1"], :removed=>[], :since=>-1, :till=>1452026405473}) }
 

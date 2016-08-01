@@ -1,3 +1,11 @@
+2.0.0
+
+Instantiation of the split client is now through a factory:
+
+  factory = SplitIoClient::SplitFactory.new("rbk5je8be5qflpa047m17fe4ra", options)
+  client = factory.client
+  manager = factory.manager
+
 1.0.4
 
 Added AND combiner for conditions support. Added events_uri config param which is the url where the metrics post are send to.
