@@ -1,3 +1,6 @@
+2.0.1
+- Supress warnings cause by Net::HTTP when it already exists.
+
 2.0.0
 - Add Factory for creation of Client and Manager interface.
 

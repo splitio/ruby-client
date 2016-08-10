@@ -1,7 +1,7 @@
 require 'json'
 require 'thread'
 require 'faraday/http_cache'
-require 'bundler/vendor/net/http/persistent'
+require 'bundler/vendor/net/http/persistent' unless defined?(Net::HTTP)
 require 'faraday_middleware'
 
 
