@@ -27,6 +27,7 @@ module SplitIoClient
     def initialize(opts = {})
       @base_uri = (opts[:base_uri] || SplitConfig.default_base_uri).chomp('/')
       @events_uri = (opts[:events_uri] || SplitConfig.default_events_uri).chomp('/')
+      @block_until_ready = (opts[:block_until_ready] || 0)
       @local_store = opts[:local_store] || SplitConfig.default_local_store
       @connection_timeout = opts[:connection_timeout] || SplitConfig.default_connection_timeout
       @read_timeout = opts[:read_timeout] || SplitConfig.default_read_timeout
@@ -86,6 +87,7 @@ module SplitIoClient
 
     attr_reader :machine_ip
     attr_reader :machine_name
+    attr_reader :block_until_ready
 
     attr_reader :features_refresh_rate
     attr_reader :segments_refresh_rate
