@@ -7,25 +7,33 @@ module SplitIoClient
       @splits_are_ready = CountDownLatch.new 1
       @segments_are_ready = {}
       @logger = logger
+      @gate_is_open = false
     end
 
-    def is_sdk_ready?(seconds)
-      are_splits_ready?(seconds) ? are_segments_ready?(seconds) : false
+    def is_sdk_ready?()
+      @gate_is_open
+    end
+
+    def is_open?
+      @gate_is_open == true
+    end
+
+    def is_gate_ready?(seconds)
+      if seconds == 0 && are_segments_ready?(seconds)
+        @gate_is_open = true
+      elsif seconds == 0 && !are_segments_ready?(seconds)
+        @gate_is_open = false
+      else
+        @gate_is_open = seconds
+      end
     end
 
     def are_segments_ready?(seconds)
-      end_time = seconds + 5
-      time_left = seconds
+      return false if @segments_are_ready.empty?
       @segments_are_ready.each do |segment|
         segment_name = segment[0]
-        count_down_latch = segment[1]
-
-        unless count_down_latch.wait(time_left)
-          @logger.error "#{segment_name} is not ready yet"
-          return false
-        end
+        return unless segment_is_ready?(segment_name)
       end
-
       return true
     end
 
@@ -33,7 +41,7 @@ module SplitIoClient
       count_down_latch = @segments_are_ready[segment_name]
       return unless count_down_latch
       original_count = count_down_latch.count
-      count_down_latch.count_down!
+      count_down_latch.countdown!
       @logger.debug "#{segment_name} is ready!" if original_count > 0
     end
 
@@ -51,8 +59,8 @@ module SplitIoClient
 
     def are_splits_ready?(seconds)
       begin
-        p "===== #{seconds}"
-        @splits_are_ready.wait(seconds)
+        @splits_are_ready.wait(seconds) unless seconds == 0
+        true
       rescue
         raise InterrumpedException.new(nil)
       end

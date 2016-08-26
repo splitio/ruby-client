@@ -217,18 +217,33 @@ module SplitIoClient
     def initialize(api_key, config = {})
       @api_key = api_key
       @config = SplitConfig.new(config)
+      @gate = SDKReadinessGate.new @config.logger
       @adapter = api_key != 'localhost' \
-      ? SplitAdapter.new(api_key, @config)
+      ? SplitAdapter.new(api_key, @config, @gate)
       : nil
       @localhost_mode = api_key == 'localhost'
     end
 
     def client
-      @client ||= SplitClient.new(@api_key, @config, @adapter, @localhost_mode)
+      gate_status = @gate.is_sdk_ready?
+      if gate_status == true || @config.block_until_ready == 0
+        @client ||= SplitClient.new(@api_key, @config, @adapter, @localhost_mode)
+      elsif gate_status == false
+        raise TimeOutException
+      else
+        gate_status
+      end
     end
 
     def manager
-      @manager ||= SplitManager.new(@api_key, @config, @adapter, @localhost_mode)
+      gate_status = @gate.is_sdk_ready?
+      if gate_status || @config.block_until_ready
+        @manager ||= SplitManager.new(@api_key, @config, @adapter, @localhost_mode)
+      elsif gate_status == false
+        raise TimeOutException
+      else
+        gate_status
+      end
     end
 
     #
@@ -237,6 +252,13 @@ module SplitIoClient
     # @return [string] version value for this sdk
     def self.sdk_version
       'RubyClientSDK-'+SplitIoClient::VERSION
+    end
+
+
+    class TimeOutException < StandardError
+      def initialize
+        super
+      end
     end
 
     private
