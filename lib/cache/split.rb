@@ -1,15 +1,17 @@
 class SplitIoClient::Cache::Split
-  attr_accessor :change_number
-
-  def initialize
+  def initialize(adapter)
+    @adapter = adapter.new
   end
 
-  def add(name, data)
+  def []=(name, keys)
+    @adapter.set(name, keys)
+  end
+
+  def [](name)
+    @adapter.get(name)
   end
 
   def remove(name)
-  end
-
-  def get(name)
+    @adapter.remove(name)
   end
 end
