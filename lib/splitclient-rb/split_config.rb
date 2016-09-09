@@ -38,6 +38,8 @@ module SplitIoClient
       @debug_enabled = opts[:debug_enabled] || SplitConfig.default_debug
       @machine_name = SplitConfig.get_hostname
       @machine_ip = SplitConfig.get_ip
+
+      log_loaded_cache
     end
 
     #
@@ -173,6 +175,14 @@ module SplitIoClient
       error_traceback = "#{exn.inspect} #{exn}\n\t#{exn.backtrace.join("\n\t")}"
       error = "[splitclient-rb] Unexpected exception in #{caller}: #{error_traceback}"
       @logger.error(error)
+    end
+
+    #
+    # log which cache class was loaded
+    #
+    # @return [void]
+    def log_loaded_cache
+      @logger.debug("Loaded cache class: #{@local_store.class}")
     end
 
     #
