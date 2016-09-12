@@ -36,7 +36,7 @@ module SplitIoClient
 
     #
     # @return [boolean] true if the splits content is empty false otherwise
-    def is_empty?
+    def empty?
       @splits.empty? ? true : false
     end
 

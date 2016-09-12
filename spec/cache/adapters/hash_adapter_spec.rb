@@ -3,7 +3,7 @@ require 'pry'
 
 describe SplitIoClient::Cache::Segment do
   context 'HashAdapter' do
-    let(:segment) { described_class.new(SplitIoClient::Cache::Adapters::HashAdapter) }
+    let(:segment) { described_class.new(SplitIoClient::Cache::Adapters::HashAdapter.new) }
 
     it 'assigns keys' do
       segment['foo'] = %w(one two)

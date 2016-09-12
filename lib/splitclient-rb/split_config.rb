@@ -38,6 +38,7 @@ module SplitIoClient
       @debug_enabled = opts[:debug_enabled] || SplitConfig.default_debug
       @machine_name = SplitConfig.get_hostname
       @machine_ip = SplitConfig.get_ip
+      @cache_adapter = opts[:cache_adapter] || SplitConfig.default_cache_adapter
     end
 
     #
@@ -201,5 +202,8 @@ module SplitIoClient
       end
     end
 
+    def default_cache_adapter
+      SplitIoClient::Cache::Adapters::HashAdapter.new
+    end
   end
 end

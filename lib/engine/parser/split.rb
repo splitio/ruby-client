@@ -63,6 +63,14 @@ module SplitIoClient
       conditions_list
     end
 
+    def to_h
+      {
+        name: name,
+        seed: seed,
+        status: status,
+        killed: killed?,
+        conditions: conditions
+      }
+    end
   end
-
 end
