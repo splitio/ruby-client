@@ -17,22 +17,21 @@ class SplitIoClient::Cache::Split
     @adapter.remove(key)
   end
 
-  def add_splits(data)
+  def add_split(split)
     @adapter['splits'] = [] if @adapter['splits'].nil?
 
-    @adapter['splits'] = [@adapter['splits'], data].flatten
+    @adapter['splits'] << split
   end
 
-  def refresh_splits(data)
-    names = [data].flatten.map { |s| s[:name] }
-    refreshed_splits = @adapter['splits'].delete_if { |s| names.include? s[:name] }
+  def refresh_splits(split)
+    @adapter['splits'].delete_if { |s| s[:name] == split[:name] }
 
-    @adapter['splits'] = [refreshed_splits, data].flatten
+    add_split(split)
   end
 
-  def add_and_refresh(data)
-    add_splits(data)
-    refresh_splits(data)
+  def add_and_refresh(split)
+    add_split(split)
+    refresh_splits(split)
   end
 
   def since
