@@ -114,8 +114,6 @@ module SplitIoClient
 
     # @return [LocalStore] configuration value for local cache store
     def self.default_cache_adapter
-      # by default Rails.cache is using FileStore, which means it's slow
-      # I think we shouldn't use it with Rails by default
       SplitIoClient::Cache::Adapters::HashAdapter.new
     end
 
