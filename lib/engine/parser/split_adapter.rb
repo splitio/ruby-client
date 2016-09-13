@@ -95,36 +95,6 @@ module SplitIoClient
     end
 
     #
-    # helper method to refresh splits values after a new fetch with changes
-    #
-    # @param splits_arr [object] array of splits to refresh
-    #
-    # @return [void]
-    def refresh_splits(splits_arr)
-      feature_names = splits_arr.map { |s| s.name }
-      @parsed_splits.splits.delete_if { |sp| feature_names.include?(sp.name) }
-      @parsed_splits.splits += splits_arr
-    end
-
-    #
-    # helper method to refresh segments values after a new fetch with changes
-    #
-    # @param segments_arr [object] array of segments to refresh
-    #
-    # @return [void]
-    def refresh_segments(segments_arr)
-      segment_names = @parsed_segments.segments.map { |s| s.name }
-      segments_arr.each do |s|
-        if segment_names.include?(s.name)
-          segment_to_update = @parsed_segments.get_segment(s.name)
-          segment_to_update.refresh_users(s.added, s.removed)
-        else
-          @parsed_segments.segments << s
-        end
-      end
-    end
-
-    #
     # @return parsed_splits [object] parsed splits for this adapter
     def parsed_splits
       @parsed_splits

@@ -27,7 +27,7 @@ module SplitIoClient
     def initialize(opts = {})
       @base_uri = (opts[:base_uri] || SplitConfig.default_base_uri).chomp('/')
       @events_uri = (opts[:events_uri] || SplitConfig.default_events_uri).chomp('/')
-      @local_store = opts[:local_store] || SplitConfig.default_local_store
+      @cache_adapter = opts[:cache_adapter] || SplitConfig.default_cache_adapter
       @connection_timeout = opts[:connection_timeout] || SplitConfig.default_connection_timeout
       @read_timeout = opts[:read_timeout] || SplitConfig.default_read_timeout
       @features_refresh_rate = opts[:features_refresh_rate] || SplitConfig.default_features_refresh_rate
@@ -38,7 +38,6 @@ module SplitIoClient
       @debug_enabled = opts[:debug_enabled] || SplitConfig.default_debug
       @machine_name = SplitConfig.get_hostname
       @machine_ip = SplitConfig.get_ip
-      @cache_adapter = opts[:cache_adapter] || SplitConfig.default_cache_adapter
     end
 
     #
@@ -114,8 +113,10 @@ module SplitIoClient
     end
 
     # @return [LocalStore] configuration value for local cache store
-    def self.default_local_store
-      defined?(Rails) && Rails.respond_to?(:cache) ? Rails.cache : LocalStore.new
+    def self.default_cache_adapter
+      # by default Rails.cache is using FileStore, which means it's slow
+      # I think we shouldn't use it with Rails by default
+      SplitIoClient::Cache::Adapters::HashAdapter.new
     end
 
     #
@@ -200,10 +201,6 @@ module SplitIoClient
         #unable to get local ip
         '127.0.0.0'
       end
-    end
-
-    def default_cache_adapter
-      SplitIoClient::Cache::Adapters::HashAdapter.new
     end
   end
 end

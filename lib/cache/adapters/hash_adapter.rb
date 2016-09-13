@@ -7,11 +7,11 @@ module SplitIoClient
           @hash = {}
         end
 
-        def set(key, obj)
+        def []=(key, obj)
           @hash[key] = obj
         end
 
-        def get(key)
+        def [](key)
           @hash[key]
         end
 

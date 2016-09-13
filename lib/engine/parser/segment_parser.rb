@@ -37,10 +37,15 @@ module SplitIoClient
 
     #
     # @return [boolean] true if the segment parser data is empty false otherwise
-    def is_empty?
+    def empty?
       @segments.empty? ? true : false
     end
 
+    def to_h
+      {
+        segments: segments,
+        since: since
+      }
+    end
   end
-
 end

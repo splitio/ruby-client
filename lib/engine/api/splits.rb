@@ -2,9 +2,9 @@ module SplitIoClient
   module Api
     class Splits < Client
       def initialize(api_key, config, metrics)
+        @api_key = api_key
         @config = config
         @metrics = metrics
-        @api_key = api_key
       end
 
       def since(since)
