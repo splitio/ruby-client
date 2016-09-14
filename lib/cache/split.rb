@@ -1,8 +1,9 @@
 class SplitIoClient::Cache::Split
-  attr_writer :since
-
   def initialize(adapter)
     @adapter = adapter
+
+    @adapter['since'] = -1
+    @adapter['splits'] = []
   end
 
   def []=(key, obj)
@@ -17,24 +18,24 @@ class SplitIoClient::Cache::Split
     @adapter.remove(key)
   end
 
-  def add_split(split)
-    @adapter['splits'] = [] if @adapter['splits'].nil?
+  def add(split)
+    stored_splits = self['splits']
+    refreshed_splits = stored_splits.reject { |s| s[:name] == split[:name] }
 
-    @adapter['splits'] << split
+    self['splits'] = refreshed_splits + [split]
   end
 
-  def refresh_splits(split)
-    @adapter['splits'].delete_if { |s| s[:name] == split[:name] }
+  def used_segments_names
+    self['splits'].each_with_object([]) do |split, names|
+      SplitIoClient::Split.new(split).conditions.each do |condition|
+        next if condition.matchers.nil?
 
-    add_split(split)
-  end
+        condition.matchers.each do |matcher|
+          next if matcher[:userDefinedSegmentMatcherData].nil?
 
-  def add_and_refresh(split)
-    add_split(split)
-    refresh_splits(split)
-  end
-
-  def since
-    @since || -1
+          names << matcher[:userDefinedSegmentMatcherData].values
+        end
+      end
+    end.flatten.uniq
   end
 end

@@ -2,10 +2,10 @@ module SplitIoClient
   module Cache
     module Stores
       class SplitStore
-        attr_reader :split_cache
+        attr_reader :splits_cache
 
-        def initialize(adapter, config, api_key, metrics)
-          @split_cache = SplitIoClient::Cache::Split.new(adapter)
+        def initialize(splits_cache, config, api_key, metrics)
+          @splits_cache = splits_cache
           @config = config
           @api_key = api_key
           @metrics = metrics
@@ -13,10 +13,14 @@ module SplitIoClient
 
         def call
           Thread.new do
-            loop do
-              store_splits
+            begin
+              loop do
+                store_splits
 
-              sleep(random_interval)
+                sleep(random_interval(@config.features_refresh_rate))
+              end
+            rescue StandardError => error
+              @config.log_found_exception(__method__.to_s, error)
             end
           end
         end
@@ -24,18 +28,16 @@ module SplitIoClient
         private
 
         def store_splits
-          data = splits_since(@split_cache.since)
+          data = splits_since(@splits_cache['since'])
 
           data[:splits] && data[:splits].each do |split|
-            @split_cache.add_and_refresh(SplitIoClient::Split.new(split).to_h)
+            @splits_cache.add(split)
           end
 
-          @split_cache.since = data[:till]
-        rescue StandardError => error
-          @config.log_found_exception(__method__.to_s, error)
+          @splits_cache['since'] = data[:till]
         end
 
-        def random_interval
+        def random_interval(interval)
           random_factor = Random.new.rand(50..100) / 100.0
 
           interval * random_factor

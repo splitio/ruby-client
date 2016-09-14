@@ -1,27 +1,28 @@
 class SplitIoClient::Cache::Segment
   def initialize(adapter)
-    @adapter = adapter.new
+    @adapter = adapter
+
+    @adapter['since'] = -1
+    @adapter['segments'] = []
+    @adapter['added_users'] = []
+    @adapter['removed_users'] = []
   end
 
-  def []=(name, keys)
-    @adapter.set(name, keys)
+  def []=(key, obj)
+    @adapter[key] = obj
   end
 
-  def [](name)
-    @adapter.get(name)
+  def [](key)
+    @adapter[key]
   end
 
-  def add_keys(name, keys)
-    self[name] = (self[name].empty? ? keys : [self[name], keys].flatten)
+  def add(segment)
+    stored_segments = self['segments']
+
+    self['segments'] = stored_segments + [segment]
   end
 
-  def remove_keys(name, keys)
-    new_keys = @adapter.get(name).reject { |key| keys.include? key }
-
-    self[name] = new_keys
-  end
-
-  def in?(name, key)
-    self[name].include? key
+  def find(name)
+    self['segments'].find { |s| s[:name] == name }
   end
 end

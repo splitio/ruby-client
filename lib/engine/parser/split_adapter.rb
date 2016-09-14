@@ -45,8 +45,9 @@ module SplitIoClient
       @parsed_segments = SegmentParser.new(@config.logger)
       @impressions = Impressions.new(100)
       @metrics = Metrics.new(100)
-      # TODO: Store adapter in @config
-      @cache_adapter = SplitIoClient::Cache::Adapters::HashAdapter.new
+      @cache_adapter = @config.cache_adapter
+      @split_cache = SplitIoClient::Cache::Split.new(@cache_adapter)
+      @segment_cache = SplitIoClient::Cache::Segment.new(@cache_adapter)
 
       @api_client = Faraday.new do |builder|
         builder.use FaradayMiddleware::Gzip
@@ -57,6 +58,7 @@ module SplitIoClient
       @segments_consumer = create_segments_api_consumer
       @metrics_producer = create_metrics_api_producer
       @impressions_producer = create_impressions_api_producer
+
     end
 
     #
@@ -66,11 +68,11 @@ module SplitIoClient
     #
     # @return [void]
     def create_splits_api_consumer
-      SplitIoClient::Stores::SplitStore.new(@cache_adapter, @config, @api_key).call
+      SplitIoClient::Stores::SplitStore.new(@split_cache, @config, @api_key, @metrics).call
     end
 
     def create_segments_api_consumer
-      SplitIoClient::Stores::SegmentStore.new(@cache_adapter, @config, @api_key).call
+      SplitIoClient::Stores::SegmentStore.new(@segment_cache, @split_cache, @config, @api_key, @metrics).call
     end
 
     #

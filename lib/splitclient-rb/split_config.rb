@@ -66,6 +66,12 @@ module SplitIoClient
     attr_reader :read_timeout
 
     #
+    # The cache adapter to store splits/segments in
+    #
+    # @return [Object] Cache adapter instance
+    attr_reader :cache_adapter
+
+    #
     # The connection timeout for network connections in seconds.
     #
     # @return [Int] The connect timeout in seconds.
