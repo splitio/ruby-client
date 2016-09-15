@@ -37,7 +37,7 @@ module SplitIoClient
     #
     # @return [boolean] true if the splits content is empty false otherwise
     def empty?
-      @splits.empty? ? true : false
+      @splits.empty?
     end
 
     #
@@ -80,7 +80,7 @@ module SplitIoClient
     # @return treatment [object] treatment for this user key, split pair
     def get_split_treatment(id, name, default_treatment, attributes = nil)
       split = get_split(name)
-      if !split.is_empty? && split.status == 'ACTIVE' && !split.killed?
+      if !split.empty? && split.status == 'ACTIVE' && !split.killed?
         split.conditions.each do |condit|
           unless condit.is_empty?
             matcher = get_matcher_type condit
@@ -92,7 +92,7 @@ module SplitIoClient
             end
           end
         end
-      elsif !split.is_empty? && split.status == 'ARCHIVED'
+      elsif !split.empty? && split.status == 'ARCHIVED'
         return Treatments::CONTROL
       end
       default_treatment

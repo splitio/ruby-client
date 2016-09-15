@@ -153,14 +153,18 @@ module SplitIoClient
       #
       # @return [Treatment]  tretment constant value
       def get_treatment_without_exception_handling(id, feature, attributes = nil)
-        @adapter.parsed_splits.segments = @adapter.parsed_segments
-        split = @adapter.parsed_splits.get_split(feature)
+        # @adapter.parsed_splits.segments = @adapter.parsed_segments
+        splits_parser = SplitIoClient::SplitParser.new(@config.logger)
+        splits_parser.splits = @adapter.split_cache['splits'].map { |s| SplitIoClient::Split.new(s) }
+        splits_parser.segments = @adapter.segment_cache['segments'].map { |s| SplitIoClient::Segment.new(s) }
+
+        split = splits_parser.get_split(feature)
 
         if split.nil?
           return Treatments::CONTROL
         else
           default_treatment = split.data[:defaultTreatment]
-          return @adapter.parsed_splits.get_split_treatment(id, feature, default_treatment, attributes)
+          return splits_parser.get_split_treatment(id, feature, default_treatment, attributes)
         end
       end
 

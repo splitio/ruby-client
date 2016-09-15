@@ -15,7 +15,7 @@ module SplitIoClient
 
         names.each do |name|
           curr_segment = @segment_cache.find(name)
-          since = curr_segment.nil? ? -1 : curr_segment.till
+          since = curr_segment.nil? ? -1 : curr_segment[:till]
 
           while true
             segments << fetch_segments(name, prefix, since)

@@ -25,6 +25,10 @@ class SplitIoClient::Cache::Split
     self['splits'] = refreshed_splits + [split]
   end
 
+  def find(name)
+    self['splits'].find { |s| s[:name] == name }
+  end
+
   def used_segments_names
     self['splits'].each_with_object([]) do |split, names|
       SplitIoClient::Split.new(split).conditions.each do |condition|

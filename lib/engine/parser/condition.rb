@@ -46,6 +46,7 @@ module SplitIoClient
     def matcher_in_segment params
       matcher = params[:matcher]
       segments = params[:segments]
+
       segment = segments.get_segment(matcher[:userDefinedSegmentMatcherData][:segmentName])
       segment.is_empty? ? UserDefinedSegmentMatcher.new(nil) : UserDefinedSegmentMatcher.new(segment)
     end

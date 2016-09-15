@@ -31,6 +31,8 @@ module SplitIoClient
 
     attr_reader :impressions_producer
 
+    attr_reader :split_cache, :segment_cache
+
     #
     # Creates a new split api adapter instance that consumes split api endpoints
     #
@@ -68,11 +70,11 @@ module SplitIoClient
     #
     # @return [void]
     def create_splits_api_consumer
-      SplitIoClient::Stores::SplitStore.new(@split_cache, @config, @api_key, @metrics).call
+      SplitIoClient::Cache::Stores::SplitStore.new(@split_cache, @config, @api_key, @metrics).call
     end
 
     def create_segments_api_consumer
-      SplitIoClient::Stores::SegmentStore.new(@segment_cache, @split_cache, @config, @api_key, @metrics).call
+      SplitIoClient::Cache::Stores::SegmentStore.new(@segment_cache, @split_cache, @config, @api_key, @metrics).call
     end
 
     #
