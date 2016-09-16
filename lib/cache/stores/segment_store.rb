@@ -31,7 +31,7 @@ module SplitIoClient
           data = segments_by_names(@segments_repository.used_segment_names)
 
           data && data.each do |segment|
-            @segments_repository.add(segment)
+            @segments_repository.add_to_segment(segment)
           end
         end
 

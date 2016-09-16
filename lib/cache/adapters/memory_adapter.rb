@@ -1,7 +1,6 @@
 module SplitIoClient
   module Cache
     module Adapters
-      # TODO: Use thread-safe data structure
       class MemoryAdapter < Adapter
         def initialize
           @hash = {}
@@ -28,17 +27,29 @@ module SplitIoClient
           @hash[key] << values
         end
 
-        # Hash
         def remove_from_set(key, data)
           data.is_a?(Enumerable) ? @hash[key].subtract(data) : @hash[key].delete(data)
         end
 
+        def in_set?(key, value)
+          @hash[key].include?(value)
+        end
+
+        # Hash
         def add_to_hash(key, hash_key, hash_value)
           @hash[key].store(hash_key, hash_value)
         end
 
         def find_in_hash(key, hash_key)
           @hash.fetch(key, {})[hash_key]
+        end
+
+        def remove_from_hash(key, hash_keys)
+          if hash_keys.is_a?(Enumerable)
+            @hash[key].delete_if { |k, _| hash_keys.include?(k) }
+          else
+            @hash[key].delete(hash_keys)
+          end
         end
       end
     end

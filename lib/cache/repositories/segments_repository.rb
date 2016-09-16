@@ -2,33 +2,36 @@ module SplitIoClient
   module Cache
     module Repositories
       class SegmentsRepository < Repository
-        def initialize(adapter)
-          super
+        def add_to_segment(name, keys)
+          # NOTE: The desired structure here would look like:
+          # segments = { 'segment_name' => Set ['segment_key1', 'segment_key2'] }
+          # But, since Redis does not support nesting data structures we need to store
+          # segment name directly in the name of the Set
 
-          @adapter[namespace_key('since')] = -1
-          @adapter[namespace_key('till')] = nil
-          @adapter[namespace_key('names')] = Set.new
-          @adapter[namespace_key('keys')] = Set.new
-          @adapter[namespace_key('segments')] = {}
+          # TODO: Initialize empty set
+          @adapter.add_to_set(namespace_key("segments:#{name}"), keys)
         end
 
-        def add(segment)
-          segment_without_name = segment.select { |k, _| k != :name }
-
-          @adapter.add_to_hash(namespace_key('segments'), segment[:name], segment_without_name)
-
-          @adapter.add_to_set(namespace_key('names'), segment[:name])
-
-          @adapter.add_to_set(namespace_key('keys'), segment[:added])
-          @adapter.remove_from_set(namespace_key('keys'), segment[:removed])
+        def remove_from_segment(name, keys)
+          @adapter.remove_from_set(namespace_key("segments:#{name}"), keys)
         end
 
-        def find(name)
-          @adapter.find_in_hash(namespace_key('segments'), name)
+        def in_segment?(name, key)
+          @adapter.in_set?(namespace_key("segments:#{name}"), key)
         end
 
         def used_segment_names
           @adapter['splits_repository_used_segment_names']
+        end
+
+        def set_change_number(name, last_change)
+          # TODO: Initialize empty hash
+
+          @adapter.add_to_hash(namespace_key('changes'), name, last_change)
+        end
+
+        def get_change_number(name)
+          @adapter.add_to_hash(namespace_key('changes'), name)
         end
 
         private

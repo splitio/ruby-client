@@ -14,12 +14,15 @@ module SplitIoClient
         prefix = 'segmentChangeFetcher'
 
         names.each do |name|
-          curr_segment = @segments_repository.find(name)
-          since = curr_segment.nil? ? -1 : curr_segment[:till]
+          # TODO: Probably won't work in specs, check
+          # Working version:
+          # curr_segment = @segments_repository.find(name)
+          # since = curr_segment.nil? ? -1 : curr_segment[:till]
 
+          since = @segments_repository.get_change_number(name)
           while true
             segments << fetch_segments(name, prefix, since)
-
+            # TODO: Continue from here
             break if (since.to_i >= @segments_repository['since'].to_i)
             since = @segments_repository['since']
           end

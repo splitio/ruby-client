@@ -28,14 +28,14 @@ module SplitIoClient
         private
 
         def store_splits
-          data = splits_since(@splits_repository['since'])
+          data = splits_since(@splits_repository.get_change_number)
 
           data[:splits] && data[:splits].each do |split|
-            @splits_repository.add(split)
+            @splits_repository.add_split(split)
           end
 
           @splits_repository['used_segment_names'] = data[:segment_names]
-          @splits_repository['since'] = data[:till]
+          @splits_repository.set_change_number(data[:till])
         end
 
         def random_interval(interval)
