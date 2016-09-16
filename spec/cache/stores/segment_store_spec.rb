@@ -36,12 +36,6 @@ describe SplitIoClient::Cache::Stores::SegmentStore do
     expect(segments).to eq(segment_data)
   end
 
-  it 'returns used segments names' do
-    split_store.send(:store_splits)
-
-    expect(split_store.splits_cache.used_segments_names).to eq(%w(employees))
-  end
-
   it 'stores segments' do
     split_store.send(:store_splits)
     segment_store.send(:store_segments)

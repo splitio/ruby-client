@@ -28,18 +28,4 @@ class SplitIoClient::Cache::Split
   def find(name)
     self['splits'].find { |s| s[:name] == name }
   end
-
-  def used_segments_names
-    self['splits'].each_with_object([]) do |split, names|
-      SplitIoClient::Split.new(split).conditions.each do |condition|
-        next if condition.matchers.nil?
-
-        condition.matchers.each do |matcher|
-          next if matcher[:userDefinedSegmentMatcherData].nil?
-
-          names << matcher[:userDefinedSegmentMatcherData].values
-        end
-      end
-    end.flatten.uniq
-  end
 end

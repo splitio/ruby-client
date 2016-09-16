@@ -44,7 +44,9 @@
                         "keySelector":null,
                         "matcherType":"WHITELIST",
                         "negate":false,
-                        "userDefinedSegmentMatcherData":null,
+                        "userDefinedSegmentMatcherData":{
+                           "segmentName":"demo"
+                        },
                         "whitelistMatcherData":{
                            "whitelist":[
                               "george"

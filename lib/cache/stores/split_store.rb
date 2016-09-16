@@ -33,6 +33,7 @@ module SplitIoClient
           data[:splits] && data[:splits].each do |split|
             @splits_cache.add(split)
           end
+          @splits_cache['segment_names'] = data[:segment_names]
 
           @splits_cache['since'] = data[:till]
         end

@@ -29,7 +29,7 @@ module SplitIoClient
         private
 
         def store_segments
-          data = segments_by_names(@splits_cache.used_segments_names)
+          data = segments_by_names(@splits_cache['segment_names'])
 
           data && data.each do |segment|
             @segment_cache.add(segment)
