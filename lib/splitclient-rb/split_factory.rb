@@ -155,8 +155,8 @@ module SplitIoClient
       def get_treatment_without_exception_handling(id, feature, attributes = nil)
         # @adapter.parsed_splits.segments = @adapter.parsed_segments
         splits_parser = SplitIoClient::SplitParser.new(@config.logger)
-        splits_parser.splits = @adapter.split_cache['splits'].map { |s| SplitIoClient::Split.new(s) }
-        splits_parser.segments = @adapter.segment_cache['segments'].map { |s| SplitIoClient::Segment.new(s) }
+        splits_parser.splits = @adapter.splits_repository['splits'].map { |s| SplitIoClient::Split.new(s) }
+        splits_parser.segments = @adapter.segments_repository['segments'].map { |s| SplitIoClient::Segment.new(s) }
 
         split = splits_parser.get_split(feature)
 

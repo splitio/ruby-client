@@ -3,12 +3,12 @@ require 'pry'
 
 describe SplitIoClient::Cache::Stores::SegmentStore do
   let(:adapter) { SplitIoClient::Cache::Adapters::HashAdapter.new }
-  let(:segment_cache) { SplitIoClient::Cache::Segment.new(adapter) }
-  let(:split_cache) { SplitIoClient::Cache::Split.new(adapter) }
+  let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentRepository.new(adapter) }
+  let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitRepository.new(adapter) }
   let(:config) { SplitIoClient::SplitConfig.new }
   let(:metrics) { SplitIoClient::Metrics.new(100) }
-  let(:segment_store) { described_class.new(segment_cache, split_store.splits_cache, config, '', metrics) }
-  let(:split_store) { SplitIoClient::Cache::Stores::SplitStore.new(split_cache, config, '', metrics) }
+  let(:segment_store) { described_class.new(segments_repository, config, '', metrics) }
+  let(:split_store) { SplitIoClient::Cache::Stores::SplitStore.new(splits_repository, config, '', metrics) }
   let(:segments_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/segments/segments.json'))) }
   let(:segments_json2) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/segments/segments2.json'))) }
   let(:splits_with_segments_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/splits/splits3.json'))) }
@@ -31,7 +31,7 @@ describe SplitIoClient::Cache::Stores::SegmentStore do
   end
 
   it 'returns segments by names' do
-    segments = segment_store.send(:segments_by_names, ['employees'])
+    segments = segment_store.send(:segments_by_names, %w(employees))
 
     expect(segments).to eq(segment_data)
   end
@@ -40,7 +40,7 @@ describe SplitIoClient::Cache::Stores::SegmentStore do
     split_store.send(:store_splits)
     segment_store.send(:store_segments)
 
-    expect(segment_store.segment_cache['segments'].size).to eq(2)
+    expect(segment_store.segments_repository['segments'].keys).to eq(%w(employees))
   end
 
   it 'updates added/removed' do

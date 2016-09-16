@@ -31,7 +31,7 @@ module SplitIoClient
 
     attr_reader :impressions_producer
 
-    attr_reader :split_cache, :segment_cache
+    attr_reader :splits_repository, :segments_repository
 
     #
     # Creates a new split api adapter instance that consumes split api endpoints
@@ -48,8 +48,8 @@ module SplitIoClient
       @impressions = Impressions.new(100)
       @metrics = Metrics.new(100)
       @cache_adapter = @config.cache_adapter
-      @split_cache = SplitIoClient::Cache::Split.new(@cache_adapter)
-      @segment_cache = SplitIoClient::Cache::Segment.new(@cache_adapter)
+      @splits_repository = SplitIoClient::Cache::Split.new(@cache_adapter)
+      @segments_repository = SplitIoClient::Cache::Segment.new(@cache_adapter)
 
       @api_client = Faraday.new do |builder|
         builder.use FaradayMiddleware::Gzip
@@ -70,11 +70,11 @@ module SplitIoClient
     #
     # @return [void]
     def create_splits_api_consumer
-      SplitIoClient::Cache::Stores::SplitStore.new(@split_cache, @config, @api_key, @metrics).call
+      SplitIoClient::Cache::Stores::SplitStore.new(@splits_repository, @config, @api_key, @metrics).call
     end
 
     def create_segments_api_consumer
-      SplitIoClient::Cache::Stores::SegmentStore.new(@segment_cache, @split_cache, @config, @api_key, @metrics).call
+      SplitIoClient::Cache::Stores::SegmentStore.new(@segments_repository, @splits_repository, @config, @api_key, @metrics).call
     end
 
     #

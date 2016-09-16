@@ -2,10 +2,10 @@ module SplitIoClient
   module Cache
     module Stores
       class SplitStore
-        attr_reader :splits_cache
+        attr_reader :splits_repository
 
-        def initialize(splits_cache, config, api_key, metrics)
-          @splits_cache = splits_cache
+        def initialize(splits_repository, config, api_key, metrics)
+          @splits_repository = splits_repository
           @config = config
           @api_key = api_key
           @metrics = metrics
@@ -28,14 +28,14 @@ module SplitIoClient
         private
 
         def store_splits
-          data = splits_since(@splits_cache['since'])
+          data = splits_since(@splits_repository['since'])
 
           data[:splits] && data[:splits].each do |split|
-            @splits_cache.add(split)
+            @splits_repository.add(split)
           end
-          @splits_cache['segment_names'] = data[:segment_names]
 
-          @splits_cache['since'] = data[:till]
+          @splits_repository['used_segment_names'] = data[:segment_names]
+          @splits_repository['since'] = data[:till]
         end
 
         def random_interval(interval)

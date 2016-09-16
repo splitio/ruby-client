@@ -2,11 +2,10 @@ module SplitIoClient
   module Cache
     module Stores
       class SegmentStore
-        attr_reader :segment_cache
+        attr_reader :segments_repository
 
-        def initialize(segment_cache, splits_cache, config, api_key, metrics)
-          @segment_cache = segment_cache
-          @splits_cache = splits_cache
+        def initialize(segments_repository, config, api_key, metrics)
+          @segments_repository = segments_repository
           @config = config
           @api_key = api_key
           @metrics = metrics
@@ -29,10 +28,10 @@ module SplitIoClient
         private
 
         def store_segments
-          data = segments_by_names(@splits_cache['segment_names'])
+          data = segments_by_names(@segments_repository.used_segment_names)
 
           data && data.each do |segment|
-            @segment_cache.add(segment)
+            @segments_repository.add(segment)
           end
         end
 
@@ -43,7 +42,7 @@ module SplitIoClient
         end
 
         def segments_api
-          SplitIoClient::Api::Segments.new(@api_key, @config, @metrics, @segment_cache)
+          SplitIoClient::Api::Segments.new(@api_key, @config, @metrics, @segments_repository)
         end
 
         def segments_by_names(names)

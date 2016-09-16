@@ -1,11 +1,11 @@
 module SplitIoClient
   module Api
     class Segments < Client
-      def initialize(api_key, config, metrics, segment_cache)
+      def initialize(api_key, config, metrics, segments_repository)
         @config = config
         @metrics = metrics
         @api_key = api_key
-        @segment_cache = segment_cache
+        @segments_repository = segments_repository
       end
 
       def by_names(names)
@@ -14,14 +14,14 @@ module SplitIoClient
         prefix = 'segmentChangeFetcher'
 
         names.each do |name|
-          curr_segment = @segment_cache.find(name)
+          curr_segment = @segments_repository.find(name)
           since = curr_segment.nil? ? -1 : curr_segment[:till]
 
           while true
             segments << fetch_segments(name, prefix, since)
 
-            break if (since.to_i >= @segment_cache['since'].to_i)
-            since = @segment_cache['since']
+            break if (since.to_i >= @segments_repository['since'].to_i)
+            since = @segments_repository['since']
           end
         end
 
@@ -39,7 +39,7 @@ module SplitIoClient
 
         if segment.status / 100 == 2
           segment_content = JSON.parse(segment.body, symbolize_names: true)
-          @segment_cache['since'] = segment_content[:till]
+          @segments_repository['since'] = segment_content[:till]
           @metrics.count(prefix + '.status.' + segment.status.to_s, 1)
 
           @config.logger.info("\'#{segment_content[:name]}\' segment retrieved.")
