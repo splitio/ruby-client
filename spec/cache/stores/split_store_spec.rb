@@ -2,8 +2,8 @@ require 'spec_helper'
 require 'pry'
 
 describe SplitIoClient::Cache::Stores::SplitStore do
-  let(:adapter) { SplitIoClient::Cache::Adapters::HashAdapter.new }
-  let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitRepository.new(adapter) }
+  let(:adapter) { SplitIoClient::Cache::Adapters::MemoryAdapter.new }
+  let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(adapter) }
   let(:config) { SplitIoClient::SplitConfig.new }
   let(:metrics) { SplitIoClient::Metrics.new(100) }
   let(:store) { described_class.new(splits_repository, config, '', metrics) }
@@ -31,7 +31,7 @@ describe SplitIoClient::Cache::Stores::SplitStore do
   it 'refreshes splits' do
     store.send(:store_splits)
 
-    active_split = store.splits_repository['splits'].find { |s| s[:name] == 'test_1_ruby' }
+    active_split = store.splits_repository['splits']['test_1_ruby']
     expect(active_split[:status]).to eq('ACTIVE')
 
     stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1473413807667')
@@ -39,7 +39,7 @@ describe SplitIoClient::Cache::Stores::SplitStore do
 
     store.send(:store_splits)
 
-    archived_split = store.splits_repository['splits'].find { |s| s[:name] == 'test_1_ruby' }
+    archived_split = store.splits_repository['splits']['test_1_ruby']
     expect(archived_split[:status]).to eq('ARCHIVED')
   end
 end

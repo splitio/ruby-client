@@ -120,7 +120,7 @@ module SplitIoClient
 
     # @return [LocalStore] configuration value for local cache store
     def self.default_cache_adapter
-      SplitIoClient::Cache::Adapters::HashAdapter.new
+      SplitIoClient::Cache::Adapters::MemoryAdapter.new
     end
 
     #

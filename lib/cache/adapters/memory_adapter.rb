@@ -2,7 +2,7 @@ module SplitIoClient
   module Cache
     module Adapters
       # TODO: Use thread-safe data structure
-      class HashAdapter < Adapter
+      class MemoryAdapter < Adapter
         def initialize
           @hash = {}
         end

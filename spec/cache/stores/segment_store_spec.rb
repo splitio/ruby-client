@@ -2,9 +2,9 @@ require 'spec_helper'
 require 'pry'
 
 describe SplitIoClient::Cache::Stores::SegmentStore do
-  let(:adapter) { SplitIoClient::Cache::Adapters::HashAdapter.new }
-  let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentRepository.new(adapter) }
-  let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitRepository.new(adapter) }
+  let(:adapter) { SplitIoClient::Cache::Adapters::MemoryAdapter.new }
+  let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(adapter) }
+  let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(adapter) }
   let(:config) { SplitIoClient::SplitConfig.new }
   let(:metrics) { SplitIoClient::Metrics.new(100) }
   let(:segment_store) { described_class.new(segments_repository, config, '', metrics) }
