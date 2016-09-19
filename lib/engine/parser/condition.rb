@@ -44,10 +44,7 @@ module SplitIoClient
 
     #returns UserDefinedSegmentMatcher[object]
     def matcher_in_segment params
-      matcher = params[:matcher]
-      segments = params[:segments]
-      segment = segments.get_segment(matcher[:userDefinedSegmentMatcherData][:segmentName])
-      segment.is_empty? ? UserDefinedSegmentMatcher.new(nil) : UserDefinedSegmentMatcher.new(segment)
+      UserDefinedSegmentMatcher.new(params[:segment_keys])
     end
 
     #returns WhitelistMatcher[object] the whitelist for this condition in case it has a whitelist matcher
@@ -125,10 +122,8 @@ module SplitIoClient
 
     #
     # @return [boolean] true if the condition is empty false otherwise
-    def is_empty?
-      @data.empty? ? true : false
+    def empty?
+      @data.empty?
     end
-
   end
-
 end

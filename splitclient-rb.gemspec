@@ -24,6 +24,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rspec"
   spec.add_development_dependency "webmock"
   spec.add_development_dependency "byebug"
+  spec.add_development_dependency "pry"
   spec.add_development_dependency "simplecov"
 
   spec.add_runtime_dependency "json", "~> 1.8"

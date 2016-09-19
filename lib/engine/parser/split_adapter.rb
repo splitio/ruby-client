@@ -31,20 +31,23 @@ module SplitIoClient
 
     attr_reader :impressions_producer
 
+    attr_reader :splits_repository, :segments_repository
+
     #
     # Creates a new split api adapter instance that consumes split api endpoints
     #
     # @param api_key [String] the API key for your split account
     #
     # @return [SplitIoClient] split.io client instance
-    def initialize(api_key, config)
+    def initialize(api_key, config, splits_repository, segments_repository)
 
       @api_key = api_key
       @config = config
-      @parsed_splits = SplitParser.new(@config.logger)
-      @parsed_segments = SegmentParser.new(@config.logger)
       @impressions = Impressions.new(100)
       @metrics = Metrics.new(100)
+
+      @splits_repository = splits_repository
+      @segments_repository = segments_repository
 
       @api_client = Faraday.new do |builder|
         builder.use FaradayMiddleware::Gzip
@@ -55,6 +58,7 @@ module SplitIoClient
       @segments_consumer = create_segments_api_consumer
       @metrics_producer = create_metrics_api_producer
       @impressions_producer = create_impressions_api_producer
+
     end
 
     #
@@ -64,78 +68,11 @@ module SplitIoClient
     #
     # @return [void]
     def create_splits_api_consumer
-      Thread.new do
-        loop do
-          begin
-            #splits fetcher
-            splits_arr = []
-            data = get_splits(@parsed_splits.since)
-            if data
-              data[:splits].each do |split|
-                splits_arr << SplitIoClient::Split.new(split)
-              end
-            end
-
-            if @parsed_splits.is_empty?
-              @parsed_splits.splits = splits_arr
-            else
-              refresh_splits(splits_arr)
-            end
-            @parsed_splits.since = data[:till]
-
-            random_interval = randomize_interval @config.features_refresh_rate
-            sleep(random_interval)
-          rescue StandardError => error
-            @config.log_found_exception(__method__.to_s, error)
-          end
-        end
-      end
+      SplitIoClient::Cache::Stores::SplitStore.new(@splits_repository, @config, @api_key, @metrics).call
     end
 
     def create_segments_api_consumer
-      Thread.new do
-        loop do
-          begin
-            #segments fetcher
-            segments_arr = []
-            segment_data = get_segments(@parsed_splits.get_used_segments)
-            segment_data.each do |segment|
-              segments_arr << SplitIoClient::Segment.new(segment)
-            end
-            if @parsed_segments.is_empty?
-              @parsed_segments.segments = segments_arr
-              @parsed_segments.segments.map { |s| s.refresh_users(s.added, s.removed) }
-            else
-              refresh_segments(segments_arr)
-            end
-
-            random_interval = randomize_interval @config.segments_refresh_rate
-            sleep(random_interval)
-          rescue StandardError => error
-            @config.log_found_exception(__method__.to_s, error)
-          end
-        end
-      end
-    end
-
-    #
-    # helper method to execute a get request to the provided endpoint
-    #
-    # @param path [string] api endpoint path
-    # @param params [object] hash of params that will be added to the request
-    #
-    # @return [object] response to the request
-    def call_api(path, params = {})
-      @api_client.get @config.base_uri + path, params do |req|
-        req.headers['Authorization'] = 'Bearer ' + @api_key
-        req.headers['SplitSDKVersion'] = SplitIoClient::SplitFactory.sdk_version
-        req.headers['SplitSDKMachineName'] = @config.machine_name
-        req.headers['SplitSDKMachineIP'] = @config.machine_ip
-        req.headers['Accept-Encoding'] = 'gzip'
-        req.options.open_timeout = @config.connection_timeout
-        req.options.timeout = @config.read_timeout
-        @config.logger.debug("GET #{@config.base_uri + path}") if @config.debug_enabled
-      end
+      SplitIoClient::Cache::Stores::SegmentStore.new(@segments_repository, @config, @api_key, @metrics).call
     end
 
     #
@@ -156,105 +93,6 @@ module SplitIoClient
         req.options.timeout = @config.read_timeout
         req.options.open_timeout = @config.connection_timeout
         @config.logger.debug("POST #{@config.events_uri + path} #{req.body}") if @config.debug_enabled
-      end
-    end
-
-    #
-    # helper method to fetch splits by using the appropriate api endpoint
-    #
-    # @param since [int] since value for the last fetch
-    #
-    # @return splits [object] splits structure in json format
-    def get_splits(since)
-      result = nil
-      start = Time.now
-      prefix = 'splitChangeFetcher'
-
-      splits = call_api('/splitChanges', {:since => since})
-
-      if splits.status / 100 == 2
-        result = JSON.parse(splits.body, symbolize_names: true)
-        @metrics.count(prefix + '.status.' + splits.status.to_s, 1)
-        @config.logger.info("#{result[:splits].length} splits retrieved.")
-        @config.logger.debug("#{result}") if @config.debug_enabled
-      else
-        @config.logger.error('Unexpected result from API call')
-        @metrics.count(prefix + '.status.' + splits.status.to_s, 1)
-      end
-
-      latency = (Time.now - start) * 1000.0
-      @metrics.time(prefix + '.time', latency)
-
-      result
-    end
-
-    #
-    # helper method to refresh splits values after a new fetch with changes
-    #
-    # @param splits_arr [object] array of splits to refresh
-    #
-    # @return [void]
-    def refresh_splits(splits_arr)
-      feature_names = splits_arr.map { |s| s.name }
-      @parsed_splits.splits.delete_if { |sp| feature_names.include?(sp.name) }
-      @parsed_splits.splits += splits_arr
-    end
-
-    #
-    # helper method to fetch segments by using the appropriate api endpoint
-    #
-    # @param names [object] array of segment names that must be fetched
-    #
-    # @return segments [object] segments structure in json format
-    def get_segments(names)
-      segments = []
-      start = Time.now
-      prefix = 'segmentChangeFetcher'
-
-      names.each do |name|
-        curr_segment = @parsed_segments.get_segment(name)
-        since = curr_segment.nil? ? -1 : curr_segment.till
-
-        while true
-          segment = call_api('/segmentChanges/' + name, {:since => since})
-
-          if segment.status / 100 == 2
-            segment_content = JSON.parse(segment.body, symbolize_names: true)
-            @parsed_segments.since = segment_content[:till]
-            @metrics.count(prefix + '.status.' + segment.status.to_s, 1)
-            @config.logger.info("\'#{segment_content[:name]}\' segment retrieved.")
-            @config.logger.debug("#{segment_content}") if @config.debug_enabled
-            segments << segment_content
-          else
-            @config.logger.error('Unexpected result from API call')
-            @metrics.count(prefix + '.status.' + segment.status.to_s, 1)
-          end
-          break if (since.to_i >= @parsed_segments.since.to_i)
-          since = @parsed_segments.since
-        end
-      end
-
-      latency = (Time.now - start) * 1000.0
-      @metrics.time(prefix + '.time', latency)
-
-      segments
-    end
-
-    #
-    # helper method to refresh segments values after a new fetch with changes
-    #
-    # @param segments_arr [object] array of segments to refresh
-    #
-    # @return [void]
-    def refresh_segments(segments_arr)
-      segment_names = @parsed_segments.segments.map { |s| s.name }
-      segments_arr.each do |s|
-        if segment_names.include?(s.name)
-          segment_to_update = @parsed_segments.get_segment(s.name)
-          segment_to_update.refresh_users(s.added, s.removed)
-        else
-          @parsed_segments.segments << s
-        end
       end
     end
 

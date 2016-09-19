@@ -84,11 +84,14 @@ module SplitIoClient
       # @param api_key [String] the API key for your split account
       #
       # @return [SplitIoClient] split.io client instance
-      def initialize(api_key, config = {}, adapter = nil, localhost_mode = false)
+      def initialize(api_key, config = {}, adapter = nil, localhost_mode = false, splits_repository, segments_repository)
         @localhost_mode = localhost_mode
         @localhost_mode_features = []
 
         @config = config
+
+        @splits_repository = splits_repository
+        @segments_repository = segments_repository
 
         if api_key == LOCALHOST_MODE
           @localhost_mode = true
@@ -153,14 +156,17 @@ module SplitIoClient
       #
       # @return [Treatment]  tretment constant value
       def get_treatment_without_exception_handling(id, feature, attributes = nil)
-        @adapter.parsed_splits.segments = @adapter.parsed_segments
-        split = @adapter.parsed_splits.get_split(feature)
+        split = @splits_repository.get_split(feature)
 
         if split.nil?
-          return Treatments::CONTROL
+          Treatments::CONTROL
         else
-          default_treatment = split.data[:defaultTreatment]
-          return @adapter.parsed_splits.get_split_treatment(id, feature, default_treatment, attributes)
+          default_treatment = split[:defaultTreatment]
+
+          # return splits_parser.get_split_treatment(id, feature, default_treatment, attributes)
+          SplitIoClient::Engine::Parser::SplitTreatment
+            .new(@splits_repository, @segments_repository)
+            .call(id, feature, default_treatment, attributes)
         end
       end
 
@@ -217,14 +223,17 @@ module SplitIoClient
     def initialize(api_key, config = {})
       @api_key = api_key
       @config = SplitConfig.new(config)
+      @cache_adapter = @config.cache_adapter
+      @splits_repository = SplitIoClient::Cache::Repositories::SplitsRepository.new(@cache_adapter)
+      @segments_repository = SplitIoClient::Cache::Repositories::SegmentsRepository.new(@cache_adapter)
       @adapter = api_key != 'localhost' \
-      ? SplitAdapter.new(api_key, @config)
+      ? SplitAdapter.new(api_key, @config, @splits_repository, @segments_repository)
       : nil
       @localhost_mode = api_key == 'localhost'
     end
 
     def client
-      @client ||= SplitClient.new(@api_key, @config, @adapter, @localhost_mode)
+      @client ||= SplitClient.new(@api_key, @config, @adapter, @localhost_mode, @splits_repository, @segments_repository)
     end
 
     def manager

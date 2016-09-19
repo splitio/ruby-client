@@ -27,7 +27,7 @@ module SplitIoClient
     def initialize(opts = {})
       @base_uri = (opts[:base_uri] || SplitConfig.default_base_uri).chomp('/')
       @events_uri = (opts[:events_uri] || SplitConfig.default_events_uri).chomp('/')
-      @local_store = opts[:local_store] || SplitConfig.default_local_store
+      @cache_adapter = opts[:cache_adapter] || SplitConfig.default_cache_adapter
       @connection_timeout = opts[:connection_timeout] || SplitConfig.default_connection_timeout
       @read_timeout = opts[:read_timeout] || SplitConfig.default_read_timeout
       @features_refresh_rate = opts[:features_refresh_rate] || SplitConfig.default_features_refresh_rate
@@ -66,6 +66,12 @@ module SplitIoClient
     #
     # @return [Int] The timeout in seconds.
     attr_reader :read_timeout
+
+    #
+    # The cache adapter to store splits/segments in
+    #
+    # @return [Object] Cache adapter instance
+    attr_reader :cache_adapter
 
     #
     # The connection timeout for network connections in seconds.
@@ -115,8 +121,8 @@ module SplitIoClient
     end
 
     # @return [LocalStore] configuration value for local cache store
-    def self.default_local_store
-      defined?(Rails) && Rails.respond_to?(:cache) ? Rails.cache : LocalStore.new
+    def self.default_cache_adapter
+      SplitIoClient::Cache::Adapters::MemoryAdapter.new
     end
 
     #
@@ -210,6 +216,5 @@ module SplitIoClient
         '127.0.0.0'
       end
     end
-
   end
 end

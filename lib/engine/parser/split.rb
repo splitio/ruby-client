@@ -46,8 +46,8 @@ module SplitIoClient
 
     #
     # @return [boolean] true if the condition is empty false otherwise
-    def is_empty?
-      @data.empty? ? true : false
+    def empty?
+      @data.empty?
     end
 
     #
@@ -63,6 +63,14 @@ module SplitIoClient
       conditions_list
     end
 
+    def to_h
+      {
+        name: name,
+        seed: seed,
+        status: status,
+        killed: killed?,
+        conditions: conditions
+      }
+    end
   end
-
 end
