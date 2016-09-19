@@ -31,6 +31,12 @@ module SplitIoClient
           @adapter[namespace_key('last_change')]
         end
 
+        def set_segment_names(names)
+          return if names.nil? || names.empty?
+
+          @adapter[namespace_key('used_segment_names')] = names
+        end
+
         private
 
         def namespace_key(key)

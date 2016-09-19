@@ -34,7 +34,7 @@ module SplitIoClient
             @splits_repository.add_split(split)
           end
 
-          @splits_repository['used_segment_names'] = data[:segment_names]
+          @splits_repository.set_segment_names(data[:segment_names])
           @splits_repository.set_change_number(data[:till])
         end
 

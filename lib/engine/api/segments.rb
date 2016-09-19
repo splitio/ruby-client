@@ -13,18 +13,14 @@ module SplitIoClient
         start = Time.now
         prefix = 'segmentChangeFetcher'
 
-        names.each do |name|
-          # TODO: Probably won't work in specs, check
-          # Working version:
-          # curr_segment = @segments_repository.find(name)
-          # since = curr_segment.nil? ? -1 : curr_segment[:till]
+        return if names.nil? || names.empty?
 
+        names.each do |name|
           since = @segments_repository.get_change_number(name)
           while true
             segments << fetch_segments(name, prefix, since)
-            # TODO: Continue from here
-            break if (since.to_i >= @segments_repository['since'].to_i)
-            since = @segments_repository['since']
+            break if (since.to_i >= @segments_repository.get_change_number(name).to_i)
+            since = @segments_repository.get_change_number(name)
           end
         end
 
@@ -42,7 +38,7 @@ module SplitIoClient
 
         if segment.status / 100 == 2
           segment_content = JSON.parse(segment.body, symbolize_names: true)
-          @segments_repository['since'] = segment_content[:till]
+          @segments_repository.set_change_number(name, segment_content[:till])
           @metrics.count(prefix + '.status.' + segment.status.to_s, 1)
 
           @config.logger.info("\'#{segment_content[:name]}\' segment retrieved.")

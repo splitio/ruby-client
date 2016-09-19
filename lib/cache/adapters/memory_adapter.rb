@@ -23,8 +23,12 @@ module SplitIoClient
         end
 
         # Set
-        def add_to_set(key, values)
-          @hash[key] << values
+        def initialize_set(key)
+          @hash[key] = Set.new
+        end
+
+        def add_to_set(key, data)
+          data.is_a?(Enumerable) ? @hash[key].merge(data) : @hash[key].add(data)
         end
 
         def remove_from_set(key, data)
@@ -36,6 +40,10 @@ module SplitIoClient
         end
 
         # Hash
+        def initialize_hash(key)
+          @hash[key] = {}
+        end
+
         def add_to_hash(key, hash_key, hash_value)
           @hash[key].store(hash_key, hash_value)
         end

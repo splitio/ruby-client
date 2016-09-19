@@ -2,14 +2,17 @@ module SplitIoClient
   module Cache
     module Repositories
       class SegmentsRepository < Repository
-        def add_to_segment(name, keys)
-          # NOTE: The desired structure here would look like:
-          # segments = { 'segment_name' => Set ['segment_key1', 'segment_key2'] }
-          # But, since Redis does not support nesting data structures we need to store
-          # segment name directly in the name of the Set
+        def add_to_segment(segment)
+          name = segment[:name]
 
-          # TODO: Initialize empty set
-          @adapter.add_to_set(namespace_key("segments:#{name}"), keys)
+          @adapter.initialize_set(namespace_key("segments:#{name}")) if @adapter[namespace_key("segments:#{name}")].nil?
+
+          @adapter.add_to_set(namespace_key("segments:#{name}"), segment[:added])
+          @adapter.remove_from_set(namespace_key("segments:#{name}"), segment[:removed])
+        end
+
+        def get_segment_keys(name)
+          @adapter[namespace_key("segments:#{name}")]
         end
 
         def remove_from_segment(name, keys)
@@ -24,14 +27,16 @@ module SplitIoClient
           @adapter['splits_repository_used_segment_names']
         end
 
+        # Non-atomic
         def set_change_number(name, last_change)
-          # TODO: Initialize empty hash
+          @adapter.initialize_hash(namespace_key('changes')) if @adapter[namespace_key('changes')].nil?
 
           @adapter.add_to_hash(namespace_key('changes'), name, last_change)
         end
 
+        # Non-atomic
         def get_change_number(name)
-          @adapter.add_to_hash(namespace_key('changes'), name)
+          @adapter.find_in_hash(namespace_key('changes'), name) || -1
         end
 
         private
