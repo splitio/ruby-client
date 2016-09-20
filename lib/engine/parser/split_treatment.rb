@@ -37,12 +37,12 @@ module SplitIoClient
           matchers = []
 
           condition.matchers.each do |matcher|
-            segment_name = matcher[:userDefinedSegmentMatcherData] && matcher[:userDefinedSegmentMatcherData][:segmentName]
-            segment_keys = @segments_repository.get_segment_keys(segment_name) if segment_name
+            # segment_name = matcher[:userDefinedSegmentMatcherData] && matcher[:userDefinedSegmentMatcherData][:segmentName]
+            # segment_keys = @segments_repository.get_segment_keys(segment_name) if segment_name
 
             matchers << condition.send(
               "matcher_#{matcher[:matcherType].downcase}",
-              matcher: matcher, segment_keys: segment_keys
+              matcher: matcher, segments_repository: @segments_repository
             )
           end
 

@@ -44,7 +44,10 @@ module SplitIoClient
 
     #returns UserDefinedSegmentMatcher[object]
     def matcher_in_segment params
-      UserDefinedSegmentMatcher.new(params[:segment_keys])
+      matcher = params[:matcher]
+      segment_name = matcher[:userDefinedSegmentMatcherData] && matcher[:userDefinedSegmentMatcherData][:segmentName]
+
+      UserDefinedSegmentMatcher.new(params[:segments_repository], segment_name)
     end
 
     #returns WhitelistMatcher[object] the whitelist for this condition in case it has a whitelist matcher

@@ -7,9 +7,10 @@ module SplitIoClient
 
     attr_reader :matcher_type
 
-    def initialize(segment_keys)
+    def initialize(segments_repository, segment_name)
       @matcher_type = "IN_SEGMENT"
-      @segment_keys = segment_keys
+      @segments_repository = segments_repository
+      @segment_name = segment_name
     end
 
     #
@@ -19,11 +20,7 @@ module SplitIoClient
     #
     # @return [boolean] evaluation of the key against the segment
     def match?(key, attributes)
-      matches = false
-      unless @segment_keys.nil?
-        matches = @segment_keys.include?(key)
-      end
-      matches
+      @segments_repository.in_segment?(@segment_name, key)
     end
 
     #
