@@ -12,6 +12,12 @@ module SplitIoClient
       def [](key)
         @adapter[namespace_key(key)]
       end
+
+      protected
+
+      def namespace_key(key)
+        "repository_#{key}"
+      end
     end
   end
 end
