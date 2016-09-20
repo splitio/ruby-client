@@ -188,7 +188,7 @@ module SplitIoClient
     #
     # @return [void]
     def log_loaded_cache
-      @logger.info("Loaded cache class: #{@local_store.class}")
+      @logger.info("Loaded cache class: #{@cache_adapter.class}")
     end
 
     #

@@ -6,21 +6,21 @@ module SplitIoClient
           @adapter = adapter
 
           @adapter[namespace_key('last_change')] = -1
-          @adapter[namespace_key('splits')] = {}
+          @adapter.initialize_map(namespace_key('splits'))
         end
 
         def add_split(split)
           split_without_name = split.select { |k, _| k != :name }
 
-          @adapter.add_to_hash(namespace_key('splits'), split[:name], split_without_name)
+          @adapter.add_to_map(namespace_key('splits'), split[:name], split_without_name)
         end
 
         def remove_split(name)
-          @adapter.add_to_hash(namespace_key('splits'), name, nil)
+          @adapter.add_to_map(namespace_key('splits'), name, nil)
         end
 
         def get_split(name)
-          @adapter.find_in_hash(namespace_key('splits'), name)
+          @adapter.find_in_map(namespace_key('splits'), name)
         end
 
         def set_change_number(since)
