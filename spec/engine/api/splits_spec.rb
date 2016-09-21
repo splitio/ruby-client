@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'pry'
 
 describe SplitIoClient::Api::Splits do
   let(:splits_api) { described_class.new('', config, metrics) }

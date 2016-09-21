@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'pry'
 
 describe SplitIoClient::Cache::Stores::SegmentStore do
   let(:adapter) { SplitIoClient::Cache::Adapters::MemoryAdapter.new }

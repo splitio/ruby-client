@@ -12,15 +12,15 @@ module SplitIoClient
         end
 
         def call
-          Thread.new do
-            begin
+          if ENV['SPLITCLIENT_ENV'] == 'test'
+            store_splits
+          else
+            Thread.new do
               loop do
                 store_splits
 
                 sleep(random_interval(@config.features_refresh_rate))
               end
-            rescue StandardError => error
-              @config.log_found_exception(__method__.to_s, error)
             end
           end
         end
@@ -36,6 +36,8 @@ module SplitIoClient
 
           @splits_repository.set_segment_names(data[:segment_names])
           @splits_repository.set_change_number(data[:till])
+        rescue StandardError => error
+          @config.log_found_exception(__method__.to_s, error)
         end
 
         def random_interval(interval)
