@@ -37,7 +37,7 @@ module SplitIoClient
     # @param api_key [String] the API key for your split account
     #
     # @return [SplitIoClient] split.io client instance
-    def initialize(api_key, config)
+    def initialize(api_key, config, gate = nil)
 
       @api_key = api_key
       @config = config
@@ -45,6 +45,9 @@ module SplitIoClient
       @parsed_segments = SegmentParser.new(@config.logger)
       @impressions = Impressions.new(100)
       @metrics = Metrics.new(100)
+      @gate = gate
+
+      @count = @config.block_until_ready
 
       @api_client = Faraday.new do |builder|
         builder.use FaradayMiddleware::Gzip
@@ -94,6 +97,7 @@ module SplitIoClient
 
     def create_segments_api_consumer
       Thread.new do
+        latch = CountDownLatch.new @config.block_until_ready
         loop do
           begin
             #segments fetcher
@@ -102,6 +106,10 @@ module SplitIoClient
             segment_data.each do |segment|
               segments_arr << SplitIoClient::Segment.new(segment)
             end
+
+            @gate.is_gate_ready?(latch.count) unless @gate.is_open?
+            @gate.register_segments(segments_arr.map(&:name)) unless @gate.nil?
+
             if @parsed_segments.is_empty?
               @parsed_segments.segments = segments_arr
               @parsed_segments.segments.map { |s| s.refresh_users(s.added, s.removed) }
@@ -110,7 +118,13 @@ module SplitIoClient
             end
 
             random_interval = randomize_interval @config.segments_refresh_rate
-            sleep(random_interval)
+
+            if @gate.is_open?
+              sleep(random_interval)
+            else
+              sleep(1)
+              latch.countdown!
+            end
           rescue StandardError => error
             @config.log_found_exception(__method__.to_s, error)
           end

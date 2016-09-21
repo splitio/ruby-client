@@ -28,6 +28,7 @@ Gem::Specification.new do |spec|
 
   spec.add_runtime_dependency "json", "~> 1.8"
   spec.add_runtime_dependency "thread_safe"
+  spec.add_runtime_dependency "countdownlatch"
   spec.add_runtime_dependency "concurrent-ruby"
   spec.add_runtime_dependency "faraday"
   spec.add_runtime_dependency "faraday-http-cache"
