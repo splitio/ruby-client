@@ -24,4 +24,26 @@ describe SplitIoClient::CombiningMatcher do
   it 'checks that the feature is V2 for the right AND conditions' do
     expect(subject.get_treatment(user_included, feature, attributes_included)).to eq 'V2'
   end
+
+  it 'checks that the feature is V3 for the right else condition' do
+    expect(subject.get_treatment(user_included, feature, attributes_excluded)).to eq 'V3'
+    expect(subject.get_treatment(user_included, feature, attributes_partially_excluded_1)).to eq 'V3'
+    expect(subject.get_treatment(user_included, feature, attributes_partially_excluded_2)).to eq 'V3'
+  end
+
+  it 'checks that the feature is V1 as default treatment for a non matching set of id and attributes' do
+    expect(subject.get_treatment(user_excluded, feature, attributes_excluded)).to eq 'V1'
+    expect(subject.get_treatment(user_excluded, feature, attributes_partially_excluded_1)).to eq 'V1'
+    expect(subject.get_treatment(user_excluded, feature, attributes_partially_excluded_2)).to eq 'V1'
+  end
+
+  it 'checks that the feature is control for a wrong set of params' do
+    expect(subject.get_treatment(nil, feature, another: 'attribute')).to eq(SplitIoClient::Treatments::CONTROL)
+  end
+
+  it 'checks that failing first condition with wrong date format attribute, '\
+     'and matching second returns correct second condition expected result' do
+
+    expect(subject.get_treatment(user_included, feature, custom_attribute: 'argentina', join: 'random')).to eq 'V3'
+  end
 end
