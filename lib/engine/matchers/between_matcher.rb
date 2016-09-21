@@ -18,6 +18,8 @@ module SplitIoClient
         param_value = get_formatted_value(attributes[@attribute.to_sym])
         matches = param_value.is_a?(Integer) ? ((param_value >= @start_value) && (param_value <= @end_value)) : false
       end
+
+      matches
     end
 
     def equals?(obj)
