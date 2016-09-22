@@ -1,0 +1,36 @@
+{
+  "splits": [
+    {
+       "orgId":"cee838c0-b3eb-11e5-855f-4eacec19f7bf",
+       "environment":"cf2d09f0-b3eb-11e5-855f-4eacec19f7bf",
+       "name":"test_killed",
+       "trafficTypeId":"u",
+       "trafficTypeName":"User",
+       "seed":-1245274114,
+       "status":"ACTIVE",
+       "killed":true,
+       "defaultTreatment":"def_test",
+       "conditions":[
+          {
+             "matcherGroup":{
+                "combiner":"AND",
+                "matchers":[
+                   {
+                      "matcherType":"ALL_KEYS",
+                      "negate":false,
+                      "userDefinedSegmentMatcherData":null,
+                      "whitelistMatcherData":null
+                   }
+                ]
+             },
+             "partitions":[
+                {
+                   "treatment":"on",
+                   "size":100
+                }
+             ]
+          }
+       ]
+    }
+  ]
+}
