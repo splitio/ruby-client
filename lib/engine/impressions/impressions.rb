@@ -30,11 +30,12 @@ module SplitIoClient
     # @param id [string] user key
     # @param feature [string] feature name
     # @param treatment [string] treatment value
+    # @param label [string] label value
     # @param time [time] time value in milisenconds
     #
     # @return void
-    def log(id, feature, treatment, time)
-      impressions = KeyImpressions.new(id, treatment, time)
+    def log(id, feature, treatment, label, time)
+      impressions = KeyImpressions.new(id, treatment, label, time)
       @queue << {feature: feature, impressions: impressions}
     end
 
@@ -67,11 +68,13 @@ module SplitIoClient
   class KeyImpressions
     attr_accessor :key
     attr_accessor :treatment
+    attr_accessor :label
     attr_accessor :time
 
-    def initialize(key, treatment, time)
+    def initialize(key, treatment, label, time)
       @key = key
       @treatment = treatment
+      @treatment = label
       @time = time
     end
   end

@@ -46,7 +46,5 @@ module SplitIoClient
     def to_s
       'in segment all'
     end
-
   end
-
 end

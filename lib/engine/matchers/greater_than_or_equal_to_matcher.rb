@@ -31,6 +31,10 @@ module SplitIoClient
       end
     end
 
+    def to_s
+      'in segment greater than or equal to'
+    end
+
     private
     def get_formatted_value(value, is_sdk_data = false)
       case @data_type

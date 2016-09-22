@@ -123,7 +123,7 @@ module SplitIoClient
           result = get_localhost_treatment(feature)
         else
           start = Time.now
-          result = nil
+          result = {}
 
           begin
             result = get_treatment_without_exception_handling(id, feature, attributes)
@@ -131,10 +131,10 @@ module SplitIoClient
             @config.log_found_exception(__method__.to_s, error)
           end
 
-          result = result.nil? ? Treatments::CONTROL : result
+          result[:treatment] = Treatments::CONTROL if result[:treatment].nil?
 
           begin
-            @adapter.impressions.log(id, feature, result, (Time.now.to_f * 1000.0))
+            @adapter.impressions.log(id, feature, result[:treatment], result[:label], (Time.now.to_f * 1000.0))
             latency = (Time.now - start) * 1000.0
             if (@adapter.impressions.queue.length >= @adapter.impressions.max_number_of_keys)
               @adapter.impressions_producer.wakeup
@@ -145,7 +145,7 @@ module SplitIoClient
 
         end
 
-        result
+        result[:treatment]
       end
 
       #
@@ -159,13 +159,12 @@ module SplitIoClient
         split = @splits_repository.get_split(feature)
 
         if split.nil?
-          Treatments::CONTROL
+          { treatment: Treatments::CONTROL }
         else
           default_treatment = split[:defaultTreatment]
 
-          # return splits_parser.get_split_treatment(id, feature, default_treatment, attributes)
           SplitIoClient::Engine::Parser::SplitTreatment
-            .new(@splits_repository, @segments_repository)
+            .new(@splits_repository, @segments_repository, @config.logger)
             .call(id, feature, default_treatment, attributes)
         end
       end
@@ -209,7 +208,8 @@ module SplitIoClient
         localhost_result = Treatments::CONTROL
         treatment = @localhost_mode_features.select{|h| h[:feature] == feature}.last
         localhost_result = treatment[:treatment] if !treatment.nil?
-        localhost_result
+
+        { treatment: localhost_result }
       end
 
       private :get_treatment_without_exception_handling, :is_localhost_mode?,
