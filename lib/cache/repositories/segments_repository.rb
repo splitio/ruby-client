@@ -44,7 +44,7 @@ module SplitIoClient
         end
 
         def remove_keys(name, keys)
-          keys.each { |key| @adapter.remove_from_map(namespace_key("segments:#{name}"), name) }
+          keys.each { |key| @adapter.delete_from_map(namespace_key("segments:#{name}"), key) }
         end
       end
     end
