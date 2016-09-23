@@ -40,5 +40,9 @@ module SplitIoClient
         false
       end
     end
+
+    def to_s
+      "in segment #{@segment_name}"
+    end
   end
 end

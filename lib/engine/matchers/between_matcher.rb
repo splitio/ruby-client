@@ -34,6 +34,10 @@ module SplitIoClient
       end
     end
 
+    def to_s
+      "between #{@start_value} and #{@end_value}"
+    end
+
     private
     def get_formatted_value(value, is_sdk_data = false)
       case @data_type
