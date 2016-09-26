@@ -4,11 +4,12 @@ module SplitIoClient
       class SplitStore
         attr_reader :splits_repository
 
-        def initialize(splits_repository, config, api_key, metrics)
+        def initialize(splits_repository, config, api_key, metrics, sdk_blocker = nil)
           @splits_repository = splits_repository
           @config = config
           @api_key = api_key
           @metrics = metrics
+          @sdk_blocker = sdk_blocker
         end
 
         def call
@@ -36,6 +37,8 @@ module SplitIoClient
 
           @splits_repository.set_segment_names(data[:segment_names])
           @splits_repository.set_change_number(data[:till])
+
+          broadcast_ready
         rescue StandardError => error
           @config.log_found_exception(__method__.to_s, error)
         end
@@ -48,6 +51,13 @@ module SplitIoClient
 
         def splits_since(since)
           SplitIoClient::Api::Splits.new(@api_key, @config, @metrics).since(since)
+        end
+
+        def broadcast_ready!
+          return unless @config.block_until_ready
+
+          @splits_repository.ready!
+          @sdk_blocker.condvar.broadcast
         end
       end
     end

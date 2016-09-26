@@ -33,6 +33,14 @@ module SplitIoClient
           @adapter.find_in_map(namespace_key('changes'), name) || -1
         end
 
+        def ready?
+          @adapter[namespace_key('ready')]
+        end
+
+        def ready!
+          @adapter[namespace_key('ready')] = true
+        end
+
         private
 
         def namespace_key(key)
