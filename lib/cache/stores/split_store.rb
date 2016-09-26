@@ -38,7 +38,7 @@ module SplitIoClient
           @splits_repository.set_segment_names(data[:segment_names])
           @splits_repository.set_change_number(data[:till])
 
-          broadcast_ready
+          broadcast_ready!
         rescue StandardError => error
           @config.log_found_exception(__method__.to_s, error)
         end
