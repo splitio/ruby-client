@@ -28,11 +28,7 @@ module SplitIoClient
         private
 
         def store_segments
-          data = segments_by_names(@segments_repository.used_segment_names)
-
-          data && data.each do |segment|
-            @segments_repository.add_to_segment(segment)
-          end
+          segments_api.store_segments_by_names(@segments_repository.used_segment_names)
         rescue StandardError => error
           @config.log_found_exception(__method__.to_s, error)
         end
@@ -45,10 +41,6 @@ module SplitIoClient
 
         def segments_api
           SplitIoClient::Api::Segments.new(@api_key, @config, @metrics, @segments_repository)
-        end
-
-        def segments_by_names(names)
-          segments_api.by_names(names)
         end
       end
     end

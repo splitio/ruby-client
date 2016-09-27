@@ -8,8 +8,7 @@ module SplitIoClient
         @segments_repository = segments_repository
       end
 
-      def by_names(names)
-        segments = []
+      def store_segments_by_names(names)
         start = Time.now
         prefix = 'segmentChangeFetcher'
 
@@ -18,7 +17,8 @@ module SplitIoClient
         names.each do |name|
           since = @segments_repository.get_change_number(name)
           while true
-            segments << fetch_segments(name, prefix, since)
+            fetch_segments(name, prefix, since).each { |segment| @segments_repository.add_to_segment(segment) }
+
             break if (since.to_i >= @segments_repository.get_change_number(name).to_i)
             since = @segments_repository.get_change_number(name)
           end
@@ -26,8 +26,6 @@ module SplitIoClient
 
         latency = (Time.now - start) * 1000.0
         @metrics.time(prefix + '.time', latency)
-
-        segments.flatten
       end
 
       private
