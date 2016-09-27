@@ -17,7 +17,7 @@ module SplitIoClient
         def ready?
           ready = @segments_repository.ready? && @splits_repository.ready?
 
-          @config.logger.debug('SplitIo SDK is ready') if @config.debug_enabled && ready
+          @config.logger.info('SplitIo SDK is ready') if @config.debug_enabled && ready
 
           ready
         end
