@@ -29,12 +29,6 @@ describe SplitIoClient::Cache::Stores::SegmentStore do
       .to_return(status: 200, body: splits_with_segments_json)
   end
 
-  it 'returns segments by names' do
-    segments = segment_store.send(:segments_by_names, %w(employees))
-
-    expect(segments).to eq(segment_data)
-  end
-
   it 'stores segments' do
     split_store.send(:store_splits)
     segment_store.send(:store_segments)
