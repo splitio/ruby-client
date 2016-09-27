@@ -15,7 +15,11 @@ module SplitIoClient
         end
 
         def ready?
-          @segments_repository.ready? && @splits_repository.ready?
+          ready = @segments_repository.ready? && @splits_repository.ready?
+
+          @config.logger.debug('SplitIo SDK is ready') if @config.debug_enabled && ready
+
+          ready
         end
 
         def wait(&block)
@@ -24,7 +28,6 @@ module SplitIoClient
               @condvar.wait(@mutex, @config.block_until_ready)
             end
 
-            @config.logger.debug('SplitIo SDK is ready') if @config.debug_enabled
             block.call
           end
         end
