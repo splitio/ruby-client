@@ -3,6 +3,8 @@ module SplitIoClient
     class Repository
       def initialize(adapter)
         @adapter = adapter
+
+        @adapter[namespace_key('ready')] = false
       end
 
       def []=(key, obj)

@@ -39,7 +39,7 @@ module SplitIoClient
     # @param api_key [String] the API key for your split account
     #
     # @return [SplitIoClient] split.io client instance
-    def initialize(api_key, config, splits_repository, segments_repository)
+    def initialize(api_key, config, splits_repository, segments_repository, sdk_blocker)
 
       @api_key = api_key
       @config = config
@@ -48,6 +48,8 @@ module SplitIoClient
 
       @splits_repository = splits_repository
       @segments_repository = segments_repository
+
+      @sdk_blocker = sdk_blocker
 
       @api_client = Faraday.new do |builder|
         builder.use FaradayMiddleware::Gzip
@@ -68,11 +70,11 @@ module SplitIoClient
     #
     # @return [void]
     def create_splits_api_consumer
-      SplitIoClient::Cache::Stores::SplitStore.new(@splits_repository, @config, @api_key, @metrics).call
+      SplitIoClient::Cache::Stores::SplitStore.new(@splits_repository, @config, @api_key, @metrics, @sdk_blocker).call
     end
 
     def create_segments_api_consumer
-      SplitIoClient::Cache::Stores::SegmentStore.new(@segments_repository, @config, @api_key, @metrics).call
+      SplitIoClient::Cache::Stores::SegmentStore.new(@segments_repository, @config, @api_key, @metrics, @sdk_blocker).call
     end
 
     #

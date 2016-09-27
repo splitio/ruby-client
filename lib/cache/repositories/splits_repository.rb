@@ -37,6 +37,14 @@ module SplitIoClient
           @adapter[namespace_key('used_segment_names')] = names
         end
 
+        def ready?
+          @adapter[namespace_key('ready')]
+        end
+
+        def ready!
+          @adapter[namespace_key('ready')] = true
+        end
+
         private
 
         def namespace_key(key)

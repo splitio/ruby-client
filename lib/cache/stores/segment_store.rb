@@ -4,11 +4,12 @@ module SplitIoClient
       class SegmentStore
         attr_reader :segments_repository
 
-        def initialize(segments_repository, config, api_key, metrics)
+        def initialize(segments_repository, config, api_key, metrics, sdk_blocker = nil)
           @segments_repository = segments_repository
           @config = config
           @api_key = api_key
           @metrics = metrics
+          @sdk_blocker = sdk_blocker
         end
 
         def call
@@ -29,6 +30,8 @@ module SplitIoClient
 
         def store_segments
           segments_api.store_segments_by_names(@segments_repository.used_segment_names)
+
+          broadcast_ready!
         rescue StandardError => error
           @config.log_found_exception(__method__.to_s, error)
         end
@@ -41,6 +44,13 @@ module SplitIoClient
 
         def segments_api
           SplitIoClient::Api::Segments.new(@api_key, @config, @metrics, @segments_repository)
+        end
+
+        def broadcast_ready!
+          return unless @config.block_until_ready
+
+          @segments_repository.ready!
+          @sdk_blocker.condvar.broadcast
         end
       end
     end

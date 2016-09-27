@@ -36,6 +36,7 @@ module SplitIoClient
       @impressions_refresh_rate = opts[:impressions_refresh_rate] || SplitConfig.default_impressions_refresh_rate
       @logger = opts[:logger] || SplitConfig.default_logger
       @debug_enabled = opts[:debug_enabled] || SplitConfig.default_debug
+      @block_until_ready = opts[:block_until_ready] || false
       @machine_name = SplitConfig.get_hostname
       @machine_ip = SplitConfig.get_ip
 
@@ -91,6 +92,12 @@ module SplitIoClient
     #
     # @return [Boolean] The value for the debug flag
     attr_reader :debug_enabled
+
+    #
+    # The number of seconds to wait for SDK readiness
+    # or false to disable waiting
+    # @return [Integer]/[FalseClass]
+    attr_reader :block_until_ready
 
     attr_reader :machine_ip
     attr_reader :machine_name

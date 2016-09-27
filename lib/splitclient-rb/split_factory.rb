@@ -226,18 +226,19 @@ module SplitIoClient
       @cache_adapter = @config.cache_adapter
       @splits_repository = SplitIoClient::Cache::Repositories::SplitsRepository.new(@cache_adapter)
       @segments_repository = SplitIoClient::Cache::Repositories::SegmentsRepository.new(@cache_adapter)
+      @sdk_blocker = SplitIoClient::Cache::Store::SDKBlocker.new(@config, @splits_repository, @segments_repository)
       @adapter = api_key != 'localhost' \
-      ? SplitAdapter.new(api_key, @config, @splits_repository, @segments_repository)
+      ? SplitAdapter.new(api_key, @config, @splits_repository, @segments_repository, @sdk_blocker)
       : nil
       @localhost_mode = api_key == 'localhost'
     end
 
     def client
-      @client ||= SplitClient.new(@api_key, @config, @adapter, @localhost_mode, @splits_repository, @segments_repository)
+      @client ||= @config.block_until_ready ? @sdk_blocker.wait { init_client } : init_client
     end
 
     def manager
-      @manager ||= SplitManager.new(@api_key, @config, @adapter, @localhost_mode)
+      @manager ||= @config.block_until_ready ? @sdk_blocker.wait { init_manager } : init_manager
     end
 
     #
@@ -250,5 +251,13 @@ module SplitIoClient
 
     private
       attr_reader :adapter
+
+    def init_client
+      SplitClient.new(@api_key, @config, @adapter, @localhost_mode, @splits_repository, @segments_repository)
+    end
+
+    def init_manager
+      SplitManager.new(@api_key, @config, @adapter, @localhost_mode)
+    end
   end
 end
