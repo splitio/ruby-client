@@ -59,6 +59,22 @@ describe SplitIoClient do
       expect(subject.get_treatment('fake_user_id_1', 'new_feature')).to eq SplitIoClient::Treatments::ON
     end
 
+    it 'validates the feature by bucketing_key' do
+      key = { bucketing_key: 'fake_user_id_1', matching_key: 'matching_key' }
+
+      expect(subject.get_treatment(key, 'new_feature')).to eq SplitIoClient::Treatments::ON
+      impressions = subject.instance_variable_get(:@adapter).impressions.clear
+
+
+      expect(impressions.first[:impressions].first.instance_variable_get(:@key)).to eq('matching_key')
+    end
+
+    it 'validates the feature by bucketing_key for nil matching_key' do
+      key = { bucketing_key: 'fake_user_id_1' }
+
+      expect(subject.get_treatment(key, 'new_feature')).to eq "control"
+    end
+
     it 'validates the feature returns default treatment for non matching ids' do
       expect(subject.get_treatment('fake_user_id_3', 'new_feature')).to eq "def_test"
     end

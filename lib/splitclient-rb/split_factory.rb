@@ -104,18 +104,20 @@ module SplitIoClient
       #
       # obtains the treatment for a given feature
       #
-      # @param id [string] user id
+      # @param key [string/hash] user id or hash with matching_key/bucketing_key
       # @param feature [string] name of the feature that is being validated
       #
       # @return [Treatment]  treatment constant value
-      def get_treatment(id, feature, attributes = nil)
-        unless id
-          @config.logger.warn('id was null for feature: ' + feature)
+      def get_treatment(key, feature, attributes = nil)
+        bucketing_key, matching_key = keys_from_key(key)
+
+        if bucketing_key.nil? || matching_key.nil?
+          @config.logger.warn('key was null for feature: ' + feature)
           return Treatments::CONTROL
         end
 
-        unless feature
-          @config.logger.warn('feature was null for id: ' + id)
+        if feature.nil?
+          @config.logger.warn('feature was null for key: ' + key)
           return Treatments::CONTROL
         end
 
@@ -126,7 +128,7 @@ module SplitIoClient
           result = nil
 
           begin
-            result = get_treatment_without_exception_handling(id, feature, attributes)
+            result = get_treatment_without_exception_handling(bucketing_key, feature, attributes)
           rescue StandardError => error
             @config.log_found_exception(__method__.to_s, error)
           end
@@ -134,7 +136,7 @@ module SplitIoClient
           result = result.nil? ? Treatments::CONTROL : result
 
           begin
-            @adapter.impressions.log(id, feature, result, (Time.now.to_f * 1000.0))
+            @adapter.impressions.log(matching_key, feature, result, (Time.now.to_f * 1000.0))
             latency = (Time.now - start) * 1000.0
             if (@adapter.impressions.queue.length >= @adapter.impressions.max_number_of_keys)
               @adapter.impressions_producer.wakeup
@@ -215,6 +217,14 @@ module SplitIoClient
       private :get_treatment_without_exception_handling, :is_localhost_mode?,
               :load_localhost_mode_features, :get_localhost_treatment
 
+      def keys_from_key(key)
+        case key.class.to_s
+        when 'Hash'
+          key.values_at(:bucketing_key, :matching_key)
+        when 'String'
+          [key, key]
+        end
+      end
     end
 
     private_constant :SplitClient
