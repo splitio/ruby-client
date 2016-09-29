@@ -17,21 +17,40 @@ module SplitIoClient
             store_segments
           else
             Thread.new do
-              loop do
-                store_segments
-
-                sleep(random_interval(@config.segments_refresh_rate))
-              end
+              @config.block_until_ready ? blocked_store : unblocked_store
             end
           end
         end
 
         private
 
+        def blocked_store
+          @sdk_blocker.splits_mutex.synchronize do
+            loop do
+              # NOTE: Waiting for SDK to store all splits and used segment names
+              @sdk_blocker.wait_for_splits
+
+              # NOTE: This method stores ALL segments for ALL segment names found in splits
+              store_segments
+              @config.logger.debug("Segment names: #{@segments_repository.used_segment_names.to_a}") if @config.debug_enabled
+
+              @sdk_blocker.segments_ready!
+
+              sleep(random_interval(@config.segments_refresh_rate))
+            end
+          end
+        end
+
+        def unblocked_store
+          loop do
+            store_segments
+
+            sleep(random_interval(@config.segments_refresh_rate))
+          end
+        end
+
         def store_segments
           segments_api.store_segments_by_names(@segments_repository.used_segment_names)
-
-          broadcast_ready!
         rescue StandardError => error
           @config.log_found_exception(__method__.to_s, error)
         end
@@ -44,13 +63,6 @@ module SplitIoClient
 
         def segments_api
           SplitIoClient::Api::Segments.new(@api_key, @config, @metrics, @segments_repository)
-        end
-
-        def broadcast_ready!
-          return unless @config.block_until_ready
-
-          @segments_repository.ready!
-          @sdk_blocker.condvar.broadcast
         end
       end
     end

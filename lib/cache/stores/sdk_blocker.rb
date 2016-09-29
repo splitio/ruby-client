@@ -4,32 +4,55 @@ module SplitIoClient
   module Cache
     module Store
       class SDKBlocker
-        attr_reader :mutex, :condvar
+        attr_reader :splits_mutex
 
-        def initialize(config, segments_repository, splits_repository)
-          @mutex = Mutex.new
-          @condvar = ConditionVariable.new
+        def initialize(config)
+          @sdk_mutex = Mutex.new
+          @sdk_condvar = ConditionVariable.new
+          @splits_mutex = Mutex.new
+          @splits_condvar = ConditionVariable.new
+
           @config = config
-          @segments_repository = segments_repository
-          @splits_repository = splits_repository
+
+          @splits_ready = false
+          @segments_ready = false
         end
 
-        def ready?
-          ready = @segments_repository.ready? && @splits_repository.ready?
+        def splits_ready!
+          @splits_ready = true
 
-          @config.logger.info('SplitIo SDK is ready') if ready
-
-          ready
+          @sdk_condvar.signal
+          @splits_condvar.signal
         end
 
-        def wait(&block)
-          @mutex.synchronize do
-            until ready? do
-              @condvar.wait(@mutex, @config.block_until_ready)
+        def segments_ready!
+          @segments_ready = true
+
+          @sdk_condvar.signal
+        end
+
+        def when_ready(&block)
+          @sdk_mutex.synchronize do
+            until sdk_ready? do
+              @sdk_condvar.wait(@sdk_mutex, @config.block_until_ready)
             end
 
             block.call
           end
+        end
+
+        def wait_for_splits
+          @splits_condvar.wait(@splits_mutex, @config.block_until_ready)
+        end
+
+        private
+
+        def sdk_ready?
+          ready = @splits_ready && @segments_ready
+
+          @config.logger.debug('SplitIO SDK is ready') if ready
+
+          ready
         end
       end
     end

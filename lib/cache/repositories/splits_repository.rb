@@ -7,6 +7,7 @@ module SplitIoClient
 
           @adapter[namespace_key('last_change')] = -1
           @adapter.initialize_map(namespace_key('splits'))
+          @adapter.initialize_map(namespace_key('used_segment_names'))
         end
 
         def add_split(split)
@@ -34,15 +35,9 @@ module SplitIoClient
         def set_segment_names(names)
           return if names.nil? || names.empty?
 
-          @adapter[namespace_key('used_segment_names')] = names
-        end
-
-        def ready?
-          @adapter[namespace_key('ready')]
-        end
-
-        def ready!
-          @adapter[namespace_key('ready')] = true
+          names.each do |name|
+            @adapter.add_to_map(namespace_key('used_segment_names'), name, 1)
+          end
         end
 
         private

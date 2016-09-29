@@ -38,7 +38,10 @@ module SplitIoClient
           @splits_repository.set_segment_names(data[:segment_names])
           @splits_repository.set_change_number(data[:till])
 
-          broadcast_ready!
+          if data[:since] == data[:till]
+            @config.logger.debug('Splits end reached') if @config.debug_enabled
+            broadcast_ready!
+          end
         rescue StandardError => error
           @config.log_found_exception(__method__.to_s, error)
         end
@@ -56,8 +59,7 @@ module SplitIoClient
         def broadcast_ready!
           return unless @config.block_until_ready
 
-          @splits_repository.ready!
-          @sdk_blocker.condvar.broadcast
+          @sdk_blocker.splits_ready!
         end
       end
     end
