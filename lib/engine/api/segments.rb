@@ -40,6 +40,8 @@ module SplitIoClient
           @metrics.count(prefix + '.status.' + segment.status.to_s, 1)
 
           @config.logger.info("\'#{segment_content[:name]}\' segment retrieved.")
+          @config.logger.info("\'#{segment_content[:name]}\' #{segment_content[:added].size} added keys")
+          @config.logger.info("\'#{segment_content[:name]}\' #{segment_content[:removed].size} removed keys")
           @config.logger.debug("#{segment_content}") if @config.debug_enabled
 
           segments << segment_content
