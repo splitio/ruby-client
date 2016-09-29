@@ -110,9 +110,10 @@ module SplitIoClient
       # @return [Treatment]  treatment constant value
       def get_treatment(key, feature, attributes = nil)
         bucketing_key, matching_key = keys_from_key(key)
+        bucketing_key = matching_key if bucketing_key.nil?
 
-        if bucketing_key.nil? || matching_key.nil?
-          @config.logger.warn('key was null for feature: ' + feature)
+        if matching_key.nil?
+          @config.logger.warn('matching_key was null for feature: ' + feature)
           return Treatments::CONTROL
         end
 
@@ -148,6 +149,15 @@ module SplitIoClient
         end
 
         result
+      end
+
+      def keys_from_key(key)
+        case key.class.to_s
+        when 'Hash'
+          key.values_at(:bucketing_key, :matching_key)
+        when 'String'
+          [key, key]
+        end
       end
 
       #
@@ -216,15 +226,6 @@ module SplitIoClient
 
       private :get_treatment_without_exception_handling, :is_localhost_mode?,
               :load_localhost_mode_features, :get_localhost_treatment
-
-      def keys_from_key(key)
-        case key.class.to_s
-        when 'Hash'
-          key.values_at(:bucketing_key, :matching_key)
-        when 'String'
-          [key, key]
-        end
-      end
     end
 
     private_constant :SplitClient
