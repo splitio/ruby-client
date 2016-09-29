@@ -50,7 +50,7 @@ module SplitIoClient
         def sdk_ready?
           ready = @splits_ready && @segments_ready
 
-          @config.logger.debug('SplitIO SDK is ready') if ready
+          @config.logger.info('SplitIO SDK is ready') if ready
 
           ready
         end
