@@ -33,6 +33,9 @@ module SplitIoClient
 
           raise SDKBlockerTimeoutExpiredException, 'SDK start up timeout expired' unless ready?
 
+          @splits_thread.wakeup
+          @segments_thread.wakeup
+
           block.call
         end
 
