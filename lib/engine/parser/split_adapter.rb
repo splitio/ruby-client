@@ -173,7 +173,7 @@ module SplitIoClient
           end
 
           if filtered.empty?
-            @config.logger.info('No impressions to report post filtering.')
+            @config.logger.debug('No impressions to report post filtering.')
           else
             test_impression = {}
             key_impressions = []
@@ -191,7 +191,7 @@ module SplitIoClient
         if res.status / 100 != 2
           @config.logger.error("Unexpected status code while posting impressions: #{res.status}")
         else
-          @config.logger.info("Impressions reported.")
+          @config.logger.debug("Impressions reported.")
           @config.logger.debug("#{test_impression_array}")if @config.debug_enabled
         end
       end
@@ -205,7 +205,7 @@ module SplitIoClient
     # @return [void]
     def post_metrics
       if @metrics.latencies.empty?
-        @config.logger.info('No latencies to report.')
+        @config.logger.debug('No latencies to report.')
       else
         @metrics.latencies.each do |l|
           metrics_time = {}
@@ -214,7 +214,7 @@ module SplitIoClient
           if res.status / 100 != 2
             @config.logger.error("Unexpected status code while posting time metrics: #{res.status}")
           else
-            @config.logger.info("Metric time reported.")
+            @config.logger.debug("Metric time reported.")
             @config.logger.debug("#{metrics_time}") if @config.debug_enabled
           end
         end
@@ -222,7 +222,7 @@ module SplitIoClient
       @metrics.latencies.clear
 
       if @metrics.counts.empty?
-        @config.logger.info('No counts to report.')
+        @config.logger.debug('No counts to report.')
       else
         @metrics.counts.each do |c|
           metrics_count = {}
@@ -239,7 +239,7 @@ module SplitIoClient
       @metrics.counts.clear
 
       if @metrics.gauges.empty?
-        @config.logger.info('No gauges to report.')
+        @config.logger.debug('No gauges to report.')
       else
         @metrics.gauges.each do |g|
           metrics_gauge = {}
@@ -248,7 +248,7 @@ module SplitIoClient
           if res.status / 100 != 2
             @config.logger.error("Unexpected status code while posting gauge metrics: #{res.status}")
           else
-            @config.logger.info("Metric gauge reported.")
+            @config.logger.debug("Metric gauge reported.")
             @config.logger.debug("#{metrics_gauge}") if @config.debug_enabled
           end
         end

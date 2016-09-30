@@ -39,7 +39,9 @@ module SplitIoClient
                 Thread.stop
               end
 
-              sleep(random_interval(@config.segments_refresh_rate))
+              sleep_for = random_interval(@config.segments_refresh_rate)
+              @config.logger.debug("Segments store is sleeping for: #{sleep_for} seconds")
+              sleep(sleep_for)
             end
           end
         end

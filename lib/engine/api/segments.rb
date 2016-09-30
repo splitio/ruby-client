@@ -18,6 +18,7 @@ module SplitIoClient
           since = @segments_repository.get_change_number(name)
           while true
             fetch_segments(name, prefix, since).each { |segment| @segments_repository.add_to_segment(segment) }
+            @config.logger.debug("Segment #{name} fetched before: #{since}, till: #{@segments_repository.get_change_number(name)}")
 
             break if (since.to_i >= @segments_repository.get_change_number(name).to_i)
             since = @segments_repository.get_change_number(name)
