@@ -38,6 +38,7 @@ module SplitIoClient
           @splits_repository.set_segment_names(data[:segment_names])
           @splits_repository.set_change_number(data[:till])
 
+          @config.logger.info("segments seen(#{data[:segment_names].length()}): #{data[:segment_names].to_a}") 
           @config.logger.debug('Splits end reached') if @config.debug_enabled
 
           broadcast_ready!
