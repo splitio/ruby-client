@@ -28,13 +28,16 @@ module SplitIoClient
         end
 
         def when_ready(&block)
-          @splits_thread.join(@config.block_until_ready)
-          @segments_thread.join(@config.block_until_ready)
+          unless ready?
+            @splits_thread.join(@config.block_until_ready)
+            @segments_thread.join(@config.block_until_ready)
 
-          raise SDKBlockerTimeoutExpiredException, 'SDK start up timeout expired' unless ready?
+            raise SDKBlockerTimeoutExpiredException, 'SDK start up timeout expired' unless ready?
 
-          @splits_thread.wakeup
-          @segments_thread.wakeup
+            @config.logger.info('SplitIO SDK is ready')
+            @splits_thread.wakeup
+            @segments_thread.wakeup
+          end
 
           block.call
         end
@@ -44,11 +47,7 @@ module SplitIoClient
         end
 
         def ready?
-          ready = @splits_ready && @segments_ready
-
-          @config.logger.info('SplitIO SDK is ready') if ready
-
-          ready
+          @ready ||= @splits_ready && @segments_ready
         end
       end
     end
