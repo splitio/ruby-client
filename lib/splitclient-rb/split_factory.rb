@@ -129,7 +129,7 @@ module SplitIoClient
           result = nil
 
           begin
-            result = get_treatment_without_exception_handling(bucketing_key, feature, attributes)
+            result = get_treatment_without_exception_handling({ bucketing_key: bucketing_key, matching_key: matching_key }, feature, attributes)
           rescue StandardError => error
             @config.log_found_exception(__method__.to_s, error)
           end
@@ -163,11 +163,11 @@ module SplitIoClient
       #
       # auxiliary method to get the treatments avoding exceptions
       #
-      # @param id [string] user id
+      # @param key [string/hash] user id or hash with matching_key/bucketing_key
       # @param feature [string] name of the feature that is being validated
       #
       # @return [Treatment]  tretment constant value
-      def get_treatment_without_exception_handling(id, feature, attributes = nil)
+      def get_treatment_without_exception_handling(key, feature, attributes = nil)
         split = @splits_repository.get_split(feature)
 
         if split.nil?
@@ -175,10 +175,9 @@ module SplitIoClient
         else
           default_treatment = split[:defaultTreatment]
 
-          # return splits_parser.get_split_treatment(id, feature, default_treatment, attributes)
           SplitIoClient::Engine::Parser::SplitTreatment
             .new(@splits_repository, @segments_repository)
-            .call(id, feature, default_treatment, attributes)
+            .call(key, feature, default_treatment, attributes)
         end
       end
 
