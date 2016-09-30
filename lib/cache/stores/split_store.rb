@@ -16,7 +16,7 @@ module SplitIoClient
           if ENV['SPLITCLIENT_ENV'] == 'test'
             store_splits
           else
-            Thread.new do
+            @sdk_blocker.splits_thread = Thread.new do
               loop do
                 store_splits
 
@@ -39,6 +39,7 @@ module SplitIoClient
           @splits_repository.set_change_number(data[:till])
 
           @config.logger.debug('Splits end reached') if @config.debug_enabled
+
           broadcast_ready!
         rescue StandardError => error
           @config.log_found_exception(__method__.to_s, error)
@@ -57,7 +58,10 @@ module SplitIoClient
         def broadcast_ready!
           return unless @config.block_until_ready
 
-          @sdk_blocker.splits_ready!
+          unless @sdk_blocker.ready?
+            @sdk_blocker.splits_ready!
+            Thread.stop
+          end
         end
       end
     end

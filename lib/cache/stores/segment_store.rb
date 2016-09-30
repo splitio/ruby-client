@@ -16,7 +16,7 @@ module SplitIoClient
           if ENV['SPLITCLIENT_ENV'] == 'test'
             store_segments
           else
-            Thread.new do
+            @sdk_blocker.segments_thread = Thread.new do
               @config.block_until_ready ? blocked_store : unblocked_store
             end
           end
@@ -34,7 +34,10 @@ module SplitIoClient
               store_segments
               @config.logger.debug("Segment names: #{@segments_repository.used_segment_names.to_a}") if @config.debug_enabled
 
-              @sdk_blocker.segments_ready!
+              unless @sdk_blocker.ready?
+                @sdk_blocker.segments_ready!
+                Thread.stop
+              end
 
               sleep(random_interval(@config.segments_refresh_rate))
             end
