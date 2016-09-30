@@ -32,22 +32,24 @@ module SplitIoClient
           unless ready?
             begin
               Timeout::timeout(@config.block_until_ready) do
-                @splits_thread.join
-                @segments_thread.join
+                sleep 0.1 while !@splits_thread.stop?
+                sleep 0.1 while !@segments_thread.stop?
               end
             rescue Timeout::Error
               fail SDKBlockerTimeoutExpiredException, 'SDK start up timeout expired'
             end
 
             @config.logger.info('SplitIO SDK is ready')
-            @splits_thread.wakeup
-            @segments_thread.wakeup
+            @splits_thread.run
+            @segments_thread.run
           end
+
           block.call
         end
 
         def wait_for_splits
-          @splits_condvar.wait(@splits_mutex, @config.block_until_ready)
+          # TODO: Must be implemented before release
+          # @splits_condvar.wait(@splits_mutex, @config.block_until_ready)
         end
 
         def ready?
