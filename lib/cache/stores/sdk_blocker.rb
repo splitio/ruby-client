@@ -47,7 +47,7 @@ module SplitIoClient
         end
 
         def ready?
-          @ready ||= @splits_ready && @segments_ready
+          @splits_ready && @segments_ready
         end
       end
     end
