@@ -1,4 +1,5 @@
 require 'thread'
+require 'timeout'
 
 module SplitIoClient
   module Cache
@@ -29,16 +30,19 @@ module SplitIoClient
 
         def when_ready(&block)
           unless ready?
-            @splits_thread.join(@config.block_until_ready)
-            @segments_thread.join(@config.block_until_ready)
-
-            raise SDKBlockerTimeoutExpiredException, 'SDK start up timeout expired' unless ready?
+            begin
+              Timeout::timeout(@config.block_until_ready) do
+                @splits_thread.join
+                @segments_thread.join
+              end
+            rescue Timeout::Error
+              fail SDKBlockerTimeoutExpiredException, 'SDK start up timeout expired'
+            end
 
             @config.logger.info('SplitIO SDK is ready')
             @splits_thread.wakeup
             @segments_thread.wakeup
           end
-
           block.call
         end
 
