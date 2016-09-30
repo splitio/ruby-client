@@ -231,14 +231,16 @@ module SplitIoClient
       ? SplitAdapter.new(api_key, @config, @splits_repository, @segments_repository, @sdk_blocker)
       : nil
       @localhost_mode = api_key == 'localhost'
+
+      @sdk_blocker.block if @config.block_until_ready
     end
 
     def client
-      @client ||= @config.block_until_ready ? @sdk_blocker.when_ready { init_client } : init_client
+      @client ||= init_client
     end
 
     def manager
-      @manager ||= @config.block_until_ready ? @sdk_blocker.when_ready { init_manager } : init_manager
+      @manager ||= init_manager
     end
 
     #

@@ -41,7 +41,10 @@ module SplitIoClient
           @config.logger.info("segments seen(#{data[:segment_names].length()}): #{data[:segment_names].to_a}")
           @config.logger.debug('Splits end reached') if @config.debug_enabled
 
-          broadcast_ready!
+          if @config.block_until_ready && !@sdk_blocker.ready?
+            @sdk_blocker.splits_ready!
+          end
+          @config.logger.info('splits are ready')
         rescue StandardError => error
           @config.log_found_exception(__method__.to_s, error)
         end
@@ -54,15 +57,6 @@ module SplitIoClient
 
         def splits_since(since)
           SplitIoClient::Api::Splits.new(@api_key, @config, @metrics).since(since)
-        end
-
-        def broadcast_ready!
-          return unless @config.block_until_ready
-
-          unless @sdk_blocker.ready?
-            @sdk_blocker.splits_ready!
-            Thread.stop
-          end
         end
       end
     end
