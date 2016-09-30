@@ -25,24 +25,20 @@ module SplitIoClient
         private
 
         def blocked_store
-          @sdk_blocker.splits_mutex.synchronize do
-            loop do
-              # NOTE: Waiting for SDK to store all splits and used segment names
-              @sdk_blocker.wait_for_splits
+          loop do
+            next unless @sdk_blocker.splits_ready
 
-              # NOTE: This method stores ALL segments for ALL segment names found in splits
-              store_segments
-              @config.logger.debug("Segment names: #{@segments_repository.used_segment_names.to_a}") if @config.debug_enabled
+            store_segments
+            @config.logger.debug("Segment names: #{@segments_repository.used_segment_names.to_a}") if @config.debug_enabled
 
-              unless @sdk_blocker.ready?
-                @sdk_blocker.segments_ready!
-                Thread.stop
-              end
-
-              sleep_for = random_interval(@config.segments_refresh_rate)
-              @config.logger.debug("Segments store is sleeping for: #{sleep_for} seconds")
-              sleep(sleep_for)
+            unless @sdk_blocker.ready?
+              @sdk_blocker.segments_ready!
+              Thread.stop
             end
+
+            sleep_for = random_interval(@config.segments_refresh_rate)
+            @config.logger.debug("Segments store is sleeping for: #{sleep_for} seconds")
+            sleep(sleep_for)
           end
         end
 

@@ -5,7 +5,7 @@ module SplitIoClient
   module Cache
     module Stores
       class SDKBlocker
-        attr_reader :splits_mutex
+        attr_reader :splits_mutex, :splits_ready
         attr_writer :splits_thread, :segments_thread
 
         def initialize(config)
@@ -45,11 +45,6 @@ module SplitIoClient
           end
 
           block.call
-        end
-
-        def wait_for_splits
-          # TODO: Must be implemented before release
-          # @splits_condvar.wait(@splits_mutex, @config.block_until_ready)
         end
 
         def ready?
