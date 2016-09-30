@@ -226,7 +226,7 @@ module SplitIoClient
       @cache_adapter = @config.cache_adapter
       @splits_repository = SplitIoClient::Cache::Repositories::SplitsRepository.new(@cache_adapter)
       @segments_repository = SplitIoClient::Cache::Repositories::SegmentsRepository.new(@cache_adapter)
-      @sdk_blocker = SplitIoClient::Cache::Store::SDKBlocker.new(@config)
+      @sdk_blocker = SplitIoClient::Cache::Stores::SDKBlocker.new(@config)
       @adapter = api_key != 'localhost' \
       ? SplitAdapter.new(api_key, @config, @splits_repository, @segments_repository, @sdk_blocker)
       : nil

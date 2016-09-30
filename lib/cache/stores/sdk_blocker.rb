@@ -2,7 +2,7 @@ require 'thread'
 
 module SplitIoClient
   module Cache
-    module Store
+    module Stores
       class SDKBlocker
         attr_reader :splits_mutex
 
@@ -35,6 +35,8 @@ module SplitIoClient
           @sdk_mutex.synchronize do
             until sdk_ready? do
               @sdk_condvar.wait(@sdk_mutex, @config.block_until_ready)
+
+              raise_timeout unless sdk_ready?
             end
 
             block.call
@@ -53,6 +55,10 @@ module SplitIoClient
           @config.logger.info('SplitIO SDK is ready') if ready
 
           ready
+        end
+
+        def raise_timeout
+          raise SDKBlockerTimeoutExpiredException, 'SDK start up timeout expired'
         end
       end
     end
