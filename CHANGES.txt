@@ -1,3 +1,6 @@
+3.0.2
+- add ability to provide different bucketing/matching keys
+
 3.0.1
 - fix segments not deleting from the cache
 

@@ -7,24 +7,24 @@ module SplitIoClient
           @segments_repository = segments_repository
         end
 
-        def call(key, split_name, default_treatment, attributes = nil)
+        def call(keys, split_name, default_treatment, attributes = nil)
           split = @splits_repository.get_split(split_name)
 
           return Treatments::CONTROL if archived?(split)
 
-          matchable?(split) ? match(split, key, attributes, default_treatment) : default_treatment
+          matchable?(split) ? match(split, keys, attributes, default_treatment) : default_treatment
         end
 
         private
 
-        def match(split, key, attributes, default_treatment)
+        def match(split, keys, attributes, default_treatment)
           split[:conditions].each do |c|
             condition = SplitIoClient::Condition.new(c)
 
             next if condition.empty?
 
-            if matcher_type(condition).match?(key, attributes)
-              treatment = Splitter.get_treatment(key, split[:seed], condition.partitions)
+            if matcher_type(condition).match?(keys[:matching_key], attributes)
+              treatment = Splitter.get_treatment(keys[:bucketing_key], split[:seed], condition.partitions)
 
               return treatment.nil? ? default_treatment : treatment
             end
