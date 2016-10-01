@@ -155,7 +155,7 @@ module SplitIoClient
     # @return [void]
     def post_impressions
       if @impressions.queue.empty?
-        @config.logger.info('No impressions to report.')
+        @config.logger.debug('No impressions to report.') if @config.debug_enabled
       else
         popped_impressions = @impressions.clear
         test_impression_array = []
@@ -173,7 +173,7 @@ module SplitIoClient
           end
 
           if filtered.empty?
-            @config.logger.debug('No impressions to report post filtering.')
+            @config.logger.debug('No impressions to report post filtering.') if @config.debug_enabled
           else
             test_impression = {}
             key_impressions = []
@@ -191,8 +191,7 @@ module SplitIoClient
         if res.status / 100 != 2
           @config.logger.error("Unexpected status code while posting impressions: #{res.status}")
         else
-          @config.logger.debug("Impressions reported.")
-          @config.logger.debug("#{test_impression_array}")if @config.debug_enabled
+          @config.logger.debug("Impressions reported: #{test_impression_array}") if @config.debug_enabled
         end
       end
     end
@@ -205,7 +204,7 @@ module SplitIoClient
     # @return [void]
     def post_metrics
       if @metrics.latencies.empty?
-        @config.logger.debug('No latencies to report.')
+        @config.logger.debug('No latencies to report.') if @config.debug_enabled
       else
         @metrics.latencies.each do |l|
           metrics_time = {}
@@ -214,15 +213,14 @@ module SplitIoClient
           if res.status / 100 != 2
             @config.logger.error("Unexpected status code while posting time metrics: #{res.status}")
           else
-            @config.logger.debug("Metric time reported.")
-            @config.logger.debug("#{metrics_time}") if @config.debug_enabled
+            @config.logger.debug("Metric time reported: #{metrics_time}") if @config.debug_enabled
           end
         end
       end
       @metrics.latencies.clear
 
       if @metrics.counts.empty?
-        @config.logger.debug('No counts to report.')
+        @config.logger.debug('No counts to report.') if @config.debug_enabled
       else
         @metrics.counts.each do |c|
           metrics_count = {}
@@ -231,15 +229,14 @@ module SplitIoClient
           if res.status / 100 != 2
             @config.logger.error("Unexpected status code while posting count metrics: #{res.status}")
           else
-            @config.logger.info("Metric counts reported.")
-            @config.logger.debug("#{metrics_count}") if @config.debug_enabled
+            @config.logger.debug("Metric counts reported: #{metrics_count}") if @config.debug_enabled
           end
         end
       end
       @metrics.counts.clear
 
       if @metrics.gauges.empty?
-        @config.logger.debug('No gauges to report.')
+        @config.logger.debug('No gauges to report.') if @config.debug_enabled
       else
         @metrics.gauges.each do |g|
           metrics_gauge = {}
@@ -248,8 +245,7 @@ module SplitIoClient
           if res.status / 100 != 2
             @config.logger.error("Unexpected status code while posting gauge metrics: #{res.status}")
           else
-            @config.logger.debug("Metric gauge reported.")
-            @config.logger.debug("#{metrics_gauge}") if @config.debug_enabled
+            @config.logger.debug("Metric gauge reported: #{metrics_gauge}") if @config.debug_enabled
           end
         end
       end

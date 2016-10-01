@@ -17,8 +17,8 @@ module SplitIoClient
 
           @metrics.count(prefix + '.status.' + splits.status.to_s, 1)
 
-          @config.logger.info("#{result[:splits].length} splits retrieved. since=#{since}")
-          @config.logger.debug("#{result}") if @config.debug_enabled
+          @config.logger.debug("#{result[:splits].length} splits retrieved. since=#{since}") if @config.debug_enabled and result[:splits].length > 0
+          @config.logger.debug("#{result}") if @config.transport_debug_enabled
         else
           @metrics.count(prefix + '.status.' + splits.status.to_s, 1)
 

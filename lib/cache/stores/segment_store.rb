@@ -30,13 +30,14 @@ module SplitIoClient
 
             store_segments
             @config.logger.debug("Segment names: #{@segments_repository.used_segment_names.to_a}") if @config.debug_enabled
-            @config.logger.info('Segments were stored')
+
             unless @sdk_blocker.ready?
               @sdk_blocker.segments_ready!
+              @config.logger.info('segments are ready')
             end
 
             sleep_for = random_interval(@config.segments_refresh_rate)
-            @config.logger.debug("Segments store is sleeping for: #{sleep_for} seconds")
+            @config.logger.debug("Segments store is sleeping for: #{sleep_for} seconds") if @config.debug_enabled
             sleep(sleep_for)
           end
         end
