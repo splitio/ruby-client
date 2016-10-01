@@ -20,7 +20,7 @@ module SplitIoClient
         end
 
         def used_segment_names
-          @adapter['splits_repository_used_segment_names']
+          @adapter['splits_repository_used_segment_names'].keys
         end
 
         def set_change_number(name, last_change)
@@ -31,14 +31,6 @@ module SplitIoClient
 
         def get_change_number(name)
           @adapter.find_in_map(namespace_key('changes'), name) || -1
-        end
-
-        def ready?
-          @adapter[namespace_key('ready')]
-        end
-
-        def ready!
-          @adapter[namespace_key('ready')] = true
         end
 
         private

@@ -1,35 +1,45 @@
 require 'thread'
+require 'timeout'
 
 module SplitIoClient
   module Cache
-    module Store
+    module Stores
       class SDKBlocker
-        attr_reader :mutex, :condvar
+        attr_reader :splits_ready
+        attr_writer :splits_thread, :segments_thread
 
-        def initialize(config, segments_repository, splits_repository)
-          @mutex = Mutex.new
-          @condvar = ConditionVariable.new
+        def initialize(config)
           @config = config
-          @segments_repository = segments_repository
-          @splits_repository = splits_repository
+
+          @splits_ready = false
+          @segments_ready = false
+        end
+
+        def splits_ready!
+          @splits_ready = true
+        end
+
+        def segments_ready!
+          @segments_ready = true
+        end
+
+        def block
+          begin
+            Timeout::timeout(@config.block_until_ready) do
+              sleep 0.1 until ready?
+              sleep 0.1 until ready?
+            end
+          rescue Timeout::Error
+            fail SDKBlockerTimeoutExpiredException, 'SDK start up timeout expired'
+          end
+
+          @config.logger.info('SplitIO SDK is ready')
+          @splits_thread.run
+          @segments_thread.run
         end
 
         def ready?
-          ready = @segments_repository.ready? && @splits_repository.ready?
-
-          @config.logger.info('SplitIo SDK is ready') if ready
-
-          ready
-        end
-
-        def wait(&block)
-          @mutex.synchronize do
-            until ready? do
-              @condvar.wait(@mutex, @config.block_until_ready)
-            end
-
-            block.call
-          end
+          @splits_ready && @segments_ready
         end
       end
     end

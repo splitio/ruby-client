@@ -33,7 +33,7 @@ describe SplitIoClient::Cache::Stores::SegmentStore do
     split_store.send(:store_splits)
     segment_store.send(:store_segments)
 
-    expect(segment_store.segments_repository.used_segment_names).to eq(Set.new(['employees']))
+    expect(segment_store.segments_repository.used_segment_names).to eq(['employees'])
   end
 
   it 'updates added/removed' do

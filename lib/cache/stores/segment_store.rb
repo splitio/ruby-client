@@ -16,22 +16,42 @@ module SplitIoClient
           if ENV['SPLITCLIENT_ENV'] == 'test'
             store_segments
           else
-            Thread.new do
-              loop do
-                store_segments
-
-                sleep(random_interval(@config.segments_refresh_rate))
-              end
+            @sdk_blocker.segments_thread = Thread.new do
+              @config.block_until_ready ? blocked_store : unblocked_store
             end
           end
         end
 
         private
 
+        def blocked_store
+          loop do
+            next unless @sdk_blocker.splits_ready
+
+            store_segments
+            @config.logger.debug("Segment names: #{@segments_repository.used_segment_names.to_a}") if @config.debug_enabled
+
+            unless @sdk_blocker.ready?
+              @sdk_blocker.segments_ready!
+              @config.logger.info('segments are ready')
+            end
+
+            sleep_for = random_interval(@config.segments_refresh_rate)
+            @config.logger.debug("Segments store is sleeping for: #{sleep_for} seconds") if @config.debug_enabled
+            sleep(sleep_for)
+          end
+        end
+
+        def unblocked_store
+          loop do
+            store_segments
+
+            sleep(random_interval(@config.segments_refresh_rate))
+          end
+        end
+
         def store_segments
           segments_api.store_segments_by_names(@segments_repository.used_segment_names)
-
-          broadcast_ready!
         rescue StandardError => error
           @config.log_found_exception(__method__.to_s, error)
         end
@@ -44,13 +64,6 @@ module SplitIoClient
 
         def segments_api
           SplitIoClient::Api::Segments.new(@api_key, @config, @metrics, @segments_repository)
-        end
-
-        def broadcast_ready!
-          return unless @config.block_until_ready
-
-          @segments_repository.ready!
-          @sdk_blocker.condvar.broadcast
         end
       end
     end

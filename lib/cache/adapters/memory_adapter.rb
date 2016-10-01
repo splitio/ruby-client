@@ -1,3 +1,5 @@
+require 'concurrent'
+
 module SplitIoClient
   module Cache
     module Adapters

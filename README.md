@@ -100,23 +100,40 @@ The following values can be customized
 **impressions_refresh_rate** : The SDK sends information on who got what treatment at what time back to Split servers to power analytics. This parameter controls how often this data is sent to Split servers in seconds
 *default value* = 60
 
+**debug_enabled** : Enables extra logging
+*default value* = false
+
+**transport_debug_enabled** : Enables extra transport logging
+*default value* = false
+
 **logger** : default logger for messages and errors
 *default value* : Ruby logger class set to STDOUT
 
+**block_until_ready** : The SDK will block your app for provided amount of seconds until it's ready. If timeout expires `SplitIoClient::SDKBlockerTimeoutExpiredException` will be thrown. If `false` provided, then SDK would run in non-blocking mode
+*default value* : false
+
 Example
 ```ruby
-options = {base_uri: 'https://my.app.api/',
-           local_store: Rails.cache,
-           connection_timeout: 10,
-           read_timeout: 5,
-           features_refresh_rate: 120,
-           segments_refresh_rate: 120,
-           metrics_refresh_rate: 360,
-           impressions_refresh_rate: 360,
-           logger: Logger.new('logfile.log')}
-
-split_client = SplitIoClient::SplitFactory.new("your_api_key", options).client
+options = {
+  base_uri: 'https://my.app.api/',
+  local_store: Rails.cache,
+  connection_timeout: 10,
+  read_timeout: 5,
+  features_refresh_rate: 120,
+  segments_refresh_rate: 120,
+  metrics_refresh_rate: 360,
+  impressions_refresh_rate: 360,
+  logger: Logger.new('logfile.log'),
+  block_until_ready: 5
+}
+begin
+  split_client = SplitIoClient::SplitFactory.new("your_api_key", options).client
+rescue SplitIoClient::SDKBlockerTimeoutExpiredException
+  # Some arbitrary actions
+end
 ```
+This begin-rescue-end block is optional, you might want to use it to catch timeout expired exception and apply some logic here.
+
 ### Execution
 ---
 In your application code you just need to call the get_treatment method with the required parameters for key and feature name

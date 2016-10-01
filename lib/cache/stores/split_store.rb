@@ -16,7 +16,7 @@ module SplitIoClient
           if ENV['SPLITCLIENT_ENV'] == 'test'
             store_splits
           else
-            Thread.new do
+            @sdk_blocker.splits_thread = Thread.new do
               loop do
                 store_splits
 
@@ -38,7 +38,13 @@ module SplitIoClient
           @splits_repository.set_segment_names(data[:segment_names])
           @splits_repository.set_change_number(data[:till])
 
-          broadcast_ready!
+          @config.logger.debug("segments seen(#{data[:segment_names].length()}): #{data[:segment_names].to_a}") if @config.debug_enabled
+
+          if @config.block_until_ready && !@sdk_blocker.ready?
+            @sdk_blocker.splits_ready!
+            @config.logger.info('splits are ready')
+          end
+          
         rescue StandardError => error
           @config.log_found_exception(__method__.to_s, error)
         end
@@ -51,13 +57,6 @@ module SplitIoClient
 
         def splits_since(since)
           SplitIoClient::Api::Splits.new(@api_key, @config, @metrics).since(since)
-        end
-
-        def broadcast_ready!
-          return unless @config.block_until_ready
-
-          @splits_repository.ready!
-          @sdk_blocker.condvar.broadcast
         end
       end
     end
