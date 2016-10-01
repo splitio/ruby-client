@@ -148,6 +148,23 @@ if split_client.get_treatment('employee_user_01','view_main_list', {age: 35})
 end
 ```
 
+Also, you can use different keys for actually getting treatment and sending impressions to the server:
+```ruby
+split_client.get_treatment({ matching_key: 'user_id', bucketing_key: 'private_user_id' },'feature_name', {attr: 'val'})
+```
+When it might be useful? Say, you have a user browsing your website and not signed up yet. You assign some internal id to that user (i.e. bucketing_key) and after user signs up you assign him a matching_key.
+By doing this you can provide both anonymous and signed up user with the same treatment.
+
+`bucketing_key` may be `nil` in that case `matching_key` would be used as a key, so calling
+```ruby
+split_client.get_treatment({ matching_key: 'user_id' },'feature_name', {attr: 'val'})
+```
+Is exactly the same as calling
+```ruby
+split_client.get_treatment('user_id' ,'feature_name', {attr: 'val'})
+```
+`bucketing_key` must not be nil
+
 Also you can use the split manager:
 
 ```ruby
