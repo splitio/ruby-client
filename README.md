@@ -100,6 +100,12 @@ The following values can be customized
 **impressions_refresh_rate** : The SDK sends information on who got what treatment at what time back to Split servers to power analytics. This parameter controls how often this data is sent to Split servers in seconds
 *default value* = 60
 
+**debug_enabled** : Enables extra logging
+*default value* = false
+
+**transport_debug_enabled** : Enables extra transport logging
+*default value* = false
+
 **logger** : default logger for messages and errors
 *default value* : Ruby logger class set to STDOUT
 
