@@ -27,7 +27,7 @@ module SplitIoClient
     def initialize(opts = {})
       @base_uri = (opts[:base_uri] || SplitConfig.default_base_uri).chomp('/')
       @events_uri = (opts[:events_uri] || SplitConfig.default_events_uri).chomp('/')
-      @local_store = opts[:local_store] || SplitConfig.default_local_store
+      @cache_adapter = opts[:cache_adapter] || SplitConfig.default_cache_adapter
       @connection_timeout = opts[:connection_timeout] || SplitConfig.default_connection_timeout
       @read_timeout = opts[:read_timeout] || SplitConfig.default_read_timeout
       @features_refresh_rate = opts[:features_refresh_rate] || SplitConfig.default_features_refresh_rate
@@ -36,8 +36,12 @@ module SplitIoClient
       @impressions_refresh_rate = opts[:impressions_refresh_rate] || SplitConfig.default_impressions_refresh_rate
       @logger = opts[:logger] || SplitConfig.default_logger
       @debug_enabled = opts[:debug_enabled] || SplitConfig.default_debug
+      @transport_debug_enabled = opts[:transport_debug_enabled] || SplitConfig.default_debug
+      @block_until_ready = opts[:block_until_ready] || false
       @machine_name = SplitConfig.get_hostname
       @machine_ip = SplitConfig.get_ip
+
+      log_loaded_cache
     end
 
     #
@@ -66,6 +70,12 @@ module SplitIoClient
     attr_reader :read_timeout
 
     #
+    # The cache adapter to store splits/segments in
+    #
+    # @return [Object] Cache adapter instance
+    attr_reader :cache_adapter
+
+    #
     # The connection timeout for network connections in seconds.
     #
     # @return [Int] The connect timeout in seconds.
@@ -83,6 +93,18 @@ module SplitIoClient
     #
     # @return [Boolean] The value for the debug flag
     attr_reader :debug_enabled
+
+    #
+    # Enable to log the content retrieved from endpoints
+    #
+    # @return [Boolean] The value for the debug flag
+    attr_reader :transport_debug_enabled
+
+    #
+    # The number of seconds to wait for SDK readiness
+    # or false to disable waiting
+    # @return [Integer]/[FalseClass]
+    attr_reader :block_until_ready
 
     attr_reader :machine_ip
     attr_reader :machine_name
@@ -113,8 +135,8 @@ module SplitIoClient
     end
 
     # @return [LocalStore] configuration value for local cache store
-    def self.default_local_store
-      defined?(Rails) && Rails.respond_to?(:cache) ? Rails.cache : LocalStore.new
+    def self.default_cache_adapter
+      SplitIoClient::Cache::Adapters::MemoryAdapter.new
     end
 
     #
@@ -166,6 +188,14 @@ module SplitIoClient
     end
 
     #
+    # The default transport_debug_enabled value
+    #
+    # @return [boolean]
+    def self.transport_debug
+      false
+    end
+
+    #
     # custom logger of exceptions
     #
     # @return [void]
@@ -173,6 +203,14 @@ module SplitIoClient
       error_traceback = "#{exn.inspect} #{exn}\n\t#{exn.backtrace.join("\n\t")}"
       error = "[splitclient-rb] Unexpected exception in #{caller}: #{error_traceback}"
       @logger.error(error)
+    end
+
+    #
+    # log which cache class was loaded
+    #
+    # @return [void]
+    def log_loaded_cache
+      @logger.info("Loaded cache class: #{@cache_adapter.class}")
     end
 
     #
@@ -200,6 +238,5 @@ module SplitIoClient
         '127.0.0.0'
       end
     end
-
   end
 end

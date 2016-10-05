@@ -100,23 +100,40 @@ The following values can be customized
 **impressions_refresh_rate** : The SDK sends information on who got what treatment at what time back to Split servers to power analytics. This parameter controls how often this data is sent to Split servers in seconds
 *default value* = 60
 
+**debug_enabled** : Enables extra logging
+*default value* = false
+
+**transport_debug_enabled** : Enables extra transport logging
+*default value* = false
+
 **logger** : default logger for messages and errors
 *default value* : Ruby logger class set to STDOUT
 
+**block_until_ready** : The SDK will block your app for provided amount of seconds until it's ready. If timeout expires `SplitIoClient::SDKBlockerTimeoutExpiredException` will be thrown. If `false` provided, then SDK would run in non-blocking mode
+*default value* : false
+
 Example
 ```ruby
-options = {base_uri: 'https://my.app.api/',
-           local_store: Rails.cache,
-           connection_timeout: 10,
-           read_timeout: 5,
-           features_refresh_rate: 120,
-           segments_refresh_rate: 120,
-           metrics_refresh_rate: 360,
-           impressions_refresh_rate: 360,
-           logger: Logger.new('logfile.log')}
-
-split_client = SplitIoClient::SplitFactory.new("your_api_key", options).client
+options = {
+  base_uri: 'https://my.app.api/',
+  local_store: Rails.cache,
+  connection_timeout: 10,
+  read_timeout: 5,
+  features_refresh_rate: 120,
+  segments_refresh_rate: 120,
+  metrics_refresh_rate: 360,
+  impressions_refresh_rate: 360,
+  logger: Logger.new('logfile.log'),
+  block_until_ready: 5
+}
+begin
+  split_client = SplitIoClient::SplitFactory.new("your_api_key", options).client
+rescue SplitIoClient::SDKBlockerTimeoutExpiredException
+  # Some arbitrary actions
+end
 ```
+This begin-rescue-end block is optional, you might want to use it to catch timeout expired exception and apply some logic here.
+
 ### Execution
 ---
 In your application code you just need to call the get_treatment method with the required parameters for key and feature name
@@ -130,6 +147,23 @@ if split_client.get_treatment('employee_user_01','view_main_list', {age: 35})
    my_app.display_main_list
 end
 ```
+
+Also, you can use different keys for actually getting treatment and sending impressions to the server:
+```ruby
+split_client.get_treatment({ matching_key: 'user_id', bucketing_key: 'private_user_id' },'feature_name', {attr: 'val'})
+```
+When it might be useful? Say, you have a user browsing your website and not signed up yet. You assign some internal id to that user (i.e. bucketing_key) and after user signs up you assign him a matching_key.
+By doing this you can provide both anonymous and signed up user with the same treatment.
+
+`bucketing_key` may be `nil` in that case `matching_key` would be used as a key, so calling
+```ruby
+split_client.get_treatment({ matching_key: 'user_id' },'feature_name', {attr: 'val'})
+```
+Is exactly the same as calling
+```ruby
+split_client.get_treatment('user_id' ,'feature_name', {attr: 'val'})
+```
+`bucketing_key` must not be nil
 
 Also you can use the split manager:
 
