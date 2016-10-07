@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe SplitIoClient::GreaterThanOrEqualToMatcher do
-  subject { SplitIoClient::SplitFactory.new('', {logger: Logger.new('/dev/null'), block_until_ready: 1}).client }
+  subject { SplitIoClient::SplitFactory.new('', { logger: Logger.new('/dev/null') }).client }
 
   let(:date_splits_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/splits/greater_than_or_equal_to_matcher/date_splits.json'))) }
   let(:negative_splits_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/splits/greater_than_or_equal_to_matcher/negative_splits.json'))) }
