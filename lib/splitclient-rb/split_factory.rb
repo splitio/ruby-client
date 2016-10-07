@@ -15,9 +15,10 @@ module SplitIoClient
       # @param api_key [String] the API key for your split account
       #
       # @return [SplitIoManager] split.io client instance
-      def initialize(api_key, config = {}, adapter = nil, localhost_mode = false)
+      def initialize(api_key, config = {}, adapter = nil, splits_repository = nil, localhost_mode = false)
         @localhost_mode_features = []
         @config = config
+        @splits_repository = splits_repository
         @localhost_mode = localhost_mode
         if @localhost_mode
           load_localhost_mode_features
@@ -48,20 +49,29 @@ module SplitIoClient
       # @returns [object] array of splits
       def splits
         return load_localhost_mode_features if @localhost_mode
-        if @adapter
-          @adapter.parsed_splits.splits.map do |split|
-            data = split.data
-            treatments = split.data[:conditions] && split.data[:conditions][0][:partitions] \
-            ? split.data[:conditions][0][:partitions].map{ |partition| partition[:treatment] }
-            : []
-            {
-              name: data[:name],
-              traffic_type_name: data[:trafficTypeName],
-              killed: data[:killed],
+        if @splits_repository
+          
+          splits = @splits_repository.list_splits 
+          ret = []
+          splits.keys.each do |key|
+              
+            split = splits.get(key)
+
+            treatments = split[:conditions] && split[:conditions][0][:partitions] \
+              ? split[:conditions][0][:partitions].map{ |partition| partition[:treatment] }
+              : []
+            ret << {
+              name: key,
+              traffic_type_name: split[:trafficTypeName],
+              killed: split[:killed],
               treatments: treatments,
-              change_number: data[:changeNumber]
+              change_number: split[:changeNumber]
             }
-          end
+
+        end
+
+        ret
+
         else
           @localhost_mode_features
         end
@@ -269,7 +279,7 @@ module SplitIoClient
     end
 
     def init_manager
-      SplitManager.new(@api_key, @config, @adapter, @localhost_mode)
+      SplitManager.new(@api_key, @config, @adapter, @splits_repository, @localhost_mode)
     end
   end
 end

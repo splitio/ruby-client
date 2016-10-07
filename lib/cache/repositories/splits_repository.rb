@@ -24,6 +24,10 @@ module SplitIoClient
           @adapter.find_in_map(namespace_key('splits'), name)
         end
 
+        def list_splits()
+          @adapter[namespace_key('splits')]
+        end
+
         def set_change_number(since)
           @adapter[namespace_key('last_change')] = since
         end
