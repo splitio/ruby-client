@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe SplitIoClient::CombiningMatcher do
-  subject { SplitIoClient::SplitFactory.new('', logger: Logger.new('/dev/null')).client }
+  subject { SplitIoClient::SplitFactory.new('', {logger: Logger.new('/dev/null'), block_until_ready: 1}).client }
 
   let(:splits_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/splits/combining_matcher_splits.json'))) }
   let(:segments_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/segments/combining_matcher_segments.json'))) }
