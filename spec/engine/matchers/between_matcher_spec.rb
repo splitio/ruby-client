@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe SplitIoClient::BetweenMatcher do
-  subject { SplitIoClient::SplitFactory.new('', {logger: Logger.new('/dev/null'), block_until_ready: 1}).client }
+  subject { SplitIoClient::SplitFactory.new('', {logger: Logger.new('/dev/null')}).client }
 
   let(:datetime_matcher_splits) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/splits/between_matcher/datetime_matcher_splits.json'))) }
   let(:negative_number_matcher_splits) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/splits/between_matcher/negative_number_matcher_splits.json'))) }

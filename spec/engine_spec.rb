@@ -2,7 +2,7 @@ require 'spec_helper'
 require 'securerandom'
 
 describe SplitIoClient do
-  subject { SplitIoClient::SplitFactory.new('', {logger: Logger.new('/dev/null'), block_until_ready: 1}).client }
+  subject { SplitIoClient::SplitFactory.new('', { logger: Logger.new('/dev/null') }).client }
 
   let(:segments_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), 'test_data/segments/engine_segments.json'))) }
   let(:segments2_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), 'test_data/segments/engine_segments2.json'))) }
