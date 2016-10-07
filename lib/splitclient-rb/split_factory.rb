@@ -48,35 +48,54 @@ module SplitIoClient
       #
       # @returns [object] array of splits
       def splits
-        return load_localhost_mode_features if @localhost_mode
-        if @splits_repository
+
+        return @localhost_mode_features if @localhost_mode
+        return nil if  @splits_repository.nil?
           
-          splits = @splits_repository.list_splits 
-          ret = []
-          splits.keys.each do |key|
+        splits = @splits_repository.list_splits 
+        ret = []
+        splits.keys.each do |key|
               
-            split = splits.get(key)
-
-            treatments = split[:conditions] && split[:conditions][0][:partitions] \
-              ? split[:conditions][0][:partitions].map{ |partition| partition[:treatment] }
-              : []
-            ret << {
-              name: key,
-              traffic_type_name: split[:trafficTypeName],
-              killed: split[:killed],
-              treatments: treatments,
-              change_number: split[:changeNumber]
-            }
-
+          split = splits.get(key)
+          ret << build_split_view(key, split)
         end
 
         ret
+      end
 
-        else
-          @localhost_mode_features
+      #
+      # method to get a split view
+      #
+      # @returns a split view
+      def split(split_name)
+
+        if @localhost_mode
+          return @localhost_mode_features.find {|x| x[:feature] == split_name}
+        end
+
+        if @splits_repository
+          
+          split = @splits_repository.get_split(split_name) 
+
+          build_split_view(split_name, split) if split
         end
       end
+
+      def build_split_view(name, split)
+        treatments = split[:conditions] && split[:conditions][0][:partitions] \
+          ? split[:conditions][0][:partitions].map{ |partition| partition[:treatment] }
+          : []
+          {
+            name: name,
+            traffic_type_name: split[:trafficTypeName],
+            killed: split[:killed],
+            treatments: treatments,
+            change_number: split[:changeNumber]
+          }
+      end
+
     end
+
 
     class SplitClient < NoMethodError
       #
