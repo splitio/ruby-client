@@ -1,4 +1,5 @@
 require 'logger'
+
 module SplitIoClient
   #
   # main class for split client sdk
@@ -57,7 +58,7 @@ module SplitIoClient
         splits.keys.each do |key|
               
           split = splits.get(key)
-          ret << build_split_view(key, split)
+          ret << build_split_view(key, split) if !Engine::Parser::SplitTreatment.archived?(split)
         end
 
         ret
@@ -77,7 +78,7 @@ module SplitIoClient
           
           split = @splits_repository.get_split(split_name) 
 
-          build_split_view(split_name, split) if split
+          build_split_view(split_name, split) if split and !Engine::Parser::SplitTreatment.archived?(split)
         end
       end
 
@@ -197,6 +198,7 @@ module SplitIoClient
       #
       # @return [Treatment]  tretment constant value
       def get_treatment_without_exception_handling(key, feature, attributes = nil)
+
         split = @splits_repository.get_split(feature)
 
         if split.nil?
