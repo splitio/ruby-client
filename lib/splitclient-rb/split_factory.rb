@@ -58,7 +58,7 @@ module SplitIoClient
         splits.keys.each do |key|
               
           split = splits.get(key)
-          ret << build_split_view(key, split) if not_archived(split)
+          ret << build_split_view(key, split) if !Engine::Parser::SplitTreatment.archived?(split)
         end
 
         ret
@@ -78,12 +78,8 @@ module SplitIoClient
           
           split = @splits_repository.get_split(split_name) 
 
-          build_split_view(split_name, split) if split and not_archived(split)
+          build_split_view(split_name, split) if split and !Engine::Parser::SplitTreatment.archived?(split)
         end
-      end
-
-      def not_archived(split)
-        split[:status] != "ARCHIVED"
       end
 
       def build_split_view(name, split)

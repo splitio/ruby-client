@@ -10,7 +10,7 @@ module SplitIoClient
         def call(keys, split_name, default_treatment, attributes = nil)
           split = @splits_repository.get_split(split_name)
 
-          return Treatments::CONTROL if archived?(split)
+          return Treatments::CONTROL if self.class.archived?(split)
 
           matchable?(split) ? match(split, keys, attributes, default_treatment) : default_treatment
         end
@@ -56,7 +56,7 @@ module SplitIoClient
           !split.nil? && split[:status] == 'ACTIVE' && split[:killed] == false
         end
 
-        def archived?(split)
+        def self.archived?(split)
           !split.nil? && split[:status] == 'ARCHIVED'
         end
       end
