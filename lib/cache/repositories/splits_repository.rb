@@ -13,7 +13,7 @@ module SplitIoClient
         def add_split(split)
           split_without_name = split.select { |k, _| k != :name }
 
-          @adapter.add_to_map(namespace_key('splits'), split[:name], split_without_name)
+          @adapter.add_to_map(namespace_key('splits'), split[:name], split_without_name.to_json)
         end
 
         def remove_split(name)
@@ -24,8 +24,15 @@ module SplitIoClient
           @adapter.find_in_map(namespace_key('splits'), name)
         end
 
-        def list_splits
-          @adapter.map(namespace_key('splits'))
+        def splits
+          splits_hash = {}
+          splits_map = @adapter.get_map(namespace_key('splits'))
+
+          splits_map.each_key do |key|
+            splits_hash[key] = JSON.parse(splits_map[key], symbolize_names: true)
+          end
+
+          splits_hash
         end
 
         def set_change_number(since)

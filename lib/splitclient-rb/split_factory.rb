@@ -53,7 +53,7 @@ module SplitIoClient
         return @localhost_mode_features if @localhost_mode
         return nil if  @splits_repository.nil?
           
-        splits = @splits_repository.list_splits 
+        splits = @splits_repository.splits 
         ret = []
         splits.keys.each do |key|
               

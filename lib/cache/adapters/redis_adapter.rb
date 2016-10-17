@@ -35,7 +35,7 @@ module SplitIoClient
           @redis.hkeys(key)
         end
 
-        def map(key)
+        def get_map(key)
           @redis.hgetall(key)
         end
 

@@ -37,7 +37,7 @@ module SplitIoClient
           @map[key].keys
         end
 
-        def map(key)
+        def get_map(key)
           @map[key]
         end
 
