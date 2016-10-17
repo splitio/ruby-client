@@ -1,67 +1,65 @@
-require 'concurrent'
+require 'redis'
+require 'json'
 
 module SplitIoClient
   module Cache
     module Adapters
-      class MemoryAdapter
+      class RedisAdapter
         def initialize
-          @map = Concurrent::Map.new
+          # TODO: Add Redis config
+          @redis = Redis.new
         end
 
         # Map
         def initialize_map(key)
-          @map[key] = Concurrent::Map.new
+          # No need to initialize hash/map in Redis
         end
 
         def add_to_map(key, field, value)
-          @map[key].put(field, value)
+          @redis.hset(key, field, value)
         end
 
         def find_in_map(key, field)
-          return nil if @map[key].nil?
-
-          @map[key].get(field)
+          @redis.hget(key, field)
         end
 
         def delete_from_map(key, field)
-          @map[key].delete(field)
+          @redis.hdel(key, field)
         end
 
         def in_map?(key, field)
-          return false if @map[key].nil?
-
-          @map[key].key?(field)
+          @redis.hexists(key, field)
         end
 
         def map_keys(key)
-          @map[key].keys
+          @redis.hkeys(key)
         end
 
         def map(key)
-          @map[key]
+          @redis.hgetall(key)
         end
 
         # String
         def string(key)
-          @map[key]
+          @redis.get(key)
         end
 
         def set_string(key, str)
-          @map[key] = str
+          @redis.set(key, str)
         end
 
         # Bool
         def set_bool(key, val)
-          @map[key] = val
+          @redis.set(key, val.to_s)
         end
 
         def bool(key)
-          @map[key]
+          @redis.get(key) == 'true'
         end
 
         # General
         def exists?(key)
-          !@map[key].nil?
+          @redis.exists(key)
         end
       end
     end

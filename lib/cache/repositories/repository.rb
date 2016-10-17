@@ -4,15 +4,15 @@ module SplitIoClient
       def initialize(adapter)
         @adapter = adapter
 
-        @adapter[namespace_key('ready')] = false
+        @adapter.set_bool(namespace_key('ready'), false)
       end
 
-      def []=(key, obj)
-        @adapter[namespace_key(key)] = obj
+      def set_string(key, str)
+        @adapter.set_string(namespace_key(key), str)
       end
 
-      def [](key)
-        @adapter[namespace_key(key)]
+      def string(key)
+        @adapter.string(namespace_key(key))
       end
 
       protected

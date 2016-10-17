@@ -5,14 +5,14 @@ module SplitIoClient
         def add_to_segment(segment)
           name = segment[:name]
 
-          @adapter.initialize_map(namespace_key("segments:#{name}")) if @adapter[namespace_key("segments:#{name}")].nil?
+          @adapter.initialize_map(namespace_key("segments:#{name}")) unless @adapter.exists?(namespace_key("segments:#{name}"))
 
           add_keys(name, segment[:added])
           remove_keys(name, segment[:removed])
         end
 
         def get_segment_keys(name)
-          @adapter[namespace_key("segments:#{name}")]
+          @adapter.map_keys(namespace_key("segments:#{name}"))
         end
 
         def in_segment?(name, key)
@@ -20,11 +20,11 @@ module SplitIoClient
         end
 
         def used_segment_names
-          @adapter['splits_repository_used_segment_names'].keys
+          @adapter.map_keys('splits_repository_used_segment_names')
         end
 
         def set_change_number(name, last_change)
-          @adapter.initialize_map(namespace_key('changes')) if @adapter[namespace_key('changes')].nil?
+          @adapter.initialize_map(namespace_key('changes')) unless @adapter.exists?(namespace_key('changes'))
 
           @adapter.add_to_map(namespace_key('changes'), name, last_change)
         end

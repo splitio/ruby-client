@@ -5,7 +5,7 @@ module SplitIoClient
         def initialize(adapter)
           @adapter = adapter
 
-          @adapter[namespace_key('last_change')] = -1
+          @adapter.set_string(namespace_key('last_change'), '-1')
           @adapter.initialize_map(namespace_key('splits'))
           @adapter.initialize_map(namespace_key('used_segment_names'))
         end
@@ -24,16 +24,16 @@ module SplitIoClient
           @adapter.find_in_map(namespace_key('splits'), name)
         end
 
-        def list_splits()
-          @adapter[namespace_key('splits')]
+        def list_splits
+          @adapter.map(namespace_key('splits'))
         end
 
         def set_change_number(since)
-          @adapter[namespace_key('last_change')] = since
+          @adapter.set_string(namespace_key('last_change'), since)
         end
 
         def get_change_number
-          @adapter[namespace_key('last_change')]
+          @adapter.string(namespace_key('last_change'))
         end
 
         def set_segment_names(names)
