@@ -1,3 +1,5 @@
+require 'concurrent'
+
 module SplitIoClient
   module Cache
     module Repositories
@@ -21,7 +23,9 @@ module SplitIoClient
         end
 
         def get_split(name)
-          @adapter.find_in_map(namespace_key('splits'), name)
+          split = @adapter.find_in_map(namespace_key('splits'), name)
+
+          JSON.parse(split, symbolize_names: true)
         end
 
         def splits
