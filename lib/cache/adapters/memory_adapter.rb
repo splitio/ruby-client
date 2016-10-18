@@ -59,6 +59,15 @@ module SplitIoClient
           @map[key]
         end
 
+        # Set
+        def add_to_set(key, val)
+          add_to_map(key, val, 1)
+        end
+
+        def get_set(key)
+          map_keys(key)
+        end
+
         # General
         def exists?(key)
           !@map[key].nil?

@@ -1,6 +1,7 @@
 require 'pry'
 require 'concurrent'
 require 'simplecov'
+require 'redis_helper'
 SimpleCov.start
 
 require 'webmock/rspec'

@@ -51,7 +51,7 @@ module SplitIoClient
           return if names.nil? || names.empty?
 
           names.each do |name|
-            @adapter.add_to_map(namespace_key('used_segment_names'), name, 1)
+            @adapter.add_to_set(namespace_key('used_segment_names'), name)
           end
         end
 

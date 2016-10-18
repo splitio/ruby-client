@@ -20,7 +20,7 @@ module SplitIoClient
         end
 
         def used_segment_names
-          @adapter.map_keys('splits_repository_used_segment_names')
+          @adapter.get_set('splits_repository_used_segment_names')
         end
 
         def set_change_number(name, last_change)

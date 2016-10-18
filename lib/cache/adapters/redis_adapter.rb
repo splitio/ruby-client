@@ -57,6 +57,15 @@ module SplitIoClient
           @redis.get(key) == 'true'
         end
 
+        # Set
+        def add_to_set(key, val)
+          @redis.sadd(key, val)
+        end
+
+        def get_set(key)
+          @redis.smembers(key)
+        end
+
         # General
         def exists?(key)
           @redis.exists(key)
