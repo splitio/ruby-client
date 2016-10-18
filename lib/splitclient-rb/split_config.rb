@@ -27,6 +27,7 @@ module SplitIoClient
     def initialize(opts = {})
       @base_uri = (opts[:base_uri] || SplitConfig.default_base_uri).chomp('/')
       @events_uri = (opts[:events_uri] || SplitConfig.default_events_uri).chomp('/')
+      @redis_url = opts[:redis_url] || SplitConfig.default_redis_url
       @cache_adapter = SplitConfig.init_cache_adapter(opts[:cache_adapter] || SplitConfig.default_cache_adapter)
       @connection_timeout = opts[:connection_timeout] || SplitConfig.default_connection_timeout
       @read_timeout = opts[:read_timeout] || SplitConfig.default_read_timeout
@@ -38,7 +39,6 @@ module SplitIoClient
       @debug_enabled = opts[:debug_enabled] || SplitConfig.default_debug
       @transport_debug_enabled = opts[:transport_debug_enabled] || SplitConfig.default_debug
       @block_until_ready = opts[:block_until_ready] || false
-      @redis_url = opts[:redis_url] || SplitConfig.default_redis_url
       @machine_name = SplitConfig.get_hostname
       @machine_ip = SplitConfig.get_ip
 
@@ -141,7 +141,7 @@ module SplitIoClient
       when :memory
         SplitIoClient::Cache::Adapters::MemoryAdapter.new
       when :redis
-        SplitIoClient::Cache::Adapters::RedisAdapter.new(self.default)
+        SplitIoClient::Cache::Adapters::RedisAdapter.new(@redis_url)
       end
     end
 

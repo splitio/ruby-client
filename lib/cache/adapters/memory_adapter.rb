@@ -4,7 +4,7 @@ module SplitIoClient
   module Cache
     module Adapters
       class MemoryAdapter
-        def initialize(config = nil)
+        def initialize
           @map = Concurrent::Map.new
         end
 
