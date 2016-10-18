@@ -25,7 +25,7 @@ describe SplitIoClient::Cache::Stores::SegmentStore do
 
   context 'memory adapter' do
     let(:adapter) { SplitIoClient::Cache::Adapters::MemoryAdapter.new }
-    let(:config) { SplitIoClient::SplitConfig.new(cache_adapter: adapter) }
+    let(:config) { SplitIoClient::SplitConfig.new(cache_adapter: :memory) }
     let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(adapter) }
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(adapter) }
     let(:segment_store) { described_class.new(segments_repository, config, '', metrics) }
@@ -50,8 +50,8 @@ describe SplitIoClient::Cache::Stores::SegmentStore do
   end
 
   context 'redis adapter' do
-    let(:adapter) { SplitIoClient::Cache::Adapters::RedisAdapter.new }
-    let(:config) { SplitIoClient::SplitConfig.new(cache_adapter: adapter) }
+    let(:adapter) { SplitIoClient::Cache::Adapters::RedisAdapter.new(SplitIoClient::SplitConfig.new) }
+    let(:config) { SplitIoClient::SplitConfig.new(cache_adapter: :redis) }
     let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(adapter) }
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(adapter) }
     let(:segment_store) { described_class.new(segments_repository, config, '', metrics) }

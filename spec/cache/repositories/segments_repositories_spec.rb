@@ -17,7 +17,8 @@ describe SplitIoClient::Cache::Repositories::SegmentsRepository do
   end
 
   context 'redis adapter' do
-    let(:adapter) { SplitIoClient::Cache::Adapters::RedisAdapter.new }
+    let(:config) { SplitIoClient::SplitConfig.new }
+    let(:adapter) { SplitIoClient::Cache::Adapters::RedisAdapter.new(config) }
     let(:repository) { described_class.new(adapter) }
 
     it 'removes keys' do

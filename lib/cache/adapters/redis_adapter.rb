@@ -5,9 +5,8 @@ module SplitIoClient
   module Cache
     module Adapters
       class RedisAdapter
-        def initialize
-          # TODO: Add Redis config
-          @redis = Redis.new
+        def initialize(config)
+          @redis = Redis.new(url: config.redis_url)
         end
 
         # Map

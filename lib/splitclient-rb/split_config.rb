@@ -27,7 +27,7 @@ module SplitIoClient
     def initialize(opts = {})
       @base_uri = (opts[:base_uri] || SplitConfig.default_base_uri).chomp('/')
       @events_uri = (opts[:events_uri] || SplitConfig.default_events_uri).chomp('/')
-      @cache_adapter = opts[:cache_adapter] || SplitConfig.default_cache_adapter
+      @cache_adapter = SplitConfig.init_cache_adapter(opts[:cache_adapter] || SplitConfig.default_cache_adapter)
       @connection_timeout = opts[:connection_timeout] || SplitConfig.default_connection_timeout
       @read_timeout = opts[:read_timeout] || SplitConfig.default_read_timeout
       @features_refresh_rate = opts[:features_refresh_rate] || SplitConfig.default_features_refresh_rate
@@ -38,6 +38,7 @@ module SplitIoClient
       @debug_enabled = opts[:debug_enabled] || SplitConfig.default_debug
       @transport_debug_enabled = opts[:transport_debug_enabled] || SplitConfig.default_debug
       @block_until_ready = opts[:block_until_ready] || false
+      @redis_url = opts[:redis_url] || SplitConfig.default_redis_url
       @machine_name = SplitConfig.get_hostname
       @machine_ip = SplitConfig.get_ip
 
@@ -105,6 +106,7 @@ module SplitIoClient
     # or false to disable waiting
     # @return [Integer]/[FalseClass]
     attr_reader :block_until_ready
+    attr_reader :redis_url
 
     attr_reader :machine_ip
     attr_reader :machine_name
@@ -134,9 +136,18 @@ module SplitIoClient
       'https://events.split.io/api/'
     end
 
+    def self.init_cache_adapter(adapter)
+      case adapter
+      when :memory
+        SplitIoClient::Cache::Adapters::MemoryAdapter.new
+      when :redis
+        SplitIoClient::Cache::Adapters::RedisAdapter.new(self.default)
+      end
+    end
+
     # @return [LocalStore] configuration value for local cache store
     def self.default_cache_adapter
-      SplitIoClient::Cache::Adapters::MemoryAdapter.new
+      :memory
     end
 
     #
@@ -185,6 +196,10 @@ module SplitIoClient
     # @return [boolean]
     def self.default_debug
       false
+    end
+
+    def self.default_redis_url
+      'redis://127.0.0.1:6379/0'
     end
 
     #
