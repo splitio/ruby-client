@@ -48,7 +48,7 @@ describe SplitIoClient::Cache::Stores::SplitStore do
   context 'redis adapter' do
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(adapter) }
     let(:config) { SplitIoClient::SplitConfig.new(cache_adapter: :redis) }
-    let(:adapter) { SplitIoClient::Cache::Adapters::RedisAdapter.new(SplitIoClient::SplitConfig.new) }
+    let(:adapter) { SplitIoClient::Cache::Adapters::RedisAdapter.new(config.redis_url) }
     let(:store) { described_class.new(splits_repository, config, '', metrics) }
 
     it 'returns splits since' do

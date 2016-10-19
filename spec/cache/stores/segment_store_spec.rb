@@ -50,7 +50,7 @@ describe SplitIoClient::Cache::Stores::SegmentStore do
   end
 
   context 'redis adapter' do
-    let(:adapter) { SplitIoClient::Cache::Adapters::RedisAdapter.new(SplitIoClient::SplitConfig.new) }
+    let(:adapter) { SplitIoClient::Cache::Adapters::RedisAdapter.new(SplitIoClient::SplitConfig.new.redis_url) }
     let(:config) { SplitIoClient::SplitConfig.new(cache_adapter: :redis) }
     let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(adapter) }
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(adapter) }

@@ -28,7 +28,7 @@ module SplitIoClient
       @base_uri = (opts[:base_uri] || SplitConfig.default_base_uri).chomp('/')
       @events_uri = (opts[:events_uri] || SplitConfig.default_events_uri).chomp('/')
       @redis_url = opts[:redis_url] || SplitConfig.default_redis_url
-      @cache_adapter = SplitConfig.init_cache_adapter(opts[:cache_adapter] || SplitConfig.default_cache_adapter)
+      @cache_adapter = SplitConfig.init_cache_adapter(opts[:cache_adapter] || SplitConfig.default_cache_adapter, @redis_url)
       @connection_timeout = opts[:connection_timeout] || SplitConfig.default_connection_timeout
       @read_timeout = opts[:read_timeout] || SplitConfig.default_read_timeout
       @features_refresh_rate = opts[:features_refresh_rate] || SplitConfig.default_features_refresh_rate
@@ -106,7 +106,6 @@ module SplitIoClient
     # or false to disable waiting
     # @return [Integer]/[FalseClass]
     attr_reader :block_until_ready
-    attr_reader :redis_url
 
     attr_reader :machine_ip
     attr_reader :machine_name
@@ -115,6 +114,8 @@ module SplitIoClient
     attr_reader :segments_refresh_rate
     attr_reader :metrics_refresh_rate
     attr_reader :impressions_refresh_rate
+
+    attr_reader :redis_url
 
     #
     # The default split client configuration
@@ -136,12 +137,12 @@ module SplitIoClient
       'https://events.split.io/api/'
     end
 
-    def self.init_cache_adapter(adapter)
+    def self.init_cache_adapter(adapter, redis_url)
       case adapter
       when :memory
         SplitIoClient::Cache::Adapters::MemoryAdapter.new
       when :redis
-        SplitIoClient::Cache::Adapters::RedisAdapter.new(@redis_url)
+        SplitIoClient::Cache::Adapters::RedisAdapter.new(redis_url)
       end
     end
 
