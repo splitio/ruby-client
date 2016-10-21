@@ -79,9 +79,6 @@ The following values can be customized
 **base_uri** :  URI for the api endpoints
 *defualt value* :  https://sdk.split.io/api/
 
-**local_store** : optional cache storage
-*default value* : custom cache local storage
-
 **connection_timeout** :  timeout for network connections in seconds
 *default value* =   5
 
@@ -112,11 +109,16 @@ The following values can be customized
 **block_until_ready** : The SDK will block your app for provided amount of seconds until it's ready. If timeout expires `SplitIoClient::SDKBlockerTimeoutExpiredException` will be thrown. If `false` provided, then SDK would run in non-blocking mode
 *default value* : false
 
+**cache_adapter** : The SDK needs some container to store fetched data, i.e. splits/segments. By default it will use store everything in the application's memory, available options: `:memory`, `:redis`.
+*default value* : memory
+
+**redis_url** : Needed if `cache_adapter` = `:redis` is selected, redis URL for SDK to connect to.
+*default value* : 'redis://127.0.0.1:6379/0'
+
 Example
 ```ruby
 options = {
   base_uri: 'https://my.app.api/',
-  local_store: Rails.cache,
   connection_timeout: 10,
   read_timeout: 5,
   features_refresh_rate: 120,
@@ -124,7 +126,9 @@ options = {
   metrics_refresh_rate: 360,
   impressions_refresh_rate: 360,
   logger: Logger.new('logfile.log'),
-  block_until_ready: 5
+  block_until_ready: 5,
+  cache_adapter: :redis,
+  redis_url: 'redis://127.0.0.1:6379/0'
 }
 begin
   split_client = SplitIoClient::SplitFactory.new("your_api_key", options).client

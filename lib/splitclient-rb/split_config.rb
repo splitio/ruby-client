@@ -15,7 +15,6 @@ module SplitIoClient
     # @option opts [String] :events_uri ("https://events.split.io/api/") The events URL for events end points
     # @option opts [Int] :read_timeout (10) The read timeout for network connections in seconds.
     # @option opts [Int] :connection_timeout (2) The connect timeout for network connections in seconds.
-    # @option opts [Object] :local_store A cache store for the Faraday HTTP caching library. Defaults to the Rails cache in a Rails environment, or a thread-safe in-memory store otherwise.
     # @option opts [Int] :features_refresh_rate The SDK polls Split servers for changes to feature roll-out plans. This parameter controls this polling period in seconds.
     # @option opts [Int] :segments_refresh_rate
     # @option opts [Int] :metrics_refresh_rate
@@ -56,13 +55,6 @@ module SplitIoClient
     #
     # @return [String] The configured URL for the events API end points
     attr_reader :events_uri
-
-    #
-    # The store for the Faraday HTTP caching library. Stores should respond to
-    # 'read', 'write' and 'delete' requests.
-    #
-    # @return [Object] The configured store for the Faraday HTTP caching library.
-    attr_reader :local_store
 
     #
     # The read timeout for network connections in seconds.
