@@ -3,7 +3,11 @@ require 'securerandom'
 
 describe SplitIoClient do
   RSpec.shared_examples 'engine specs' do |cache_adapter|
-    subject { SplitIoClient::SplitFactory.new('', { logger: Logger.new('/dev/null'), cache_adapter: :redis }).client }
+    let(:config) do
+      { logger: Logger.new('/dev/null'), cache_adapter: cache_adapter }
+    end
+
+    subject { SplitIoClient::SplitFactory.new('', config).client }
 
     let(:segments_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), 'test_data/segments/engine_segments.json'))) }
     let(:segments2_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), 'test_data/segments/engine_segments2.json'))) }
@@ -42,6 +46,26 @@ describe SplitIoClient do
       before do
         stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
           .to_return(status: 200, body: all_keys_matcher_json)
+      end
+
+      context 'producer mode' do
+        let(:config) do
+          { logger: Logger.new('/dev/null'), mode: :producer, cache_adapter: cache_adapter }
+        end
+
+        it 'stores splits' do
+          expect(subject.instance_variable_get(:@adapter).splits_repository.splits.size).to eq(1)
+        end
+      end
+
+      context 'consumer mode' do
+        let(:config) do
+          { logger: Logger.new('/dev/null'), mode: :consumer, cache_adapter: cache_adapter }
+        end
+
+        it 'stores splits' do
+          expect(subject.instance_variable_get(:@adapter).splits_repository.splits.size).to eq(0)
+        end
       end
 
       it 'validates the feature is on for all ids' do

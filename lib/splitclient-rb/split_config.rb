@@ -26,6 +26,7 @@ module SplitIoClient
     def initialize(opts = {})
       @base_uri = (opts[:base_uri] || SplitConfig.default_base_uri).chomp('/')
       @events_uri = (opts[:events_uri] || SplitConfig.default_events_uri).chomp('/')
+      @mode = opts[:mode] || SplitConfig.default_mode
       @redis_url = opts[:redis_url] || SplitConfig.default_redis_url
       @cache_adapter = SplitConfig.init_cache_adapter(opts[:cache_adapter] || SplitConfig.default_cache_adapter, @redis_url)
       @connection_timeout = opts[:connection_timeout] || SplitConfig.default_connection_timeout
@@ -41,7 +42,7 @@ module SplitIoClient
       @machine_name = SplitConfig.get_hostname
       @machine_ip = SplitConfig.get_ip
 
-      log_loaded_cache
+      startup_log
     end
 
     #
@@ -57,6 +58,11 @@ module SplitIoClient
     attr_reader :events_uri
 
     #
+    # The mode SDK will run
+    #
+    # @return [Symbol] One of the available SDK modes: standalone, consumer, producer
+    attr_reader :mode
+
     # The read timeout for network connections in seconds.
     #
     # @return [Int] The timeout in seconds.
@@ -138,6 +144,10 @@ module SplitIoClient
       end
     end
 
+    def self.default_mode
+      :standalone
+    end
+
     # @return [LocalStore] configuration value for local cache store
     def self.default_cache_adapter
       :memory
@@ -214,10 +224,11 @@ module SplitIoClient
     end
 
     #
-    # log which cache class was loaded
+    # log which cache class was loaded and SDK mode
     #
     # @return [void]
-    def log_loaded_cache
+    def startup_log
+      @logger.info("Loaded SDK in the #{@mode} mode")
       @logger.info("Loaded cache class: #{@cache_adapter.class}")
     end
 
