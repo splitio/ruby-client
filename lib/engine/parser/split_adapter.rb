@@ -161,14 +161,14 @@ module SplitIoClient
         test_impression_array = []
         popped_impressions.each do |i|
           filtered = []
-          keys_seen = []
+          keys_treatments_seen = []
 
           impressions = i[:impressions]
           impressions.each do |imp|
-            if keys_seen.include?(imp.key)
+            if keys_treatments_seen.include?("#{imp.key}:#{imp.treatment}")
               next
             end
-            keys_seen << imp.key
+            keys_treatments_seen << "#{imp.key}:#{imp.treatment}"
             filtered << imp
           end
 
