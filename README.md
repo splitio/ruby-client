@@ -109,11 +109,26 @@ The following values can be customized
 **block_until_ready** : The SDK will block your app for provided amount of seconds until it's ready. If timeout expires `SplitIoClient::SDKBlockerTimeoutExpiredException` will be thrown. If `false` provided, then SDK would run in non-blocking mode
 *default value* : false
 
-**cache_adapter** : The SDK needs some container to store fetched data, i.e. splits/segments. By default it will use store everything in the application's memory, available options: `:memory`, `:redis`.
+#### Cache adapter
+
+The SDK needs some container to store fetched data, i.e. splits/segments. By default it will store everything in the application's memory, but you can also use Redis.
+
+To use Redis, you have to include `redis-rb` in your app's Gemfile.
+
+**cache_adapter** : Supported options: `:memory`, `:redis`
 *default value* : memory
 
-**redis_url** : Needed if `cache_adapter` = `:redis` is selected, redis URL for SDK to connect to.
+**redis_url** : Redis URL or hash with configuration for SDK to connect to.
 *default value* : 'redis://127.0.0.1:6379/0'
+
+You can also use Sentinel like this:
+
+```ruby
+SENTINELS = [{:host => "127.0.0.1", :port => 26380},
+             {:host => "127.0.0.1", :port => 26381}]
+
+redis_url = Redis.new(:url => "redis://mymaster", :sentinels => SENTINELS, :role => :master)
+```
 
 Example
 ```ruby

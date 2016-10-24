@@ -6,7 +6,9 @@ module SplitIoClient
     module Adapters
       class RedisAdapter
         def initialize(redis_url)
-          @redis = Redis.new(url: redis_url)
+          connection = redis_url.is_a?(Hash) ? redis_url : { url: redis_url }
+
+          @redis = Redis.new(connection)
         end
 
         # Map
