@@ -57,17 +57,31 @@ module SplitIoClient
         end
 
         # Set
+        alias_method :initialize_set, :initialize_map
+
         def add_to_set(key, val)
           @redis.sadd(key, val)
+        end
+
+        def delete_from_set(key, val)
+          @redis.srem(key, val)
         end
 
         def get_set(key)
           @redis.smembers(key)
         end
 
+        def in_set?(key, val)
+          @redis.sismember(key, val)
+        end
+
         # General
         def exists?(key)
           @redis.exists(key)
+        end
+
+        def delete(key)
+          @redis.del(key)
         end
       end
     end

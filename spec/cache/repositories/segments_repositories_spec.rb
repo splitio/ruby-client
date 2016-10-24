@@ -7,11 +7,9 @@ describe SplitIoClient::Cache::Repositories::SegmentsRepository do
 
     it 'removes keys' do
       repository.add_to_segment(name: 'foo', added: [1, 2, 3], removed: [])
-
       expect(repository.get_segment_keys('foo')).to eq([1, 2, 3])
 
       repository.send(:remove_keys, 'foo', [1, 2, 3])
-
       expect(repository.get_segment_keys('foo')).to eq([])
     end
   end
@@ -23,11 +21,9 @@ describe SplitIoClient::Cache::Repositories::SegmentsRepository do
 
     it 'removes keys' do
       repository.add_to_segment(name: 'foo', added: [1, 2, 3], removed: [])
-
       expect(repository.get_segment_keys('foo')).to eq(%w(1 2 3))
 
       repository.send(:remove_keys, 'foo', %w(1 2 3))
-
       expect(repository.get_segment_keys('foo')).to eq([])
     end
   end

@@ -60,17 +60,22 @@ module SplitIoClient
         end
 
         # Set
+        alias_method :initialize_set, :initialize_map
+        alias_method :get_set, :map_keys
+        alias_method :delete_from_set, :delete_from_map
+        alias_method :in_set?, :in_map?
+
         def add_to_set(key, val)
           add_to_map(key, val, 1)
-        end
-
-        def get_set(key)
-          map_keys(key)
         end
 
         # General
         def exists?(key)
           !@map[key].nil?
+        end
+
+        def delete(key)
+          @map[key] = nil
         end
       end
     end

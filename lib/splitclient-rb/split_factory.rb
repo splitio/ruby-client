@@ -52,11 +52,11 @@ module SplitIoClient
 
         return @localhost_mode_features if @localhost_mode
         return nil if  @splits_repository.nil?
-          
-        splits = @splits_repository.splits 
+
+        splits = @splits_repository.splits
         ret = []
         splits.keys.each do |key|
-              
+
           split = splits.get(key)
           ret << build_split_view(key, split) if !Engine::Parser::SplitTreatment.archived?(split)
         end
@@ -75,8 +75,8 @@ module SplitIoClient
         end
 
         if @splits_repository
-          
-          split = @splits_repository.get_split(split_name) 
+
+          split = @splits_repository.get_split(split_name)
 
           build_split_view(split_name, split) if split and !Engine::Parser::SplitTreatment.archived?(split)
         end

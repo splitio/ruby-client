@@ -18,7 +18,7 @@ module SplitIoClient
       protected
 
       def namespace_key(key)
-        "repository_#{key}"
+        "SPLITIO.#{key}"
       end
     end
   end
