@@ -23,8 +23,12 @@ module SplitIoClient
           @map[key].get(field)
         end
 
-        def delete_from_map(key, field)
-          @map[key].delete(field)
+        def delete_from_map(key, fields)
+          if fields.is_a? Array
+            fields.each { |field| @map[key].delete(field) }
+          else
+            @map[key].delete(field)
+          end
         end
 
         def in_map?(key, field)
@@ -69,8 +73,12 @@ module SplitIoClient
         alias_method :delete_from_set, :delete_from_map
         alias_method :in_set?, :in_map?
 
-        def add_to_set(key, val)
-          add_to_map(key, val, 1)
+        def add_to_set(key, values)
+          if values.is_a? Array
+            values.each { |value| add_to_map(key, value, 1) }
+          else
+            add_to_map(key, values, 1)
+          end
         end
 
         # General

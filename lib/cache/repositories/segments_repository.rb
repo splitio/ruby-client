@@ -2,6 +2,8 @@ module SplitIoClient
   module Cache
     module Repositories
       class SegmentsRepository < Repository
+        KEYS_SLICE = 3000
+
         def initialize(adapter)
           @adapter = adapter
 
@@ -44,11 +46,15 @@ module SplitIoClient
         end
 
         def add_keys(name, keys)
-          keys.each { |key| @adapter.add_to_set(segment_data(name), key) }
+          keys.each_slice(KEYS_SLICE) do |keys_slice|
+            @adapter.add_to_set(segment_data(name), keys_slice)
+          end
         end
 
         def remove_keys(name, keys)
-          keys.each { |key| @adapter.delete_from_set(segment_data(name), key) }
+          keys.each_slice(KEYS_SLICE) do |keys_slice|
+            @adapter.delete_from_set(segment_data(name), keys_slice)
+          end
         end
       end
     end
