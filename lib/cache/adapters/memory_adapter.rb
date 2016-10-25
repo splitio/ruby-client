@@ -50,6 +50,10 @@ module SplitIoClient
           @map[key] = str
         end
 
+        def find_strings_by_prefix(prefix)
+          @map.keys.select { |str| str.start_with? prefix }
+        end
+
         # Bool
         def set_bool(key, val)
           @map[key] = val

@@ -49,6 +49,10 @@ module SplitIoClient
           @redis.set(key, str)
         end
 
+        def find_strings_by_prefix(prefix)
+          @redis.keys("#{prefix}*")
+        end
+
         # Bool
         def set_bool(key, val)
           @redis.set(key, val.to_s)

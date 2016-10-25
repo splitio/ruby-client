@@ -8,30 +8,36 @@ module SplitIoClient
           @adapter = adapter
 
           @adapter.set_string(namespace_key('split.till'), '-1')
-          @adapter.initialize_map(namespace_key('splits'))
           @adapter.initialize_map(namespace_key('segments.registered'))
         end
 
         def add_split(split)
-          @adapter.add_to_map(namespace_key('splits'), split[:name], split.to_json)
+          @adapter.set_string(namespace_key("split.#{split[:name]}"), split.to_json)
         end
 
         def remove_split(name)
-          @adapter.delete_from_map(namespace_key('splits'), name)
+          @adapter.delete(namespace_key("split.#{name}"))
         end
 
-        def get_split(name)
-          split = @adapter.find_in_map(namespace_key('splits'), name)
+        def get_split(name, prefixed = false)
+          split = prefixed ? @adapter.string(name) : @adapter.string(namespace_key("split.#{name}"))
 
           JSON.parse(split, symbolize_names: true)
         end
 
         def splits
           splits_hash = {}
-          splits_map = @adapter.get_map(namespace_key('splits'))
+          splits = []
+          split_names = @adapter.find_strings_by_prefix(namespace_key('split'))
 
-          splits_map.each_key do |key|
-            splits_hash[key] = JSON.parse(splits_map[key], symbolize_names: true)
+          split_names.each do |name|
+            next if name == namespace_key('split.till')
+
+            splits << get_split(name, true)
+          end
+
+          splits.each do |split|
+            splits_hash[split[:name]] = split
           end
 
           splits_hash

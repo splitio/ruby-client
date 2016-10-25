@@ -2,6 +2,12 @@ module SplitIoClient
   module Cache
     module Repositories
       class SegmentsRepository < Repository
+        def initialize(adapter)
+          @adapter = adapter
+
+          @adapter.set_bool(namespace_key('ready'), false)
+        end
+
         def add_to_segment(segment)
           name = segment[:name]
 
