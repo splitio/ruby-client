@@ -49,19 +49,12 @@ module SplitIoClient
       #
       # @returns [object] array of splits
       def splits
-
         return @localhost_mode_features if @localhost_mode
-        return nil if  @splits_repository.nil?
+        return if @splits_repository.nil?
 
-        splits = @splits_repository.splits
-        ret = []
-        splits.keys.each do |key|
-
-          split = splits.get(key)
-          ret << build_split_view(key, split) if !Engine::Parser::SplitTreatment.archived?(split)
+        @splits_repository.splits.each_with_object([]) do |(name, split), memo|
+          memo << build_split_view(name, split) unless Engine::Parser::SplitTreatment.archived?(split)
         end
-
-        ret
       end
 
       #
