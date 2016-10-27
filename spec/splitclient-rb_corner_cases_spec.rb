@@ -23,5 +23,4 @@ describe SplitIoClient do
   it 'validates the feature is "default" for id when segment used does not exist' do
     expect(subject.get_treatment(user, feature)).to eq "default"
   end
-
 end

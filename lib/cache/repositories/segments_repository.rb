@@ -2,49 +2,59 @@ module SplitIoClient
   module Cache
     module Repositories
       class SegmentsRepository < Repository
+        KEYS_SLICE = 3000
+
+        def initialize(adapter)
+          @adapter = adapter
+
+          @adapter.set_bool(namespace_key('ready'), false)
+        end
+
         def add_to_segment(segment)
           name = segment[:name]
 
-          @adapter.initialize_map(namespace_key("segments:#{name}")) if @adapter[namespace_key("segments:#{name}")].nil?
+          @adapter.initialize_set(segment_data(name)) unless @adapter.exists?(segment_data(name))
 
           add_keys(name, segment[:added])
           remove_keys(name, segment[:removed])
         end
 
         def get_segment_keys(name)
-          @adapter[namespace_key("segments:#{name}")]
+          @adapter.get_set(segment_data(name))
         end
 
         def in_segment?(name, key)
-          @adapter.in_map?(namespace_key("segments:#{name}"), key)
+          @adapter.in_set?(segment_data(name), key)
         end
 
         def used_segment_names
-          @adapter['splits_repository_used_segment_names'].keys
+          @adapter.get_set(namespace_key('segments.registered'))
         end
 
         def set_change_number(name, last_change)
-          @adapter.initialize_map(namespace_key('changes')) if @adapter[namespace_key('changes')].nil?
-
-          @adapter.add_to_map(namespace_key('changes'), name, last_change)
+          @adapter.set_string(namespace_key("segment.#{name}.till"), last_change)
         end
 
         def get_change_number(name)
-          @adapter.find_in_map(namespace_key('changes'), name) || -1
+          @adapter.string(namespace_key("segment.#{name}.till")) || -1
         end
 
         private
 
-        def namespace_key(key)
-          "segments_repository_#{key}"
+        def segment_data(name)
+          namespace_key("segmentData.#{name}")
         end
 
         def add_keys(name, keys)
-          keys.each { |key| @adapter.add_to_map(namespace_key("segments:#{name}"), key, 1) }
+          keys.each_slice(KEYS_SLICE) do |keys_slice|
+            @adapter.add_to_set(segment_data(name), keys_slice)
+          end
         end
 
         def remove_keys(name, keys)
-          keys.each { |key| @adapter.delete_from_map(namespace_key("segments:#{name}"), key) }
+          keys.each_slice(KEYS_SLICE) do |keys_slice|
+            @adapter.delete_from_set(segment_data(name), keys_slice)
+          end
         end
       end
     end

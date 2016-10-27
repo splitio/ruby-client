@@ -1,3 +1,5 @@
+require 'concurrent'
+
 module SplitIoClient
   module Cache
     module Repositories
@@ -5,49 +7,56 @@ module SplitIoClient
         def initialize(adapter)
           @adapter = adapter
 
-          @adapter[namespace_key('last_change')] = -1
-          @adapter.initialize_map(namespace_key('splits'))
-          @adapter.initialize_map(namespace_key('used_segment_names'))
+          @adapter.set_string(namespace_key('split.till'), '-1')
+          @adapter.initialize_map(namespace_key('segments.registered'))
         end
 
         def add_split(split)
-          split_without_name = split.select { |k, _| k != :name }
-
-          @adapter.add_to_map(namespace_key('splits'), split[:name], split_without_name)
+          @adapter.set_string(namespace_key("split.#{split[:name]}"), split.to_json)
         end
 
         def remove_split(name)
-          @adapter.add_to_map(namespace_key('splits'), name, nil)
+          @adapter.delete(namespace_key("split.#{name}"))
         end
 
-        def get_split(name)
-          @adapter.find_in_map(namespace_key('splits'), name)
+        def get_split(name, prefixed = false)
+          split = prefixed ? @adapter.string(name) : @adapter.string(namespace_key("split.#{name}"))
+
+          JSON.parse(split, symbolize_names: true)
         end
 
-        def list_splits()
-          @adapter[namespace_key('splits')]
+        def splits
+          splits_hash = {}
+          splits = []
+          split_names = @adapter.find_strings_by_prefix(namespace_key('split'))
+
+          split_names.each do |name|
+            next if name == namespace_key('split.till')
+
+            splits << get_split(name, true)
+          end
+
+          splits.each do |split|
+            splits_hash[split[:name]] = split
+          end
+
+          splits_hash
         end
 
         def set_change_number(since)
-          @adapter[namespace_key('last_change')] = since
+          @adapter.set_string(namespace_key('split.till'), since)
         end
 
         def get_change_number
-          @adapter[namespace_key('last_change')]
+          @adapter.string(namespace_key('split.till'))
         end
 
         def set_segment_names(names)
           return if names.nil? || names.empty?
 
           names.each do |name|
-            @adapter.add_to_map(namespace_key('used_segment_names'), name, 1)
+            @adapter.add_to_set(namespace_key('segments.registered'), name)
           end
-        end
-
-        private
-
-        def namespace_key(key)
-          "splits_repository_#{key}"
         end
       end
     end
