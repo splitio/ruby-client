@@ -77,37 +77,52 @@ By default the split client uses its default configuration, it will be sufficien
 The following values can be customized
 
 **base_uri** :  URI for the api endpoints
-*defualt value* :  https://sdk.split.io/api/
+
+*defualt value* : `https://sdk.split.io/api/`
 
 **connection_timeout** :  timeout for network connections in seconds
-*default value* =   5
+
+*default value* = `5`
 
 **read_timeout** : timeout for requests in seconds
-*default value* = 5
+
+*default value* = `5`
 
 **features_refresh_rate** : The SDK polls Split servers for changes to feature roll-out plans. This parameter controls this polling period in seconds
-*default value* = 30
+
+*default value* = `30`
 
 **segments_refresh_rate** : The SDK polls Split servers for changes to segment definitions. This parameter controls this polling period in seconds
-*default value* = 60
+
+*default value* = `60`
 
 **metrics_refresh_rate** : The SDK sends diagnostic metrics to Split servers. This parameters controls this metric flush period in seconds
-*default value* = 60
+
+*default value* = `60`
 
 **impressions_refresh_rate** : The SDK sends information on who got what treatment at what time back to Split servers to power analytics. This parameter controls how often this data is sent to Split servers in seconds
-*default value* = 60
+
+*default value* = `60`
 
 **debug_enabled** : Enables extra logging
-*default value* = false
+
+*default value* = `false`
 
 **transport_debug_enabled** : Enables extra transport logging
-*default value* = false
+
+*default value* = `false`
 
 **logger** : default logger for messages and errors
-*default value* : Ruby logger class set to STDOUT
+
+*default value* = `Logger.new($stdout)`
 
 **block_until_ready** : The SDK will block your app for provided amount of seconds until it's ready. If timeout expires `SplitIoClient::SDKBlockerTimeoutExpiredException` will be thrown. If `false` provided, then SDK would run in non-blocking mode
-*default value* : false
+
+*default value* = `false`
+
+**mode** : See [SDK modes section](#sdk-modes).
+
+*default value* = `:standalone`
 
 #### Cache adapter
 
@@ -116,10 +131,12 @@ The SDK needs some container to store fetched data, i.e. splits/segments. By def
 To use Redis, you have to include `redis-rb` in your app's Gemfile.
 
 **cache_adapter** : Supported options: `:memory`, `:redis`
-*default value* : memory
+
+*default value* = `memory`
 
 **redis_url** : Redis URL or hash with configuration for SDK to connect to.
-*default value* : 'redis://127.0.0.1:6379/0'
+
+*default value* = `'redis://127.0.0.1:6379/0'`
 
 You can also use Sentinel like this:
 
@@ -202,6 +219,40 @@ And you should get something like this:
  => [{:name=>"some_feature", :traffic_type_name=>nil, :killed=>false, :treatments=>nil, :change_number=>1469134003507}, {:name=>"another_feature", :traffic_type_name=>nil, :killed=>false, :treatments=>nil, :change_number=>1469134003414}, {:name=>"even_more_features", :traffic_type_name=>nil, :killed=>false, :treatments=>nil, :change_number=>1469133991063}, {:name=>"yet_another_feature", :traffic_type_name=>nil, :killed=>false, :treatments=>nil, :change_number=>1469133757521}]
  ```
 
+### SDK Modes
+
+By default SDK would run alongside with your application and will be run in `standalone` mode, which includes two modes:
+- `producer` - storing information from the Splits API in the chosen cache
+- `consumer` - retrieving data from the cache and providing `get_treatment` interface
+
+As you might think, you can choose between these 3 modes by providing `mode` option in the config.
+
+#### Producer mode
+
+If you have, say, one Redis cache which is used by several Split SDKs at once, e.g.: Python and Ruby, you want to have only one of them to write data to Redis, so it would remain consistent. That's why we have producer mode.
+
+SDK can be ran in `producer` mode both in the scope of the application (e.g. as a part of the Rails app), and as a separate process. Let's see what steps are needed to run it as a separate process:
+
+1. You need to create a config file with .yml extension. All options specified in the above example section are valid, but you should write them in the YAML format, like this:
+
+```yaml
+---
+:api_key: 'SECRET_API_KEY'
+:base_uri: 'https://my.app.api/'
+:connection_timeout: 10
+:read_timeout: 5
+:features_refresh_rate: 120
+:segments_refresh_rate: 120
+:metrics_refresh_rate: 360
+:impressions_refresh_rate: 360
+:block_until_ready: 5
+:cache_adapter: :redis
+:redis_url: 'redis://127.0.0.1:6379/0'
+```
+
+2. Run the executable provided by the SDK: `bundle exec exe/splitio -c ~/path/to/config/file.yml`
+
+That's it!
 
 ## Development
 
