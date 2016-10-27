@@ -77,39 +77,52 @@ By default the split client uses its default configuration, it will be sufficien
 The following values can be customized
 
 **base_uri** :  URI for the api endpoints
-*defualt value* :  https://sdk.split.io/api/
+
+*defualt value* : `https://sdk.split.io/api/`
 
 **connection_timeout** :  timeout for network connections in seconds
-*default value* =   5
+
+*default value* = `5`
 
 **read_timeout** : timeout for requests in seconds
-*default value* = 5
+
+*default value* = `5`
 
 **features_refresh_rate** : The SDK polls Split servers for changes to feature roll-out plans. This parameter controls this polling period in seconds
-*default value* = 30
+
+*default value* = `30`
 
 **segments_refresh_rate** : The SDK polls Split servers for changes to segment definitions. This parameter controls this polling period in seconds
-*default value* = 60
+
+*default value* = `60`
 
 **metrics_refresh_rate** : The SDK sends diagnostic metrics to Split servers. This parameters controls this metric flush period in seconds
-*default value* = 60
+
+*default value* = `60`
 
 **impressions_refresh_rate** : The SDK sends information on who got what treatment at what time back to Split servers to power analytics. This parameter controls how often this data is sent to Split servers in seconds
-*default value* = 60
+
+*default value* = `60`
 
 **debug_enabled** : Enables extra logging
-*default value* = false
+
+*default value* = `false`
 
 **transport_debug_enabled** : Enables extra transport logging
-*default value* = false
+
+*default value* = `false`
 
 **logger** : default logger for messages and errors
-*default value* : Ruby logger class set to STDOUT
+
+*default value* = `Logger.new($stdout)`
 
 **block_until_ready** : The SDK will block your app for provided amount of seconds until it's ready. If timeout expires `SplitIoClient::SDKBlockerTimeoutExpiredException` will be thrown. If `false` provided, then SDK would run in non-blocking mode
-*default value* : false
 
-**mode** : See SDK modes section.
+*default value* = `false`
+
+**mode** : See [SDK modes section](#sdk-modes).
+
+*default value* = `:standalone`
 
 #### Cache adapter
 
@@ -118,10 +131,12 @@ The SDK needs some container to store fetched data, i.e. splits/segments. By def
 To use Redis, you have to include `redis-rb` in your app's Gemfile.
 
 **cache_adapter** : Supported options: `:memory`, `:redis`
-*default value* : memory
+
+*default value* = `memory`
 
 **redis_url** : Redis URL or hash with configuration for SDK to connect to.
-*default value* : 'redis://127.0.0.1:6379/0'
+
+*default value* = `'redis://127.0.0.1:6379/0'`
 
 You can also use Sentinel like this:
 
