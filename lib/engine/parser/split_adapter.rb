@@ -71,6 +71,8 @@ module SplitIoClient
       when :producer
         split_store
         segment_store
+
+        sleep unless ENV['SPLITCLIENT_ENV'] == 'test'
       end
     end
 

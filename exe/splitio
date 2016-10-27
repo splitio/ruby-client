@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 
+lib = File.expand_path('../../lib', __FILE__)
+$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
+
 require 'optparse'
 require 'pry'
 require 'yaml'
@@ -30,6 +33,6 @@ begin
  end
 
 config = YAML.load_file(options[:config_path])
-config.merge(sdk_mode: :producer)
+config.merge!(mode: :producer)
 
 SplitIoClient::SplitFactory.new(config[:api_key], config)
