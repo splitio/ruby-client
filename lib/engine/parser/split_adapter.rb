@@ -40,7 +40,6 @@ module SplitIoClient
     #
     # @return [SplitIoClient] split.io client instance
     def initialize(api_key, config, splits_repository, segments_repository, sdk_blocker)
-
       @api_key = api_key
       @config = config
       @impressions = Impressions.new(100)
@@ -56,11 +55,25 @@ module SplitIoClient
         builder.adapter :net_http_persistent
       end
 
-      @splits_consumer = create_splits_api_consumer
-      @segments_consumer = create_segments_api_consumer
-      @metrics_producer = create_metrics_api_producer
-      @impressions_producer = create_impressions_api_producer
+      start_based_on_mode(@config.mode)
+    end
 
+    def start_based_on_mode(mode)
+      case mode
+      when :standalone
+        split_store
+        segment_store
+        metrics_sender
+        impressions_sender
+      when :consumer
+        metrics_sender
+        impressions_sender
+      when :producer
+        split_store
+        segment_store
+
+        sleep unless ENV['SPLITCLIENT_ENV'] == 'test'
+      end
     end
 
     #
@@ -69,11 +82,11 @@ module SplitIoClient
     # provided within the configuration
     #
     # @return [void]
-    def create_splits_api_consumer
+    def split_store
       SplitIoClient::Cache::Stores::SplitStore.new(@splits_repository, @config, @api_key, @metrics, @sdk_blocker).call
     end
 
-    def create_segments_api_consumer
+    def segment_store
       SplitIoClient::Cache::Stores::SegmentStore.new(@segments_repository, @config, @api_key, @metrics, @sdk_blocker).call
     end
 
@@ -116,11 +129,10 @@ module SplitIoClient
     # provided within the configuration
     #
 
-    def create_metrics_api_producer
+    def metrics_sender
       Thread.new do
         loop do
           begin
-            #post captured metrics
             post_metrics
 
             random_interval = randomize_interval @config.metrics_refresh_rate
@@ -132,11 +144,10 @@ module SplitIoClient
       end
     end
 
-    def create_impressions_api_producer
+    def impressions_sender
       Thread.new do
         loop do
           begin
-            #post captured impressions
             post_impressions
 
             random_interval = randomize_interval @config.impressions_refresh_rate
