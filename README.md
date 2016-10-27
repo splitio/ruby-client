@@ -109,6 +109,8 @@ The following values can be customized
 **block_until_ready** : The SDK will block your app for provided amount of seconds until it's ready. If timeout expires `SplitIoClient::SDKBlockerTimeoutExpiredException` will be thrown. If `false` provided, then SDK would run in non-blocking mode
 *default value* : false
 
+**mode** : See SDK modes section.
+
 #### Cache adapter
 
 The SDK needs some container to store fetched data, i.e. splits/segments. By default it will store everything in the application's memory, but you can also use Redis.
@@ -202,6 +204,40 @@ And you should get something like this:
  => [{:name=>"some_feature", :traffic_type_name=>nil, :killed=>false, :treatments=>nil, :change_number=>1469134003507}, {:name=>"another_feature", :traffic_type_name=>nil, :killed=>false, :treatments=>nil, :change_number=>1469134003414}, {:name=>"even_more_features", :traffic_type_name=>nil, :killed=>false, :treatments=>nil, :change_number=>1469133991063}, {:name=>"yet_another_feature", :traffic_type_name=>nil, :killed=>false, :treatments=>nil, :change_number=>1469133757521}]
  ```
 
+### SDK Modes
+
+By default SDK would run alongside with your application and will be run in `standalone` mode, which includes two modes:
+- `producer` - storing information from the Splits API in the chosen cache
+- `consumer` - retrieving data from the cache and providing `get_treatment` interface
+
+As you might think, you can choose between these 3 modes by providing `mode` option in the config.
+
+#### Producer mode
+
+If you have, say, one Redis cache which is used by several Split SDKs at once, e.g.: Python and Ruby, you want to have only one of them to write data to Redis, so it would remain consistent. That's why we have producer mode.
+
+SDK can be ran in `producer` mode both in the scope of the application (e.g. as a part of the Rails app), and as a separate process. Let's see what steps are needed to run it as a separate process:
+
+1. You need to create a config file with .yml extension. All options specified in the above example section are valid, but you should write them in the YAML format, like this:
+
+```yaml
+---
+:api_key: 'SECRET_API_KEY'
+:base_uri: 'https://my.app.api/'
+:connection_timeout: 10
+:read_timeout: 5
+:features_refresh_rate: 120
+:segments_refresh_rate: 120
+:metrics_refresh_rate: 360
+:impressions_refresh_rate: 360
+:block_until_ready: 5
+:cache_adapter: :redis
+:redis_url: 'redis://127.0.0.1:6379/0'
+```
+
+2. Run the executable provided by the SDK: `bundle exec exe/splitio -c ~/path/to/config/file.yml`
+
+That's it!
 
 ## Development
 
