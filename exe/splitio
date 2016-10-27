@@ -33,6 +33,6 @@ begin
  end
 
 config = YAML.load_file(options[:config_path])
-config.merge!(mode: :producer)
+config.merge!(mode: :producer, cache_adapter: :redis)
 
 SplitIoClient::SplitFactory.new(config[:api_key], config)
