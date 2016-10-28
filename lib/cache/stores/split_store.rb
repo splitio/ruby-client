@@ -44,7 +44,7 @@ module SplitIoClient
             @sdk_blocker.splits_ready!
             @config.logger.info('splits are ready')
           end
-          
+
         rescue StandardError => error
           @config.log_found_exception(__method__.to_s, error)
         end

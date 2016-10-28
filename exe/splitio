@@ -1,0 +1,37 @@
+#!/usr/bin/env ruby
+
+lib = File.expand_path('../../lib', __FILE__)
+$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
+
+require 'optparse'
+require 'yaml'
+require_relative '../lib/splitclient-rb'
+
+ARGV << '-h' if ARGV.empty?
+
+options = {}
+opt_parser = OptionParser.new do |opts|
+  opts.banner = "Usage: splitio [options]"
+
+  opts.on("-cPATH", "--config=PATH", "Set the path to splitio.yml config file") do |c|
+    options[:config_path] = c
+  end
+
+  opts.on_tail("-h", "--help", "Prints this help") do
+    puts opts
+    exit
+  end
+end
+
+begin
+   opt_parser.parse!(ARGV)
+ rescue OptionParser::InvalidOption => e
+   puts e
+   puts opt_parser
+   exit(1)
+ end
+
+config = YAML.load_file(options[:config_path])
+config.merge!(mode: :producer, cache_adapter: :redis)
+
+SplitIoClient::SplitFactory.new(config[:api_key], config)

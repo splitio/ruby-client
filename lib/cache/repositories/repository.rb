@@ -1,24 +1,18 @@
 module SplitIoClient
   module Cache
     class Repository
-      def initialize(adapter)
-        @adapter = adapter
-
-        @adapter[namespace_key('ready')] = false
+      def set_string(key, str)
+        @adapter.set_string(namespace_key(key), str)
       end
 
-      def []=(key, obj)
-        @adapter[namespace_key(key)] = obj
-      end
-
-      def [](key)
-        @adapter[namespace_key(key)]
+      def string(key)
+        @adapter.string(namespace_key(key))
       end
 
       protected
 
       def namespace_key(key)
-        "repository_#{key}"
+        "SPLITIO.#{key}"
       end
     end
   end

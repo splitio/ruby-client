@@ -15,7 +15,6 @@ module SplitIoClient
     # @option opts [String] :events_uri ("https://events.split.io/api/") The events URL for events end points
     # @option opts [Int] :read_timeout (10) The read timeout for network connections in seconds.
     # @option opts [Int] :connection_timeout (2) The connect timeout for network connections in seconds.
-    # @option opts [Object] :local_store A cache store for the Faraday HTTP caching library. Defaults to the Rails cache in a Rails environment, or a thread-safe in-memory store otherwise.
     # @option opts [Int] :features_refresh_rate The SDK polls Split servers for changes to feature roll-out plans. This parameter controls this polling period in seconds.
     # @option opts [Int] :segments_refresh_rate
     # @option opts [Int] :metrics_refresh_rate
@@ -27,7 +26,9 @@ module SplitIoClient
     def initialize(opts = {})
       @base_uri = (opts[:base_uri] || SplitConfig.default_base_uri).chomp('/')
       @events_uri = (opts[:events_uri] || SplitConfig.default_events_uri).chomp('/')
-      @cache_adapter = opts[:cache_adapter] || SplitConfig.default_cache_adapter
+      @mode = opts[:mode] || SplitConfig.default_mode
+      @redis_url = opts[:redis_url] || SplitConfig.default_redis_url
+      @cache_adapter = SplitConfig.init_cache_adapter(opts[:cache_adapter] || SplitConfig.default_cache_adapter, @redis_url)
       @connection_timeout = opts[:connection_timeout] || SplitConfig.default_connection_timeout
       @read_timeout = opts[:read_timeout] || SplitConfig.default_read_timeout
       @features_refresh_rate = opts[:features_refresh_rate] || SplitConfig.default_features_refresh_rate
@@ -41,7 +42,7 @@ module SplitIoClient
       @machine_name = SplitConfig.get_hostname
       @machine_ip = SplitConfig.get_ip
 
-      log_loaded_cache
+      startup_log
     end
 
     #
@@ -57,13 +58,11 @@ module SplitIoClient
     attr_reader :events_uri
 
     #
-    # The store for the Faraday HTTP caching library. Stores should respond to
-    # 'read', 'write' and 'delete' requests.
+    # The mode SDK will run
     #
-    # @return [Object] The configured store for the Faraday HTTP caching library.
-    attr_reader :local_store
+    # @return [Symbol] One of the available SDK modes: standalone, consumer, producer
+    attr_reader :mode
 
-    #
     # The read timeout for network connections in seconds.
     #
     # @return [Int] The timeout in seconds.
@@ -114,6 +113,8 @@ module SplitIoClient
     attr_reader :metrics_refresh_rate
     attr_reader :impressions_refresh_rate
 
+    attr_reader :redis_url
+
     #
     # The default split client configuration
     #
@@ -134,9 +135,22 @@ module SplitIoClient
       'https://events.split.io/api/'
     end
 
+    def self.init_cache_adapter(adapter, redis_url)
+      case adapter
+      when :memory
+        SplitIoClient::Cache::Adapters::MemoryAdapter.new
+      when :redis
+        SplitIoClient::Cache::Adapters::RedisAdapter.new(redis_url)
+      end
+    end
+
+    def self.default_mode
+      :standalone
+    end
+
     # @return [LocalStore] configuration value for local cache store
     def self.default_cache_adapter
-      SplitIoClient::Cache::Adapters::MemoryAdapter.new
+      :memory
     end
 
     #
@@ -187,6 +201,10 @@ module SplitIoClient
       false
     end
 
+    def self.default_redis_url
+      'redis://127.0.0.1:6379/0'
+    end
+
     #
     # The default transport_debug_enabled value
     #
@@ -206,10 +224,11 @@ module SplitIoClient
     end
 
     #
-    # log which cache class was loaded
+    # log which cache class was loaded and SDK mode
     #
     # @return [void]
-    def log_loaded_cache
+    def startup_log
+      @logger.info("Loaded SDK in the #{@mode} mode")
       @logger.info("Loaded cache class: #{@cache_adapter.class}")
     end
 
