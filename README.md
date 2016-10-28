@@ -149,7 +149,7 @@ SENTINELS = [{host: '127.0.0.1', port: 26380},
 redis_url = Redis.new(url: 'redis://mymaster', sentinels: SENTINELS, role: :master)
 ```
 
-Example
+Example using Redis
 ```ruby
 options = {
   base_uri: 'https://my.app.api/',
@@ -162,6 +162,7 @@ options = {
   logger: Logger.new('logfile.log'),
   block_until_ready: 5,
   cache_adapter: :redis,
+  mode: :consumer,
   redis_url: 'redis://127.0.0.1:6379/0'
 }
 begin
