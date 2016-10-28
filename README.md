@@ -273,7 +273,7 @@ If you have, say, one Redis cache which is used by several Split SDKs at once, e
 
 SDK can be ran in `producer` mode both in the scope of the application (e.g. as a part of the Rails app), and as a separate process. Let's see what steps are needed to run it as a separate process:
 
-1. You need to create a config file with .yml extension. All options specified in the above example section are valid, but you should write them in the YAML format, like this:
+- You need to create a config file with .yml extension. All options specified in the above example section are valid, but you should write them in the YAML format, like this:
 
 ```yaml
 ---
@@ -290,7 +290,15 @@ SDK can be ran in `producer` mode both in the scope of the application (e.g. as 
 :redis_url: 'redis://127.0.0.1:6379/0'
 ```
 
-2. Run the executable provided by the SDK: `bundle exec exe/splitio -c ~/path/to/config/file.yml`
+- Install binstubs
+```ruby
+bundle binstubs splitclient-rb
+```
+
+- Run the executable provided by the SDK: 
+```ruby
+bundle exec bin/splitio -c ~/path/to/config/file.yml
+```
 
 That's it!
 
