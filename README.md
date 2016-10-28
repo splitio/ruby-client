@@ -1,9 +1,9 @@
-# splitclient-rb
+# Split Ruby SDK
 
-Ruby client for split software. This is provided as a gem that can be installed to your Ruby application
+Ruby SDK for Split software, provided as a gem that can be installed to your Ruby application.
 
 ## Installation
-----------
+---
 
  - Once the gem is published you can install it with the following steps:
 
@@ -15,30 +15,32 @@ Ruby client for split software. This is provided as a gem that can be installed 
 
 	And then execute:
 
-	    $ bundle
+	    $ bundle install
 
 	Or install it yourself as:
 
 	    $ gem install splitclient-rb
 
- - If the gem is still unpublished you can install it through this git repository with the following instructions:
+ - You can also use the most recent version from github:
 
-	Add these lines to you application's Gemnfile
+	Add these lines to you application's `Gemfile`:
 	```ruby
-	gem 'splitclient-rb', :git=>'https://github.com/splitio/ruby-client.git',
+	gem 'splitclient-rb', git: 'https://github.com/splitio/ruby-client.git',
 	```
-	You can also specify any specific branch if necessary
+	You can also use any specific branch if necessary:
 	```ruby
-	gem 'splitclient-rb', :git=>'https://github.com/splitio/ruby-client.git', :branch=>'development'
+	gem 'splitclient-rb', git: 'https://github.com/splitio/ruby-client.git', branch: 'development'
 	```
 	And then execute:
 
 	    $ bundle install
 
 ## Usage
-###Quick Setup
-------
-Within your application you need the following
+
+### Quick Setup
+---
+
+Within your application you need the following:
 
 Require the Split client:
 ```ruby
@@ -47,7 +49,7 @@ require 'splitclient-rb'
 
 Create a new split client instance with your API key:
 ```ruby
-factory  = SplitIoClient::SplitFactory.new("your_api_key").client
+factory  = SplitIoClient::SplitFactory.new('YOUR_API_KEY').client
 split_client = factory.client
 ```
 
@@ -56,29 +58,29 @@ For advance use cases you can also obtain a `manager` instance from the factory.
 manager = factory.manager
 ```
 
-###Ruby on Rails
-----
-If you're using Ruby on Rails
+### Ruby on Rails
+---
 
-Create an initializer file at config/initializers/splitclient.rb and then initialize the split client :
+Create an initializer: `config/initializers/splitclient.rb` and then initialize the split client:
 ```ruby
-Rails.configuration.split_client = SplitIoClient::SplitFactory.new("your_api_key").client
+Rails.configuration.split_client = SplitIoClient::SplitFactory.new('YOUR_API_KEY').client
 ```
-In your controllers, access the client using
+In your controllers, access the client using:
 
 ```ruby
 Rails.application.config.split_client
 ```
 
-###Configuration
+### Configuration
 ---
-By default the split client uses its default configuration, it will be sufficient for most scenarios. However you can also provide custom configuration when initializing the client using an optional hash of options.
 
-The following values can be customized
+Split client's default configuration should be sufficient for most scenarios. However you can also provide custom configuration when initializing the client using an optional hash of options.
+
+The following values can be customized:
 
 **base_uri** :  URI for the api endpoints
 
-*defualt value* : `https://sdk.split.io/api/`
+*defualt value* = `https://sdk.split.io/api/`
 
 **connection_timeout** :  timeout for network connections in seconds
 
@@ -141,10 +143,10 @@ To use Redis, you have to include `redis-rb` in your app's Gemfile.
 You can also use Sentinel like this:
 
 ```ruby
-SENTINELS = [{:host => "127.0.0.1", :port => 26380},
-             {:host => "127.0.0.1", :port => 26381}]
+SENTINELS = [{host: '127.0.0.1', port: 26380},
+             {host: '127.0.0.1', port: 26381}]
 
-redis_url = Redis.new(:url => "redis://mymaster", :sentinels => SENTINELS, :role => :master)
+redis_url = Redis.new(url: 'redis://mymaster', sentinels: SENTINELS, role: :master)
 ```
 
 Example
@@ -163,48 +165,57 @@ options = {
   redis_url: 'redis://127.0.0.1:6379/0'
 }
 begin
-  split_client = SplitIoClient::SplitFactory.new("your_api_key", options).client
+  split_client = SplitIoClient::SplitFactory.new('YOUR_API_KEY', options).client
 rescue SplitIoClient::SDKBlockerTimeoutExpiredException
   # Some arbitrary actions
 end
 ```
-This begin-rescue-end block is optional, you might want to use it to catch timeout expired exception and apply some logic here.
+This begin-rescue-end block is optional, you might want to use it to catch timeout expired exception and apply some logic.
 
 ### Execution
 ---
-In your application code you just need to call the get_treatment method with the required parameters for key and feature name
+
+In your application code you just need to call the `get_treatment` method with the required parameters for key and feature name:
 ```ruby
-split_client.get_treatment('user_id','feature_name', {attr: 'val'})
+split_client.get_treatment('user_id','feature_name', attr: 'val')
 ```
 
 For example
 ```ruby
-if split_client.get_treatment('employee_user_01','view_main_list', {age: 35})
+if split_client.get_treatment('employee_user_01','view_main_list', age: 35)
    my_app.display_main_list
 end
 ```
 
 Also, you can use different keys for actually getting treatment and sending impressions to the server:
 ```ruby
-split_client.get_treatment({ matching_key: 'user_id', bucketing_key: 'private_user_id' },'feature_name', {attr: 'val'})
+split_client.get_treatment(
+	{ matching_key: 'user_id', bucketing_key: 'private_user_id' },
+	'feature_name',
+	attr: 'val'
+)
 ```
 When it might be useful? Say, you have a user browsing your website and not signed up yet. You assign some internal id to that user (i.e. bucketing_key) and after user signs up you assign him a matching_key.
 By doing this you can provide both anonymous and signed up user with the same treatment.
 
 `bucketing_key` may be `nil` in that case `matching_key` would be used as a key, so calling
 ```ruby
-split_client.get_treatment({ matching_key: 'user_id' },'feature_name', {attr: 'val'})
+split_client.get_treatment(
+	{ matching_key: 'user_id' },
+	'feature_name',
+	attr: 'val'
+)
 ```
 Is exactly the same as calling
 ```ruby
-split_client.get_treatment('user_id' ,'feature_name', {attr: 'val'})
+split_client.get_treatment('user_id' ,'feature_name', attr: 'val')
 ```
 `bucketing_key` must not be nil
 
 Also you can use the split manager:
 
 ```ruby
-split_manager = SplitIoClient::SplitFactory.new("your_api_key", options).manager
+split_manager = SplitIoClient::SplitFactory.new('your_api_key', options).manager
 ```
 
 With the manager you can get a list of your splits by doing:
@@ -215,8 +226,37 @@ manager.splits
 
 And you should get something like this:
 
-```bash
- => [{:name=>"some_feature", :traffic_type_name=>nil, :killed=>false, :treatments=>nil, :change_number=>1469134003507}, {:name=>"another_feature", :traffic_type_name=>nil, :killed=>false, :treatments=>nil, :change_number=>1469134003414}, {:name=>"even_more_features", :traffic_type_name=>nil, :killed=>false, :treatments=>nil, :change_number=>1469133991063}, {:name=>"yet_another_feature", :traffic_type_name=>nil, :killed=>false, :treatments=>nil, :change_number=>1469133757521}]
+```ruby
+[
+	{ 
+		name: 'some_feature',
+		traffic_type_name: nil,
+		killed: false,
+		treatments: nil,
+		change_number: 1469134003507
+	},
+	{ 
+		name: 'another_feature',
+		traffic_type_name: nil,
+		killed: false,
+		treatments: nil,
+		change_number: 1469134003414
+	},
+	{ 
+		name: 'even_more_features',
+		traffic_type_name: nil,
+		killed: false,
+		treatments: nil,
+		change_number: 1469133991063
+	},
+	{ 
+		name: 'yet_another_feature',
+		traffic_type_name: nil,
+		killed: false,
+		treatments: nil,
+		change_number: 1469133757521
+	}
+]
  ```
 
 ### SDK Modes
