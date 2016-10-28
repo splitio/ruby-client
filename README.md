@@ -152,7 +152,6 @@ redis_url = Redis.new(url: 'redis://mymaster', sentinels: SENTINELS, role: :mast
 Example using Redis
 ```ruby
 options = {
-  base_uri: 'https://my.app.api/',
   connection_timeout: 10,
   read_timeout: 5,
   features_refresh_rate: 120,
@@ -279,7 +278,6 @@ SDK can be ran in `producer` mode both in the scope of the application (e.g. as 
 ```yaml
 ---
 :api_key: 'SECRET_API_KEY'
-:base_uri: 'https://my.app.api/'
 :connection_timeout: 10
 :read_timeout: 5
 :features_refresh_rate: 120
