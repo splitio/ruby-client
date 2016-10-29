@@ -61,7 +61,7 @@ module SplitIoClient
       # method to get the list of just split names. Ideal for ietrating and calling client.get_treatment
       #
       # @returns [object] array of split names (String)
-      def splitNames
+      def split_names
         if @localhost_mode
           local_feature_names = []
           @localhost_mode_features.each do  |split|

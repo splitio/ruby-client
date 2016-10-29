@@ -1,6 +1,6 @@
 3.1.0
 - Add RedisAdapter 
-- adds manager.splitNames()
+- adds manager.split_names()
 
 3.0.3
 - Fix nil ref in manager
