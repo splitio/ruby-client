@@ -19,4 +19,16 @@ describe SplitIoClient do
     end
 
   end
+
+  describe "#manager get_splitNames returns split names from localhost mode" do
+    let(:split_names) { ["local_feature", "local_feature2"] }
+
+    it 'validates the calling manager.splits returns the offline data' do
+      allow(File).to receive(:exists?).and_return(true)
+      allow(File).to receive(:open).and_return(split_file)
+
+      expect(subject.splitNames()).to eql( split_names )
+    end
+
+  end
 end

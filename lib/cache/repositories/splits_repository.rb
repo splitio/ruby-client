@@ -43,6 +43,18 @@ module SplitIoClient
           splits_hash
         end
 
+        # Return an array of Split Names excluding control keys like split.till
+        def splitNames
+          names = []
+          split_names = @adapter.find_strings_by_prefix(namespace_key('split'))
+
+          split_names.each do |name|
+            next if name == namespace_key('split.till')
+            names << name.dup.sub!(namespace_key('split.'), "")
+          end
+          names
+        end
+
         def set_change_number(since)
           @adapter.set_string(namespace_key('split.till'), since)
         end
