@@ -19,40 +19,27 @@ module SplitIoClient
           @adapter.delete(namespace_key("split.#{name}"))
         end
 
-        def get_split(name, prefixed = false)
-          split = prefixed ? @adapter.string(name) : @adapter.string(namespace_key("split.#{name}"))
+        def get_split(name)
+          split = @adapter.string(namespace_key("split.#{name}"))
 
           JSON.parse(split, symbolize_names: true)
         end
 
         def splits
           splits_hash = {}
-          splits = []
-          split_names = @adapter.find_strings_by_prefix(namespace_key('split'))
 
           split_names.each do |name|
-            next if name == namespace_key('split.till')
-
-            splits << get_split(name, true)
-          end
-
-          splits.each do |split|
-            splits_hash[split[:name]] = split
+            splits_hash[name] = get_split(name)
           end
 
           splits_hash
         end
 
         # Return an array of Split Names excluding control keys like split.till
-        def splitNames
-          names = []
-          split_names = @adapter.find_strings_by_prefix(namespace_key('split'))
-
-          split_names.each do |name|
-            next if name == namespace_key('split.till')
-            names << name.dup.sub!(namespace_key('split.'), "")
-          end
-          names
+        def split_names
+          @adapter.find_strings_by_prefix(namespace_key('split'))
+            .reject { |split| split == namespace_key('split.till') }
+            .map { |split| split.gsub(namespace_key('split.'), '') }
         end
 
         def set_change_number(since)
