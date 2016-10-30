@@ -41,7 +41,7 @@ describe SplitIoClient::Cache::Stores::SplitStore do
       store.send(:store_splits)
 
       archived_split = store.splits_repository.splits['test_1_ruby']
-      expect(archived_split[:status]).to eq('ARCHIVED')
+      expect(archived_split).to be_nil
     end
   end
 
@@ -76,7 +76,7 @@ describe SplitIoClient::Cache::Stores::SplitStore do
       store.send(:store_splits)
 
       archived_split = store.splits_repository.splits['test_1_ruby']
-      expect(archived_split[:status]).to eq('ARCHIVED')
+      expect(archived_split).to be_nil
     end
   end
 end
