@@ -37,10 +37,9 @@ module SplitIoClient
 
         # Return an array of Split Names excluding control keys like split.till
         def split_names
-          to_ret = @adapter.find_strings_by_prefix(namespace_key('split'))
+          @adapter.find_strings_by_prefix(namespace_key('split'))
             .reject { |split| split == namespace_key('split.till') }
             .map { |split| split.gsub(namespace_key('split.'), '') }
-          to_ret
         end
 
         def set_change_number(since)
