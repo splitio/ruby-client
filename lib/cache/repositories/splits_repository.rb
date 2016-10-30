@@ -22,7 +22,7 @@ module SplitIoClient
         def get_split(name)
           split = @adapter.string(namespace_key("split.#{name}"))
 
-          JSON.parse(split, symbolize_names: true)
+          JSON.parse(split, symbolize_names: true) if !split.nil?
         end
 
         def splits
@@ -37,9 +37,10 @@ module SplitIoClient
 
         # Return an array of Split Names excluding control keys like split.till
         def split_names
-          @adapter.find_strings_by_prefix(namespace_key('split'))
+          to_ret = @adapter.find_strings_by_prefix(namespace_key('split'))
             .reject { |split| split == namespace_key('split.till') }
             .map { |split| split.gsub(namespace_key('split.'), '') }
+          to_ret
         end
 
         def set_change_number(since)
@@ -57,6 +58,11 @@ module SplitIoClient
             @adapter.add_to_set(namespace_key('segments.registered'), name)
           end
         end
+
+        def exists?(name)
+          @adapter.exists?(namespace_key("split.#{name}"))
+        end
+
       end
     end
   end

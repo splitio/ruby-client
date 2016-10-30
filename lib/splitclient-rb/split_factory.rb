@@ -72,7 +72,7 @@ module SplitIoClient
 
         return if @splits_repository.nil?
 
-        @splits_repository.splitNames
+        @splits_repository.split_names
       end
 
       #
@@ -215,8 +215,8 @@ module SplitIoClient
           default_treatment = split[:defaultTreatment]
 
           SplitIoClient::Engine::Parser::SplitTreatment
-            .new(@splits_repository, @segments_repository)
-            .call(key, feature, default_treatment, attributes)
+            .new(@segments_repository)
+            .call(key, split, default_treatment, attributes)
         end
       end
 

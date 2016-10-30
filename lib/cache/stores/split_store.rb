@@ -32,7 +32,17 @@ module SplitIoClient
           data = splits_since(@splits_repository.get_change_number)
 
           data[:splits] && data[:splits].each do |split|
-            @splits_repository.add_split(split)
+            # Remove split if needed
+            if Engine::Parser::SplitTreatment.archived?(split)
+              @config.logger.debug("Seeing archived split #{split[:name]}") if @config.debug_enabled
+              if @splits_repository.exists?(split[:name])
+                @config.logger.debug("removing split from store(#{split})") if @config.debug_enabled
+                @splits_repository.remove_split(split[:name])
+              end
+            else
+              @config.logger.debug("storing split (#{split[:name]})") if @config.debug_enabled
+              @splits_repository.add_split(split)
+            end
           end
 
           @splits_repository.set_segment_names(data[:segment_names])

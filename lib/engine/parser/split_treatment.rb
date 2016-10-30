@@ -2,13 +2,11 @@ module SplitIoClient
   module Engine
     module Parser
       class SplitTreatment
-        def initialize(splits_repository, segments_repository)
-          @splits_repository = splits_repository
+        def initialize(segments_repository)
           @segments_repository = segments_repository
         end
 
-        def call(keys, split_name, default_treatment, attributes = nil)
-          split = @splits_repository.get_split(split_name)
+        def call(keys, split, default_treatment, attributes = nil)
 
           return Treatments::CONTROL if self.class.archived?(split)
 
