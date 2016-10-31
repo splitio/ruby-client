@@ -53,7 +53,9 @@ module SplitIoClient
         return if @splits_repository.nil?
 
         @splits_repository.splits.each_with_object([]) do |(name, split), memo|
-          memo << build_split_view(name, split) unless Engine::Parser::SplitTreatment.archived?(split)
+          split_model = Engine::Models::Split.new(split)
+
+          memo << build_split_view(name, split) unless split_model.archived?
         end
       end
 
@@ -65,14 +67,14 @@ module SplitIoClient
         if @localhost_mode
           local_feature_names = []
           @localhost_mode_features.each do  |split|
-            local_feature_names << split[:feature] 
+            local_feature_names << split[:feature]
           end
           return local_feature_names
         end
 
         return if @splits_repository.nil?
 
-        @splits_repository.splitNames
+        @splits_repository.split_names
       end
 
       #
@@ -86,10 +88,9 @@ module SplitIoClient
         end
 
         if @splits_repository
-
           split = @splits_repository.get_split(split_name)
 
-          build_split_view(split_name, split) if split and !Engine::Parser::SplitTreatment.archived?(split)
+          build_split_view(split_name, split) unless split_model(split).archived?
         end
       end
 
@@ -106,6 +107,11 @@ module SplitIoClient
           }
       end
 
+      private
+
+      def split_model(split)
+        split_model = Engine::Models::Split.new(split)
+      end
     end
 
 
@@ -215,8 +221,8 @@ module SplitIoClient
           default_treatment = split[:defaultTreatment]
 
           SplitIoClient::Engine::Parser::SplitTreatment
-            .new(@splits_repository, @segments_repository)
-            .call(key, feature, default_treatment, attributes)
+            .new(@segments_repository)
+            .call(key, split, default_treatment, attributes)
         end
       end
 

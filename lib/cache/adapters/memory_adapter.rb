@@ -87,7 +87,7 @@ module SplitIoClient
         end
 
         def delete(key)
-          @map[key] = nil
+          @map.delete(key)
         end
       end
     end

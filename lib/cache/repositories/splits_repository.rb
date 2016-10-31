@@ -22,7 +22,7 @@ module SplitIoClient
         def get_split(name)
           split = @adapter.string(namespace_key("split.#{name}"))
 
-          JSON.parse(split, symbolize_names: true)
+          JSON.parse(split, symbolize_names: true) if split
         end
 
         def splits
@@ -56,6 +56,10 @@ module SplitIoClient
           names.each do |name|
             @adapter.add_to_set(namespace_key('segments.registered'), name)
           end
+        end
+
+        def exists?(name)
+          @adapter.exists?(namespace_key("split.#{name}"))
         end
       end
     end
