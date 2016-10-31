@@ -16,6 +16,7 @@ describe SplitIoClient do
     let(:killed_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), 'test_data/splits/engine/killed.json'))) }
     let(:segment_deleted_matcher_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), 'test_data/splits/engine/segment_deleted_matcher.json'))) }
     let(:segment_matcher_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), 'test_data/splits/engine/segment_matcher.json'))) }
+    let(:segment_matcher2_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), 'test_data/splits/engine/segment_matcher2.json'))) }
     let(:whitelist_matcher_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), 'test_data/splits/engine/whitelist_matcher.json'))) }
 
     before :each do
@@ -89,6 +90,12 @@ describe SplitIoClient do
         expect(subject.get_treatment('fake_user_id_1', 'new_feature')).to eq SplitIoClient::Treatments::ON
       end
 
+      it 'validates the feature is on for all ids multiple keys' do
+        expect(subject.get_treatments('fake_user_id_1', ['new_feature', 'foo'])).to eq(
+          new_feature: SplitIoClient::Treatments::ON, foo: SplitIoClient::Treatments::CONTROL
+        )
+      end
+
       it 'validates the feature by bucketing_key' do
         key = { bucketing_key: 'bucketing_key', matching_key: 'fake_user_id_1' }
 
@@ -110,6 +117,53 @@ describe SplitIoClient do
 
       it 'returns default treatment for active splits with a non matching id' do
         expect(subject.get_treatment('fake_user_id_3', 'new_feature')).to eq "def_test"
+      end
+    end
+
+    context 'get_treatments in segment matcher' do
+      before do
+        stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+          .to_return(status: 200, body: segment_matcher2_json)
+      end
+
+      before do
+        stub_request(:get, 'https://sdk.split.io/api/segmentChanges/demo?since=-1')
+          .to_return(status: 200, body: segments_json)
+      end
+
+      it 'validates the feature is on for all ids' do
+        expect(subject.get_treatments('fake_user_id_1', ['new_feature', 'new_feature2', 'new_feature3', 'new_feature4'])).to eq(
+          new_feature: SplitIoClient::Treatments::ON,
+          new_feature2: SplitIoClient::Treatments::ON,
+          new_feature3: SplitIoClient::Treatments::ON,
+          new_feature4: SplitIoClient::Treatments::CONTROL
+        )
+      end
+
+      it 'validates the feature by bucketing_key' do
+        key = { bucketing_key: 'bucketing_key', matching_key: 'fake_user_id_1' }
+
+        expect(subject.get_treatments(key, ['new_feature', 'new_feature2'])).to eq(
+          new_feature: SplitIoClient::Treatments::ON,
+          new_feature2: SplitIoClient::Treatments::ON,
+        )
+        impressions = subject.instance_variable_get(:@adapter).impressions.clear
+
+        expect(impressions.first[:impressions].first.instance_variable_get(:@key)).to eq('fake_user_id_1')
+      end
+
+      it 'validates the feature by bucketing_key for nil matching_key' do
+        key = { bucketing_key: 'fake_user_id_1' }
+
+        expect(subject.get_treatments(key, ['new_feature'])).to eq(new_feature: SplitIoClient::Treatments::CONTROL)
+      end
+
+      it 'validates the feature returns default treatment for non matching ids' do
+        expect(subject.get_treatments('fake_user_id_3', ['new_feature'])).to eq(new_feature: "def_test")
+      end
+
+      it 'returns default treatment for active splits with a non matching id' do
+        expect(subject.get_treatments('fake_user_id_3', ['new_feature'])).to eq(new_feature: "def_test")
       end
     end
 

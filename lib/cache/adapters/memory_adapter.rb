@@ -58,6 +58,12 @@ module SplitIoClient
           @map.keys.select { |str| str.start_with? prefix }
         end
 
+        def multiple_strings(keys)
+          keys.each_with_object({}) do |key, memo|
+            memo[key] = string(key)
+          end
+        end
+
         # Bool
         def set_bool(key, val)
           @map[key] = val

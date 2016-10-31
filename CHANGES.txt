@@ -1,26 +1,32 @@
 3.1.0
-- Add RedisAdapter 
+- Add RedisAdapter
 - adds manager.split_names()
 
 3.0.3
+
 - Fix nil ref in manager
 
 3.0.2
+
 - add ability to provide different bucketing/matching keys
 
 3.0.1
+
 - fix segments not deleting from the cache
 
 3.0.0
+
 - add new caching interface
 - add replaceable adapters to store cache in
 - add first cache adapter: MemoryAdapter
 - refactoring
 
 2.0.1
+
 - Supress warnings cause by Net::HTTP when it already exists.
 
 2.0.0
+
 - Add Factory for creation of Client and Manager interface.
 
 1.0.4
