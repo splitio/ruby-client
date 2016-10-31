@@ -6,8 +6,9 @@ module SplitIoClient
           @segments_repository = segments_repository
         end
 
-        def call(keys, split, default_treatment, attributes = nil)
+        def call(keys, split, attributes = nil)
           split_model = Models::Split.new(split)
+          default_treatment = split[:defaultTreatment]
 
           return Treatments::CONTROL if split_model.archived?
 
