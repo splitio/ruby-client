@@ -22,7 +22,7 @@ module SplitIoClient
         def get_split(name)
           split = @adapter.string(namespace_key("split.#{name}"))
 
-          JSON.parse(split, symbolize_names: true) if !split.nil?
+          JSON.parse(split, symbolize_names: true) if split
         end
 
         def splits
