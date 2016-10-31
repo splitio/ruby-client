@@ -7,10 +7,11 @@ module SplitIoClient
         end
 
         def call(keys, split, default_treatment, attributes = nil)
+          split_model = Models::Split.new(split)
 
-          return Treatments::CONTROL if self.class.archived?(split)
+          return Treatments::CONTROL if split_model.archived?
 
-          matchable?(split) ? match(split, keys, attributes, default_treatment) : default_treatment
+          split_model.matchable? ? match(split, keys, attributes, default_treatment) : default_treatment
         end
 
         private
@@ -48,14 +49,6 @@ module SplitIoClient
           else
             final_matcher
           end
-        end
-
-        def matchable?(split)
-          !split.nil? && split[:status] == 'ACTIVE' && split[:killed] == false
-        end
-
-        def self.archived?(split)
-          !split.nil? && split[:status] == 'ARCHIVED'
         end
       end
     end

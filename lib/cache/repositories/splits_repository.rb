@@ -61,7 +61,6 @@ module SplitIoClient
         def exists?(name)
           @adapter.exists?(namespace_key("split.#{name}"))
         end
-
       end
     end
   end
