@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'set'
 
 describe SplitIoClient::Cache::Repositories::SplitsRepository do
   RSpec.shared_examples 'SplitsRepository specs' do |cache_adapter|
@@ -23,7 +24,7 @@ describe SplitIoClient::Cache::Repositories::SplitsRepository do
     end
 
     it 'returns splits names' do
-      expect(repository.split_names).to eq(%w(foo bar baz))
+      expect(Set.new(repository.split_names)).to eq(Set.new(%w(foo bar baz)))
     end
 
     it 'returns splits data' do
