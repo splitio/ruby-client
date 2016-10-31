@@ -28,11 +28,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "pry-byebug"
   spec.add_development_dependency "simplecov"
 
-  spec.add_development_dependency "growl"
-  spec.add_development_dependency "libnotify"
-  spec.add_development_dependency "guard"
-  spec.add_development_dependency "guard-rspec"
-
   spec.add_runtime_dependency "json", "~> 1.8"
   spec.add_runtime_dependency "thread_safe"
   spec.add_runtime_dependency "concurrent-ruby"
