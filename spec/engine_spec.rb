@@ -120,7 +120,7 @@ describe SplitIoClient do
       end
     end
 
-    context 'get_treatmentsin segment matcher' do
+    context 'get_treatments in segment matcher' do
       before do
         stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
           .to_return(status: 200, body: segment_matcher2_json)
