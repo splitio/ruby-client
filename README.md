@@ -161,7 +161,7 @@ options = {
   logger: Logger.new('logfile.log'),
   block_until_ready: 5,
   cache_adapter: :redis,
-  mode: :consumer,
+  mode: :standalone,
   redis_url: 'redis://127.0.0.1:6379/0'
 }
 begin
@@ -170,6 +170,10 @@ rescue SplitIoClient::SDKBlockerTimeoutExpiredException
   # Some arbitrary actions
 end
 ```
+
+#### IMPORTANT
+For now, SDK does not support both `producer` mode and `block_until_ready`. You must either run SDK in `standalone` mode, or do not use `block_until_ready` option.
+
 This begin-rescue-end block is optional, you might want to use it to catch timeout expired exception and apply some logic.
 
 ### Execution
