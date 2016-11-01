@@ -182,10 +182,17 @@ split_client.get_treatment('user_id','feature_name', attr: 'val')
 
 For example
 ```ruby
-if split_client.get_treatment('employee_user_01','view_main_list', age: 35)
+if split_client.get_treatment('employee_user_01', 'view_main_list', age: 35)
    my_app.display_main_list
 end
 ```
+`get_treatment` also supports `Array` as a second argument, that means you can provide an array of split names to get treatment, like so:
+```ruby
+split_client.get_treatment('employee_user_01', ['view_main_list', 'view_secondary_list'])
+
+# => { view_main_list: 'on', view_secondary_list: 'off' }
+```
+It's highly recommended to use `get_treatment` with an array of feature names when needed, because it's more efficient internally, when you're using Redis as an adapter.
 
 Also, you can use different keys for actually getting treatment and sending impressions to the server:
 ```ruby
