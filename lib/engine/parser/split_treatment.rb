@@ -2,17 +2,17 @@ module SplitIoClient
   module Engine
     module Parser
       class SplitTreatment
-        def initialize(splits_repository, segments_repository)
-          @splits_repository = splits_repository
+        def initialize(segments_repository)
           @segments_repository = segments_repository
         end
 
-        def call(keys, split_name, default_treatment, attributes = nil)
-          split = @splits_repository.get_split(split_name)
+        def call(keys, split, attributes = nil)
+          split_model = Models::Split.new(split)
+          default_treatment = split[:defaultTreatment]
 
-          return Treatments::CONTROL if self.class.archived?(split)
+          return Treatments::CONTROL if split_model.archived?
 
-          matchable?(split) ? match(split, keys, attributes, default_treatment) : default_treatment
+          split_model.matchable? ? match(split, keys, attributes, default_treatment) : default_treatment
         end
 
         private
@@ -50,14 +50,6 @@ module SplitIoClient
           else
             final_matcher
           end
-        end
-
-        def matchable?(split)
-          !split.nil? && split[:status] == 'ACTIVE' && split[:killed] == false
-        end
-
-        def self.archived?(split)
-          !split.nil? && split[:status] == 'ARCHIVED'
         end
       end
     end

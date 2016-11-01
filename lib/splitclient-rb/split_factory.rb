@@ -53,7 +53,9 @@ module SplitIoClient
         return if @splits_repository.nil?
 
         @splits_repository.splits.each_with_object([]) do |(name, split), memo|
-          memo << build_split_view(name, split) unless Engine::Parser::SplitTreatment.archived?(split)
+          split_model = Engine::Models::Split.new(split)
+
+          memo << build_split_view(name, split) unless split_model.archived?
         end
       end
 
@@ -61,18 +63,18 @@ module SplitIoClient
       # method to get the list of just split names. Ideal for ietrating and calling client.get_treatment
       #
       # @returns [object] array of split names (String)
-      def splitNames
+      def split_names
         if @localhost_mode
           local_feature_names = []
           @localhost_mode_features.each do  |split|
-            local_feature_names << split[:feature] 
+            local_feature_names << split[:feature]
           end
           return local_feature_names
         end
 
         return if @splits_repository.nil?
 
-        @splits_repository.splitNames
+        @splits_repository.split_names
       end
 
       #
@@ -86,10 +88,9 @@ module SplitIoClient
         end
 
         if @splits_repository
-
           split = @splits_repository.get_split(split_name)
 
-          build_split_view(split_name, split) if split and !Engine::Parser::SplitTreatment.archived?(split)
+          build_split_view(split_name, split) unless split.nil? or split_model(split).archived?
         end
       end
 
@@ -106,6 +107,11 @@ module SplitIoClient
           }
       end
 
+      private
+
+      def split_model(split)
+        split_model = Engine::Models::Split.new(split)
+      end
     end
 
 
@@ -142,35 +148,49 @@ module SplitIoClient
         end
       end
 
+      def get_treatments(key, split_names, attributes = nil)
+        @splits_repository.get_splits(split_names).each_with_object({}) do |(name, data), memo|
+          memo.merge!(name => get_treatment(key, name, attributes, data))
+        end
+      end
+
       #
       # obtains the treatment for a given feature
       #
-      # @param key [string/hash] user id or hash with matching_key/bucketing_key
-      # @param feature [string] name of the feature that is being validated
+      # @param key [String/Hash] user id or hash with matching_key/bucketing_key
+      # @param split_name [String/Array] name of the feature that is being validated or array of them
       #
-      # @return [Treatment]  treatment constant value
-      def get_treatment(key, feature, attributes = nil)
+      # @return [String/Hash] Treatment as String or Hash of treatments in case of array of features
+      def get_treatment(key, split_name, attributes = nil, split_data = nil)
         bucketing_key, matching_key = keys_from_key(key)
         bucketing_key = matching_key if bucketing_key.nil?
 
         if matching_key.nil?
-          @config.logger.warn('matching_key was null for feature: ' + feature)
+          @config.logger.warn('matching_key was null for split_name: ' + split_name.to_s)
           return Treatments::CONTROL
         end
 
-        if feature.nil?
-          @config.logger.warn('feature was null for key: ' + key)
+        if split_name.nil?
+          @config.logger.warn('split_name was null for key: ' + key)
           return Treatments::CONTROL
         end
 
         if is_localhost_mode?
-          result = get_localhost_treatment(feature)
+          result = get_localhost_treatment(split_name)
         else
           start = Time.now
           result = nil
 
           begin
-            result = get_treatment_without_exception_handling({ bucketing_key: bucketing_key, matching_key: matching_key }, feature, attributes)
+            split = split_data ? split_data : @splits_repository.get_split(split_name)
+
+            result = if split.nil?
+              Treatments::CONTROL
+            else
+              SplitIoClient::Engine::Parser::SplitTreatment.new(@segments_repository).call(
+                { bucketing_key: bucketing_key, matching_key: matching_key }, split, attributes
+              )
+            end
           rescue StandardError => error
             @config.log_found_exception(__method__.to_s, error)
           end
@@ -178,7 +198,7 @@ module SplitIoClient
           result = result.nil? ? Treatments::CONTROL : result
 
           begin
-            @adapter.impressions.log(matching_key, feature, result, (Time.now.to_f * 1000.0))
+            @adapter.impressions.log(matching_key, split_name, result, (Time.now.to_f * 1000.0))
             latency = (Time.now - start) * 1000.0
           rescue StandardError => error
             @config.log_found_exception(__method__.to_s, error)
@@ -199,34 +219,14 @@ module SplitIoClient
       end
 
       #
-      # auxiliary method to get the treatments avoding exceptions
-      #
-      # @param key [string/hash] user id or hash with matching_key/bucketing_key
-      # @param feature [string] name of the feature that is being validated
-      #
-      # @return [Treatment]  tretment constant value
-      def get_treatment_without_exception_handling(key, feature, attributes = nil)
-
-        split = @splits_repository.get_split(feature)
-
-        if split.nil?
-          Treatments::CONTROL
-        else
-          default_treatment = split[:defaultTreatment]
-
-          SplitIoClient::Engine::Parser::SplitTreatment
-            .new(@splits_repository, @segments_repository)
-            .call(key, feature, default_treatment, attributes)
-        end
-      end
-
-      #
       # method that returns the sdk gem version
       #
       # @return [string] version value for this sdk
       def self.sdk_version
         'RubyClientSDK-'+SplitIoClient::VERSION
       end
+
+      private
 
       #
       # method to check if the sdk is running in localhost mode based on api key
@@ -261,9 +261,6 @@ module SplitIoClient
         localhost_result = treatment[:treatment] if !treatment.nil?
         localhost_result
       end
-
-      private :get_treatment_without_exception_handling, :is_localhost_mode?,
-              :load_localhost_mode_features, :get_localhost_treatment
     end
 
     private_constant :SplitClient

@@ -32,13 +32,13 @@ module SplitIoClient
           data = splits_since(@splits_repository.get_change_number)
 
           data[:splits] && data[:splits].each do |split|
-            @splits_repository.add_split(split)
+            add_split_unless_archived(split)
           end
 
           @splits_repository.set_segment_names(data[:segment_names])
           @splits_repository.set_change_number(data[:till])
 
-          @config.logger.debug("segments seen(#{data[:segment_names].length()}): #{data[:segment_names].to_a}") if @config.debug_enabled
+          @config.logger.debug("segments seen(#{data[:segment_names].length}): #{data[:segment_names].to_a}") if @config.debug_enabled
 
           if @config.block_until_ready && !@sdk_blocker.ready?
             @sdk_blocker.splits_ready!
@@ -57,6 +57,32 @@ module SplitIoClient
 
         def splits_since(since)
           SplitIoClient::Api::Splits.new(@api_key, @config, @metrics).since(since)
+        end
+
+        def add_split_unless_archived(split)
+          if split_model(split).archived?
+            @config.logger.debug("Seeing archived split #{split[:name]}") if @config.debug_enabled
+
+            remove_archived_split(split)
+          else
+            store_split(split)
+          end
+        end
+
+        def remove_archived_split(split)
+          @config.logger.debug("removing split from store(#{split})") if @config.debug_enabled
+
+          @splits_repository.remove_split(split[:name])
+        end
+
+        def store_split(split)
+          @config.logger.debug("storing split (#{split[:name]})") if @config.debug_enabled
+
+          @splits_repository.add_split(split)
+        end
+
+        def split_model(split)
+          Engine::Models::Split.new(split)
         end
       end
     end

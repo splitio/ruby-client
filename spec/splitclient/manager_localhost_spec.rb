@@ -27,7 +27,7 @@ describe SplitIoClient do
       allow(File).to receive(:exists?).and_return(true)
       allow(File).to receive(:open).and_return(split_file)
 
-      expect(subject.splitNames()).to eql( split_names )
+      expect(subject.split_names()).to eql( split_names )
     end
 
   end

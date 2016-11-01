@@ -4,6 +4,8 @@ module SplitIoClient
   module Cache
     module Repositories
       class SplitsRepository < Repository
+        SPLITS_SLICE = 10
+
         def initialize(adapter)
           @adapter = adapter
 
@@ -19,10 +21,27 @@ module SplitIoClient
           @adapter.delete(namespace_key("split.#{name}"))
         end
 
+        def get_splits(names, slice = SPLITS_SLICE)
+          splits = {}
+
+          names.each_slice(slice) do |splits_slice|
+            splits.merge!(
+              @adapter
+                .multiple_strings(splits_slice.map { |name| namespace_key("split.#{name}") })
+                .map { |name, data| [name.gsub(namespace_key('split.'), ''), data] }.to_h
+            )
+          end
+
+          splits.map do |name, data|
+            parsed_data = data ? JSON.parse(data, symbolize_names: true) : nil
+            [name.to_sym, parsed_data]
+          end.to_h
+        end
+
         def get_split(name)
           split = @adapter.string(namespace_key("split.#{name}"))
 
-          JSON.parse(split, symbolize_names: true)
+          JSON.parse(split, symbolize_names: true) if split
         end
 
         def splits
@@ -56,6 +75,10 @@ module SplitIoClient
           names.each do |name|
             @adapter.add_to_set(namespace_key('segments.registered'), name)
           end
+        end
+
+        def exists?(name)
+          @adapter.exists?(namespace_key("split.#{name}"))
         end
       end
     end

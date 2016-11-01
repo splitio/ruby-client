@@ -53,6 +53,10 @@ module SplitIoClient
           @redis.keys("#{prefix}*")
         end
 
+        def multiple_strings(keys)
+          Hash[keys.zip(@redis.mget(keys))]
+        end
+
         # Bool
         def set_bool(key, val)
           @redis.set(key, val.to_s)
