@@ -14,6 +14,8 @@ module SplitIoClient
         end
 
         def add_to_map(key, field, value)
+          initialize_map(key) unless @map[key]
+
           @map[key].put(field, value)
         end
 
@@ -78,6 +80,7 @@ module SplitIoClient
         alias_method :get_set, :map_keys
         alias_method :delete_from_set, :delete_from_map
         alias_method :in_set?, :in_map?
+        alias_method :find_sets_by_prefix, :find_strings_by_prefix
 
         def add_to_set(key, values)
           if values.is_a? Array
@@ -87,13 +90,27 @@ module SplitIoClient
           end
         end
 
+        def get_all_from_set(key)
+          @map[key].keys
+        end
+
+        def union_sets(set_keys)
+          set_keys.each_with_object([]) do |key, memo|
+            memo << get_set(key)
+          end.flatten
+        end
+
         # General
         def exists?(key)
           !@map[key].nil?
         end
 
         def delete(key)
-          @map.delete(key)
+          if key.is_a? Array
+            key.each { |k| @map.delete(k) }
+          else
+            @map.delete(key)
+          end
         end
       end
     end

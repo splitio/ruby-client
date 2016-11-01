@@ -198,11 +198,12 @@ module SplitIoClient
           result = result.nil? ? Treatments::CONTROL : result
 
           begin
-            @adapter.impressions.log(matching_key, split_name, result, (Time.now.to_f * 1000.0))
             latency = (Time.now - start) * 1000.0
-
             # Measure
             @adapter.metrics.time("sdk.get_treatment", latency)
+            @impressions_repository.add(
+              split_name, key_name: matching_key, treatment: result, time: latency
+            )
           rescue StandardError => error
             @config.log_found_exception(__method__.to_s, error)
           end
@@ -275,6 +276,7 @@ module SplitIoClient
       @cache_adapter = @config.cache_adapter
       @splits_repository = SplitIoClient::Cache::Repositories::SplitsRepository.new(@cache_adapter)
       @segments_repository = SplitIoClient::Cache::Repositories::SegmentsRepository.new(@cache_adapter)
+      @impressions_repository = SplitIoClient::Cache::Repositories::ImpressionsRepository.new(@cache_adapter)
       @sdk_blocker = SplitIoClient::Cache::Stores::SDKBlocker.new(@config)
       @adapter = api_key != 'localhost' \
       ? SplitAdapter.new(api_key, @config, @splits_repository, @segments_repository, @sdk_blocker)
