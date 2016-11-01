@@ -228,28 +228,28 @@ And you should get something like this:
 
 ```ruby
 [
-	{ 
+	{
 		name: 'some_feature',
 		traffic_type_name: nil,
 		killed: false,
 		treatments: nil,
 		change_number: 1469134003507
 	},
-	{ 
+	{
 		name: 'another_feature',
 		traffic_type_name: nil,
 		killed: false,
 		treatments: nil,
 		change_number: 1469134003414
 	},
-	{ 
+	{
 		name: 'even_more_features',
 		traffic_type_name: nil,
 		killed: false,
 		treatments: nil,
 		change_number: 1469133991063
 	},
-	{ 
+	{
 		name: 'yet_another_feature',
 		traffic_type_name: nil,
 		killed: false,
@@ -295,7 +295,7 @@ SDK can be ran in `producer` mode both in the scope of the application (e.g. as 
 bundle binstubs splitclient-rb
 ```
 
-- Run the executable provided by the SDK: 
+- Run the executable provided by the SDK:
 ```ruby
 bundle exec bin/splitio -c ~/path/to/config/file.yml
 ```
