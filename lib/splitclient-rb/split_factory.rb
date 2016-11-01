@@ -90,7 +90,7 @@ module SplitIoClient
         if @splits_repository
           split = @splits_repository.get_split(split_name)
 
-          build_split_view(split_name, split) unless split_model(split).archived?
+          build_split_view(split_name, split) unless split.nil? or split_model(split).archived?
         end
       end
 
