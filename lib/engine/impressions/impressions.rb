@@ -40,7 +40,9 @@ module SplitIoClient
       begin 
         @queue.push( {feature: feature, impressions: impressions} , true ) # don't wait if queue is full
       rescue ThreadError
-        @config.logger.warn("Dropping impressions. Current size is #{@max_number_of_keys}. Consider increasing impressions_queue_size")
+        if Random.new.rand(1..1000) <= 2 # log only 0.2 % of the time.
+          @config.logger.warn("Dropping impressions. Current size is #{@max_number_of_keys}. Consider increasing impressions_queue_size")
+        end
       end
     end
 
