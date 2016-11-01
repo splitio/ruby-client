@@ -186,10 +186,17 @@ split_client.get_treatment('user_id','feature_name', attr: 'val')
 
 For example
 ```ruby
-if split_client.get_treatment('employee_user_01','view_main_list', age: 35)
+if split_client.get_treatment('employee_user_01', 'view_main_list', age: 35)
    my_app.display_main_list
 end
 ```
+`get_treatment` also supports `Array` as a second argument, that means you can provide an array of split names to get treatment, like so:
+```ruby
+split_client.get_treatment('employee_user_01', ['view_main_list', 'view_secondary_list'])
+
+# => { view_main_list: 'on', view_secondary_list: 'off' }
+```
+It's highly recommended to use `get_treatment` with an array of feature names when needed, because it's more efficient internally, when you're using Redis as an adapter.
 
 Also, you can use different keys for actually getting treatment and sending impressions to the server:
 ```ruby
@@ -232,28 +239,28 @@ And you should get something like this:
 
 ```ruby
 [
-	{ 
+	{
 		name: 'some_feature',
 		traffic_type_name: nil,
 		killed: false,
 		treatments: nil,
 		change_number: 1469134003507
 	},
-	{ 
+	{
 		name: 'another_feature',
 		traffic_type_name: nil,
 		killed: false,
 		treatments: nil,
 		change_number: 1469134003414
 	},
-	{ 
+	{
 		name: 'even_more_features',
 		traffic_type_name: nil,
 		killed: false,
 		treatments: nil,
 		change_number: 1469133991063
 	},
-	{ 
+	{
 		name: 'yet_another_feature',
 		traffic_type_name: nil,
 		killed: false,
@@ -299,7 +306,7 @@ SDK can be ran in `producer` mode both in the scope of the application (e.g. as 
 bundle binstubs splitclient-rb
 ```
 
-- Run the executable provided by the SDK: 
+- Run the executable provided by the SDK:
 ```ruby
 bundle exec bin/splitio -c ~/path/to/config/file.yml
 ```

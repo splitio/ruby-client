@@ -91,7 +91,7 @@ describe SplitIoClient do
       end
 
       it 'validates the feature is on for all ids multiple keys' do
-        expect(subject.get_treatments('fake_user_id_1', ['new_feature', 'foo'])).to eq(
+        expect(subject.get_treatment('fake_user_id_1', ['new_feature', 'foo'])).to eq(
           new_feature: SplitIoClient::Treatments::ON, foo: SplitIoClient::Treatments::CONTROL
         )
       end
@@ -132,7 +132,7 @@ describe SplitIoClient do
       end
 
       it 'validates the feature is on for all ids' do
-        expect(subject.get_treatments('fake_user_id_1', ['new_feature', 'new_feature2', 'new_feature3', 'new_feature4'])).to eq(
+        expect(subject.get_treatment('fake_user_id_1', ['new_feature', 'new_feature2', 'new_feature3', 'new_feature4'])).to eq(
           new_feature: SplitIoClient::Treatments::ON,
           new_feature2: SplitIoClient::Treatments::ON,
           new_feature3: SplitIoClient::Treatments::ON,
@@ -143,7 +143,7 @@ describe SplitIoClient do
       it 'validates the feature by bucketing_key' do
         key = { bucketing_key: 'bucketing_key', matching_key: 'fake_user_id_1' }
 
-        expect(subject.get_treatments(key, ['new_feature', 'new_feature2'])).to eq(
+        expect(subject.get_treatment(key, ['new_feature', 'new_feature2'])).to eq(
           new_feature: SplitIoClient::Treatments::ON,
           new_feature2: SplitIoClient::Treatments::ON,
         )
@@ -155,15 +155,15 @@ describe SplitIoClient do
       it 'validates the feature by bucketing_key for nil matching_key' do
         key = { bucketing_key: 'fake_user_id_1' }
 
-        expect(subject.get_treatments(key, ['new_feature'])).to eq(new_feature: SplitIoClient::Treatments::CONTROL)
+        expect(subject.get_treatment(key, ['new_feature'])).to eq(new_feature: SplitIoClient::Treatments::CONTROL)
       end
 
       it 'validates the feature returns default treatment for non matching ids' do
-        expect(subject.get_treatments('fake_user_id_3', ['new_feature'])).to eq(new_feature: "def_test")
+        expect(subject.get_treatment('fake_user_id_3', ['new_feature'])).to eq(new_feature: "def_test")
       end
 
       it 'returns default treatment for active splits with a non matching id' do
-        expect(subject.get_treatments('fake_user_id_3', ['new_feature'])).to eq(new_feature: "def_test")
+        expect(subject.get_treatment('fake_user_id_3', ['new_feature'])).to eq(new_feature: "def_test")
       end
     end
 

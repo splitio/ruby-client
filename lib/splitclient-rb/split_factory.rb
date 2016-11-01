@@ -148,12 +148,6 @@ module SplitIoClient
         end
       end
 
-      def get_treatments(key, split_names, attributes = nil)
-        @splits_repository.get_splits(split_names).each_with_object({}) do |(name, data), memo|
-          memo.merge!(name => get_treatment(key, name, attributes, data))
-        end
-      end
-
       #
       # obtains the treatment for a given feature
       #
@@ -162,6 +156,10 @@ module SplitIoClient
       #
       # @return [String/Hash] Treatment as String or Hash of treatments in case of array of features
       def get_treatment(key, split_name, attributes = nil, split_data = nil)
+        if split_name.is_a? Array
+          return get_treatments(key, split_name, attributes)
+        end
+
         bucketing_key, matching_key = keys_from_key(key)
         bucketing_key = matching_key if bucketing_key.nil?
 
@@ -227,6 +225,12 @@ module SplitIoClient
       end
 
       private
+
+      def get_treatments(key, split_names, attributes = nil)
+        @splits_repository.get_splits(split_names).each_with_object({}) do |(name, data), memo|
+          memo.merge!(name => get_treatment(key, name, attributes, data))
+        end
+      end
 
       #
       # method to check if the sdk is running in localhost mode based on api key
