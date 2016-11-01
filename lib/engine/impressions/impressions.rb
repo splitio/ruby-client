@@ -21,7 +21,7 @@ module SplitIoClient
     # @param config [SplitConfig] the config object
     def initialize(config)
       @config = config
-      @queue = SizedQueue.new(config.impressions_queue_size)
+      @queue = SizedQueue.new(config.impressions_queue_size <= 0? 1 : config.impressions_queue_size)
       @max_number_of_keys = config.impressions_queue_size
     end
 
@@ -35,7 +35,7 @@ module SplitIoClient
     #
     # @return void
     def log(id, feature, treatment, time)
-      return if @max_number_of_keys < 0 # shotcut to desable impressions
+      return if @max_number_of_keys <= 0 # shortcut to desable impressions
       impressions = KeyImpressions.new(id, treatment, time)
       begin 
         @queue.push( {feature: feature, impressions: impressions} , true ) # don't wait if queue is full
