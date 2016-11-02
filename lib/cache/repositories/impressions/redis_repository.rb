@@ -14,6 +14,7 @@ module SplitIoClient
           end
 
           def clear
+            # TODO: Get impressions in batches (use spop)
             impressions = @adapter.union_sets(impression_keys).map { |i| JSON.parse(i) }
 
             @adapter.delete(impression_keys)
