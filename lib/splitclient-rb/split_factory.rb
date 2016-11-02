@@ -204,6 +204,9 @@ module SplitIoClient
             @impressions_repository.add(
               split_name, key_name: matching_key, treatment: result, time: latency
             )
+
+            # Measure
+            @adapter.metrics.time("sdk.get_treatment", latency)
           rescue StandardError => error
             @config.log_found_exception(__method__.to_s, error)
           end
