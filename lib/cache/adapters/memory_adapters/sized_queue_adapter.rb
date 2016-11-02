@@ -23,6 +23,7 @@ module SplitIoClient
 
           private
 
+          # Return 1 to prevent an exception
           def queue_size
             @size <= 0 ? 1 : @size
           end
