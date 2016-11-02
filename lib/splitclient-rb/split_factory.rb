@@ -200,6 +200,9 @@ module SplitIoClient
           begin
             @adapter.impressions.log(matching_key, split_name, result, (Time.now.to_f * 1000.0))
             latency = (Time.now - start) * 1000.0
+
+            # Measure
+            @adapter.metrics.time("sdk.get_treatment", latency)
           rescue StandardError => error
             @config.log_found_exception(__method__.to_s, error)
           end
