@@ -18,10 +18,11 @@ module SplitIoClient
     #
     # initializes the class
     #
-    # @param max [int] max number of cached entries
-    def initialize(max)
-      @queue = Queue.new
-      @max_number_of_keys = max
+    # @param config [SplitConfig] the config object
+    def initialize(config)
+      @config = config
+      @queue = SizedQueue.new(config.impressions_queue_size <= 0? 1 : config.impressions_queue_size)
+      @max_number_of_keys = config.impressions_queue_size
     end
 
     #
@@ -34,8 +35,16 @@ module SplitIoClient
     #
     # @return void
     def log(id, feature, treatment, time)
+      return if @max_number_of_keys <= 0 # shortcut to desable impressions
       impressions = KeyImpressions.new(id, treatment, time)
-      @queue << {feature: feature, impressions: impressions}
+      begin 
+        @queue.push( {feature: feature, impressions: impressions} , true ) # don't wait if queue is full
+      rescue ThreadError
+        @random_sampler ||=  Random.new
+        if @random_sampler.rand(1..1000) <= 2 # log only 0.2 % of the time.
+          @config.logger.warn("Dropping impressions. Current size is #{@max_number_of_keys}. Consider increasing impressions_queue_size")
+        end
+      end
     end
 
     #
