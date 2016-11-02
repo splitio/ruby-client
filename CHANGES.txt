@@ -1,6 +1,7 @@
 3.1.0
 - Add RedisAdapter
 - adds manager.split_names()
+- add impressions_queue_size to prevent memory leak when Threads pauses due to 'smart' fork.
 
 3.0.3
 

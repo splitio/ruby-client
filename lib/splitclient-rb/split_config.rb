@@ -21,6 +21,7 @@ module SplitIoClient
     # @option opts [Int] :impressions_refresh_rate
     # @option opts [Object] :logger a logger to user for messages from the client. Defaults to stdout
     # @option opts [Boolean] :debug_enabled (false) The value for the debug flag
+    # @option opts [Int] :impressions_queue_size how big the impressions queue is before dropping impressions. -1 to disable it.
     #
     # @return [type] SplitConfig with configuration options
     def initialize(opts = {})
@@ -35,6 +36,7 @@ module SplitIoClient
       @segments_refresh_rate = opts[:segments_refresh_rate] || SplitConfig.default_segments_refresh_rate
       @metrics_refresh_rate = opts[:metrics_refresh_rate] || SplitConfig.default_metrics_refresh_rate
       @impressions_refresh_rate = opts[:impressions_refresh_rate] || SplitConfig.default_impressions_refresh_rate
+      @impressions_queue_size = opts[:impressions_queue_size] || SplitConfig.default_impressions_queue_size
       @logger = opts[:logger] || SplitConfig.default_logger
       @debug_enabled = opts[:debug_enabled] || SplitConfig.default_debug
       @transport_debug_enabled = opts[:transport_debug_enabled] || SplitConfig.default_debug
@@ -113,6 +115,12 @@ module SplitIoClient
     attr_reader :metrics_refresh_rate
     attr_reader :impressions_refresh_rate
 
+    #
+    # Wow big the impressions queue is before dropping impressions. -1 to disable it.
+    #
+    # @return [Integer]
+    attr_reader :impressions_queue_size
+
     attr_reader :redis_url
 
     #
@@ -183,6 +191,10 @@ module SplitIoClient
 
     def self.default_impressions_refresh_rate
       60
+    end
+
+    def self.default_impressions_queue_size
+      5000
     end
 
     #

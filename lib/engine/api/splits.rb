@@ -22,7 +22,7 @@ module SplitIoClient
         else
           @metrics.count(prefix + '.status.' + splits.status.to_s, 1)
 
-          @config.logger.error('Unexpected result from API call')
+          @config.logger.error('Unexpected result from Splits API call')
         end
 
         latency = (Time.now - start) * 1000.0

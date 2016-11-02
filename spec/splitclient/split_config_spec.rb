@@ -8,6 +8,7 @@ describe SplitIoClient do
                           segments_refresh_rate: 4,
                           metrics_refresh_rate: 5,
                           impressions_refresh_rate: 6,
+                          impressions_queue_size: 20,
                           logger: Logger.new("/dev/null"),
                           debug_enabled: true} }
 
@@ -22,6 +23,7 @@ describe SplitIoClient do
       expect(configs.segments_refresh_rate).to eq SplitIoClient::SplitConfig.default_segments_refresh_rate
       expect(configs.metrics_refresh_rate).to eq SplitIoClient::SplitConfig.default_metrics_refresh_rate
       expect(configs.impressions_refresh_rate).to eq SplitIoClient::SplitConfig.default_impressions_refresh_rate
+      expect(configs.impressions_queue_size).to eq SplitIoClient::SplitConfig.default_impressions_queue_size
       expect(configs.debug_enabled).to eq SplitIoClient::SplitConfig.default_debug
       expect(configs.machine_name).to eq SplitIoClient::SplitConfig.get_hostname
       expect(configs.machine_ip).to eq SplitIoClient::SplitConfig.get_ip
@@ -38,6 +40,7 @@ describe SplitIoClient do
       expect(configs.segments_refresh_rate).to eq custom_options[:segments_refresh_rate]
       expect(configs.metrics_refresh_rate).to eq custom_options[:metrics_refresh_rate]
       expect(configs.impressions_refresh_rate).to eq custom_options[:impressions_refresh_rate]
+      expect(configs.impressions_queue_size).to eq custom_options[:impressions_queue_size]
       expect(configs.debug_enabled).to eq custom_options[:debug_enabled]
     end
 
@@ -50,6 +53,7 @@ describe SplitIoClient do
       expect(configs.segments_refresh_rate).to eq 60
       expect(configs.metrics_refresh_rate).to eq 60
       expect(configs.impressions_refresh_rate).to eq 60
+      expect(configs.impressions_queue_size).to eq 5000
     end
   end
 

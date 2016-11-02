@@ -104,6 +104,8 @@ The following values can be customized:
 
 **impressions_refresh_rate** : The SDK sends information on who got what treatment at what time back to Split servers to power analytics. This parameter controls how often this data is sent to Split servers in seconds
 
+**impressions_queue_size** : The size of the impressions queue. -1 to disable impressions.
+
 *default value* = `60`
 
 **debug_enabled** : Enables extra logging

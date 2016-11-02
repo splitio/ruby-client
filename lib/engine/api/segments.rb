@@ -49,7 +49,7 @@ module SplitIoClient
 
           segments << segment_content
         else
-          @config.logger.error('Unexpected result from API call')
+          @config.logger.error("Unexpected result from API Call for Segment #{name} status #{segment.status.to_s} since #{since.to_s}")
           @metrics.count(prefix + '.status.' + segment.status.to_s, 1)
         end
 

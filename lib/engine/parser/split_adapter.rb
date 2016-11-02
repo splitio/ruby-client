@@ -42,7 +42,7 @@ module SplitIoClient
     def initialize(api_key, config, splits_repository, segments_repository, sdk_blocker)
       @api_key = api_key
       @config = config
-      @impressions = Impressions.new(100)
+      @impressions = Impressions.new(@config)
       @metrics = Metrics.new(100)
 
       @splits_repository = splits_repository
