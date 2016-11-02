@@ -3,28 +3,45 @@ require 'set'
 
 describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
   RSpec.shared_examples 'impressions specs' do |cache_adapter|
-    context 'memory adapter' do
-      let(:adapter) { cache_adapter }
-      let(:repository) { described_class.new(adapter) }
+    let(:config) { SplitIoClient::SplitConfig.new }
+    let(:adapter) { cache_adapter }
+    let(:repository) { described_class.new(adapter, config) }
 
-      it 'adds impressions' do
-        repository.add('foo', foo: 'foo', bar: 'bar')
-        repository.add('foo2', foo2: 'foo2', bar2: 'bar2')
-        repository.add('foo3', foo3: 'foo3', bar3: 'bar3')
 
-        expect(Set.new(repository.clear)).to eq(
-          Set.new([
-            { 'foo' => 'foo', 'bar' => 'bar' },
-            { 'foo2' => 'foo2', 'bar2' => 'bar2' },
-            { 'foo3' => 'foo3', 'bar3' => 'bar3' },
-          ])
-        )
+    before do
+      Redis.new.flushall
 
-        expect(repository.clear).to eq([])
-      end
+      repository.add('foo1', 'key_name' => 'matching_key', 'treatment' => 'on', 'time' => 1478113516002)
+      repository.add('foo2', 'key_name' => 'matching_key2', 'treatment' => 'off', 'time' => 1478113518285)
+    end
+
+    it 'adds impressions' do
+      expect(Set.new(repository.clear)).to eq(
+        Set.new([
+          { feature: 'foo1', impressions: { 'key_name' => 'matching_key', 'treatment' => 'on', 'time' => 1478113516002 } },
+          { feature: 'foo2', impressions: { 'key_name' => 'matching_key2', 'treatment' => 'off', 'time' => 1478113518285 } }
+        ])
+      )
+
+      expect(repository.clear).to eq([])
+    end
+
+    # TODO: Move this spec to the separate file
+    it 'format impressions to be sent' do
+      adapter = SplitIoClient::SplitAdapter.new(nil, SplitIoClient::SplitConfig.new(mode: :nil_mode), nil, nil, nil, nil)
+      expect(Set.new(adapter.impressions_array(repository))).to eq(Set.new([
+        {
+          testName: 'foo1',
+          keyImpressions: [{ keyName: 'matching_key', treatment: 'on', time: 1478113516002 }]
+        },
+        {
+          testName: 'foo2',
+          keyImpressions: [{ keyName: 'matching_key2', treatment: 'off', time: 1478113518285 }]
+        }
+      ]))
     end
   end
 
-  include_examples 'impressions specs', SplitIoClient::Cache::Adapters::MemoryAdapter.new
+  include_examples 'impressions specs', SplitIoClient::Cache::Adapters::MemoryAdapter.new(SplitIoClient::Cache::Adapters::MemoryAdapters::SizedQueueAdapter.new(3))
   include_examples 'impressions specs', SplitIoClient::Cache::Adapters::RedisAdapter.new(SplitIoClient::SplitConfig.new.redis_url)
 end

@@ -14,10 +14,6 @@ module SplitIoClient
   #
   class SplitAdapter < NoMethodError
     #
-    # handler for impressions
-    attr_reader :impressions
-
-    #
     # handler for metrics
     attr_reader :metrics
 
@@ -31,7 +27,7 @@ module SplitIoClient
 
     attr_reader :impressions_producer
 
-    attr_reader :splits_repository, :segments_repository
+    attr_reader :splits_repository, :segments_repository, :impressions_repository
 
     #
     # Creates a new split api adapter instance that consumes split api endpoints
@@ -39,14 +35,14 @@ module SplitIoClient
     # @param api_key [String] the API key for your split account
     #
     # @return [SplitIoClient] split.io client instance
-    def initialize(api_key, config, splits_repository, segments_repository, sdk_blocker)
+    def initialize(api_key, config, splits_repository, segments_repository, impressions_repository, sdk_blocker)
       @api_key = api_key
       @config = config
-      @impressions = Impressions.new(@config)
       @metrics = Metrics.new(100)
 
       @splits_repository = splits_repository
       @segments_repository = segments_repository
+      @impressions_repository = impressions_repository
 
       @sdk_blocker = sdk_blocker
 
@@ -165,46 +161,52 @@ module SplitIoClient
     #
     # @return [void]
     def post_impressions
-      if @impressions.queue.empty?
+      impressions = impressions_array
+
+      res = post_api('/testImpressions/bulk', impressions)
+      if res.status / 100 != 2
+        @config.logger.error("Unexpected status code while posting impressions: #{res.status}")
+      else
+        @config.logger.debug("Impressions reported: #{impressions}") if @config.debug_enabled
+      end
+    end
+
+    def impressions_array(impressions = nil)
+      impressions_data = impressions || @impressions_repository
+      popped_impressions = impressions_data.clear
+      test_impression_array = []
+
+      if popped_impressions.empty?
         @config.logger.debug('No impressions to report.') if @config.debug_enabled
       else
-        popped_impressions = @impressions.clear
-        test_impression_array = []
-        popped_impressions.each do |i|
-          filtered = []
+        popped_impressions.each do |item|
           keys_treatments_seen = []
+          filtered_impressions = []
+          item_hash = "#{item[:impressions]['key_name']}:#{item[:impressions]['treatment']}"
 
-          impressions = i[:impressions]
-          impressions.each do |imp|
-            if keys_treatments_seen.include?("#{imp.key}:#{imp.treatment}")
-              next
-            end
-            keys_treatments_seen << "#{imp.key}:#{imp.treatment}"
-            filtered << imp
-          end
+          next if keys_treatments_seen.include?(item_hash)
 
-          if filtered.empty?
+          keys_treatments_seen << item_hash
+          filtered_impressions << item
+
+          if filtered_impressions.empty?
             @config.logger.debug('No impressions to report post filtering.') if @config.debug_enabled
           else
-            test_impression = {}
-            key_impressions = []
-
-            filtered.each do |f|
-              key_impressions << {keyName: f.key, treatment: f.treatment, time: f.time.to_i}
+            key_impressions = filtered_impressions.each_with_object([]) do |impression, memo|
+              memo << {
+                keyName: impression[:impressions]['key_name'],
+                treatment: impression[:impressions]['treatment'],
+                time: impression[:impressions]['time']
+              }
             end
 
-            test_impression = {testName: i[:feature], keyImpressions: key_impressions}
+            test_impression = { testName: item[:feature], keyImpressions: key_impressions }
             test_impression_array << test_impression
           end
         end
-
-        res = post_api('/testImpressions/bulk', test_impression_array)
-        if res.status / 100 != 2
-          @config.logger.error("Unexpected status code while posting impressions: #{res.status}")
-        else
-          @config.logger.debug("Impressions reported: #{test_impression_array}") if @config.debug_enabled
-        end
       end
+
+      test_impression_array
     end
 
     #

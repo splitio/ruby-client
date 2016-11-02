@@ -24,6 +24,11 @@ describe SplitIoClient do
       redis.flushall
     end
 
+    after :each do
+      redis = Redis.new
+      redis.flushall
+    end
+
     context '#get_treatment returns CONTROL' do
       before do
         stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
@@ -100,9 +105,9 @@ describe SplitIoClient do
         key = { bucketing_key: 'bucketing_key', matching_key: 'fake_user_id_1' }
 
         expect(subject.get_treatment(key, 'new_feature')).to eq SplitIoClient::Treatments::ON
-        impressions = subject.instance_variable_get(:@adapter).impressions.clear
+        impressions = subject.instance_variable_get(:@adapter).impressions_repository.clear
 
-        expect(impressions.first[:impressions].first.instance_variable_get(:@key)).to eq('fake_user_id_1')
+        expect(impressions.first[:impressions]['key_name']).to eq('fake_user_id_1')
       end
 
       it 'validates the feature by bucketing_key for nil matching_key' do
@@ -147,9 +152,9 @@ describe SplitIoClient do
           new_feature: SplitIoClient::Treatments::ON,
           new_feature2: SplitIoClient::Treatments::ON,
         )
-        impressions = subject.instance_variable_get(:@adapter).impressions.clear
+        impressions = subject.instance_variable_get(:@adapter).impressions_repository.clear
 
-        expect(impressions.first[:impressions].first.instance_variable_get(:@key)).to eq('fake_user_id_1')
+        expect(impressions.first[:impressions]['key_name']).to eq('fake_user_id_1')
       end
 
       it 'validates the feature by bucketing_key for nil matching_key' do
