@@ -11,7 +11,7 @@ module SplitIoClient
           # Store impression data in Redis
           def add(split_name, data)
             @adapter.add_to_set(
-              namespace_key(split_name), data.merge(split_name: split_name).to_json
+              namespace_key("impressions.#{split_name}"), data.merge(split_name: split_name).to_json
             )
           end
 
@@ -36,13 +36,9 @@ module SplitIoClient
 
           private
 
-          def namespace_key(key)
-            "SPLITIO.impressions.#{key}"
-          end
-
           # Get all sets by prefix
           def impression_keys
-            @adapter.find_sets_by_prefix('SPLITIO.impressions.')
+            @adapter.find_sets_by_prefix(namespace_key('impressions.'))
           end
         end
       end
