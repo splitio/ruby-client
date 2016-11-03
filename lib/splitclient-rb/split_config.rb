@@ -159,6 +159,7 @@ module SplitIoClient
     def self.init_cache_adapter(adapter, data_structure, redis_url = nil, impressions_queue_size = nil)
       case adapter
       when :memory
+        # takes :memory_adapter (symbol) and returns MemoryAdapter (string)
         adapter = SplitIoClient::Cache::Adapters::MemoryAdapters.const_get(
           data_structure.to_s.split('_').collect(&:capitalize).join
         ).new(impressions_queue_size)
