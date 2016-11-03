@@ -4,6 +4,7 @@ module SplitIoClient
   module Cache
     module Adapters
       module MemoryAdapters
+        # Memory adapter implementation, which stores everything inside thread-safe Map
         class MapAdapter
           def initialize(_ = nil)
             @map = Concurrent::Map.new

@@ -1,6 +1,7 @@
 module SplitIoClient
   module Cache
     module Repositories
+      # Repository which forwards impressions interface to the selected adapter
       class ImpressionsRepository < Repository
         extend Forwardable
         def_delegators :@adapter, :add, :clear, :empty?

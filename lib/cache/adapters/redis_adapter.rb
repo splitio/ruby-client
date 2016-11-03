@@ -4,6 +4,7 @@ require 'json'
 module SplitIoClient
   module Cache
     module Adapters
+      # Redis adapter used to provide interface to Redis
       class RedisAdapter
         def initialize(redis_url)
           connection = redis_url.is_a?(Hash) ? redis_url : { url: redis_url }

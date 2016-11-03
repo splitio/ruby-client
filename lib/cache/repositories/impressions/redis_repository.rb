@@ -8,13 +8,16 @@ module SplitIoClient
             @config = config
           end
 
+          # Store impression data in Redis
           def add(split_name, data)
             @adapter.add_to_set(
               namespace_key(split_name), data.merge(split_name: split_name).to_json
             )
           end
 
-          def clear(impressions_enumerator = nil)
+          # Get random impressions from redis in batches of size @config.impressions_queue_size,
+          # delete fetched impressions afterwards
+          def clear
             impressions = impression_keys.each_with_object([]) do |key, memo|
               @adapter.random_set_elements(key, @config.impressions_queue_size).each do |impression|
                 parsed_impression = JSON.parse(impression)
@@ -37,6 +40,7 @@ module SplitIoClient
             "SPLITIO.impressions.#{key}"
           end
 
+          # Get all sets by prefix
           def impression_keys
             @adapter.find_sets_by_prefix('SPLITIO.impressions.')
           end
