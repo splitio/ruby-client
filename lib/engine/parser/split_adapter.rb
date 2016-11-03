@@ -63,10 +63,10 @@ module SplitIoClient
         impressions_sender
       when :consumer
         metrics_sender
-        impressions_sender
       when :producer
         split_store
         segment_store
+        impressions_sender
 
         sleep unless ENV['SPLITCLIENT_ENV'] == 'test'
       end
@@ -103,7 +103,13 @@ module SplitIoClient
         req.body = param.to_json
         req.options.timeout = @config.read_timeout
         req.options.open_timeout = @config.connection_timeout
-        @config.logger.debug("POST #{@config.events_uri + path} #{req.body}") if @config.debug_enabled
+
+        if @config.transport_debug_enabled
+          @config.logger.debug("POST #{@config.events_uri + path} #{req.body}")
+        elsif @config.debug_enabled
+          @config.logger.debug("POST #{@config.events_uri + path}")
+        end          
+
       end
     end
 
@@ -142,7 +148,12 @@ module SplitIoClient
 
     def impressions_sender
       # Disable impressions if @config.impressions_queue_size == -1
-      return if @config.impressions_queue_size < 0
+      if @config.impressions_queue_size < 0
+        @config.logger.info("Disabling impressions service by config.")
+        return
+      end
+
+      @config.logger.info("Starting impressions service...")
 
       Thread.new do
         loop do
@@ -156,6 +167,7 @@ module SplitIoClient
           end
         end
       end
+      @config.logger.info("Started impressions service")
     end
 
     #
@@ -166,11 +178,16 @@ module SplitIoClient
     def post_impressions
       impressions = impressions_array
 
+      if impressions.empty?
+        @config.logger.debug('No impressions to report') if @config.debug_enabled
+        return
+      end
+
       res = post_api('/testImpressions/bulk', impressions)
       if res.status / 100 != 2
         @config.logger.error("Unexpected status code while posting impressions: #{res.status}")
       else
-        @config.logger.debug("Impressions reported: #{impressions}") if @config.debug_enabled
+        @config.logger.debug("Impressions reported: #{impressions.length}") if @config.debug_enabled
       end
     end
 
@@ -179,9 +196,8 @@ module SplitIoClient
       popped_impressions = impressions_data.clear
       test_impression_array = []
 
-      if popped_impressions.empty?
-        @config.logger.debug('No impressions to report.') if @config.debug_enabled
-      else
+      if !popped_impressions.empty?
+
         popped_impressions.each do |item|
           keys_treatments_seen = []
           filtered_impressions = []
@@ -192,9 +208,7 @@ module SplitIoClient
           keys_treatments_seen << item_hash
           filtered_impressions << item
 
-          if filtered_impressions.empty?
-            @config.logger.debug('No impressions to report post filtering.') if @config.debug_enabled
-          else
+          if !filtered_impressions.empty?
             key_impressions = filtered_impressions.each_with_object([]) do |impression, memo|
               memo << {
                 keyName: impression[:impressions]['key_name'],
@@ -229,7 +243,7 @@ module SplitIoClient
           if res.status / 100 != 2
             @config.logger.error("Unexpected status code while posting time metrics: #{res.status}")
           else
-            @config.logger.debug("Metric time reported: #{metrics_time}") if @config.debug_enabled
+            @config.logger.debug("Metric time reported: #{metrics_time.size()}") if @config.debug_enabled
           end
         end
       end
@@ -245,7 +259,7 @@ module SplitIoClient
           if res.status / 100 != 2
             @config.logger.error("Unexpected status code while posting count metrics: #{res.status}")
           else
-            @config.logger.debug("Metric counts reported: #{metrics_count}") if @config.debug_enabled
+            @config.logger.debug("Metric counts reported: #{metrics_count.size()}") if @config.debug_enabled
           end
         end
       end
@@ -261,7 +275,7 @@ module SplitIoClient
           if res.status / 100 != 2
             @config.logger.error("Unexpected status code while posting gauge metrics: #{res.status}")
           else
-            @config.logger.debug("Metric gauge reported: #{metrics_gauge}") if @config.debug_enabled
+            @config.logger.debug("Metric gauge reported: #{metrics_gauge.size()}") if @config.debug_enabled
           end
         end
       end
