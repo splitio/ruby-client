@@ -200,7 +200,10 @@ module SplitIoClient
 
           begin
             latency = (Time.now - start) * 1000.0
-            @impressions_repository.add(split_name, 'key_name' => matching_key, 'treatment' => result, 'time' => (Time.now.to_f * 1000.0))
+            if @config.impressions_queue_size > 0
+              # Disable impressions if @config.impressions_queue_size == -1
+              @impressions_repository.add(split_name, 'key_name' => matching_key, 'treatment' => result, 'time' => (Time.now.to_f * 1000.0))
+            end
 
             # Measure
             @adapter.metrics.time("sdk.get_treatment", latency)

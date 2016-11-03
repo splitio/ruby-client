@@ -3,8 +3,9 @@ module SplitIoClient
     module Repositories
       module Impressions
         class RedisRepository < Repository
-          def initialize(adapter)
+          def initialize(adapter, config)
             @adapter = adapter
+            @config = config
           end
 
           def add(split_name, data)
@@ -13,22 +14,21 @@ module SplitIoClient
             )
           end
 
-          def clear
-            # TODO: Get impressions in batches (use spop)
-            impressions = @adapter.union_sets(impression_keys).map { |i| JSON.parse(i) }
+          def clear(impressions_enumerator = nil)
+            impressions = impression_keys.each_with_object([]) do |key, memo|
+              @adapter.random_set_elements(key, @config.impressions_queue_size).each do |impression|
+                parsed_impression = JSON.parse(impression)
 
-            @adapter.delete(impression_keys)
+                memo << {
+                  feature: parsed_impression['split_name'],
+                  impressions: parsed_impression.reject { |k, _| k == 'split_name' }
+                }
 
-            impressions.each_with_object([]) do |impression, memo|
-              memo << {
-                feature: impression['split_name'],
-                impressions: impression.reject { |k, _| k == 'split_name' }
-              }
+                @adapter.delete_from_set(key, impression)
+              end
             end
-          end
 
-          def empty?
-            impression_keys.size > 0
+            impressions
           end
 
           private

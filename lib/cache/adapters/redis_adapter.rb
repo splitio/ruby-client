@@ -96,6 +96,10 @@ module SplitIoClient
           @redis.sunion(set_keys)
         end
 
+        def random_set_elements(key, count)
+          @redis.srandmember(key, count)
+        end
+
         # General
         def exists?(key)
           @redis.exists(key)

@@ -141,6 +141,9 @@ module SplitIoClient
     end
 
     def impressions_sender
+      # Disable impressions if @config.impressions_queue_size == -1
+      return if @config.impressions_queue_size > 0
+
       Thread.new do
         loop do
           begin

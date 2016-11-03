@@ -37,11 +37,13 @@ module SplitIoClient
       @features_refresh_rate = opts[:features_refresh_rate] || SplitConfig.default_features_refresh_rate
       @segments_refresh_rate = opts[:segments_refresh_rate] || SplitConfig.default_segments_refresh_rate
       @metrics_refresh_rate = opts[:metrics_refresh_rate] || SplitConfig.default_metrics_refresh_rate
+
       @impressions_refresh_rate = opts[:impressions_refresh_rate] || SplitConfig.default_impressions_refresh_rate
       @impressions_queue_size = opts[:impressions_queue_size] || SplitConfig.default_impressions_queue_size
       @impressions_adapter = SplitConfig.init_cache_adapter(
         opts[:cache_adapter] || SplitConfig.default_cache_adapter, :sized_queue_adapter, @redis_url, @impressions_queue_size
       )
+
       @logger = opts[:logger] || SplitConfig.default_logger
       @debug_enabled = opts[:debug_enabled] || SplitConfig.default_debug
       @transport_debug_enabled = opts[:transport_debug_enabled] || SplitConfig.default_debug

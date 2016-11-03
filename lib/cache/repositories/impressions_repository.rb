@@ -10,7 +10,7 @@ module SplitIoClient
           when 'SplitIoClient::Cache::Adapters::MemoryAdapter'
             Repositories::Impressions::MemoryRepository.new(adapter, config)
           when 'SplitIoClient::Cache::Adapters::RedisAdapter'
-            Repositories::Impressions::RedisRepository.new(adapter)
+            Repositories::Impressions::RedisRepository.new(adapter, config)
           end
         end
       end
