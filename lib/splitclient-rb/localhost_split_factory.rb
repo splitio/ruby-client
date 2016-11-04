@@ -73,6 +73,13 @@ module SplitIoClient
         load_localhost_mode_features(splits_file)
       end
 
+      def get_treatments(key, split_names, attributes = nil)
+        split_names.each_with_object({}) do | (name), memo|
+          puts "name #{name} memo #{memo}"
+          memo.merge!(name => get_treatment(key, name, attributes))
+        end
+      end
+
       #
       # obtains the treatment for a given feature
       #

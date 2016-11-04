@@ -1,0 +1,7 @@
+---
+:api_key: 42fsieif0v7d9jqm3qrqn59bdn 
+:mode: :producer
+:cache_adapter: :redis
+:debug_enabled: true
+:transport_debug_enabled: true
+:impressions_refresh_rate: 30

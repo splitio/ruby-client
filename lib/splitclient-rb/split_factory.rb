@@ -150,6 +150,14 @@ module SplitIoClient
       end
 
       def get_treatments(key, split_names, attributes = nil)
+
+        # This localhost behavior must live in in localhost_spit_factory#client
+        if is_localhost_mode?
+          return split_names.each_with_object({}) do | (name), memo|
+            memo.merge!(name => get_localhost_treatment(name))
+          end
+        end
+
         @splits_repository.get_splits(split_names).each_with_object({}) do |(name, data), memo|
           memo.merge!(name => get_treatment(key, name, attributes, data))
         end
