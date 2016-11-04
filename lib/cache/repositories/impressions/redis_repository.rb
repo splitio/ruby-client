@@ -19,16 +19,16 @@ module SplitIoClient
           # delete fetched impressions afterwards
           def clear
             impressions = impression_keys.each_with_object([]) do |key, memo|
-              @adapter.random_set_elements(key, @config.impressions_queue_size).each do |impression|
+              members = @adapter.random_set_elements(key, @config.impressions_queue_size)
+              members.each do |impression|
                 parsed_impression = JSON.parse(impression)
 
                 memo << {
                   feature: parsed_impression['split_name'],
                   impressions: parsed_impression.reject { |k, _| k == 'split_name' }
                 }
-
-                @adapter.delete_from_set(key, impression)
               end
+              @adapter.delete_from_set(key, members)
             end
 
             impressions
