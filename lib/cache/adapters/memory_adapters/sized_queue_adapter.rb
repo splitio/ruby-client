@@ -11,6 +11,7 @@ module SplitIoClient
 
           # Adds data to queue in non-blocking mode
           def add_to_queue(data)
+            # IMPORTANT: this requires Ruby >= 2.2, consider changing implementation
             @queue.push(data, true)
           end
 
