@@ -230,7 +230,7 @@ module SplitIoClient
       #
       # @return [string] version value for this sdk
       def self.sdk_version
-        'RubyClientSDK-'+SplitIoClient::VERSION
+        'ruby-'+SplitIoClient::VERSION
       end
 
       private
