@@ -56,6 +56,6 @@ describe SplitIoClient::Cache::Repositories::SplitsRepository do
     end
   end
 
-  include_examples 'SplitsRepository specs', SplitIoClient::Cache::Adapters::MemoryAdapter.new
+  include_examples 'SplitsRepository specs', SplitIoClient::Cache::Adapters::MemoryAdapter.new(SplitIoClient::Cache::Adapters::MemoryAdapters::MapAdapter.new)
   include_examples 'SplitsRepository specs', SplitIoClient::Cache::Adapters::RedisAdapter.new('redis://127.0.0.1:6379/0')
 end

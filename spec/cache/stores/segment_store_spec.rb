@@ -24,7 +24,7 @@ describe SplitIoClient::Cache::Stores::SegmentStore do
   end
 
   context 'memory adapter' do
-    let(:adapter) { SplitIoClient::Cache::Adapters::MemoryAdapter.new }
+    let(:adapter) { SplitIoClient::Cache::Adapters::MemoryAdapter.new(SplitIoClient::Cache::Adapters::MemoryAdapters::MapAdapter.new) }
     let(:config) { SplitIoClient::SplitConfig.new(cache_adapter: :memory) }
     let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(adapter) }
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(adapter) }

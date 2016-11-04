@@ -11,7 +11,7 @@ describe SplitIoClient::Cache::Stores::SplitStore do
   end
 
   context 'memory adapter' do
-    let(:adapter) { SplitIoClient::Cache::Adapters::MemoryAdapter.new }
+    let(:adapter) { SplitIoClient::Cache::Adapters::MemoryAdapters::MapAdapter.new }
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(adapter) }
     let(:config) { SplitIoClient::SplitConfig.new }
     let(:store) { described_class.new(splits_repository, config, '', metrics) }

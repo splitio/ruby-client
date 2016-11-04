@@ -29,14 +29,21 @@ module SplitIoClient
       @events_uri = (opts[:events_uri] || SplitConfig.default_events_uri).chomp('/')
       @mode = opts[:mode] || SplitConfig.default_mode
       @redis_url = opts[:redis_url] || SplitConfig.default_redis_url
-      @cache_adapter = SplitConfig.init_cache_adapter(opts[:cache_adapter] || SplitConfig.default_cache_adapter, @redis_url)
+      @cache_adapter = SplitConfig.init_cache_adapter(
+        opts[:cache_adapter] || SplitConfig.default_cache_adapter, :map_adapter, @redis_url, false
+      )
       @connection_timeout = opts[:connection_timeout] || SplitConfig.default_connection_timeout
       @read_timeout = opts[:read_timeout] || SplitConfig.default_read_timeout
       @features_refresh_rate = opts[:features_refresh_rate] || SplitConfig.default_features_refresh_rate
       @segments_refresh_rate = opts[:segments_refresh_rate] || SplitConfig.default_segments_refresh_rate
       @metrics_refresh_rate = opts[:metrics_refresh_rate] || SplitConfig.default_metrics_refresh_rate
+
       @impressions_refresh_rate = opts[:impressions_refresh_rate] || SplitConfig.default_impressions_refresh_rate
       @impressions_queue_size = opts[:impressions_queue_size] || SplitConfig.default_impressions_queue_size
+      @impressions_adapter = SplitConfig.init_cache_adapter(
+        opts[:cache_adapter] || SplitConfig.default_cache_adapter, :sized_queue_adapter, @redis_url, @impressions_queue_size
+      )
+
       @logger = opts[:logger] || SplitConfig.default_logger
       @debug_enabled = opts[:debug_enabled] || SplitConfig.default_debug
       @transport_debug_enabled = opts[:transport_debug_enabled] || SplitConfig.default_debug
@@ -75,6 +82,12 @@ module SplitIoClient
     #
     # @return [Object] Cache adapter instance
     attr_reader :cache_adapter
+
+    #
+    # The cache adapter to store impressions in
+    #
+    # @return [Object] Impressions adapter instance
+    attr_reader :impressions_adapter
 
     #
     # The connection timeout for network connections in seconds.
@@ -143,10 +156,15 @@ module SplitIoClient
       'https://events.split.io/api/'
     end
 
-    def self.init_cache_adapter(adapter, redis_url)
+    def self.init_cache_adapter(adapter, data_structure, redis_url = nil, impressions_queue_size = nil)
       case adapter
       when :memory
-        SplitIoClient::Cache::Adapters::MemoryAdapter.new
+        # takes :memory_adapter (symbol) and returns MemoryAdapter (string)
+        adapter = SplitIoClient::Cache::Adapters::MemoryAdapters.const_get(
+          data_structure.to_s.split('_').collect(&:capitalize).join
+        ).new(impressions_queue_size)
+
+        SplitIoClient::Cache::Adapters::MemoryAdapter.new(adapter)
       when :redis
         SplitIoClient::Cache::Adapters::RedisAdapter.new(redis_url)
       end

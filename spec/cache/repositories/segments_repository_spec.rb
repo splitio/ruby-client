@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe SplitIoClient::Cache::Repositories::SegmentsRepository do
   context 'memory adapter' do
-    let(:adapter) { SplitIoClient::Cache::Adapters::MemoryAdapter.new }
+    let(:adapter) { SplitIoClient::Cache::Adapters::MemoryAdapters::MapAdapter.new }
     let(:repository) { described_class.new(adapter) }
 
     it 'removes keys' do
