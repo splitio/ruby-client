@@ -104,7 +104,7 @@ The following values can be customized:
 
 **impressions_refresh_rate** : The SDK sends information on who got what treatment at what time back to Split servers to power analytics. This parameter controls how often this data is sent to Split servers in seconds
 
-**impressions_queue_size** : The size of the impressions queue. -1 to disable impressions.
+**impressions_queue_size** : The size of the impressions queue in case of `cache_adapter == :memory` and the size impressions batch to be fetched from Redis in case of `cache_adapter == :redis`. Use `-1` to disable impressions.
 
 *default value* = `60`
 
@@ -130,7 +130,7 @@ The following values can be customized:
 
 #### Cache adapter
 
-The SDK needs some container to store fetched data, i.e. splits/segments. By default it will store everything in the application's memory, but you can also use Redis.
+The SDK needs some container to store data, i.e. splits/segments/impressions. By default it will store everything in the application's memory, but you can also use Redis.
 
 To use Redis, you have to include `redis-rb` in your app's Gemfile.
 
@@ -234,28 +234,28 @@ And you should get something like this:
 
 ```ruby
 [
-	{ 
+	{
 		name: 'some_feature',
 		traffic_type_name: nil,
 		killed: false,
 		treatments: nil,
 		change_number: 1469134003507
 	},
-	{ 
+	{
 		name: 'another_feature',
 		traffic_type_name: nil,
 		killed: false,
 		treatments: nil,
 		change_number: 1469134003414
 	},
-	{ 
+	{
 		name: 'even_more_features',
 		traffic_type_name: nil,
 		killed: false,
 		treatments: nil,
 		change_number: 1469133991063
 	},
-	{ 
+	{
 		name: 'yet_another_feature',
 		traffic_type_name: nil,
 		killed: false,
@@ -301,7 +301,7 @@ SDK can be ran in `producer` mode both in the scope of the application (e.g. as 
 bundle binstubs splitclient-rb
 ```
 
-- Run the executable provided by the SDK: 
+- Run the executable provided by the SDK:
 ```ruby
 bundle exec bin/splitio -c ~/path/to/config/file.yml
 ```

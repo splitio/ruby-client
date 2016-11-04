@@ -4,6 +4,7 @@ require 'json'
 module SplitIoClient
   module Cache
     module Adapters
+      # Redis adapter used to provide interface to Redis
       class RedisAdapter
         def initialize(redis_url)
           connection = redis_url.is_a?(Hash) ? redis_url : { url: redis_url }
@@ -68,6 +69,7 @@ module SplitIoClient
 
         # Set
         alias_method :initialize_set, :initialize_map
+        alias_method :find_sets_by_prefix, :find_strings_by_prefix
 
         def add_to_set(key, val)
           @redis.sadd(key, val)
@@ -85,12 +87,28 @@ module SplitIoClient
           @redis.sismember(key, val)
         end
 
+        def get_all_from_set(key)
+          @redis.smembers(key)
+        end
+
+        def union_sets(set_keys)
+          return [] if set_keys == []
+
+          @redis.sunion(set_keys)
+        end
+
+        def random_set_elements(key, count)
+          @redis.srandmember(key, count)
+        end
+
         # General
         def exists?(key)
           @redis.exists(key)
         end
 
         def delete(key)
+          return nil if key == []
+
           @redis.del(key)
         end
       end

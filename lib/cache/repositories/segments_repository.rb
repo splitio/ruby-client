@@ -10,6 +10,7 @@ module SplitIoClient
           @adapter.set_bool(namespace_key('ready'), false)
         end
 
+        # Receives segment data, adds and removes segements from the store
         def add_to_segment(segment)
           name = segment[:name]
 

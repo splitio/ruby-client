@@ -131,7 +131,7 @@ module SplitIoClient
       # @param api_key [String] the API key for your split account
       #
       # @return [SplitIoClient] split.io client instance
-      def initialize(api_key, config = {}, adapter = nil, localhost_mode = false, splits_repository, segments_repository)
+      def initialize(api_key, config = {}, adapter = nil, localhost_mode = false, splits_repository, segments_repository, impressions_repository)
         @localhost_mode = localhost_mode
         @localhost_mode_features = []
 
@@ -139,6 +139,7 @@ module SplitIoClient
 
         @splits_repository = splits_repository
         @segments_repository = segments_repository
+        @impressions_repository = impressions_repository
 
         if api_key == LOCALHOST_MODE
           @localhost_mode = true
@@ -198,8 +199,11 @@ module SplitIoClient
           result = result.nil? ? Treatments::CONTROL : result
 
           begin
-            @adapter.impressions.log(matching_key, split_name, result, (Time.now.to_f * 1000.0))
             latency = (Time.now - start) * 1000.0
+            if @config.impressions_queue_size > 0
+              # Disable impressions if @config.impressions_queue_size == -1
+              @impressions_repository.add(split_name, 'key_name' => matching_key, 'treatment' => result, 'time' => (Time.now.to_f * 1000.0).to_i)
+            end
 
             # Measure
             @adapter.metrics.time("sdk.get_treatment", latency)
@@ -226,7 +230,7 @@ module SplitIoClient
       #
       # @return [string] version value for this sdk
       def self.sdk_version
-        'RubyClientSDK-'+SplitIoClient::VERSION
+        'ruby-'+SplitIoClient::VERSION
       end
 
       private
@@ -275,9 +279,10 @@ module SplitIoClient
       @cache_adapter = @config.cache_adapter
       @splits_repository = SplitIoClient::Cache::Repositories::SplitsRepository.new(@cache_adapter)
       @segments_repository = SplitIoClient::Cache::Repositories::SegmentsRepository.new(@cache_adapter)
+      @impressions_repository = SplitIoClient::Cache::Repositories::ImpressionsRepository.new(@config.impressions_adapter, @config)
       @sdk_blocker = SplitIoClient::Cache::Stores::SDKBlocker.new(@config)
       @adapter = api_key != 'localhost' \
-      ? SplitAdapter.new(api_key, @config, @splits_repository, @segments_repository, @sdk_blocker)
+      ? SplitAdapter.new(api_key, @config, @splits_repository, @segments_repository, @impressions_repository, @sdk_blocker)
       : nil
       @localhost_mode = api_key == 'localhost'
 
@@ -304,7 +309,7 @@ module SplitIoClient
       attr_reader :adapter
 
     def init_client
-      SplitClient.new(@api_key, @config, @adapter, @localhost_mode, @splits_repository, @segments_repository)
+      SplitClient.new(@api_key, @config, @adapter, @localhost_mode, @splits_repository, @segments_repository, @impressions_repository)
     end
 
     def init_manager

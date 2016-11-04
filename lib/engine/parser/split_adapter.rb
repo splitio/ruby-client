@@ -14,10 +14,6 @@ module SplitIoClient
   #
   class SplitAdapter < NoMethodError
     #
-    # handler for impressions
-    attr_reader :impressions
-
-    #
     # handler for metrics
     attr_reader :metrics
 
@@ -31,7 +27,7 @@ module SplitIoClient
 
     attr_reader :impressions_producer
 
-    attr_reader :splits_repository, :segments_repository
+    attr_reader :splits_repository, :segments_repository, :impressions_repository
 
     #
     # Creates a new split api adapter instance that consumes split api endpoints
@@ -39,14 +35,14 @@ module SplitIoClient
     # @param api_key [String] the API key for your split account
     #
     # @return [SplitIoClient] split.io client instance
-    def initialize(api_key, config, splits_repository, segments_repository, sdk_blocker)
+    def initialize(api_key, config, splits_repository, segments_repository, impressions_repository, sdk_blocker)
       @api_key = api_key
       @config = config
-      @impressions = Impressions.new(@config)
       @metrics = Metrics.new(100)
 
       @splits_repository = splits_repository
       @segments_repository = segments_repository
+      @impressions_repository = impressions_repository
 
       @sdk_blocker = sdk_blocker
 
@@ -67,10 +63,10 @@ module SplitIoClient
         impressions_sender
       when :consumer
         metrics_sender
-        impressions_sender
       when :producer
         split_store
         segment_store
+        impressions_sender
 
         sleep unless ENV['SPLITCLIENT_ENV'] == 'test'
       end
@@ -107,7 +103,13 @@ module SplitIoClient
         req.body = param.to_json
         req.options.timeout = @config.read_timeout
         req.options.open_timeout = @config.connection_timeout
-        @config.logger.debug("POST #{@config.events_uri + path} #{req.body}") if @config.debug_enabled
+
+        if @config.transport_debug_enabled
+          @config.logger.debug("POST #{@config.events_uri + path} #{req.body}")
+        elsif @config.debug_enabled
+          @config.logger.debug("POST #{@config.events_uri + path}")
+        end
+
       end
     end
 
@@ -145,6 +147,14 @@ module SplitIoClient
     end
 
     def impressions_sender
+      # Disable impressions if @config.impressions_queue_size == -1
+      if @config.impressions_queue_size < 0
+        @config.logger.info("Disabling impressions service by config.")
+        return
+      end
+
+      @config.logger.info("Starting impressions service...")
+
       Thread.new do
         loop do
           begin
@@ -157,6 +167,7 @@ module SplitIoClient
           end
         end
       end
+      @config.logger.info("Started impressions service")
     end
 
     #
@@ -165,46 +176,60 @@ module SplitIoClient
     #
     # @return [void]
     def post_impressions
-      if @impressions.queue.empty?
-        @config.logger.debug('No impressions to report.') if @config.debug_enabled
+      impressions = impressions_array
+
+      if impressions.empty?
+        @config.logger.debug('No impressions to report') if @config.debug_enabled
+        return
+      end
+
+      res = post_api('/testImpressions/bulk', impressions)
+      if res.status / 100 != 2
+        @config.logger.error("Unexpected status code while posting impressions: #{res.status}")
       else
-        popped_impressions = @impressions.clear
-        test_impression_array = []
-        popped_impressions.each do |i|
-          filtered = []
-          keys_treatments_seen = []
+        @config.logger.debug("Impressions reported: #{impressions.length}") if @config.debug_enabled
+      end
+    end
 
-          impressions = i[:impressions]
-          impressions.each do |imp|
-            if keys_treatments_seen.include?("#{imp.key}:#{imp.treatment}")
-              next
-            end
-            keys_treatments_seen << "#{imp.key}:#{imp.treatment}"
-            filtered << imp
-          end
+    # REFACTOR
+    def impressions_array(impressions = nil)
+      impressions_data = impressions || @impressions_repository
+      popped_impressions = impressions_data.clear
+      test_impression_array = []
+      filtered_impressions = []
+      keys_treatments_seen = []
 
-          if filtered.empty?
-            @config.logger.debug('No impressions to report post filtering.') if @config.debug_enabled
-          else
-            test_impression = {}
-            key_impressions = []
+      if !popped_impressions.empty?
+        popped_impressions.each do |item|
+          item_hash = "#{item[:impressions]['key_name']}:#{item[:impressions]['treatment']}"
 
-            filtered.each do |f|
-              key_impressions << {keyName: f.key, treatment: f.treatment, time: f.time.to_i}
-            end
+          next if keys_treatments_seen.include?(item_hash)
 
-            test_impression = {testName: i[:feature], keyImpressions: key_impressions}
-            test_impression_array << test_impression
-          end
+          keys_treatments_seen << item_hash
+          filtered_impressions << item
         end
 
-        res = post_api('/testImpressions/bulk', test_impression_array)
-        if res.status / 100 != 2
-          @config.logger.error("Unexpected status code while posting impressions: #{res.status}")
-        else
-          @config.logger.debug("Impressions reported: #{test_impression_array}") if @config.debug_enabled
+        return [] unless filtered_impressions
+
+        features = filtered_impressions.map { |i| i[:feature] }.uniq
+        test_impression_array = features.each_with_object([]) do |feature, memo|
+          current_impressions = filtered_impressions.select { |i| i[:feature] == feature }
+          current_impressions.map! do |i|
+            {
+              keyName: i[:impressions]['key_name'],
+              treatment: i[:impressions]['treatment'],
+              time: i[:impressions]['time']
+            }
+          end
+
+          memo << {
+            testName: feature,
+            keyImpressions: current_impressions
+          }
         end
       end
+
+      test_impression_array
     end
 
     #
@@ -224,7 +249,7 @@ module SplitIoClient
           if res.status / 100 != 2
             @config.logger.error("Unexpected status code while posting time metrics: #{res.status}")
           else
-            @config.logger.debug("Metric time reported: #{metrics_time}") if @config.debug_enabled
+            @config.logger.debug("Metric time reported: #{metrics_time.size()}") if @config.debug_enabled
           end
         end
       end
@@ -240,7 +265,7 @@ module SplitIoClient
           if res.status / 100 != 2
             @config.logger.error("Unexpected status code while posting count metrics: #{res.status}")
           else
-            @config.logger.debug("Metric counts reported: #{metrics_count}") if @config.debug_enabled
+            @config.logger.debug("Metric counts reported: #{metrics_count.size()}") if @config.debug_enabled
           end
         end
       end
@@ -256,7 +281,7 @@ module SplitIoClient
           if res.status / 100 != 2
             @config.logger.error("Unexpected status code while posting gauge metrics: #{res.status}")
           else
-            @config.logger.debug("Metric gauge reported: #{metrics_gauge}") if @config.debug_enabled
+            @config.logger.debug("Metric gauge reported: #{metrics_gauge.size()}") if @config.debug_enabled
           end
         end
       end
