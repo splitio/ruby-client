@@ -64,17 +64,8 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
       repository.add('foo1', 'key_name' => 'matching_key', 'treatment' => 'on', 'time' => 1478113516902)
       repository.add('foo2', 'key_name' => 'matching_key2', 'treatment' => 'off', 'time' => 1478113518985)
 
-      expect(impressions_array.find { |i| i[:testName] == 'foo1' }[:keyImpressions]).to match_array(
-        [
-          { keyName: 'matching_key', treatment: 'on', time: 1478113516002 }
-        ]
-      )
-
-      expect(impressions_array.find { |i| i[:testName] == 'foo2' }[:keyImpressions]).to match_array(
-        [
-          { keyName: 'matching_key2', treatment: 'off', time: 1478113518285 }
-        ]
-      )
+      expect(impressions_array.find { |i| i[:testName] == 'foo1' }[:keyImpressions].size).to eq(1)
+      expect(impressions_array.find { |i| i[:testName] == 'foo2' }[:keyImpressions].size).to eq(1)
     end
   end
 
