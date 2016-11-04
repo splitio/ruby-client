@@ -187,8 +187,17 @@ module SplitIoClient
       if res.status / 100 != 2
         @config.logger.error("Unexpected status code while posting impressions: #{res.status}")
       else
-        @config.logger.debug("Impressions reported: #{impressions.length}") if @config.debug_enabled
+        @config.logger.debug("Impressions reported: #{calculate_tot_impressions(impressions)}") if @config.debug_enabled
       end
+    end
+
+    def calculate_tot_impressions(impressions = nil)
+      tot = 0
+      return tot if impressions.nil?
+      impressions.each do |test_impression|
+        tot += test_impression[:keyImpressions].length
+      end
+      tot
     end
 
     # REFACTOR
