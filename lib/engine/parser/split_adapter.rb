@@ -108,7 +108,7 @@ module SplitIoClient
           @config.logger.debug("POST #{@config.events_uri + path} #{req.body}")
         elsif @config.debug_enabled
           @config.logger.debug("POST #{@config.events_uri + path}")
-        end          
+        end
 
       end
     end
@@ -191,35 +191,41 @@ module SplitIoClient
       end
     end
 
+    # REFACTOR
     def impressions_array(impressions = nil)
       impressions_data = impressions || @impressions_repository
       popped_impressions = impressions_data.clear
       test_impression_array = []
+      filtered_impressions = []
+      keys_treatments_seen = []
 
       if !popped_impressions.empty?
-
         popped_impressions.each do |item|
-          keys_treatments_seen = []
-          filtered_impressions = []
           item_hash = "#{item[:impressions]['key_name']}:#{item[:impressions]['treatment']}"
 
           next if keys_treatments_seen.include?(item_hash)
 
           keys_treatments_seen << item_hash
           filtered_impressions << item
+        end
 
-          if !filtered_impressions.empty?
-            key_impressions = filtered_impressions.each_with_object([]) do |impression, memo|
-              memo << {
-                keyName: impression[:impressions]['key_name'],
-                treatment: impression[:impressions]['treatment'],
-                time: impression[:impressions]['time']
-              }
-            end
+        return [] unless filtered_impressions
 
-            test_impression = { testName: item[:feature], keyImpressions: key_impressions }
-            test_impression_array << test_impression
+        features = filtered_impressions.map { |i| i[:feature] }.uniq
+        test_impression_array = features.each_with_object([]) do |feature, memo|
+          current_impressions = filtered_impressions.select { |i| i[:feature] == feature }
+          current_impressions.map! do |i|
+            {
+              keyName: i[:impressions]['key_name'],
+              treatment: i[:impressions]['treatment'],
+              time: i[:impressions]['time']
+            }
           end
+
+          memo << {
+            testName: feature,
+            keyImpressions: current_impressions
+          }
         end
       end
 
