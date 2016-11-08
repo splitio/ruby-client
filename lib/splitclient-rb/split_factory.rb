@@ -157,11 +157,14 @@ module SplitIoClient
           end
         end
 
+        bucketing_key, matching_key = keys_from_key(key)
+        bucketing_key = matching_key if bucketing_key.nil?
+
         treatments = @splits_repository.get_splits(split_names).each_with_object({}) do |(name, data), memo|
-          memo.merge!(name => get_treatment(key, name, attributes, data, false))
+          memo.merge!(name => get_treatment(matching_key, name, attributes, data, false))
         end
 
-        @impressions_repository.add_bulk(key, treatments, (Time.now.to_f * 1000.0).to_i)
+        @impressions_repository.add_bulk(matching_key, treatments, (Time.now.to_f * 1000.0).to_i)
 
         treatments
       end
