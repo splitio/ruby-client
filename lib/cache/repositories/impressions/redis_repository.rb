@@ -15,6 +15,14 @@ module SplitIoClient
             )
           end
 
+          def add_bulk(key, treatments, time)
+            @adapter.redis.pipelined do
+              treatments.each do |split_name, treatment|
+                add(split_name, 'key_name' => key, 'treatment' => treatment, 'time' => time)
+              end
+            end
+          end
+
           # Get random impressions from redis in batches of size @config.impressions_queue_size,
           # delete fetched impressions afterwards
           def clear

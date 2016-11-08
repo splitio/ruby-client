@@ -150,17 +150,20 @@ module SplitIoClient
       end
 
       def get_treatments(key, split_names, attributes = nil)
-
         # This localhost behavior must live in in localhost_spit_factory#client
         if is_localhost_mode?
-          return split_names.each_with_object({}) do | (name), memo|
+          return split_names.each_with_object({}) do |name, memo|
             memo.merge!(name => get_localhost_treatment(name))
           end
         end
 
-        @splits_repository.get_splits(split_names).each_with_object({}) do |(name, data), memo|
-          memo.merge!(name => get_treatment(key, name, attributes, data))
+        treatments = @splits_repository.get_splits(split_names).each_with_object({}) do |(name, data), memo|
+          memo.merge!(name => get_treatment(key, name, attributes, data, false))
         end
+
+        @impressions_repository.add_bulk(key, treatments, (Time.now.to_f * 1000.0).to_i)
+
+        treatments
       end
 
       #
@@ -170,7 +173,7 @@ module SplitIoClient
       # @param split_name [String/Array] name of the feature that is being validated or array of them
       #
       # @return [String/Hash] Treatment as String or Hash of treatments in case of array of features
-      def get_treatment(key, split_name, attributes = nil, split_data = nil)
+      def get_treatment(key, split_name, attributes = nil, split_data = nil, store_impressions = true)
         bucketing_key, matching_key = keys_from_key(key)
         bucketing_key = matching_key if bucketing_key.nil?
 
@@ -208,7 +211,7 @@ module SplitIoClient
 
           begin
             latency = (Time.now - start) * 1000.0
-            if @config.impressions_queue_size > 0
+            if @config.impressions_queue_size > 0 && store_impressions
               # Disable impressions if @config.impressions_queue_size == -1
               @impressions_repository.add(split_name, 'key_name' => matching_key, 'treatment' => result, 'time' => (Time.now.to_f * 1000.0).to_i)
             end
