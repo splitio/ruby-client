@@ -3,6 +3,8 @@ module SplitIoClient
     module Repositories
       module Impressions
         class RedisRepository < Repository
+          IMPRESSIONS_SLICE = 1000
+
           def initialize(adapter, config)
             @adapter = adapter
             @config = config
@@ -17,8 +19,10 @@ module SplitIoClient
 
           def add_bulk(key, treatments, time)
             @adapter.redis.pipelined do
-              treatments.each do |split_name, treatment|
-                add(split_name, 'key_name' => key, 'treatment' => treatment, 'time' => time)
+              treatments.each_slice(IMPRESSIONS_SLICE) do |treatments_slice|
+                treatments_slice.each do |split_name, treatment|
+                  add(split_name, 'key_name' => key, 'treatment' => treatment, 'time' => time)
+                end
               end
             end
           end
