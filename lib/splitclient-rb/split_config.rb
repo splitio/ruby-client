@@ -45,7 +45,7 @@ module SplitIoClient
       )
 
       @metrics_adapter = SplitConfig.init_cache_adapter(
-        opts[:cache_adapter] || SplitConfig.default_cache_adapter, :array_adapter, @redis_url, false
+        opts[:cache_adapter] || SplitConfig.default_cache_adapter, :map_adapter, @redis_url, false
       )
 
       @logger = opts[:logger] || SplitConfig.default_logger

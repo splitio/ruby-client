@@ -3,12 +3,10 @@ module SplitIoClient
     module Repositories
       module Metrics
         class MemoryRepository
-          def initialize(adapter = nil, config, binary_search)
+          def initialize(_ = nil, adapter, config)
             @counts = []
             @latencies = []
             @gauges = []
-
-            @binary_search = binary_search
 
             @config = config
           end
@@ -24,13 +22,13 @@ module SplitIoClient
             end
           end
 
-          def add_latency(operation, time_in_ms)
+          def add_latency(operation, time_in_ms, binary_search)
             operation_hash = @latencies.find { |l| l[:operation] == operation }
             if operation_hash.nil?
-              latencies_for_op = (operation == 'sdk.get_treatment') ? @binary_search.add_latency_millis(time_in_ms) : [time_in_ms]
+              latencies_for_op = (operation == 'sdk.get_treatment') ? binary_search.add_latency_millis(time_in_ms) : [time_in_ms]
               @latencies << { operation: operation, latencies: latencies_for_op }
             else
-              latencies_for_op = (operation == 'sdk.get_treatment') ? @binary_search.add_latency_millis(time_in_ms) : operation_hash[:latencies].push(time_in_ms)
+              latencies_for_op = (operation == 'sdk.get_treatment') ? binary_search.add_latency_millis(time_in_ms) : operation_hash[:latencies].push(time_in_ms)
             end
           end
 
@@ -43,6 +41,34 @@ module SplitIoClient
             else
               gauge_hash[:value].set_value(value)
             end
+          end
+
+          def counts
+            @counts.each_with_object({}) do |count, memo|
+              memo[count[:name]] = count[:delta].sum
+            end
+          end
+
+          def latencies
+            @latencies.each_with_object({}) do |latency, memo|
+              memo[latency[:operation]] = latency[:latencies]
+            end
+          end
+
+          def gauges
+            # TODO
+          end
+
+          def clear_counts
+            @counts = []
+          end
+
+          def clear_latencies
+            @latencies = []
+          end
+
+          def clear_gauges
+            @gauges = []
           end
 
           #

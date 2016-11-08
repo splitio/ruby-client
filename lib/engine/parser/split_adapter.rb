@@ -38,12 +38,13 @@ module SplitIoClient
     def initialize(api_key, config, splits_repository, segments_repository, impressions_repository, metrics_repository, sdk_blocker)
       @api_key = api_key
       @config = config
-      @metrics = Metrics.new(100, @config)
 
       @splits_repository = splits_repository
       @segments_repository = segments_repository
       @impressions_repository = impressions_repository
       @metrics_repository = metrics_repository
+
+      @metrics = Metrics.new(100, @config, @metrics_repository)
 
       @sdk_blocker = sdk_blocker
 
@@ -258,47 +259,27 @@ module SplitIoClient
           res = post_api('/metrics/time', metrics_time)
           if res.status / 100 != 2
             @config.logger.error("Unexpected status code while posting time metrics: #{res.status}")
-            @config.logger.debug("Metric time NOT reported: #{metrics_time}") if @config.debug_enabled
           else
             @config.logger.debug("Metric time reported: #{metrics_time.size}") if @config.debug_enabled
-            @config.logger.debug("Metric time reported: #{metrics_time}") if @config.debug_enabled
           end
         end
       end
       @metrics_repository.clear_latencies
 
-      # if @metrics_repository.counts.empty?
-      #   @config.logger.debug('No counts to report.') if @config.debug_enabled
-      # else
-      #   @metrics_repository.counts.each do |c|
-      #     metrics_count = {}
-      #     metrics_count = {name: c[:name], delta: c[:delta].sum}
-      #     res = post_api('/metrics/counter', metrics_count)
-      #     if res.status / 100 != 2
-      #       @config.logger.error("Unexpected status code while posting count metrics: #{res.status}")
-      #     else
-      #       @config.logger.debug("Metric counts reported: #{metrics_count.size()}") if @config.debug_enabled
-      #     end
-      #   end
-      # end
-      # @metrics_repository.clear_counts
-
-      # TODO
-      # if @metrics.gauges.empty?
-      #   @config.logger.debug('No gauges to report.') if @config.debug_enabled
-      # else
-      #   @metrics.gauges.each do |g|
-      #     metrics_gauge = {}
-      #     metrics_gauge = {name: g[:name], value: g[:gauge].value}
-      #     res = post_api('/metrics/gauge', metrics_gauge)
-      #     if res.status / 100 != 2
-      #       @config.logger.error("Unexpected status code while posting gauge metrics: #{res.status}")
-      #     else
-      #       @config.logger.debug("Metric gauge reported: #{metrics_gauge.size()}") if @config.debug_enabled
-      #     end
-      #   end
-      # end
-      # @metrics.gauges.clear
+      if @metrics_repository.counts.empty?
+        @config.logger.debug('No counts to report.') if @config.debug_enabled
+      else
+        @metrics_repository.counts.each do |name, count|
+          metrics_count = { name: name, delta: count }
+          res = post_api('/metrics/counter', metrics_count)
+          if res.status / 100 != 2
+            @config.logger.error("Unexpected status code while posting count metrics: #{res.status}")
+          else
+            @config.logger.debug("Metric counts reported: #{metrics_count.size}") if @config.debug_enabled
+          end
+        end
+      end
+      @metrics_repository.clear_counts
     end
 
     private

@@ -32,13 +32,13 @@ module SplitIoClient
     # @return [int] queue size
     attr_accessor :queue_size
 
-    def initialize(queue_size, config)
+    def initialize(queue_size, config, repository)
       @queue_size = queue_size
       @binary_search = SplitIoClient::BinarySearchLatencyTracker.new
 
       @config = config
 
-      @repository = Cache::Repositories::MetricsRepository.new(@config.metrics_adapter, @config)
+      @repository = repository
     end
 
     #
