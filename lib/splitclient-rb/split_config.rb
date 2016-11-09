@@ -44,6 +44,10 @@ module SplitIoClient
         opts[:cache_adapter] || SplitConfig.default_cache_adapter, :sized_queue_adapter, @redis_url, @impressions_queue_size
       )
 
+      @metrics_adapter = SplitConfig.init_cache_adapter(
+        opts[:cache_adapter] || SplitConfig.default_cache_adapter, :map_adapter, @redis_url, false
+      )
+
       @logger = opts[:logger] || SplitConfig.default_logger
       @debug_enabled = opts[:debug_enabled] || SplitConfig.default_debug
       @transport_debug_enabled = opts[:transport_debug_enabled] || SplitConfig.default_debug
@@ -88,6 +92,12 @@ module SplitIoClient
     #
     # @return [Object] Impressions adapter instance
     attr_reader :impressions_adapter
+
+    #
+    # The cache adapter to store metrics in
+    #
+    # @return [Symbol] Metrics adapter
+    attr_reader :metrics_adapter
 
     #
     # The connection timeout for network connections in seconds.
@@ -176,6 +186,10 @@ module SplitIoClient
 
     # @return [LocalStore] configuration value for local cache store
     def self.default_cache_adapter
+      :memory
+    end
+
+    def self.default_metrics_adapter
       :memory
     end
 

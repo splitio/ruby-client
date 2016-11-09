@@ -131,7 +131,7 @@ module SplitIoClient
       # @param api_key [String] the API key for your split account
       #
       # @return [SplitIoClient] split.io client instance
-      def initialize(api_key, config = {}, adapter = nil, localhost_mode = false, splits_repository, segments_repository, impressions_repository)
+      def initialize(api_key, config = {}, adapter = nil, localhost_mode = false, splits_repository, segments_repository, impressions_repository, metrics_repository)
         @localhost_mode = localhost_mode
         @localhost_mode_features = []
 
@@ -140,6 +140,7 @@ module SplitIoClient
         @splits_repository = splits_repository
         @segments_repository = segments_repository
         @impressions_repository = impressions_repository
+        @metrics_repository = metrics_repository
 
         if api_key == LOCALHOST_MODE
           @localhost_mode = true
@@ -288,9 +289,10 @@ module SplitIoClient
       @splits_repository = SplitIoClient::Cache::Repositories::SplitsRepository.new(@cache_adapter)
       @segments_repository = SplitIoClient::Cache::Repositories::SegmentsRepository.new(@cache_adapter)
       @impressions_repository = SplitIoClient::Cache::Repositories::ImpressionsRepository.new(@config.impressions_adapter, @config)
+      @metrics_repository = SplitIoClient::Cache::Repositories::MetricsRepository.new(@config.metrics_adapter, @config)
       @sdk_blocker = SplitIoClient::Cache::Stores::SDKBlocker.new(@config)
       @adapter = api_key != 'localhost' \
-      ? SplitAdapter.new(api_key, @config, @splits_repository, @segments_repository, @impressions_repository, @sdk_blocker)
+      ? SplitAdapter.new(api_key, @config, @splits_repository, @segments_repository, @impressions_repository, @metrics_repository, @sdk_blocker)
       : nil
       @localhost_mode = api_key == 'localhost'
 
@@ -317,7 +319,7 @@ module SplitIoClient
       attr_reader :adapter
 
     def init_client
-      SplitClient.new(@api_key, @config, @adapter, @localhost_mode, @splits_repository, @segments_repository, @impressions_repository)
+      SplitClient.new(@api_key, @config, @adapter, @localhost_mode, @splits_repository, @segments_repository, @impressions_repository, @metrics_repository)
     end
 
     def init_manager

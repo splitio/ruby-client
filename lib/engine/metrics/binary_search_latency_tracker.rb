@@ -52,16 +52,22 @@ module SplitIoClient
     # Increment the internal counter for the bucket this latency falls into.
     # @param millis
     #
-    def add_latency_millis(millis)
+    def add_latency_millis(millis, return_index = false)
       index = find_bucket_index(millis * 1000)
+
+      return index if return_index
+
       @latencies[index] += 1
       @latencies
     end
 
     # Increment the internal counter for the bucket this latency falls into.
     # @param micros
-    def add_latency_micros(micros)
+    def add_latency_micros(micros, return_index = false)
       index = find_bucket_index(micros)
+
+      return index if return_index
+
       @latencies[index] += 1
       @latencies
     end
