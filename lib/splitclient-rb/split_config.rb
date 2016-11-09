@@ -41,7 +41,7 @@ module SplitIoClient
       @impressions_refresh_rate = opts[:impressions_refresh_rate] || SplitConfig.default_impressions_refresh_rate
       @impressions_queue_size = opts[:impressions_queue_size] || SplitConfig.default_impressions_queue_size
       @impressions_adapter = SplitConfig.init_cache_adapter(
-        opts[:cache_adapter] || SplitConfig.default_cache_adapter, :sized_queue_adapter, @redis_url, @impressions_queue_size
+        opts[:cache_adapter] || SplitConfig.default_cache_adapter, :queue_adapter, @redis_url, @impressions_queue_size
       )
 
       @metrics_adapter = SplitConfig.init_cache_adapter(
