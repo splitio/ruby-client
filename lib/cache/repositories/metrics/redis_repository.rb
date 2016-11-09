@@ -63,7 +63,7 @@ module SplitIoClient
               collected_latencies[key] = value.split(',').map(&:to_f)
             end
 
-            collected_latencies['sdk.get_treatment'] = latencies_array
+            collected_latencies['sdk.get_treatment'] = latencies_array unless latencies_array.reduce(:+) == 0
 
             collected_latencies
           end
