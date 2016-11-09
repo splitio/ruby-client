@@ -7,7 +7,7 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
     let(:adapter) { cache_adapter }
     let(:repository) { described_class.new(adapter, config) }
     let(:split_adapter) do
-      SplitIoClient::SplitAdapter.new(nil, SplitIoClient::SplitConfig.new(mode: :nil), nil, nil, nil, nil)
+      SplitIoClient::SplitAdapter.new(nil, SplitIoClient::SplitConfig.new(mode: :nil), nil, nil, nil, nil, nil)
     end
     let(:impressions_array) { split_adapter.impressions_array(repository) }
 

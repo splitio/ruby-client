@@ -58,6 +58,10 @@ module SplitIoClient
           Hash[keys.zip(@redis.mget(keys))]
         end
 
+        def append_to_string(key, val)
+          @redis.append(key, val)
+        end
+
         # Bool
         def set_bool(key, val)
           @redis.set(key, val.to_s)
@@ -110,6 +114,10 @@ module SplitIoClient
           return nil if key == []
 
           @redis.del(key)
+        end
+
+        def inc(key, inc = 1)
+          @redis.incrby(key, inc)
         end
       end
     end
