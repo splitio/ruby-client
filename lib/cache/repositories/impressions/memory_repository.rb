@@ -18,6 +18,12 @@ module SplitIoClient
             end
           end
 
+          def add_bulk(key, treatments, time)
+            treatments.each do |split_name, treatment|
+              add(split_name, 'key_name' => key, 'treatment' => treatment, 'time' => time)
+            end
+          end
+
           # Get everything from the queue and leave it empty
           def clear
             @adapter.clear
