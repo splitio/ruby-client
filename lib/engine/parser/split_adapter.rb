@@ -215,7 +215,7 @@ module SplitIoClient
       popped_impressions = impressions ? impressions : @impressions_repository.clear
       test_impression_array, filtered_impressions, keys_treatments_seen = [], [], []
 
-      return test_impression_array if popped_impressions.empty?
+      return [] if popped_impressions.empty?
 
       popped_impressions.each do |item|
         item_hash = "#{item[:feature]}:#{item[:impressions]['key_name']}:#{item[:impressions]['treatment']}"
@@ -226,7 +226,7 @@ module SplitIoClient
         filtered_impressions << item
       end
 
-      return [] unless filtered_impressions
+      return [] if filtered_impressions.empty?
 
       features = filtered_impressions.map { |i| i[:feature] }.uniq
       test_impression_array = features.each_with_object([]) do |feature, memo|
