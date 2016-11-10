@@ -211,36 +211,37 @@ module SplitIoClient
       filtered_impressions = []
       keys_treatments_seen = []
 
-      if !popped_impressions.empty?
-        popped_impressions.each do |item|
-          item_hash = "#{item[:impressions]['key_name']}:#{item[:impressions]['treatment']}"
+      return test_impression_array if popped_impressions.empty?
+      
+      popped_impressions.each do |item|
 
-          next if keys_treatments_seen.include?(item_hash)
+        item_hash = "#{item[:feature]}:#{item[:impressions]['key_name']}:#{item[:impressions]['treatment']}"
 
-          keys_treatments_seen << item_hash
-          filtered_impressions << item
-        end
+        next if keys_treatments_seen.include?(item_hash)
 
-        return [] unless filtered_impressions
-
-        features = filtered_impressions.map { |i| i[:feature] }.uniq
-        test_impression_array = features.each_with_object([]) do |feature, memo|
-          current_impressions = filtered_impressions.select { |i| i[:feature] == feature }
-          current_impressions.map! do |i|
-            {
-              keyName: i[:impressions]['key_name'],
-              treatment: i[:impressions]['treatment'],
-              time: i[:impressions]['time']
-            }
-          end
-
-          memo << {
-            testName: feature,
-            keyImpressions: current_impressions
-          }
-        end
+        keys_treatments_seen << item_hash
+        filtered_impressions << item
       end
 
+      return [] unless filtered_impressions
+
+      features = filtered_impressions.map { |i| i[:feature] }.uniq
+      test_impression_array = features.each_with_object([]) do |feature, memo|
+        current_impressions = filtered_impressions.select { |i| i[:feature] == feature }
+        current_impressions.map! do |i|
+          {
+            keyName: i[:impressions]['key_name'],
+            treatment: i[:impressions]['treatment'],
+            time: i[:impressions]['time']
+          }
+        end
+
+        memo << {
+          testName: feature,
+          keyImpressions: current_impressions
+        }
+      end
+      
       test_impression_array
     end
 
