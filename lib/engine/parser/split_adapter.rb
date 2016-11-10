@@ -135,6 +135,9 @@ module SplitIoClient
     #
 
     def metrics_sender
+      # TODO: Send metrics in main thread for test ENV
+      return if ENV['SPLITCLIENT_ENV'] == 'test'
+
       Thread.new do
         loop do
           begin
@@ -158,6 +161,9 @@ module SplitIoClient
 
       @config.logger.info("Starting impressions service...")
 
+      # TODO: Send impressions in main thread for test ENV
+      return if ENV['SPLITCLIENT_ENV'] == 'test'
+
       Thread.new do
         loop do
           begin
@@ -170,6 +176,7 @@ module SplitIoClient
           end
         end
       end
+
       @config.logger.info("Started impressions service")
     end
 
@@ -205,16 +212,12 @@ module SplitIoClient
 
     # REFACTOR
     def impressions_array(impressions = nil)
-      impressions_data = impressions || @impressions_repository
-      popped_impressions = impressions_data.clear
-      test_impression_array = []
-      filtered_impressions = []
-      keys_treatments_seen = []
+      popped_impressions = impressions ? impressions : @impressions_repository.clear
+      test_impression_array, filtered_impressions, keys_treatments_seen = [], [], []
 
       return test_impression_array if popped_impressions.empty?
-      
-      popped_impressions.each do |item|
 
+      popped_impressions.each do |item|
         item_hash = "#{item[:feature]}:#{item[:impressions]['key_name']}:#{item[:impressions]['treatment']}"
 
         next if keys_treatments_seen.include?(item_hash)
@@ -241,7 +244,7 @@ module SplitIoClient
           keyImpressions: current_impressions
         }
       end
-      
+
       test_impression_array
     end
 
