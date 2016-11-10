@@ -40,6 +40,7 @@ module SplitIoClient
                   impressions: parsed_impression.reject { |k, _| k == 'split_name' }
                 }
               end
+
               @adapter.delete_from_set(key, members)
             end
 

@@ -18,6 +18,7 @@ describe SplitIoClient do
     let(:segment_matcher_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), 'test_data/splits/engine/segment_matcher.json'))) }
     let(:segment_matcher2_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), 'test_data/splits/engine/segment_matcher2.json'))) }
     let(:whitelist_matcher_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), 'test_data/splits/engine/whitelist_matcher.json'))) }
+    let(:impressions_test_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), 'test_data/splits/engine/impressions_test.json'))) }
 
     before :each do
       redis = Redis.new
@@ -105,7 +106,7 @@ describe SplitIoClient do
         key = { bucketing_key: 'bucketing_key', matching_key: 'fake_user_id_1' }
 
         expect(subject.get_treatment(key, 'new_feature')).to eq SplitIoClient::Treatments::ON
-        impressions = subject.instance_variable_get(:@adapter).impressions_repository.clear
+        impressions = subject.instance_variable_get(:@impressions_repository).clear
 
         expect(impressions.first[:impressions]['key_name']).to eq('fake_user_id_1')
       end
@@ -242,6 +243,35 @@ describe SplitIoClient do
         (0..(treatments.length - 1)).each do |i|
           expect(range.cover?(treatments[i])).to be true
         end
+      end
+    end
+
+    describe 'impressions' do
+      let(:adapter) { SplitIoClient::SplitAdapter.new(nil, SplitIoClient::SplitConfig.new(mode: :nil), nil, nil, nil, nil, nil) }
+
+      before do
+        stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+          .to_return(status: 200, body: impressions_test_json)
+      end
+
+      it 'returns correct impressions for get_treatments' do
+        subject.get_treatments('21', ["sample_feature", "beta_feature"])
+        subject.get_treatments('22', ["sample_feature", "beta_feature"])
+        subject.get_treatments('23', ["sample_feature", "beta_feature"])
+        subject.get_treatments('24', ["sample_feature", "beta_feature"])
+        subject.get_treatments('25', ["sample_feature", "beta_feature"])
+        subject.get_treatments('26', ["sample_feature", "beta_feature"])
+        # Need this because we're storing impressions in the Set
+        # Without sleep we may have identical impressions (including time)
+        # In that case only one impression with key "26" would be stored
+        sleep 0.01
+        subject.get_treatments('26', ["sample_feature", "beta_feature"])
+
+        impressions = subject.instance_variable_get(:@impressions_repository).clear
+
+        expect(impressions.size).to eq(14)
+        expect(adapter.impressions_array(impressions).find { |i| i[:testName] == 'sample_feature' }[:keyImpressions].size).to eq(6)
+        expect(adapter.impressions_array(impressions).find { |i| i[:testName] == 'beta_feature' }[:keyImpressions].size).to eq(6)
       end
     end
   end
