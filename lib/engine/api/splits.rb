@@ -10,7 +10,7 @@ module SplitIoClient
       def since(since)
         start = Time.now
         prefix = 'splitChangeFetcher'
-        splits = call_api('/splitChanges', @config, @api_key, {:since => since})
+        splits = get_api("#{@config.base_uri}/splitChanges", @config, @api_key, since: since)
 
         if splits.status / 100 == 2
           result = splits_with_segment_names(splits.body)

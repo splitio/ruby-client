@@ -1,18 +1,31 @@
 module SplitIoClient
   module Api
     class Client
-      def call_api(path, config, api_key, params = {})
-        api_client.get(config.base_uri + path, params) do |req|
-          req.headers['Authorization'] = 'Bearer ' + api_key
-          req.headers['SplitSDKVersion'] = SplitIoClient::SplitFactory.sdk_version
-          req.headers['SplitSDKMachineName'] = config.machine_name
-          req.headers['SplitSDKMachineIP'] = config.machine_ip
-          req.headers['Accept-Encoding'] = 'gzip'
+      def get_api(url, config, api_key, params = {})
+        api_client.get(url, params) do |req|
+          req.headers = common_headers(api_key, config).merge('Accept-Encoding' => 'gzip')
 
-          req.options.open_timeout = config.connection_timeout
           req.options.timeout = config.read_timeout
+          req.options.open_timeout = config.connection_timeout
 
-          config.logger.debug("GET #{config.base_uri + path}") if config.debug_enabled
+          config.logger.debug("GET #{url}") if config.debug_enabled
+        end
+      end
+
+      def post_api(url, config, api_key, data, params = {})
+        api_client.post(url) do |req|
+          req.headers = common_headers(api_key, config).merge('Content-Type' => 'application/json')
+
+          req.body = data.to_json
+
+          req.options.timeout = config.read_timeout
+          req.options.open_timeout = config.connection_timeout
+
+          if config.transport_debug_enabled
+            config.logger.debug("POST #{url} #{req.body}")
+          elsif config.debug_enabled
+            config.logger.debug("POST #{url}")
+          end
         end
       end
 
@@ -23,6 +36,15 @@ module SplitIoClient
           builder.use FaradayMiddleware::Gzip
           builder.adapter :net_http_persistent
         end
+      end
+
+      def common_headers(api_key, config)
+        {
+          'Authorization' => "Bearer #{api_key}",
+          'SplitSDKVersion' => SplitIoClient::SplitFactory.sdk_version,
+          'SplitSDKMachineName' => config.machine_name,
+          'SplitSDKMachineIP' => config.machine_ip
+        }
       end
     end
   end
