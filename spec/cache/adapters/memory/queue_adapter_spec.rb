@@ -12,9 +12,13 @@ describe SplitIoClient::Cache::Adapters::MemoryAdapters::QueueAdapter do
     expect { adapter.add_to_queue('foo') }.to raise_error(ThreadError)
   end
 
-  it 'sets correct size_counter after clear' do
+  it 'sets correct current_size after clear' do
     adapter.clear
 
-    expect(adapter.instance_variable_get(:@size_counter).value).to eq(0)
+    expect(adapter.instance_variable_get(:@current_size).value).to eq(0)
+  end
+
+  it 'adds impressions' do
+    expect(adapter.instance_variable_get(:@current_size).value).to eq(queue_size)
   end
 end

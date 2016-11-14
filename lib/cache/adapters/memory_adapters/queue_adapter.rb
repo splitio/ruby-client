@@ -4,19 +4,19 @@ module SplitIoClient
       module MemoryAdapters
         # Memory adapter implementation, which stores everything inside queue
         class QueueAdapter
-          def initialize(size)
-            @size = size
+          def initialize(max_size)
+            @max_size = max_size
             @queue = Queue.new
-            @size_counter = Concurrent::AtomicFixnum.new(0)
+            @current_size = Concurrent::AtomicFixnum.new(0)
           end
 
           # Adds data to queue in non-blocking mode
           def add_to_queue(data)
-            fail ThreadError if @size_counter.value >= @size
+            fail ThreadError if @current_size.value >= @max_size
 
             @queue.push(data)
 
-            @size_counter.increment
+            @current_size.increment
           end
 
           # Get all items from the queue
@@ -26,11 +26,12 @@ module SplitIoClient
             loop do
               items << @queue.pop(true)
 
-              @size_counter.decrement
             end
 
           rescue ThreadError
             # Last queue item reached
+            @current_size.value = 0
+
             items
           end
         end
