@@ -148,7 +148,12 @@ You can also use Sentinel like this:
 SENTINELS = [{host: '127.0.0.1', port: 26380},
              {host: '127.0.0.1', port: 26381}]
 
-redis_url = Redis.new(url: 'redis://mymaster', sentinels: SENTINELS, role: :master)
+redis_connection = { url: 'redis://mymaster', sentinels: SENTINELS, role: :master }
+
+options = {
+  # Other options here
+  redis_url: redis_connection
+}
 ```
 
 Example using Redis
