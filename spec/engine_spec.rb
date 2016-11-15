@@ -277,11 +277,23 @@ describe SplitIoClient do
         let(:config) do
           { logger: Logger.new('/dev/null'), cache_adapter: cache_adapter, impressions_queue_size: -1 }
         end
+        let(:impressions) { subject.instance_variable_get(:@impressions_repository).clear }
 
-        it 'works when impressions are disabled' do
+        it 'works when impressions are disabled for get_treatments' do
           expect(subject.get_treatments('21', ["sample_feature", "beta_feature"])).to eq(
-            { sample_feature: 'off', beta_feature: 'off' }
+            {
+              sample_feature: SplitIoClient::Treatments::OFF,
+              beta_feature: SplitIoClient::Treatments::OFF
+            }
           )
+
+          expect(impressions).to eq([])
+        end
+
+        it 'works when impressions are disabled for get_treatments' do
+          expect(subject.get_treatment('21', "sample_feature")).to eq(SplitIoClient::Treatments::OFF)
+
+          expect(impressions).to eq([])
         end
       end
     end
