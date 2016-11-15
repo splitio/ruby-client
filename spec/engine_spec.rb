@@ -290,7 +290,7 @@ describe SplitIoClient do
           expect(impressions).to eq([])
         end
 
-        it 'works when impressions are disabled for get_treatments' do
+        it 'works when impressions are disabled for get_treatment' do
           expect(subject.get_treatment('21', "sample_feature")).to eq(SplitIoClient::Treatments::OFF)
 
           expect(impressions).to eq([])
