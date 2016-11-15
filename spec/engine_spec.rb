@@ -272,6 +272,18 @@ describe SplitIoClient do
         expect(formatted_impressions.find { |i| i[:testName] == 'sample_feature' }[:keyImpressions].size).to eq(6)
         expect(formatted_impressions.find { |i| i[:testName] == 'beta_feature' }[:keyImpressions].size).to eq(6)
       end
+
+      context 'when impressions are disabled' do
+        let(:config) do
+          { logger: Logger.new('/dev/null'), cache_adapter: cache_adapter, impressions_queue_size: -1 }
+        end
+
+        it 'works when impressions are disabled' do
+          expect(subject.get_treatments('21', ["sample_feature", "beta_feature"])).to eq(
+            { sample_feature: 'off', beta_feature: 'off' }
+          )
+        end
+      end
     end
   end
 
