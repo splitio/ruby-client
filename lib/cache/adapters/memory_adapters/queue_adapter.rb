@@ -26,12 +26,10 @@ module SplitIoClient
             loop do
               items << @queue.pop(true)
 
+              @current_size.decrement
             end
 
           rescue ThreadError
-            # Last queue item reached
-            @current_size.value = 0
-
             items
           end
         end
