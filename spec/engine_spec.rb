@@ -247,7 +247,8 @@ describe SplitIoClient do
     end
 
     describe 'impressions' do
-      let(:adapter) { SplitIoClient::SplitAdapter.new(nil, SplitIoClient::SplitConfig.new(mode: :nil), nil, nil, nil, nil, nil) }
+      let(:impressions) { subject.instance_variable_get(:@impressions_repository).clear }
+      let(:formatted_impressions) { SplitIoClient::Cache::Senders::ImpressionsSender.new(nil, config, nil).send(:formatted_impressions, impressions) }
 
       before do
         stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
@@ -267,11 +268,33 @@ describe SplitIoClient do
         sleep 0.01
         subject.get_treatments('26', ["sample_feature", "beta_feature"])
 
-        impressions = subject.instance_variable_get(:@impressions_repository).clear
-
         expect(impressions.size).to eq(14)
-        expect(adapter.impressions_array(impressions).find { |i| i[:testName] == 'sample_feature' }[:keyImpressions].size).to eq(6)
-        expect(adapter.impressions_array(impressions).find { |i| i[:testName] == 'beta_feature' }[:keyImpressions].size).to eq(6)
+        expect(formatted_impressions.find { |i| i[:testName] == 'sample_feature' }[:keyImpressions].size).to eq(6)
+        expect(formatted_impressions.find { |i| i[:testName] == 'beta_feature' }[:keyImpressions].size).to eq(6)
+      end
+
+      context 'when impressions are disabled' do
+        let(:config) do
+          { logger: Logger.new('/dev/null'), cache_adapter: cache_adapter, impressions_queue_size: -1 }
+        end
+        let(:impressions) { subject.instance_variable_get(:@impressions_repository).clear }
+
+        it 'works when impressions are disabled for get_treatments' do
+          expect(subject.get_treatments('21', ["sample_feature", "beta_feature"])).to eq(
+            {
+              sample_feature: SplitIoClient::Treatments::OFF,
+              beta_feature: SplitIoClient::Treatments::OFF
+            }
+          )
+
+          expect(impressions).to eq([])
+        end
+
+        it 'works when impressions are disabled for get_treatment' do
+          expect(subject.get_treatment('21', "sample_feature")).to eq(SplitIoClient::Treatments::OFF)
+
+          expect(impressions).to eq([])
+        end
       end
     end
   end

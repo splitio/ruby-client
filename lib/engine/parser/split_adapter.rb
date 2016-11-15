@@ -75,18 +75,19 @@ module SplitIoClient
       end
     end
 
-    #
-    # creates a safe thread that will be executing api calls
-    # for fetching splits and segments give the execution time
-    # provided within the configuration
-    #
-    # @return [void]
+    # Starts thread which loops constantly and stores splits in the splits_repository of choice
     def split_store
       SplitIoClient::Cache::Stores::SplitStore.new(@splits_repository, @config, @api_key, @metrics, @sdk_blocker).call
     end
 
+    # Starts thread which loops constantly and stores segments in the segments_repository of choice
     def segment_store
       SplitIoClient::Cache::Stores::SegmentStore.new(@segments_repository, @config, @api_key, @metrics, @sdk_blocker).call
+    end
+
+    # Starts thread which loops constantly and sends impressions to the Split API
+    def impressions_sender
+      SplitIoClient::Cache::Senders::ImpressionsSender.new(@impressions_repository, @config, @api_key).call
     end
 
     #
@@ -150,102 +151,6 @@ module SplitIoClient
           end
         end
       end
-    end
-
-    def impressions_sender
-      # Disable impressions if @config.impressions_queue_size == -1
-      if @config.impressions_queue_size < 0
-        @config.logger.info("Disabling impressions service by config.")
-        return
-      end
-
-      @config.logger.info("Starting impressions service...")
-
-      # TODO: Send impressions in main thread for test ENV
-      return if ENV['SPLITCLIENT_ENV'] == 'test'
-
-      Thread.new do
-        loop do
-          begin
-            post_impressions
-
-            random_interval = randomize_interval @config.impressions_refresh_rate
-            sleep(random_interval)
-          rescue StandardError => error
-            @config.log_found_exception(__method__.to_s, error)
-          end
-        end
-      end
-
-      @config.logger.info("Started impressions service")
-    end
-
-    #
-    # creates the appropriate json data for the cached impressions values
-    # and then sends them to the appropriate api endpoint with a valid body format
-    #
-    # @return [void]
-    def post_impressions
-      impressions = impressions_array
-
-      if impressions.empty?
-        @config.logger.debug('No impressions to report') if @config.debug_enabled
-        return
-      end
-
-      res = post_api('/testImpressions/bulk', impressions)
-      if res.status / 100 != 2
-        @config.logger.error("Unexpected status code while posting impressions: #{res.status}")
-      else
-        @config.logger.debug("Impressions reported: #{calculate_tot_impressions(impressions)}") if @config.debug_enabled
-      end
-    end
-
-    def calculate_tot_impressions(impressions = nil)
-      tot = 0
-      return tot if impressions.nil?
-      impressions.each do |test_impression|
-        tot += test_impression[:keyImpressions].length
-      end
-      tot
-    end
-
-    # REFACTOR
-    def impressions_array(impressions = nil)
-      popped_impressions = impressions ? impressions : @impressions_repository.clear
-      test_impression_array, filtered_impressions, keys_treatments_seen = [], [], []
-
-      return [] if popped_impressions.empty?
-
-      popped_impressions.each do |item|
-        item_hash = "#{item[:feature]}:#{item[:impressions]['key_name']}:#{item[:impressions]['treatment']}"
-
-        next if keys_treatments_seen.include?(item_hash)
-
-        keys_treatments_seen << item_hash
-        filtered_impressions << item
-      end
-
-      return [] if filtered_impressions.empty?
-
-      features = filtered_impressions.map { |i| i[:feature] }.uniq
-      test_impression_array = features.each_with_object([]) do |feature, memo|
-        current_impressions = filtered_impressions.select { |i| i[:feature] == feature }
-        current_impressions.map! do |i|
-          {
-            keyName: i[:impressions]['key_name'],
-            treatment: i[:impressions]['treatment'],
-            time: i[:impressions]['time']
-          }
-        end
-
-        memo << {
-          testName: feature,
-          keyImpressions: current_impressions
-        }
-      end
-
-      test_impression_array
     end
 
     #
