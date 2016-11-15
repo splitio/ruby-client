@@ -165,7 +165,9 @@ module SplitIoClient
           memo.merge!(name => get_treatment(matching_key, name, attributes, data, false))
         end
 
-        @impressions_repository.add_bulk(matching_key, treatments, (Time.now.to_f * 1000.0).to_i)
+        if @config.impressions_queue_size > 0
+          @impressions_repository.add_bulk(matching_key, treatments, (Time.now.to_f * 1000.0).to_i)
+        end
 
         treatments
       end
