@@ -1,7 +1,7 @@
 module SplitIoClient
   class LocalhostSplitFactoryBuilder < NoMethodError
-    def self.build(directory)
-      splits_file = File.join(directory, ".split")
+    def self.build(directory = nil)
+      splits_file = File.join(directory || Dir.home, ".split")
       LocalhostSplitFactory.new(splits_file)
     end
 
