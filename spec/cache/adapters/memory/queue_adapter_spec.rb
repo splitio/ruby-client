@@ -18,7 +18,7 @@ describe SplitIoClient::Cache::Adapters::MemoryAdapters::QueueAdapter do
     expect(adapter.instance_variable_get(:@current_size).value).to eq(0)
   end
 
-  it 'adds impressions' do
+  it 'returns correct queue size' do
     expect(adapter.instance_variable_get(:@current_size).value).to eq(queue_size)
   end
 end

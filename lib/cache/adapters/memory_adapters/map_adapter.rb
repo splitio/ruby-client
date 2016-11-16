@@ -31,7 +31,7 @@ module SplitIoClient
             if fields.is_a? Array
               fields.each { |field| @map[key].delete(field) }
             else
-              @map[key].delete(field)
+              @map[key].delete(fields)
             end
           end
 
