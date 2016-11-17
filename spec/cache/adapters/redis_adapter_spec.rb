@@ -1,23 +1,18 @@
 require 'spec_helper'
 
-describe SplitIoClient::Cache::Adapters::MemoryAdapters::MapAdapter do
-  let(:adapter) { described_class.new }
+describe SplitIoClient::Cache::Adapters::RedisAdapter do
+  before :each do
+    Redis.new.flushall
+  end
+
+  let(:adapter) { described_class.new('redis://127.0.0.1:6379/0') }
 
   context 'map' do
     before do
-      adapter.initialize_map('foo')
       adapter.add_to_map('foo', 'bar', 'baz')
     end
 
-    it 'initializes map' do
-      expect(adapter.instance_variable_get(:@map)['foo']).to be_a(Concurrent::Map)
-    end
-
-    it 'adds to map' do
-      expect(adapter.instance_variable_get(:@map)['foo']['bar']).to eq('baz')
-    end
-
-    it 'finds in map' do
+    it 'adds and finds in map' do
       expect(adapter.find_in_map('foo', 'bar')).to eq('baz')
     end
 
@@ -34,7 +29,6 @@ describe SplitIoClient::Cache::Adapters::MemoryAdapters::MapAdapter do
       expect(adapter.find_in_map('foo', 'bar')).to eq(nil)
       expect(adapter.find_in_map('foo', 'baz')).to eq(nil)
     end
-
     it 'checks if key is in map' do
       expect(adapter.in_map?('foo', 'bar')).to eq(true)
       expect(adapter.in_map?('foo', 'baz')).to eq(false)
@@ -45,7 +39,7 @@ describe SplitIoClient::Cache::Adapters::MemoryAdapters::MapAdapter do
     end
 
     it 'returns map' do
-      expect(adapter.get_map('foo')).to be_a(Concurrent::Map)
+      expect(adapter.get_map('foo')).to eq('bar' => 'baz')
     end
   end
 
@@ -69,7 +63,7 @@ describe SplitIoClient::Cache::Adapters::MemoryAdapters::MapAdapter do
       adapter.set_string('foo3', 'bar')
       adapter.set_string('bar', 'bar')
 
-      expect(adapter.find_strings_by_prefix('foo')).to eq(%w(foo foo2 foo3))
+      expect(adapter.find_strings_by_prefix('foo')).to match_array(%w(foo foo2 foo3))
     end
 
     it 'returns multiple strings' do
@@ -108,14 +102,13 @@ describe SplitIoClient::Cache::Adapters::MemoryAdapters::MapAdapter do
     end
 
     it 'adds value to set' do
-      expect(adapter.instance_variable_get(:@map)['foo']['bar']).to eq(1)
+      expect(adapter.get_set('foo')).to eq(%w(bar))
     end
 
     it 'adds values to set' do
       adapter.add_to_set('bar', %w(foo bar))
 
-      expect(adapter.instance_variable_get(:@map)['bar']['foo']).to eq(1)
-      expect(adapter.instance_variable_get(:@map)['bar']['bar']).to eq(1)
+      expect(adapter.get_set('bar')).to match_array(%w(foo bar))
     end
 
     it 'gets all keys from set' do
@@ -135,7 +128,7 @@ describe SplitIoClient::Cache::Adapters::MemoryAdapters::MapAdapter do
     it 'deletes key' do
       adapter.delete('foo')
 
-      expect(adapter.instance_variable_get(:@map)['foo']).to eq(nil)
+      expect(adapter.get_set('foo')).to eq([])
     end
 
     it 'deletes keys' do
@@ -143,8 +136,8 @@ describe SplitIoClient::Cache::Adapters::MemoryAdapters::MapAdapter do
 
       adapter.delete(['foo', 'bar'])
 
-      expect(adapter.instance_variable_get(:@map)['foo']).to eq(nil)
-      expect(adapter.instance_variable_get(:@map)['bar']).to eq(nil)
+      expect(adapter.get_set('foo')).to eq([])
+      expect(adapter.get_set('bar')).to eq([])
     end
   end
 end

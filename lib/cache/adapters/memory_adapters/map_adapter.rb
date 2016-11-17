@@ -97,9 +97,11 @@ module SplitIoClient
           end
 
           def union_sets(set_keys)
-            set_keys.each_with_object([]) do |key, memo|
+            array = set_keys.each_with_object([]) do |key, memo|
               memo << get_set(key)
             end.flatten
+
+            Set.new(array)
           end
 
           # General
