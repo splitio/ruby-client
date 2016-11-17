@@ -74,7 +74,7 @@ module SplitIoClient
       end
 
       def get_treatments(key, split_names, attributes = nil)
-        split_names.each_with_object({}) do | (name), memo|
+        split_names.each_with_object({}) do |name, memo|
           puts "name #{name} memo #{memo}"
           memo.merge!(name => get_treatment(key, name, attributes))
         end
