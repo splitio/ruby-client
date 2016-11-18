@@ -140,15 +140,21 @@ module SplitIoClient
       return if ENV['SPLITCLIENT_ENV'] == 'test'
 
       Thread.new do
+
+        # pick one random interval and stick to it.
+        random_interval = randomize_interval @config.metrics_refresh_rate
+
         loop do
           begin
+
             post_metrics
 
-            random_interval = randomize_interval @config.metrics_refresh_rate
-            sleep(random_interval)
           rescue StandardError => error
             @config.log_found_exception(__method__.to_s, error)
           end
+
+          # Sleep either on success of failure.
+          sleep(random_interval)
         end
       end
     end
