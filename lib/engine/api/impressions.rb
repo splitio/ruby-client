@@ -13,7 +13,7 @@ module SplitIoClient
           return
         end
 
-        result = post_api("#{config.events_uri}/testImpressions/bulk", @config, @api_key, @impressions)
+        result = post_api("#{@config.events_uri}/testImpressions/bulk", @config, @api_key, @impressions)
 
         if result.status / 100 != 2
           @config.logger.error("Unexpected status code while posting impressions: #{result.status}")
