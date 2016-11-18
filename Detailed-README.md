@@ -325,6 +325,17 @@ To run the suite of unit tests a rake task is provided. It's executed with the f
 Also, simplecov is used for coverage reporting. After the execution of the rake task it will create the `/coverage` folder with coverage reports in pretty HTML format.
 Right now, the code coverage of the gem is at about 95%.
 
+## Release
+
+```bash
+gem build splitclient-rb.gemspec
+```
+
+This will generate a file gemspec with the right version, then:
+
+```bash
+gem push splitclient-rb-<VERSION>.gem
+```
 
 ## Contributing
 
