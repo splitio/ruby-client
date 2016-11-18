@@ -49,7 +49,7 @@ require 'splitclient-rb'
 
 Create a new split client instance with your API key:
 ```ruby
-factory  = SplitIoClient::SplitFactory.new('YOUR_API_KEY').client
+factory  = SplitIoClient::SplitFactoryBuilder.build('YOUR_API_KEY').client
 split_client = factory.client
 ```
 
@@ -58,12 +58,41 @@ For advance use cases you can also obtain a `manager` instance from the factory.
 manager = factory.manager
 ```
 
+#### Localhost mode
+
+You can run SDK in so called "localhost" mode. In this mode SDK won't hit Split API and return treatments based on ".split" file on your local machine. The format of this file is two columns separated by whitespace. The left column is the Split name, the right column is the treatment name. Here is a sample file:
+
+```
+# this is a comment
+
+# split_client.get_treatment('foo', 'reporting_v2') => 'on'
+
+reporting_v2 on
+double_writes_to_cassandra off
+new-navigation v3
+
+```
+
+To use SDK in the localhost mode you should pass `localhost` as an API key like this:
+
+```
+factory  = SplitIoClient::SplitFactoryBuilder.build('localhost')
+split_client = factory.client
+```
+
+By default SDK will look in your home directory (i.e. `~`) for a `.split` file, but you can specify a path where SDK should look for `.split` file (note: you must provide absolute path):
+
+```
+factory  = SplitIoClient::SplitFactoryBuilder.build('localhost', path: '/where/to-look-for/split/file').client
+split_client = factory.client
+```
+
 ### Ruby on Rails
 ---
 
 Create an initializer: `config/initializers/splitclient.rb` and then initialize the split client:
 ```ruby
-Rails.configuration.split_client = SplitIoClient::SplitFactory.new('YOUR_API_KEY').client
+Rails.configuration.split_client = SplitIoClient::SplitFactoryBuilder.build('YOUR_API_KEY').client
 ```
 In your controllers, access the client using:
 
@@ -91,7 +120,7 @@ The following values can be customized:
 *default value* = `5`
 
 **features_refresh_rate** : The SDK polls Split servers for changes to feature roll-out plans. This parameter controls this polling period in seconds
-
+split_client.get_treatment('user_id','feature_name', attr: 'val')
 *default value* = `30`
 
 **segments_refresh_rate** : The SDK polls Split servers for changes to segment definitions. This parameter controls this polling period in seconds
@@ -172,13 +201,14 @@ options = {
   redis_url: 'redis://127.0.0.1:6379/0'
 }
 begin
-  split_client = SplitIoClient::SplitFactory.new('YOUR_API_KEY', options).client
+  split_client = SplitIoClient::SplitFactoryBuilder.build('YOUR_API_KEY', options).client
 rescue SplitIoClient::SDKBlockerTimeoutExpiredException
   # Some arbitrary actions
 end
 ```
 
 #### IMPORTANT
+
 For now, SDK does not support both `producer` mode and `block_until_ready`. You must either run SDK in `standalone` mode, or do not use `block_until_ready` option.
 
 This begin-rescue-end block is optional, you might want to use it to catch timeout expired exception and apply some logic.
@@ -226,7 +256,7 @@ split_client.get_treatment('user_id' ,'feature_name', attr: 'val')
 Also you can use the split manager:
 
 ```ruby
-split_manager = SplitIoClient::SplitFactory.new('your_api_key', options).manager
+split_manager = SplitIoClient::SplitFactoryBuilder.build('your_api_key', options).manager
 ```
 
 With the manager you can get a list of your splits by doing:
