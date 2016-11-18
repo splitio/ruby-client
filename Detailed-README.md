@@ -76,11 +76,13 @@ new-navigation v3
 To use SDK in the localhost mode you should pass `localhost` as an API key like this:
 
 ```ruby
-factory  = SplitIoClient::SplitFactoryBuilder.build('localhost', path: '/where/to-look-for/.split').client
+factory  = SplitIoClient::SplitFactoryBuilder.build('localhost', path: '/where/to-look-for/<file_name>')
 split_client = factory.client
 ```
 
-You need to specify a path where SDK should look for the file (note: you must provide absolute path).
+By default SDK will look in your home directory (i.e. `~`) for a `.split` file, but you can specify a different 
+file name (full path) to look for the file (note: you must provide absolute path):
+
 
 ### Ruby on Rails
 ---
