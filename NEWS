@@ -1,6 +1,7 @@
 3.1.0
 
 Now supporting Redis as a cache adapter
+Factory is build now as SplitIoClient::SplitFactoryBuilder.build('<API_KEY>')
 
 3.0.2
 

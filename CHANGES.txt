@@ -4,6 +4,8 @@
 - add impressions_queue_size to prevent memory leak when Threads pauses due to 'smart' fork.
 - do not report latencies for get_treatment is array is all zeros
 - Fix deduplication problem when posting impressions
+- Change in how factory is construct.
+- Detach implementation for local factory and regular one.
 
 3.0.3
 
