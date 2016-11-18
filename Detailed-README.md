@@ -76,7 +76,7 @@ new-navigation v3
 To use SDK in the localhost mode you should pass `localhost` as an API key like this:
 
 ```
-factory  = SplitIoClient::SplitFactoryBuilder.build('localhost').client
+factory  = SplitIoClient::SplitFactoryBuilder.build('localhost')
 split_client = factory.client
 ```
 
