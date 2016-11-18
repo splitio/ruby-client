@@ -1,3 +1,7 @@
+3.1.1
+- Fix variable not found when posting impression
+- Fix infinite loop when posting impression if there is a network glitch
+
 3.1.0
 - Add RedisAdapter
 - adds manager.split_names()
