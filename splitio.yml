@@ -1,5 +1,5 @@
 ---
-:api_key: 42fsieif0v7d9jqm3qrqn59bdn 
+:api_key: api_key 
 :mode: :producer
 :cache_adapter: :redis
 :debug_enabled: true
