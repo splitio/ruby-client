@@ -3,7 +3,7 @@ module SplitIoClient
     def self.build(api_key, config = {})
       case api_key
       when 'localhost'
-        splits_file = File.join(config[:path] || Dir.home, '.split')
+        splits_file = config[:path]
 
         LocalhostSplitFactory.new(splits_file)
       else
