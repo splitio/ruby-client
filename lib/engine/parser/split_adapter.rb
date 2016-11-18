@@ -156,7 +156,7 @@ module SplitIoClient
           sleep(randomize_interval(@config.metrics_refresh_rate))
         end
       end
-      @config.logger.info('Started metrics service')
+
     end
 
     #

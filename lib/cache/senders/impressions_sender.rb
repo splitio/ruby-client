@@ -28,8 +28,6 @@ module SplitIoClient
               end
             end
           end
-
-          @config.logger.info('Started impressions service') unless ENV['SPLITCLIENT_ENV'] == 'test'
         end
 
         private
