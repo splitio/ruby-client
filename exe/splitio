@@ -17,6 +17,12 @@ opt_parser = OptionParser.new do |opts|
     options[:config_path] = c
   end
 
+  opts.on("--base-uri=BASE_URI", "Set the base uri for Split SDK")
+  opts.on("--events-uri=EVENTS_URI", "Set the events uri for Split SDK")
+  opts.on("--read-timeout=READ_TIMEOUT", "Read timeout in seconds")
+  opts.on("--connection-timeout=READ_TIMEOUT", "Read timeout in seconds")
+  opts.on("--redis-url=REDIS_URL", "Set base uri for Split SDK")
+
   opts.on_tail("-h", "--help", "Prints this help") do
     puts opts
     exit
