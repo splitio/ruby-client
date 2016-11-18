@@ -193,7 +193,6 @@ options = {
   metrics_refresh_rate: 360,
   impressions_refresh_rate: 360,
   logger: Logger.new('logfile.log'),
-  block_until_ready: 5,
   cache_adapter: :redis,
   mode: :standalone,
   redis_url: 'redis://127.0.0.1:6379/0'
@@ -323,7 +322,6 @@ SDK can be ran in `producer` mode both in the scope of the application (e.g. as 
 :segments_refresh_rate: 120
 :metrics_refresh_rate: 360
 :impressions_refresh_rate: 360
-:block_until_ready: 5
 :cache_adapter: :redis
 :mode: :producer
 :redis_url: 'redis://127.0.0.1:6379/0'
@@ -360,6 +358,17 @@ To run the suite of unit tests a rake task is provided. It's executed with the f
 Also, simplecov is used for coverage reporting. After the execution of the rake task it will create the `/coverage` folder with coverage reports in pretty HTML format.
 Right now, the code coverage of the gem is at about 95%.
 
+## Release
+
+```bash
+gem build splitclient-rb.gemspec
+```
+
+This will generate a file gemspec with the right version, then:
+
+```bash
+gem push splitclient-rb-<VERSION>.gem
+```
 
 ## Contributing
 
