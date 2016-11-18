@@ -1,7 +1,6 @@
 require 'splitclient-rb/version'
 require 'splitclient-rb/split_factory'
 require 'splitclient-rb/split_factory_builder'
-require 'splitclient-rb/localhost_split_factory_builder'
 require 'splitclient-rb/localhost_split_factory'
 require 'splitclient-rb/split_config'
 require 'exceptions/sdk_blocker_timeout_expired_exception'
