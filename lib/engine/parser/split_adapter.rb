@@ -141,8 +141,7 @@ module SplitIoClient
 
       Thread.new do
 
-        # pick one random interval and stick to it.
-        random_interval = randomize_interval @config.metrics_refresh_rate
+        @config.logger.info('Starting metrics service')
 
         loop do
           begin
@@ -154,9 +153,10 @@ module SplitIoClient
           end
 
           # Sleep either on success of failure.
-          sleep(random_interval)
+          sleep(randomize_interval(@config.metrics_refresh_rate))
         end
       end
+      @config.logger.info('Started metrics service')
     end
 
     #
