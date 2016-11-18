@@ -19,7 +19,7 @@ module SplitIoClient
             post_impressions
           else
             Thread.new do
-              @config.logger.info('Starting impressions service') unless ENV['SPLITCLIENT_ENV'] == 'test'
+              @config.logger.info('Starting impressions service')
 
               loop do
                 post_impressions
