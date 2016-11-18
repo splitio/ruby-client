@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe SplitIoClient do
-  subject { SplitIoClient::LocalhostSplitFactoryBuilder.build.manager }
+  subject { SplitIoClient::SplitFactoryBuilder.build('localhost').manager }
 
   let(:split_file) { ["local_feature local_treatment", "local_feature2 local_treatment2"] }
 

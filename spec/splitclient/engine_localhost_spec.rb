@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe SplitIoClient do
-  subject { SplitIoClient::LocalhostSplitFactoryBuilder.build.client }
+  subject { SplitIoClient::SplitFactoryBuilder.build('localhost').client }
 
   let(:split_file) { ["local_feature local_treatment", "local_feature2 local_treatment2", "local_feature local_treatment_rewritten"] }
   let(:split_string) { "local_feature local_treatment\nlocal_feature2 local_treatment2\local_feature local_treatment_rewritten" }
