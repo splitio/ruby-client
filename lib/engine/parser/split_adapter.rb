@@ -153,7 +153,7 @@ module SplitIoClient
           end
 
           # Sleep either on success of failure.
-          sleep(randomize_interval(@config.metrics_refresh_rate))
+          sleep(::Utilities.randomize_interval(@config.metrics_refresh_rate))
         end
       end
 
@@ -195,14 +195,6 @@ module SplitIoClient
         end
       end
       @metrics_repository.clear_counts
-    end
-
-    private
-
-    def randomize_interval(interval)
-      @random_generator ||=  Random.new
-      random_factor = @random_generator.rand(50..100)/100.0
-      interval * random_factor
     end
   end
 end
