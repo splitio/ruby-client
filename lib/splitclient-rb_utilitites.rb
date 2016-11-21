@@ -31,4 +31,9 @@ module Utilities
       return :non_valid_date_info
     end
   end
+
+  def randomize_interval(interval)
+    random_factor = Random.new.rand(50..100) / 100.0
+    interval * random_factor
+  end
 end

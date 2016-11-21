@@ -24,7 +24,7 @@ module SplitIoClient
               loop do
                 post_impressions
 
-                sleep(randomize_interval(@config.impressions_refresh_rate))
+                sleep(::Utilities.randomize_interval(@config.impressions_refresh_rate))
               end
             end
           end
@@ -44,12 +44,6 @@ module SplitIoClient
 
         def impressions_client
           SplitIoClient::Api::Impressions.new(@api_key, @config, formatted_impressions)
-        end
-
-        def randomize_interval(interval)
-          @random_generator ||=  Random.new
-          random_factor = @random_generator.rand(50..100)/100.0
-          interval * random_factor
         end
       end
     end
