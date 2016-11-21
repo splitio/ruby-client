@@ -139,8 +139,17 @@ module SplitIoClient
       # TODO: Send metrics in main thread for test ENV
       return if ENV['SPLITCLIENT_ENV'] == 'test'
 
-      Thread.new do
+      metrics_thread
 
+      if defined?(PhusionPassenger)
+        PhusionPassenger.on_event(:starting_worker_process) do |forked|
+          metrics_thread if forked
+        end
+      end
+    end
+
+    def metrics_thread
+      Thread.new do
         @config.logger.info('Starting metrics service')
 
         loop do
@@ -156,7 +165,6 @@ module SplitIoClient
           sleep(::Utilities.randomize_interval(@config.metrics_refresh_rate))
         end
       end
-
     end
 
     #
