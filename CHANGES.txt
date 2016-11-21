@@ -1,3 +1,6 @@
+3.1.2
+- Fix issue with complex key where get_treatment and get_treatments return different values.
+
 3.1.1
 - Fix variable not found when posting impression
 - Fix infinite loop when posting impression if there is a network glitch
