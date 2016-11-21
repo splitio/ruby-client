@@ -327,6 +327,7 @@ SDK can be ran in `producer` mode both in the scope of the application (e.g. as 
 :redis_url: 'redis://127.0.0.1:6379/0'
 ```
 
+
 - Install binstubs
 ```ruby
 bundle binstubs splitclient-rb
@@ -337,7 +338,15 @@ bundle binstubs splitclient-rb
 bundle exec bin/splitio -c ~/path/to/config/file.yml
 ```
 
-That's it!
+Also, you can pass options directly to the cli command, like this:
+```
+bundle exec bin/splitio -c ~/path/to/config/file.yml --debug
+```
+
+Note: options passed through cli have higher priority than those specified in the configuration file. To see the full list of supported options you can run:
+```
+bundle exec bin/splitio -h
+```
 
 ## Development
 
