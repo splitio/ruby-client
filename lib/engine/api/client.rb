@@ -43,8 +43,17 @@ module SplitIoClient
           'Authorization' => "Bearer #{api_key}",
           'SplitSDKVersion' => SplitIoClient::SplitFactory.sdk_version,
           'SplitSDKMachineName' => config.machine_name,
-          'SplitSDKMachineIP' => config.machine_ip
+          'SplitSDKMachineIP' => config.machine_ip,
+          'Referer' => referer
         }
+      end
+
+      def referer
+        result = SplitIoClient::SplitFactory.sdk_version
+
+        result = "#{result}::#{SplitIoClient::SplitConfig.get_hostname}" unless SplitIoClient::SplitConfig.get_hostname == 'localhost'
+
+        result
       end
     end
   end
