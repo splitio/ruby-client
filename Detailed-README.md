@@ -76,13 +76,18 @@ new-navigation v3
 To use SDK in the localhost mode you should pass `localhost` as an API key like this:
 
 ```ruby
-factory  = SplitIoClient::SplitFactoryBuilder.build('localhost', path: '/where/to-look-for/<file_name>')
+factory = SplitIoClient::SplitFactoryBuilder.build('localhost', path: '/where/to-look-for/<file_name>')
 split_client = factory.client
 ```
 
-By default SDK will look in your home directory (i.e. `~`) for a `.split` file, but you can specify a different 
+By default SDK will look in your home directory (i.e. `~`) for a `.split` file, but you can specify a different
 file name (full path) to look for the file (note: you must provide absolute path):
 
+When in localhost mode you can make use of the SDK ability to automatically refresh splits from file, to do that just specify reload rate in seconds like this:
+
+```ruby
+factory = SplitIoClient::SplitFactoryBuilder.build('localhost', path: '/where/to-look-for/<file_name>', reload_rate: 3)
+```
 
 ### Ruby on Rails
 ---
