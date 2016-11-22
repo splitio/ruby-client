@@ -90,6 +90,12 @@ module SplitIoClient
       SplitIoClient::Cache::Senders::ImpressionsSender.new(@impressions_repository, @config, @api_key).call
     end
 
+    # Starts thread which loops constantly and sends impressions to the Split API
+    def metrics_sender
+      SplitIoClient::Cache::Senders::MetricsSender.new(@metrics_repository, @config, @api_key).call
+    end
+
+
     #
     # helper method to execute a post request to the provided endpoint
     #
@@ -127,74 +133,6 @@ module SplitIoClient
     # @return parsed_segments [object] parsed segments for this adapter
     def parsed_segments
       @parsed_segments
-    end
-
-    #
-    # creates two safe threads that will be executing api calls
-    # for posting impressions and metrics given the execution time
-    # provided within the configuration
-    #
-
-    def metrics_sender
-      # TODO: Send metrics in main thread for test ENV
-      return if ENV['SPLITCLIENT_ENV'] == 'test'
-
-      Thread.new do
-
-        @config.logger.info('Starting metrics service')
-
-        loop do
-          begin
-
-            post_metrics
-
-          rescue StandardError => error
-            @config.log_found_exception(__method__.to_s, error)
-          end
-
-          # Sleep either on success of failure.
-          sleep(::Utilities.randomize_interval(@config.metrics_refresh_rate))
-        end
-      end
-
-    end
-
-    #
-    # creates the appropriate json data for the cached metrics values
-    # include latencies, counts and gauges
-    # and then sends them to the appropriate api endpoint with a valida body format
-    #
-    # @return [void]
-    def post_metrics
-      if @metrics_repository.latencies.empty?
-        @config.logger.debug('No latencies to report.') if @config.debug_enabled
-      else
-        @metrics_repository.latencies.each do |name, latencies|
-          metrics_time = { name: name, latencies: latencies }
-          res = post_api('/metrics/time', metrics_time)
-          if res.status / 100 != 2
-            @config.logger.error("Unexpected status code while posting time metrics: #{res.status}")
-          else
-            @config.logger.debug("Metric time reported: #{metrics_time.size}") if @config.debug_enabled
-          end
-        end
-      end
-      @metrics_repository.clear_latencies
-
-      if @metrics_repository.counts.empty?
-        @config.logger.debug('No counts to report.') if @config.debug_enabled
-      else
-        @metrics_repository.counts.each do |name, count|
-          metrics_count = { name: name, delta: count }
-          res = post_api('/metrics/counter', metrics_count)
-          if res.status / 100 != 2
-            @config.logger.error("Unexpected status code while posting count metrics: #{res.status}")
-          else
-            @config.logger.debug("Metric counts reported: #{metrics_count.size}") if @config.debug_enabled
-          end
-        end
-      end
-      @metrics_repository.clear_counts
     end
   end
 end
