@@ -9,17 +9,17 @@ module SplitIoClient
         end
 
         def call
-          if ENV['SPLITCLIENT_ENV'] == 'test'
-            post_metrics
-          else
-            Thread.new do
-              @config.logger.info('Starting metrics service')
+          return if ENV['SPLITCLIENT_ENV'] == 'test'
 
-              loop do
-                post_metrics
+          post_metrics
+          
+          Thread.new do
+            @config.logger.info('Starting metrics service')
 
-                sleep(::Utilities.randomize_interval(@config.metrics_refresh_rate))
-              end
+            loop do
+              post_metrics
+
+              sleep(::Utilities.randomize_interval(@config.metrics_refresh_rate))
             end
           end
         end
