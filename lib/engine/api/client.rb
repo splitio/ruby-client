@@ -1,3 +1,7 @@
+require 'faraday/http_cache'
+require 'bundler/vendor/net/http/persistent' unless defined?(Net::HTTP)
+require 'faraday_middleware'
+
 module SplitIoClient
   module Api
     class Client

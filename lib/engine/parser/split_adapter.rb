@@ -1,57 +1,36 @@
 require 'json'
 require 'thread'
-require 'faraday/http_cache'
-require 'bundler/vendor/net/http/persistent' unless defined?(Net::HTTP)
-require 'faraday_middleware'
-
 
 module SplitIoClient
-
   #
   # acts as an api adapater to connect to split endpoints
   # uses a configuration object that can be modified when creating the client instance
   # also, uses safe threads to execute fetches and post give the time execution values from the config
   #
   class SplitAdapter < NoMethodError
-    #
-    # handler for metrics
-    attr_reader :metrics
-
-    #
-    # handler for parsed splits
-    attr_reader :parsed_splits
-
-    #
-    # handeler for parsed segments
-    attr_reader :parsed_segments
-
-    attr_reader :impressions_producer
-
-    attr_reader :splits_repository, :segments_repository, :impressions_repository
+    attr_reader :splits_repository, :segments_repository, :impressions_repository, :metrics
 
     #
     # Creates a new split api adapter instance that consumes split api endpoints
     #
     # @param api_key [String] the API key for your split account
+    # @param config [SplitConfig] SplitConfig instance
+    # @param splits_repository [SplitsRepository] SplitsRepository instance to store splits in
+    # @param segments_repository [SegmentsRepository] SegmentsRepository instance to store segments in
+    # @param impressions_repository [ImpressionsRepository] ImpressionsRepository instance to store impressions in
+    # @param metrics_repository [MetricsRepository] SplitsRepository instance to store metrics in
+    # @param sdk_blocker [SDKBlocker] SDKBlocker instance which blocks splits_repository/segments_repository
     #
     # @return [SplitIoClient] split.io client instance
     def initialize(api_key, config, splits_repository, segments_repository, impressions_repository, metrics_repository, sdk_blocker)
       @api_key = api_key
       @config = config
-
       @splits_repository = splits_repository
       @segments_repository = segments_repository
       @impressions_repository = impressions_repository
       @metrics_repository = metrics_repository
-
       @metrics = Metrics.new(100, @config, @metrics_repository)
-
       @sdk_blocker = sdk_blocker
-
-      @api_client = Faraday.new do |builder|
-        builder.use FaradayMiddleware::Gzip
-        builder.adapter :net_http_persistent
-      end
 
       start_based_on_mode(@config.mode)
     end
@@ -90,49 +69,9 @@ module SplitIoClient
       SplitIoClient::Cache::Senders::ImpressionsSender.new(@impressions_repository, @config, @api_key).call
     end
 
-    # Starts thread which loops constantly and sends impressions to the Split API
+    # Starts thread which loops constantly and sends metrics to the Split API
     def metrics_sender
       SplitIoClient::Cache::Senders::MetricsSender.new(@metrics_repository, @config, @api_key).call
-    end
-
-
-    #
-    # helper method to execute a post request to the provided endpoint
-    #
-    # @param path [string] api endpoint path
-    # @param params [object] hash of params that will be added to the request
-    #
-    # @return [object] response to the request
-    def post_api(path, param)
-      @api_client.post (@config.events_uri + path) do |req|
-        req.headers['Authorization'] = 'Bearer ' + @api_key
-        req.headers['Content-Type'] = 'application/json'
-        req.headers['SplitSDKVersion'] = SplitIoClient::SplitFactory.sdk_version
-        req.headers['SplitSDKMachineName'] = @config.machine_name
-        req.headers['SplitSDKMachineIP'] = @config.machine_ip
-        req.body = param.to_json
-        req.options.timeout = @config.read_timeout
-        req.options.open_timeout = @config.connection_timeout
-
-        if @config.transport_debug_enabled
-          @config.logger.debug("POST #{@config.events_uri + path} #{req.body}")
-        elsif @config.debug_enabled
-          @config.logger.debug("POST #{@config.events_uri + path}")
-        end
-
-      end
-    end
-
-    #
-    # @return parsed_splits [object] parsed splits for this adapter
-    def parsed_splits
-      @parsed_splits
-    end
-
-    #
-    # @return parsed_segments [object] parsed segments for this adapter
-    def parsed_segments
-      @parsed_segments
     end
   end
 end

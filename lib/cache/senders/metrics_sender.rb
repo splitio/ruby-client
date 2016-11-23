@@ -33,8 +33,9 @@ module SplitIoClient
         end
 
         def metrics_client
-          SplitIoClient::Api::Impressions.new(@api_key, @config, @metrics_repository)
+          SplitIoClient::Api::Metrics.new(@api_key, @config, @metrics_repository)
         end
+      end
     end
   end
 end
