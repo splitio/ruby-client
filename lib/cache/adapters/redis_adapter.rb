@@ -121,6 +121,12 @@ module SplitIoClient
         def inc(key, inc = 1)
           @redis.incrby(key, inc)
         end
+
+        def pipelined(&block)
+          @redis.pipelined do
+            block.call
+          end
+        end
       end
     end
   end

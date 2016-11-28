@@ -6,6 +6,8 @@ module SplitIoClient
       class SplitsRepository < Repository
         SPLITS_SLICE = 10
 
+        attr_reader :adapter
+
         def initialize(adapter)
           @adapter = adapter
 
