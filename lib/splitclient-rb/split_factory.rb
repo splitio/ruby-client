@@ -97,15 +97,24 @@ module SplitIoClient
         bucketing_key, matching_key = keys_from_key(key)
         bucketing_key = matching_key if bucketing_key.nil?
 
-        treatments = @splits_repository.get_splits(split_names).each_with_object({}) do |(name, data), memo|
-          memo.merge!(name => get_treatment(key, name, attributes, data, false))
-        end
+        treatments =
+          if @config.cache_adapter == :redis
+            @splits_repository.adapter.pipelined { multiple_treatments(split_names, key, attributes) }
+          else
+            multiple_treatments(split_names, key, attributes)
+          end
 
         if @config.impressions_queue_size > 0
-          @impressions_repository.add_bulk(matching_key, treatments, (Time.now.to_f * 1000.0).to_i)
+          @impressions_repository.add_bulk(matching_key, bucketing_key, treatments, (Time.now.to_f * 1000.0).to_i)
         end
 
         treatments
+      end
+
+      def multiple_treatments(split_names, key, attributes)
+        @splits_repository.get_splits(split_names).each_with_object({}) do |(name, data), memo|
+          memo.merge!(name => get_treatment(key, name, attributes, data, false))
+        end
       end
 
       #
@@ -152,7 +161,12 @@ module SplitIoClient
           latency = (Time.now - start) * 1000.0
           if @config.impressions_queue_size > 0 && store_impressions
             # Disable impressions if @config.impressions_queue_size == -1
-            @impressions_repository.add(split_name, 'key_name' => matching_key, 'treatment' => result, 'time' => (Time.now.to_f * 1000.0).to_i)
+            @impressions_repository.add(split_name,
+              'key_name' => matching_key,
+              'bucketing_key' => bucketing_key,
+              'treatment' => result,
+              'time' => (Time.now.to_f * 1000.0).to_i
+            )
           end
 
           # Measure

@@ -17,11 +17,11 @@ module SplitIoClient
             )
           end
 
-          def add_bulk(key, treatments, time)
+          def add_bulk(key, bucketing_key, treatments, time)
             @adapter.redis.pipelined do
               treatments.each_slice(IMPRESSIONS_SLICE) do |treatments_slice|
                 treatments_slice.each do |split_name, treatment|
-                  add(split_name, 'key_name' => key, 'treatment' => treatment, 'time' => time)
+                  add(split_name, 'key_name' => key, 'bucketing_key' => bucketing_key, 'treatment' => treatment, 'time' => time)
                 end
               end
             end
