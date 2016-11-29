@@ -193,7 +193,7 @@ module SplitIoClient
       @segments_repository = SplitIoClient::Cache::Repositories::SegmentsRepository.new(@cache_adapter)
       @impressions_repository = SplitIoClient::Cache::Repositories::ImpressionsRepository.new(@config.impressions_adapter, @config)
       @metrics_repository = SplitIoClient::Cache::Repositories::MetricsRepository.new(@config.metrics_adapter, @config)
-      @sdk_blocker = SplitIoClient::Cache::Stores::SDKBlocker.new(@config)
+      @sdk_blocker = SplitIoClient::Cache::Stores::SDKBlocker.new(@config, @splits_repository, @segments_repository)
       @adapter = SplitAdapter.new(api_key, @config, @splits_repository, @segments_repository, @impressions_repository, @metrics_repository, @sdk_blocker)
 
       @sdk_blocker.block if @config.block_until_ready
