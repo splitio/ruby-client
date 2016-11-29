@@ -42,6 +42,18 @@ module SplitIoClient
           @adapter.string(namespace_key("segment.#{name}.till")) || -1
         end
 
+        def ready?
+          @adapter.get_string(namespace_key('cache.ready.segments')).to_i != -1
+        end
+
+        def not_ready!
+          @adapter.set_string(namespace_key('cache.ready.segments'), -1)
+        end
+
+        def ready!
+          @adapter.set_string(namespace_key('cache.ready.segments'), Time.now.utc.to_i)
+        end
+
         private
 
         def segment_data(name)
