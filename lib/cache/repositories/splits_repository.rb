@@ -82,7 +82,7 @@ module SplitIoClient
         end
 
         def ready?
-          @adapter.get_string(namespace_key('cache.ready.splits')).to_i != -1
+          @adapter.string(namespace_key('cache.ready.splits')).to_i != -1
         end
 
         def not_ready!
