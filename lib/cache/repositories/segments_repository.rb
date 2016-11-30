@@ -4,6 +4,8 @@ module SplitIoClient
       class SegmentsRepository < Repository
         KEYS_SLICE = 3000
 
+        attr_reader :adapter
+
         def initialize(adapter)
           @adapter = adapter
 

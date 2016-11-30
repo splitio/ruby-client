@@ -116,6 +116,12 @@ module SplitIoClient
               @map.delete(key)
             end
           end
+
+          # This method is used in Redis adapter
+          # "stubbing" it here to keep the interface
+          def pipelined(&block)
+            block.call
+          end
         end
       end
     end

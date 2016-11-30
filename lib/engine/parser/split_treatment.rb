@@ -36,11 +36,13 @@ module SplitIoClient
         def matcher_type(condition)
           matchers = []
 
-          condition.matchers.each do |matcher|
-            matchers << condition.send(
-              "matcher_#{matcher[:matcherType].downcase}",
-              matcher: matcher, segments_repository: @segments_repository
-            )
+          @segments_repository.adapter.pipelined do
+            condition.matchers.each do |matcher|
+              matchers << condition.send(
+                "matcher_#{matcher[:matcherType].downcase}",
+                matcher: matcher, segments_repository: @segments_repository
+              )
+            end
           end
 
           final_matcher = condition.create_condition_matcher(matchers)
