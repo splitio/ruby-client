@@ -18,9 +18,9 @@ module SplitIoClient
             end
           end
 
-          def add_bulk(key, treatments, time)
+          def add_bulk(key, bucketing_key, treatments, time)
             treatments.each do |split_name, treatment|
-              add(split_name, 'key_name' => key, 'treatment' => treatment, 'time' => time)
+              add(split_name, 'key_name' => key, 'bucketing_key' => bucketing_key, 'treatment' => treatment, 'time' => time)
             end
           end
 
