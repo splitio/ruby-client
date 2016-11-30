@@ -98,10 +98,8 @@ module SplitIoClient
         bucketing_key = matching_key if bucketing_key.nil?
 
         treatments =
-          if @config.cache_adapter == :redis
-            @splits_repository.adapter.pipelined { multiple_treatments(split_names, key, attributes) }
-          else
-            multiple_treatments(split_names, key, attributes)
+          @splits_repository.get_splits(split_names).each_with_object({}) do |(name, data), memo|
+            memo.merge!(name => get_treatment(key, name, attributes, data, false))
           end
 
         if @config.impressions_queue_size > 0
@@ -109,12 +107,6 @@ module SplitIoClient
         end
 
         treatments
-      end
-
-      def multiple_treatments(split_names, key, attributes)
-        @splits_repository.get_splits(split_names).each_with_object({}) do |(name, data), memo|
-          memo.merge!(name => get_treatment(key, name, attributes, data, false))
-        end
       end
 
       #
