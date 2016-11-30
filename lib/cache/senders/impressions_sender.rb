@@ -18,19 +18,29 @@ module SplitIoClient
           if ENV['SPLITCLIENT_ENV'] == 'test'
             post_impressions
           else
-            Thread.new do
-              @config.logger.info('Starting impressions service')
+            impressions_thread
 
-              loop do
-                post_impressions
-
-                sleep(::Utilities.randomize_interval(@config.impressions_refresh_rate))
+            if defined?(PhusionPassenger)
+              PhusionPassenger.on_event(:starting_worker_process) do |forked|
+                impressions_thread if forked
               end
             end
           end
         end
 
         private
+
+        def impressions_thread
+          Thread.new do
+            @config.logger.info('Starting impressions service')
+
+            loop do
+              post_impressions
+
+              sleep(::Utilities.randomize_interval(@config.impressions_refresh_rate))
+            end
+          end
+        end
 
         def post_impressions
           impressions_client.post

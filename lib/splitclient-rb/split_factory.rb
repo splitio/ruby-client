@@ -103,7 +103,7 @@ module SplitIoClient
           end
 
         if @config.impressions_queue_size > 0
-          @impressions_repository.add_bulk(matching_key, treatments, (Time.now.to_f * 1000.0).to_i)
+          @impressions_repository.add_bulk(matching_key, bucketing_key, treatments, (Time.now.to_f * 1000.0).to_i)
         end
 
         treatments
@@ -153,7 +153,12 @@ module SplitIoClient
           latency = (Time.now - start) * 1000.0
           if @config.impressions_queue_size > 0 && store_impressions
             # Disable impressions if @config.impressions_queue_size == -1
-            @impressions_repository.add(split_name, 'key_name' => matching_key, 'treatment' => result, 'time' => (Time.now.to_f * 1000.0).to_i)
+            @impressions_repository.add(split_name,
+              'key_name' => matching_key,
+              'bucketing_key' => bucketing_key,
+              'treatment' => result,
+              'time' => (Time.now.to_f * 1000.0).to_i
+            )
           end
 
           # Measure
