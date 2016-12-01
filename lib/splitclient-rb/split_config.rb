@@ -176,6 +176,12 @@ module SplitIoClient
 
         SplitIoClient::Cache::Adapters::MemoryAdapter.new(adapter)
       when :redis
+        begin
+          require 'redis'
+        rescue LoadError
+          fail StandardError, 'To use Redis as a cache adapter you must include it in your Gemfile' unless defined?(Redis)
+        end
+
         SplitIoClient::Cache::Adapters::RedisAdapter.new(redis_url)
       end
     end
