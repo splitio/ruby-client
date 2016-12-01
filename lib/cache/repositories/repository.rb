@@ -12,7 +12,7 @@ module SplitIoClient
       protected
 
       def namespace_key(key)
-        "SPLITIO.#{key}"
+        "SPLITIO/ruby-#{VERSION}/#{key}"
       end
     end
   end
