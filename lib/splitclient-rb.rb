@@ -1,4 +1,8 @@
 require 'splitclient-rb/version'
+require 'splitclient-rb/clients/localhost_split_client'
+require 'splitclient-rb/clients/split_client'
+require 'splitclient-rb/managers/localhost_split_manager'
+require 'splitclient-rb/managers/split_manager'
 require 'splitclient-rb/split_factory'
 require 'splitclient-rb/split_factory_builder'
 require 'splitclient-rb/localhost_split_factory'

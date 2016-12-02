@@ -155,6 +155,14 @@ module SplitIoClient
     end
 
     #
+    # method that returns the sdk gem version
+    #
+    # @return [string] version value for this sdk
+    def self.sdk_version
+      'RubyClientSDK-'+SplitIoClient::VERSION
+    end
+
+    #
     # The default base uri for api calls
     #
     # @return [string] The default base uri
