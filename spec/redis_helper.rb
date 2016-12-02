@@ -1,3 +1,5 @@
+require 'redis'
+
 module RSpec
   module RedisHelper
     # When this module is included into the rspec config,
