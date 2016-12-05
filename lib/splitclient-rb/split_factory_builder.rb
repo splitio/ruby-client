@@ -1,3 +1,5 @@
+require 'logger'
+
 module SplitIoClient
   class SplitFactoryBuilder
     def self.build(api_key, config = {})
