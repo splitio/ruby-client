@@ -8,6 +8,7 @@ module SplitIoClient
                        :clear_counts, :clear_latencies, :clear_gauges
 
         def initialize(adapter, config)
+          @config = config
           @adapter = case adapter.class.to_s
           when 'SplitIoClient::Cache::Adapters::MemoryAdapter'
             Repositories::Metrics::MemoryRepository.new(adapter, config)

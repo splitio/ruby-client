@@ -8,8 +8,9 @@ module SplitIoClient
 
         attr_reader :adapter
 
-        def initialize(adapter)
+        def initialize(adapter, config)
           @adapter = adapter
+          @config = config
 
           @adapter.set_string(namespace_key('splits.till'), '-1')
           @adapter.initialize_map(namespace_key('segments.registered'))
@@ -58,8 +59,7 @@ module SplitIoClient
 
         # Return an array of Split Names excluding control keys like splits.till
         def split_names
-          @adapter.find_strings_by_prefix(namespace_key('split'))
-            .reject { |split| split == namespace_key('splits.till') }
+          @adapter.find_strings_by_prefix(namespace_key('split.'))
             .map { |split| split.gsub(namespace_key('split.'), '') }
         end
 

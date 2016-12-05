@@ -195,8 +195,8 @@ module SplitIoClient
       @api_key = api_key
       @config = SplitConfig.new(config)
       @cache_adapter = @config.cache_adapter
-      @splits_repository = SplitIoClient::Cache::Repositories::SplitsRepository.new(@cache_adapter)
-      @segments_repository = SplitIoClient::Cache::Repositories::SegmentsRepository.new(@cache_adapter)
+      @splits_repository = SplitIoClient::Cache::Repositories::SplitsRepository.new(@cache_adapter, @config)
+      @segments_repository = SplitIoClient::Cache::Repositories::SegmentsRepository.new(@cache_adapter, @config)
       @impressions_repository = SplitIoClient::Cache::Repositories::ImpressionsRepository.new(@config.impressions_adapter, @config)
       @metrics_repository = SplitIoClient::Cache::Repositories::MetricsRepository.new(@config.metrics_adapter, @config)
       @sdk_blocker = SplitIoClient::Cache::Stores::SDKBlocker.new(@config)

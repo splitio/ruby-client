@@ -12,7 +12,7 @@ module SplitIoClient
       protected
 
       def namespace_key(key)
-        "SPLITIO/ruby-#{VERSION}/#{key}"
+        "#{@config.redis_namespace}/#{key}"
       end
     end
   end

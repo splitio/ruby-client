@@ -4,7 +4,8 @@ require 'set'
 describe SplitIoClient::Cache::Repositories::SplitsRepository do
   RSpec.shared_examples 'SplitsRepository specs' do |cache_adapter|
     let(:adapter) { cache_adapter }
-    let(:repository) { described_class.new(adapter) }
+    let(:config) { SplitIoClient::SplitConfig.new(cache_adapter: cache_adapter) }
+    let(:repository) { described_class.new(adapter, config) }
 
     before :all do
       redis = Redis.new
@@ -20,7 +21,6 @@ describe SplitIoClient::Cache::Repositories::SplitsRepository do
       repository.add_split(name: 'foo')
       repository.add_split(name: 'bar')
       repository.add_split(name: 'baz')
-      repository.add_split(name: 'till')
     end
 
     it 'returns splits names' do
