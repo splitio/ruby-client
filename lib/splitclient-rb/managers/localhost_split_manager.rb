@@ -1,6 +1,6 @@
 module SplitIoClient
   class LocalhostSplitManager
-    include SplitIoClient::FeatureUtils
+    include SplitIoClient::LocalhostUtils
 
     #
     # Creates a new split manager instance that holds the splits from a given file

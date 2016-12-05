@@ -1,4 +1,3 @@
-
 module SplitIoClient
   class SplitFactory
     include SplitIoClient::Cache::Repositories

@@ -1,6 +1,6 @@
 module SplitIoClient
   class LocalhostSplitClient
-    include SplitIoClient::FeatureUtils
+    include SplitIoClient::LocalhostUtils
 
     #
     # variables to if the sdk is being used in localhost mode and store the list of features
