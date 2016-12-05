@@ -363,10 +363,11 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 The gem uses rspec for unit testing. Under the default `/spec` folder you will find the files for the unit tests and the specs helper file ( spec_helper.rb ). If a new spec file with new unit tests is required you just simply need to create it under the spec folder and all its test will be executed on the next rspec execution.
 
-To run the suite of unit tests a rake task is provided. It's executed with the following command:
+To run the suite of unit tests a rake task is provided.
 
+Make sure redis is running in localhost at redis://127.0.0.1:6379/0 and then just run:
 ```bash
-  $ rake spec
+  SPLITCLIENT_ENV=test bundle exec rspecrake spec
 ```
 
 Also, simplecov is used for coverage reporting. After the execution of the rake task it will create the `/coverage` folder with coverage reports in pretty HTML format.
