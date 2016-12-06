@@ -5,28 +5,29 @@ module SplitIoClient
   module Cache
     module Stores
       class SDKBlocker
-        attr_reader :splits_ready
+        attr_reader :splits_repository
         attr_writer :splits_thread, :segments_thread
 
-        def initialize(config)
+        def initialize(config, splits_repository, segments_repository)
           @config = config
+          @splits_repository = splits_repository
+          @segments_repository = segments_repository
 
-          @splits_ready = false
-          @segments_ready = false
+          @splits_repository.not_ready!
+          @segments_repository.not_ready!
         end
 
         def splits_ready!
-          @splits_ready = true
+          @splits_repository.ready!
         end
 
         def segments_ready!
-          @segments_ready = true
+          @segments_repository.ready!
         end
 
         def block
           begin
             Timeout::timeout(@config.block_until_ready) do
-              sleep 0.1 until ready?
               sleep 0.1 until ready?
             end
           rescue Timeout::Error
@@ -39,7 +40,7 @@ module SplitIoClient
         end
 
         def ready?
-          @splits_ready && @segments_ready
+          @splits_repository.ready? && @segments_repository.ready?
         end
       end
     end

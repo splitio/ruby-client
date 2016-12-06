@@ -26,7 +26,7 @@ module SplitIoClient
 
         def blocked_store
           loop do
-            next unless @sdk_blocker.splits_ready
+            next unless @sdk_blocker.splits_repository.ready?
 
             store_segments
             @config.logger.debug("Segment names: #{@segments_repository.used_segment_names.to_a}") if @config.debug_enabled
