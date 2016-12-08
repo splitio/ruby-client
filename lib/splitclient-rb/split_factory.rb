@@ -11,8 +11,8 @@ module SplitIoClient
 
       @cache_adapter = @config.cache_adapter
 
-      @splits_repository = SplitsRepository.new(@cache_adapter)
-      @segments_repository = SegmentsRepository.new(@cache_adapter)
+      @splits_repository = SplitsRepository.new(@cache_adapter, @config)
+      @segments_repository = SegmentsRepository.new(@cache_adapter, @config)
       @impressions_repository = ImpressionsRepository.new(@config.impressions_adapter, @config)
       @metrics_repository = MetricsRepository.new(@config.metrics_adapter, @config)
 

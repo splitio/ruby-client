@@ -3,7 +3,8 @@ require 'spec_helper'
 describe SplitIoClient::Cache::Repositories::SegmentsRepository do
   context 'memory adapter' do
     let(:adapter) { SplitIoClient::Cache::Adapters::MemoryAdapters::MapAdapter.new }
-    let(:repository) { described_class.new(adapter) }
+    let(:config) { SplitIoClient::SplitConfig.new }
+    let(:repository) { described_class.new(adapter, config) }
 
     it 'removes keys' do
       repository.add_to_segment(name: 'foo', added: [1, 2, 3], removed: [])
@@ -17,7 +18,7 @@ describe SplitIoClient::Cache::Repositories::SegmentsRepository do
   context 'redis adapter' do
     let(:config) { SplitIoClient::SplitConfig.new }
     let(:adapter) { SplitIoClient::Cache::Adapters::RedisAdapter.new(config.redis_url) }
-    let(:repository) { described_class.new(adapter) }
+    let(:repository) { described_class.new(adapter, config) }
 
     it 'removes keys' do
       repository.add_to_segment(name: 'foo', added: [1, 2, 3], removed: [])
