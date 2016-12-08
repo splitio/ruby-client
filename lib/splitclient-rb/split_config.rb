@@ -157,6 +157,14 @@ module SplitIoClient
     end
 
     #
+    # method that returns the sdk gem version
+    #
+    # @return [string] version value for this sdk
+    def self.sdk_version
+      'RubyClientSDK-'+SplitIoClient::VERSION
+    end
+
+    #
     # The default base uri for api calls
     #
     # @return [string] The default base uri
@@ -178,6 +186,12 @@ module SplitIoClient
 
         SplitIoClient::Cache::Adapters::MemoryAdapter.new(adapter)
       when :redis
+        begin
+          require 'redis'
+        rescue LoadError
+          fail StandardError, 'To use Redis as a cache adapter you must include it in your Gemfile'
+        end
+
         SplitIoClient::Cache::Adapters::RedisAdapter.new(redis_url)
       end
     end

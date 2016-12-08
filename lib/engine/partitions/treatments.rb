@@ -1,10 +1,8 @@
 module SplitIoClient
-
   #
   # represents the possible return values for a treatment
   #
   class Treatments < NoMethodError
-
     # Constants to represent treatment values
     CONTROL = 'control'
     OFF = 'off'
@@ -34,7 +32,5 @@ module SplitIoClient
     def self.is_control?(treatment)
       get_type(treatment).equal?(CONTROL) ? true : false
     end
-
   end
-
 end
