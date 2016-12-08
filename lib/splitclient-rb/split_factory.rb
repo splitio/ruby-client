@@ -16,7 +16,7 @@ module SplitIoClient
       @impressions_repository = ImpressionsRepository.new(@config.impressions_adapter, @config)
       @metrics_repository = MetricsRepository.new(@config.metrics_adapter, @config)
 
-      @sdk_blocker = SDKBlocker.new(@config)
+      @sdk_blocker = SDKBlocker.new(@config, @splits_repository, @segments_repository)
       @adapter = SplitAdapter.new(@api_key, @config, @splits_repository, @segments_repository, @impressions_repository, @metrics_repository, @sdk_blocker)
 
       @client = SplitClient.new(@api_key, @config, @adapter, @splits_repository, @segments_repository, @impressions_repository, @metrics_repository)

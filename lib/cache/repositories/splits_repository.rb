@@ -82,6 +82,18 @@ module SplitIoClient
         def exists?(name)
           @adapter.exists?(namespace_key("split.#{name}"))
         end
+
+        def ready?
+          @adapter.string(namespace_key('cache.ready.splits')).to_i != -1
+        end
+
+        def not_ready!
+          @adapter.set_string(namespace_key('cache.ready.splits'), -1)
+        end
+
+        def ready!
+          @adapter.set_string(namespace_key('cache.ready.splits'), Time.now.utc.to_i)
+        end
       end
     end
   end
