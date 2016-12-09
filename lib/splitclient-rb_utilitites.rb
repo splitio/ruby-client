@@ -27,7 +27,7 @@ module Utilities
     zeroed = Time.new(parsed_value.year, parsed_value.month, parsed_value.day, 0, 0, 0, 0)
 
     zeroed.to_i * 1000
-  rescue StandartError
+  rescue StandardError
     return :non_valid_date_info
   end
 
