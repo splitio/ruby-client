@@ -50,9 +50,15 @@ module SplitIoClient
     end
 
     def build_split_view(name, split)
-      treatments = split[:conditions] && split[:conditions][0][:partitions] \
-        ? split[:conditions][0][:partitions].map { |partition| partition[:treatment] }
-        : []
+      return {} unless split
+
+      treatments =
+        if split[:conditions] && split[:conditions][0][:partitions]
+          split[:conditions][0][:partitions].map { |partition| partition[:treatment] }
+        else
+          []
+        end
+
         {
           name: name,
           traffic_type_name: split[:trafficTypeName],
