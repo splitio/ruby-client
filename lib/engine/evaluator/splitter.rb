@@ -47,6 +47,10 @@ module SplitIoClient
         Digest::MurmurHash2A.rawdigest(key)
       end
 
+      def hash(key, seed)
+        legacy_hash(key, seed)
+      end
+
       #
       # returns a hash value for the give key, sedd pair
       #
