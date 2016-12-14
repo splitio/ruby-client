@@ -9,8 +9,8 @@ module SplitIoClient
           end
 
           # Store impression data in the selected adapter
-          def add(split_name, data)
-            @adapter.add_to_queue(feature: split_name, impressions: data)
+          def add(split, data)
+            @adapter.add_to_queue(feature: split[:name], impressions: data)
           rescue ThreadError # queue is full
             if random_sampler.rand(1..1000) <= 2 # log only 0.2 % of the time
               @config.logger.warn("Dropping impressions. Current size is #{@config.impressions_queue_size}. " \

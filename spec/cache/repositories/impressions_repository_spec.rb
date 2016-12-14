@@ -13,8 +13,8 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
     before :each do
       Redis.new.flushall
 
-      repository.add('foo1', 'key_name' => 'matching_key', 'treatment' => 'on', 'time' => 1478113516002)
-      repository.add('foo2', 'key_name' => 'matching_key2', 'treatment' => 'off', 'time' => 1478113518285)
+      repository.add({ name: 'foo1' }, 'key_name' => 'matching_key', 'treatment' => 'on', 'time' => 1478113516002)
+      repository.add({ name: 'foo2' }, 'key_name' => 'matching_key2', 'treatment' => 'off', 'time' => 1478113518285)
     end
 
     it 'adds impressions' do
@@ -36,9 +36,9 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
     before do
       Redis.new.flushall
 
-      repository.add('foo1', 'key_name' => 'matching_key', 'treatment' => 'on', 'time' => 1478113516002)
-      repository.add('foo2', 'key_name' => 'matching_key2', 'treatment' => 'off', 'time' => 1478113518285)
-      repository.add('foo2', 'key_name' => 'matching_key3', 'treatment' => 'on', 'time' => 1478113518500)
+      repository.add({ name: 'foo1' }, 'key_name' => 'matching_key', 'treatment' => 'on', 'time' => 1478113516002)
+      repository.add({ name: 'foo2' }, 'key_name' => 'matching_key2', 'treatment' => 'off', 'time' => 1478113518285)
+      repository.add({ name: 'foo2' }, 'key_name' => 'matching_key3', 'treatment' => 'on', 'time' => 1478113518500)
     end
 
     let(:config) { SplitIoClient::SplitConfig.new(impressions_queue_size: 1) }
