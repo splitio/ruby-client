@@ -7,23 +7,25 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
     let(:repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(adapter, config) }
     let(:sender) { described_class.new(repository, config, nil) }
     let(:formatted_impressions) { sender.send(:formatted_impressions, repository.clear) }
+    let(:split_1) { { name: 'foo1', label: 'custom_label1' } }
+    let(:split_2) { { name: 'foo2', label: 'custom_label2' } }
 
     before :each do
       Redis.new.flushall
 
-      repository.add({ name: 'foo1' }, 'key_name' => 'matching_key', 'treatment' => 'on', 'time' => 1478113516002)
-      repository.add({ name: 'foo2' }, 'key_name' => 'matching_key2', 'treatment' => 'off', 'time' => 1478113518285)
+      repository.add(split_1, 'key_name' => 'matching_key', 'bucketing_key' => 'foo1', 'treatment' => 'on', 'time' => 1478113516002)
+      repository.add(split_2, 'key_name' => 'matching_key2', 'bucketing_key' => 'foo2', 'treatment' => 'off', 'time' => 1478113518285)
     end
 
     it 'formats impressions to be sent' do
       expect(formatted_impressions).to match_array([
         {
           testName: 'foo1',
-          keyImpressions: [{ keyName: 'matching_key', treatment: 'on', time: 1478113516002 }]
+          keyImpressions: [{ keyName: 'matching_key', treatment: 'on', time: 1478113516002, bucketingKey: 'foo1', label: 'custom_label1' }]
         },
         {
           testName: 'foo2',
-          keyImpressions: [{ keyName: 'matching_key2', treatment: 'off', time: 1478113518285 }]
+          keyImpressions: [{ keyName: 'matching_key2', treatment: 'off', time: 1478113518285, bucketingKey: 'foo2', label: 'custom_label2' }]
         }
       ])
     end
@@ -33,21 +35,21 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
 
       expect(formatted_impressions.find { |i| i[:testName] == 'foo1' }[:keyImpressions]).to match_array(
         [
-          { keyName: 'matching_key', treatment: 'on', time: 1478113516002 }
+          { keyName: 'matching_key', treatment: 'on', time: 1478113516002, bucketingKey: 'foo1', label: 'custom_label1' }
         ]
       )
 
       expect(formatted_impressions.find { |i| i[:testName] == 'foo2' }[:keyImpressions]).to match_array(
         [
-          { keyName: 'matching_key2', treatment: 'off', time: 1478113518285 },
-          { keyName: 'matching_key3', treatment: 'off', time: 1478113518900 }
+          { keyName: 'matching_key2', treatment: 'off', time: 1478113518285, bucketingKey: 'foo2', label: 'custom_label2' },
+          { keyName: 'matching_key3', treatment: 'off', time: 1478113518900, bucketingKey: nil, label: nil }
         ]
       )
     end
 
     it 'filters out impressions with the same key/treatment' do
-      repository.add('foo1', 'key_name' => 'matching_key', 'treatment' => 'on', 'time' => 1478113516902)
-      repository.add('foo2', 'key_name' => 'matching_key2', 'treatment' => 'off', 'time' => 1478113518985)
+      repository.add({ name: 'foo1' }, 'key_name' => 'matching_key', 'treatment' => 'on', 'time' => 1478113516902)
+      repository.add({ name: 'foo2' }, 'key_name' => 'matching_key2', 'treatment' => 'off', 'time' => 1478113518985)
 
       expect(formatted_impressions.find { |i| i[:testName] == 'foo1' }[:keyImpressions].size).to eq(1)
       expect(formatted_impressions.find { |i| i[:testName] == 'foo2' }[:keyImpressions].size).to eq(1)

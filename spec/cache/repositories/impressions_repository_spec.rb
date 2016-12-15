@@ -12,12 +12,12 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
 
     before :each do
       Redis.new.flushall
-
-      repository.add({ name: 'foo1' }, 'key_name' => 'matching_key', 'treatment' => 'on', 'time' => 1478113516002)
-      repository.add({ name: 'foo2' }, 'key_name' => 'matching_key2', 'treatment' => 'off', 'time' => 1478113518285)
     end
 
     it 'adds impressions' do
+      repository.add({ name: 'foo1' }, 'key_name' => 'matching_key', 'treatment' => 'on', 'time' => 1478113516002)
+      repository.add({ name: 'foo2' }, 'key_name' => 'matching_key2', 'treatment' => 'off', 'time' => 1478113518285)
+
       expect(repository.clear).to match_array(
         [
           { feature: 'foo1', impressions: { 'key_name' => 'matching_key', 'treatment' => 'on', 'time' => 1478113516002 } },
@@ -26,6 +26,15 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
       )
 
       expect(repository.clear).to eq([])
+    end
+
+    it 'adds impressions in bulk' do
+      results = {
+        'foo' => { treatment: 'yes', label: 'sample label' },
+        'bar' => { treatment: 'no', label: 'sample label2' }
+      }
+      
+      repository.add_bulk('foo', 'sample_bucketing_key', results, Time.now)
     end
   end
 

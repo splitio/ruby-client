@@ -23,7 +23,11 @@ module SplitIoClient
 
     treatments =
       @splits_repository.get_splits(split_names).each_with_object({}) do |(name, data), memo|
-        memo.merge!(name => get_treatment(key, name, attributes, data, false))
+        memo.merge!(name => {
+            label: data[:label],
+            treatment: get_treatment(key, name, attributes, data, false)
+          }
+        )
       end
 
     if @config.impressions_queue_size > 0

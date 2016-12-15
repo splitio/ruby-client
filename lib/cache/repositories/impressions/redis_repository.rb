@@ -13,15 +13,21 @@ module SplitIoClient
           # Store impression data in Redis
           def add(split, data)
             @adapter.add_to_set(
-              namespace_key("impressions.#{split[:name]}"), data.merge(split_name: split[:name]).to_json
+              namespace_key("impressions.#{split[:name]}"), data.merge(split_name: split[:name], label: split[:label]).to_json
             )
           end
 
-          def add_bulk(key, bucketing_key, treatments, time)
+          def add_bulk(key, bucketing_key, results, time)
             @adapter.redis.pipelined do
-              treatments.each_slice(IMPRESSIONS_SLICE) do |treatments_slice|
-                treatments_slice.each do |split_name, treatment|
-                  add(split_name, 'key_name' => key, 'bucketing_key' => bucketing_key, 'treatment' => treatment, 'time' => time)
+              results.each_slice(IMPRESSIONS_SLICE) do |results_slice|
+                results_slice.each do |split_name, result|
+                  add(split_name,
+                    'key_name' => key,
+                    'bucketing_key' => bucketing_key,
+                    'treatment' => result[:treatment],
+                    'label' => result[:label],
+                    'time' => time
+                  )
                 end
               end
             end
