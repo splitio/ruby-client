@@ -26,6 +26,10 @@ opt_parser = OptionParser.new do |opts|
     options[:events_uri] = c
   end
 
+  opts.on("--api-key=API_KEY", "Set the API Key for Split SDK") do |c|
+    options[:api_key] = c
+  end
+
   opts.on("--read-timeout=READ_TIMEOUT", "Read timeout in seconds") do |c|
     options[:read_timeout] = c
   end
