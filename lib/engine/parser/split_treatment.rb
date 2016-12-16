@@ -8,29 +8,38 @@ module SplitIoClient
 
         def call(keys, split, attributes = nil)
           split_model = Models::Split.new(split)
-          default_treatment = split[:defaultTreatment]
+          @default_treatment = split[:defaultTreatment]
 
-          return Treatments::CONTROL if split_model.archived?
+          return treatment('archived', Treatments::CONTROL) if split_model.archived?
 
-          split_model.matchable? ? match(split, keys, attributes, default_treatment) : default_treatment
+          if split_model.matchable?
+            match(split, keys, attributes)
+          else
+            treatment('killed', @default_treatment)
+          end
         end
 
         private
 
-        def match(split, keys, attributes, default_treatment)
+        def match(split, keys, attributes)
           split[:conditions].each do |c|
             condition = SplitIoClient::Condition.new(c)
+            label = c[:label]
 
             next if condition.empty?
 
             if matcher_type(condition).match?(keys[:matching_key], attributes)
-              treatment = Splitter.get_treatment(keys[:bucketing_key], split[:seed], condition.partitions)
+              result = Splitter.get_treatment(keys[:bucketing_key], split[:seed], condition.partitions)
 
-              return treatment.nil? ? default_treatment : treatment
+              if result.nil?
+                treatment('no rule matched', default_treatment)
+              else
+                treatment(label, result)
+              end
             end
           end
 
-          default_treatment
+          treatment('no rule matched', default_treatment)
         end
 
         def matcher_type(condition)
@@ -52,6 +61,10 @@ module SplitIoClient
           else
             final_matcher
           end
+        end
+
+        def treatment(label, treatment)
+          { label: label, treatment: treatment }
         end
       end
     end
