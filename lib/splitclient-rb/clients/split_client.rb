@@ -59,23 +59,23 @@ module SplitIoClient
     end
 
     start = Time.now
-    result = nil
+    result = { label: 'exception', treatment: Treatments::CONTROL }
 
     begin
       split = split_data ? split_data : @splits_repository.get_split(split_name)
 
       result = if split.nil?
-        Treatments::CONTROL
+        fail StandardError, "Split with the name of #{split_name} was nil"
       else
         SplitIoClient::Engine::Parser::SplitTreatment.new(@segments_repository).call(
           { bucketing_key: bucketing_key, matching_key: matching_key }, split, attributes
         )
       end
     rescue StandardError => error
+      result = { label: 'exception', treatment: Treatments::CONTROL }
+
       @config.log_found_exception(__method__.to_s, error)
     end
-
-    result = result.nil? ? Treatments::CONTROL : result
 
     begin
       latency = (Time.now - start) * 1000.0
@@ -95,7 +95,7 @@ module SplitIoClient
       @config.log_found_exception(__method__.to_s, error)
     end
 
-    result
+    result[:treatment]
   end
 
   def keys_from_key(key)
