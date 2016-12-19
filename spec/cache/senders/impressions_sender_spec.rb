@@ -7,14 +7,24 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
     let(:repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(adapter, config) }
     let(:sender) { described_class.new(repository, config, nil) }
     let(:formatted_impressions) { sender.send(:formatted_impressions, repository.clear) }
-    let(:split_1) { { name: 'foo1', label: 'custom_label1' } }
-    let(:split_2) { { name: 'foo2', label: 'custom_label2' } }
 
     before :each do
       Redis.new.flushall
 
-      repository.add(split_1, 'key_name' => 'matching_key', 'bucketing_key' => 'foo1', 'treatment' => 'on', 'time' => 1478113516002)
-      repository.add(split_2, 'key_name' => 'matching_key2', 'bucketing_key' => 'foo2', 'treatment' => 'off', 'time' => 1478113518285)
+      repository.add('foo1',
+        'key_name' => 'matching_key',
+        'bucketing_key' => 'foo1',
+        'treatment' => 'on',
+        'label' => 'custom_label1',
+        'time' => 1478113516002
+      )
+      repository.add('foo2',
+        'key_name' => 'matching_key2',
+        'bucketing_key' => 'foo2',
+        'treatment' => 'off',
+        'label' => 'custom_label2',
+        'time' => 1478113518285
+      )
     end
 
     it 'formats impressions to be sent' do
@@ -31,7 +41,7 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
     end
 
     it 'formats multiple impressions for one key' do
-      repository.add({ name: 'foo2' }, 'key_name' => 'matching_key3', 'treatment' => 'off', 'time' => 1478113518900)
+      repository.add('foo2', 'key_name' => 'matching_key3', 'treatment' => 'off', 'time' => 1478113518900)
 
       expect(formatted_impressions.find { |i| i[:testName] == 'foo1' }[:keyImpressions]).to match_array(
         [
@@ -48,8 +58,8 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
     end
 
     it 'filters out impressions with the same key/treatment' do
-      repository.add({ name: 'foo1' }, 'key_name' => 'matching_key', 'treatment' => 'on', 'time' => 1478113516902)
-      repository.add({ name: 'foo2' }, 'key_name' => 'matching_key2', 'treatment' => 'off', 'time' => 1478113518985)
+      repository.add('foo1', 'key_name' => 'matching_key', 'treatment' => 'on', 'time' => 1478113516902)
+      repository.add('foo2', 'key_name' => 'matching_key2', 'treatment' => 'off', 'time' => 1478113518985)
 
       expect(formatted_impressions.find { |i| i[:testName] == 'foo1' }[:keyImpressions].size).to eq(1)
       expect(formatted_impressions.find { |i| i[:testName] == 'foo2' }[:keyImpressions].size).to eq(1)

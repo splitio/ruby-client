@@ -23,14 +23,17 @@ module SplitIoClient
 
       treatments_with_labels =
         @splits_repository.get_splits(split_names).each_with_object({}) do |(name, data), memo|
-          memo.merge!(name => get_treatment(key, name, attributes, data, false))
+          memo.merge!(name => get_treatment(key, name, attributes, data, false, true))
         end
 
       if @config.impressions_queue_size > 0
         @impressions_repository.add_bulk(matching_key, bucketing_key, treatments_with_labels, (Time.now.to_f * 1000.0).to_i)
       end
 
-      # treatments
+      split_names = treatments_with_labels.keys
+      treatments = treatments_with_labels.values.map { |v| v[:treatment] }
+
+      Hash[split_names.zip(treatments)]
     end
 
     #
@@ -40,25 +43,25 @@ module SplitIoClient
     # @param split_name [String/Array] name of the feature that is being validated or array of them
     #
     # @return [String/Hash] Treatment as String or Hash of treatments in case of array of features
-    def get_treatment(key, split_name, attributes = nil, split_data = nil, store_impressions = true)
+    def get_treatment(key, split_name, attributes = nil, split_data = nil, store_impressions = true, multiple = false)
       bucketing_key, matching_key = keys_from_key(key)
       bucketing_key = matching_key if bucketing_key.nil?
 
       if matching_key.nil?
         @config.logger.warn('matching_key was null for split_name: ' + split_name.to_s)
-        return Treatments::CONTROL
+        return parsed_treatment(multiple, { label: 'matching_key was null', treatment: Treatments::CONTROL })
       end
 
       if split_name.nil?
         @config.logger.warn('split_name was null for key: ' + key)
-        return Treatments::CONTROL
+        return parsed_treatment(multiple, { label: 'split_name was null', treatment: Treatments::CONTROL })
       end
 
       start = Time.now
       treatment_with_label = { label: 'exception', treatment: Treatments::CONTROL }
 
       begin
-        split = split_data ? split_data : @splits_repository.get_split(split_name)
+        split = multiple ? split_data : @splits_repository.get_split(split_name)
 
         treatment_with_label = if split.nil?
           fail StandardError, "Split with the name of #{split_name} was nil"
@@ -69,6 +72,8 @@ module SplitIoClient
         end
       rescue StandardError => error
         @config.log_found_exception(__method__.to_s, error)
+
+        return parsed_treatment(multiple, treatment_with_label)
       end
 
       begin
@@ -88,16 +93,11 @@ module SplitIoClient
         @adapter.metrics.time('sdk.get_treatment', latency)
       rescue StandardError => error
         @config.log_found_exception(__method__.to_s, error)
+
+        return parsed_treatment(multiple, treatment_with_label)
       end
 
-      if split_data
-        {
-          treatment: treatment_with_label[:treatment],
-          label: treatment_with_label[:label]
-        }
-      else
-        treatment_with_label[:treatment]
-      end
+      parsed_treatment(multiple, treatment_with_label)
     end
 
     def keys_from_key(key)
@@ -106,6 +106,17 @@ module SplitIoClient
         key.values_at(:bucketing_key, :matching_key)
       when 'String'
         [key, key]
+      end
+    end
+
+    def parsed_treatment(multiple, treatment_with_label)
+      if multiple
+        {
+          treatment: treatment_with_label[:treatment],
+          label: treatment_with_label[:label]
+        }
+      else
+        treatment_with_label[:treatment]
       end
     end
 

@@ -1,3 +1,6 @@
+3.2.0
+- Add impression labeling
+
 3.1.4
 - Allow to store block until ready flag in Redis
 

@@ -32,14 +32,14 @@ module SplitIoClient
               result = Splitter.get_treatment(keys[:bucketing_key], split[:seed], condition.partitions)
 
               if result.nil?
-                treatment('no rule matched', default_treatment)
+                return treatment('no rule matched', @default_treatment)
               else
-                treatment(label, result)
+                return treatment(label, result)
               end
             end
           end
 
-          treatment('no rule matched', default_treatment)
+          treatment('no rule matched', @default_treatment)
         end
 
         def matcher_type(condition)
