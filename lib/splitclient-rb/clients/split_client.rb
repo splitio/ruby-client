@@ -41,6 +41,10 @@ module SplitIoClient
     #
     # @param key [String/Hash] user id or hash with matching_key/bucketing_key
     # @param split_name [String/Array] name of the feature that is being validated or array of them
+    # @param attributes [Hash] attributes to pass to the treatment class
+    # @param split_data [Hash] split data, when provided this method doesn't fetch splits_repository for the data
+    # @param store_impressions [Boolean] impressions aren't stored if this flag is false
+    # @param multiple [Hash] internal flag to signal if method is called by get_treatments
     #
     # @return [String/Hash] Treatment as String or Hash of treatments in case of array of features
     def get_treatment(key, split_name, attributes = nil, split_data = nil, store_impressions = true, multiple = false)
@@ -49,16 +53,16 @@ module SplitIoClient
 
       if matching_key.nil?
         @config.logger.warn('matching_key was null for split_name: ' + split_name.to_s)
-        return parsed_treatment(multiple, { label: 'matching_key was null', treatment: Treatments::CONTROL })
+        return parsed_treatment(multiple, { label: Engine::Models::Label::EXCEPTION, treatment: Treatments::CONTROL })
       end
 
       if split_name.nil?
         @config.logger.warn('split_name was null for key: ' + key)
-        return parsed_treatment(multiple, { label: 'split_name was null', treatment: Treatments::CONTROL })
+        return parsed_treatment(multiple, { label: Engine::Models::Label::EXCEPTION, treatment: Treatments::CONTROL })
       end
 
       start = Time.now
-      treatment_with_label = { label: 'exception', treatment: Treatments::CONTROL }
+      treatment_with_label = { label: Engine::Models::Label::EXCEPTION, treatment: Treatments::CONTROL }
 
       begin
         split = multiple ? split_data : @splits_repository.get_split(split_name)

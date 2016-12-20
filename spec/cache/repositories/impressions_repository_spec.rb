@@ -1,6 +1,8 @@
 require 'spec_helper'
 require 'set'
 
+include SplitIoClient::Cache::Adapters
+
 describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
   RSpec.shared_examples 'impressions specs' do |cache_adapter|
     let(:config) { SplitIoClient::SplitConfig.new(impressions_queue_size: 5) }
@@ -38,8 +40,8 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
     end
   end
 
-  include_examples 'impressions specs', SplitIoClient::Cache::Adapters::MemoryAdapter.new(SplitIoClient::Cache::Adapters::MemoryAdapters::SizedQueueAdapter.new(3))
-  include_examples 'impressions specs', SplitIoClient::Cache::Adapters::RedisAdapter.new(SplitIoClient::SplitConfig.new.redis_url)
+  include_examples 'impressions specs', MemoryAdapter.new(MemoryAdapters::SizedQueueAdapter.new(3))
+  include_examples 'impressions specs', RedisAdapter.new(SplitIoClient::SplitConfig.new.redis_url)
 
   context 'queue size less than the actual queue' do
     before do
@@ -51,7 +53,7 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
     end
 
     let(:config) { SplitIoClient::SplitConfig.new(impressions_queue_size: 1) }
-    let(:adapter) { SplitIoClient::Cache::Adapters::RedisAdapter.new(SplitIoClient::SplitConfig.new.redis_url) }
+    let(:adapter) { RedisAdapter.new(SplitIoClient::SplitConfig.new.redis_url) }
     let(:repository) { described_class.new(adapter, config) }
 
     it 'returns impressions' do
