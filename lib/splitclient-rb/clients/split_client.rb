@@ -67,10 +67,10 @@ module SplitIoClient
       begin
         split = multiple ? split_data : @splits_repository.get_split(split_name)
 
-        treatment_with_label = if split.nil?
-          fail StandardError, "Split with the name of #{split_name} was nil"
+        if split.nil?
+          return parsed_treatment(multiple, treatment_with_label)
         else
-          SplitIoClient::Engine::Parser::SplitTreatment.new(@segments_repository).call(
+          treatment_with_label = SplitIoClient::Engine::Parser::SplitTreatment.new(@segments_repository).call(
             { bucketing_key: bucketing_key, matching_key: matching_key }, split, attributes
           )
         end
