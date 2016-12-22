@@ -15,7 +15,7 @@ module SplitIoClient
           config.logger.debug("GET #{url}") if config.debug_enabled
         end
       rescue StandardError => e
-        Logger.new('log/api_client.log').info("#{e}\nURL:#{url}\nparams:#{params}")
+        config.logger.warn("#{e}\nURL:#{url}\ndata:#{data}\nparams:#{params}")
       end
 
       def post_api(url, config, api_key, data, params = {})
