@@ -34,7 +34,7 @@ module SplitIoClient
           end
         end
       rescue StandardError => e
-        config.logger.info("#{e}\nURL:#{url}\ndata:#{data}\nparams:#{params}")
+        config.logger.warn("#{e}\nURL:#{url}\ndata:#{data}\nparams:#{params}")
       end
 
       private
