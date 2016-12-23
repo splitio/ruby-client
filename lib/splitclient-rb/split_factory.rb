@@ -22,7 +22,7 @@ module SplitIoClient
       @client = SplitClient.new(@api_key, @config, @adapter, @splits_repository, @segments_repository, @impressions_repository, @metrics_repository)
       @manager = SplitManager.new(@api_key, @config, @adapter, @splits_repository)
 
-      @sdk_blocker.block if @config.block_until_ready
+      @sdk_blocker.block if @config.block_until_ready > 0
     end
   end
 end
