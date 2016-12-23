@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe SplitIoClient::Cache::Stores::SDKBlocker do
   RSpec.shared_examples 'sdk_blocker specs' do |cache_adapter|
-    let(:config) { SplitIoClient::SplitConfig.new(block_until_ready: 0.1) }
+    let(:config) { SplitIoClient::SplitConfig.new(ready: 0.1) }
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(cache_adapter, config) }
     let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(cache_adapter, config) }
     let(:sdk_blocker) { described_class.new(config, splits_repository, segments_repository) }
