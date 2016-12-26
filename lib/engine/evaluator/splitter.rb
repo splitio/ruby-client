@@ -1,3 +1,5 @@
+require 'digest/murmurhash'
+
 module SplitIoClient
   # Misc class in charge of providing hash functions and
   # determination of treatment based on concept of buckets
@@ -48,7 +50,7 @@ module SplitIoClient
       end
 
       def hash(key, seed)
-        legacy_hash(key, seed)
+        murmur_hash2a(key)
       end
 
       #
