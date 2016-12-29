@@ -16,13 +16,23 @@ module SplitIoClient
           if ENV['SPLITCLIENT_ENV'] == 'test'
             store_segments
           else
-            @sdk_blocker.segments_thread = Thread.new do
-              @config.block_until_ready ? blocked_store : unblocked_store
+            segments_thread
+
+            if defined?(PhusionPassenger)
+              PhusionPassenger.on_event(:starting_worker_process) do |forked|
+                segments_thread if forked
+              end
             end
           end
         end
 
         private
+
+        def segments_thread
+          @sdk_blocker.segments_thread = Thread.new do
+            @config.block_until_ready ? blocked_store : unblocked_store
+          end
+        end
 
         def blocked_store
           loop do

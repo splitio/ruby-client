@@ -17,6 +17,8 @@ module SplitIoClient
         end
 
         def add_split(split)
+          return unless split[:name]
+
           @adapter.set_string(namespace_key("split.#{split[:name]}"), split.to_json)
         end
 

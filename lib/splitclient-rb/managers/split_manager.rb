@@ -22,8 +22,11 @@ module SplitIoClient
 
       @splits_repository.splits.each_with_object([]) do |(name, split), memo|
         split_model = Engine::Models::Split.new(split)
+        split_view = build_split_view(name, split)
 
-        memo << build_split_view(name, split) unless split_model.archived?
+        next if split_view[:name] == nil
+
+        memo << split_view unless split_model.archived?
       end
     end
 
