@@ -13,7 +13,7 @@ describe SplitIoClient::Splitter do
   end
 
   context 'non alpha numeric' do
-    xit 'returns expected hash and bucket' do
+    it 'returns expected hash and bucket' do
       CSV.foreach(
         File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/hash/murmur3-sample-data-non-alpha-numeric-v2.csv')),
         headers: true,
