@@ -467,6 +467,14 @@ This will generate a file gemspec with the right version, then:
 gem push splitclient-rb-<VERSION>.gem
 ```
 
+## Benchmarking
+
+To benchmark hashing algorithms (currently we're using MurmurHash) you'll need to run:
+
+```bash
+bundle exec rake benchmark_hashing_algorithm
+```
+
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/splitio/ruby-client.
