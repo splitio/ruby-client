@@ -34,60 +34,17 @@ module SplitIoClient
           return (partitions.first).treatment
         end
 
-        return get_treatment_for_key(bucket(hash(id, seed)), partitions)
+        return get_treatment_for_key(bucket(count_hash(id, seed)), partitions)
       end
 
-      def murmur_hash1(key)
-        Digest::MurmurHash1.rawdigest(key)
-      end
-
-      def murmur_hash2(key)
-        Digest::MurmurHash2.rawdigest(key)
-      end
-
-      def murmur_hash2a(key)
-        Digest::MurmurHash2A.rawdigest(key)
-      end
-
-      def hash(key, seed)
-        murmur_hash2a(key)
-      end
-
+      # returns a hash value for the give key, seed pair
       #
-      # returns a hash value for the give key, sedd pair
+      # @param key [String] user key
+      # @param seed [Fixnum] seed for the user key
       #
-      # @param key [string] user key
-      # @param seed [number] seed for the user key
-      #
-      # @return hash [string] hash value
-      def legacy_hash(key, seed)
-        h = 0
-        for i in 0..key.length-1
-          h = to_int32(31 * h + key[i].ord)
-        end
-        h^seed
-      end
-
-      #
-      # misc method to convert ruby number to int 32 since overflow is handled different to java
-      #
-      # @param number [number] ruby number value
-      #
-      # @return [int] returns the int 32 value of the provided number
-      def to_int32(number)
-        begin
-          sign = number < 0 ? -1 : 1
-          abs = number.abs
-          return 0 if abs == 0 || abs == Float::INFINITY
-        rescue
-          return 0
-        end
-
-        pos_int = sign * abs.floor
-        int_32bit = pos_int % 2**32
-
-        return int_32bit - 2**32 if int_32bit >= 2**31
-        int_32bit
+      # @return hash [String] hash value
+      def count_hash(key, seed)
+        Digest::MurmurHash3_x86_32.rawdigest(key, [seed].pack('L'))
       end
 
       #
