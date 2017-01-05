@@ -14,6 +14,8 @@ module SplitIoClient
 
           config.logger.debug("GET #{url}") if config.debug_enabled
         end
+      rescue StandardError => e
+        config.logger.warn("#{e}\nURL:#{url}\ndata:#{data}\nparams:#{params}")
       end
 
       def post_api(url, config, api_key, data, params = {})
@@ -31,6 +33,8 @@ module SplitIoClient
             config.logger.debug("POST #{url}")
           end
         end
+      rescue StandardError => e
+        config.logger.warn("#{e}\nURL:#{url}\ndata:#{data}\nparams:#{params}")
       end
 
       private
