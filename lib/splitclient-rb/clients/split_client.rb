@@ -84,7 +84,7 @@ module SplitIoClient
         latency = (Time.now - start) * 1000.0
         if @config.impressions_queue_size > 0 && store_impressions && split
           # Disable impressions if @config.impressions_queue_size == -1
-          @impressions_repository.add(split,
+          @impressions_repository.add(split_name,
             'key_name' => matching_key,
             'bucketing_key' => bucketing_key,
             'treatment' => treatment_with_label[:treatment],
