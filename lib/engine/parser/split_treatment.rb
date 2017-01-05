@@ -10,12 +10,12 @@ module SplitIoClient
           split_model = Models::Split.new(split)
           @default_treatment = split[:defaultTreatment]
 
-          return treatment('archived', Treatments::CONTROL) if split_model.archived?
+          return treatment(Models::Label::ARCHIVED, Treatments::CONTROL) if split_model.archived?
 
           if split_model.matchable?
             match(split, keys, attributes)
           else
-            treatment('killed', @default_treatment)
+            treatment(Models::Label::KILLED, @default_treatment)
           end
         end
 
@@ -32,14 +32,14 @@ module SplitIoClient
               result = Splitter.get_treatment(keys[:bucketing_key], split[:seed], condition.partitions)
 
               if result.nil?
-                return treatment('no rule matched', @default_treatment)
+                return treatment(Models::Label::NO_RULE_MATCHED, @default_treatment)
               else
                 return treatment(label, result)
               end
             end
           end
 
-          treatment('no rule matched', @default_treatment)
+          treatment(Models::Label::NO_RULE_MATCHED, @default_treatment)
         end
 
         def matcher_type(condition)

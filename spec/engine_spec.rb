@@ -37,15 +37,36 @@ describe SplitIoClient do
       end
 
       it 'returns CONTROL for random id' do
-        expect(subject.get_treatment('my_random_user_id', 'my_random_feaure')).to be SplitIoClient::Treatments::CONTROL
+        expect(subject.get_treatment('my_random_user_id', 'my_random_feaure')).to eq SplitIoClient::Treatments::CONTROL
+      end
+
+      it 'returns CONTROL and label for random id' do
+        expect(subject.get_treatment('my_random_user_id', 'my_random_feaure', nil, nil, false, true)).to eq(
+          treatment: SplitIoClient::Treatments::CONTROL,
+          label: SplitIoClient::Engine::Models::Label::EXCEPTION
+        )
       end
 
       it 'returns CONTROL on null id' do
         expect(subject.get_treatment(nil, 'my_random_feaure')).to eq SplitIoClient::Treatments::CONTROL
       end
 
+      it 'returns CONTROL and label on null id' do
+        expect(subject.get_treatment(nil, 'my_random_feaure', nil, nil, false, true)).to eq(
+          treatment: SplitIoClient::Treatments::CONTROL,
+          label: SplitIoClient::Engine::Models::Label::EXCEPTION
+        )
+      end
+
       it 'returns CONTROL on null feature' do
         expect(subject.get_treatment('my_random_user_id', nil)).to eq SplitIoClient::Treatments::CONTROL
+      end
+
+      it 'returns CONTROL and label on null feature' do
+        expect(subject.get_treatment('my_random_user_id', nil, nil, nil, false, true)).to eq(
+          treatment: SplitIoClient::Treatments::CONTROL,
+          label: SplitIoClient::Engine::Models::Label::EXCEPTION
+        )
       end
     end
 
