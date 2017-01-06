@@ -54,7 +54,7 @@ module SplitIoClient
       @transport_debug_enabled = opts[:transport_debug_enabled] || SplitConfig.default_debug
       @block_until_ready = opts[:block_until_ready] || false
       @machine_name = SplitConfig.get_hostname
-      @machine_ip = SplitConfig.get_ip
+      @machine_ip = opts[:ip] || SplitConfig.get_ip
 
       startup_log
     end
@@ -316,12 +316,9 @@ module SplitIoClient
     #
     # @return [string]
     def self.get_ip
-      begin
-        Socket::getaddrinfo(Socket.gethostname, 'echo', Socket::AF_INET)[0][3]
-      rescue
-        #unable to get local ip
-        '127.0.0.0'
-      end
+      Socket.ip_address_list.detect { |intf| intf.ipv4_private? }.ip_address
+    rescue StandardError
+      'unknown'
     end
   end
 end
