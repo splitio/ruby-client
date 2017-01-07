@@ -24,6 +24,7 @@ module SplitIoClient
                     time: i[:impressions]['time'],
                     bucketingKey: i[:impressions]['bucketing_key'],
                     label: i[:impressions]['label'],
+                    changeNumber: i[:impressions]['change_number'],
                   }
                 end
 

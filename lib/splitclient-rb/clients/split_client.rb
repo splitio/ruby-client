@@ -1,5 +1,8 @@
 module SplitIoClient
   class SplitClient
+
+    include SplitIoClient::Engine::Parser
+
     #
     # Creates a new split client instance that connects to split.io API.
     #
@@ -62,22 +65,22 @@ module SplitIoClient
       end
 
       start = Time.now
-      treatment_with_label = { label: Engine::Models::Label::EXCEPTION, treatment: Treatments::CONTROL }
+      treatment_label_change_number = { label: Engine::Models::Label::EXCEPTION, treatment: Treatments::CONTROL }
 
       begin
         split = multiple ? split_data : @splits_repository.get_split(split_name)
 
         if split.nil?
-          return parsed_treatment(multiple, treatment_with_label)
+          return parsed_treatment(multiple, treatment_label_change_number)
         else
-          treatment_with_label = SplitIoClient::Engine::Parser::SplitTreatment.new(@segments_repository).call(
+          treatment_label_change_number = SplitTreatment.new(@segments_repository).call(
             { bucketing_key: bucketing_key, matching_key: matching_key }, split, attributes
           )
         end
       rescue StandardError => error
         @config.log_found_exception(__method__.to_s, error)
 
-        return parsed_treatment(multiple, treatment_with_label)
+        return parsed_treatment(multiple, treatment_label_change_number)
       end
 
       begin
@@ -87,9 +90,10 @@ module SplitIoClient
           @impressions_repository.add(split_name,
             'key_name' => matching_key,
             'bucketing_key' => bucketing_key,
-            'treatment' => treatment_with_label[:treatment],
-            'label' => treatment_with_label[:label],
-            'time' => (Time.now.to_f * 1000.0).to_i
+            'treatment' => treatment_label_change_number[:treatment],
+            'label' => treatment_label_change_number[:label],
+            'time' => (Time.now.to_f * 1000.0).to_i,
+            'change_number' => treatment_label_change_number[:change_number]
           )
         end
 
@@ -98,10 +102,10 @@ module SplitIoClient
       rescue StandardError => error
         @config.log_found_exception(__method__.to_s, error)
 
-        return parsed_treatment(multiple, treatment_with_label)
+        return parsed_treatment(multiple, treatment_label_change_number)
       end
 
-      parsed_treatment(multiple, treatment_with_label)
+      parsed_treatment(multiple, treatment_label_change_number)
     end
 
     def keys_from_key(key)
@@ -113,14 +117,15 @@ module SplitIoClient
       end
     end
 
-    def parsed_treatment(multiple, treatment_with_label)
+    def parsed_treatment(multiple, treatment_label_change_number)
       if multiple
         {
-          treatment: treatment_with_label[:treatment],
-          label: treatment_with_label[:label]
+          treatment: treatment_label_change_number[:treatment],
+          label: treatment_label_change_number[:label]
+          change_number: treatment_label_change_number[:change_number]
         }
       else
-        treatment_with_label[:treatment]
+        treatment_label_change_number[:treatment]
       end
     end
 
