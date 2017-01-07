@@ -367,7 +367,7 @@ To run the suite of unit tests a rake task is provided.
 
 Make sure redis is running in localhost at redis://127.0.0.1:6379/0 and then just run:
 ```bash
-  SPLITCLIENT_ENV=test bundle exec rspecrake spec
+  SPLITCLIENT_ENV=test bundle exec rspec spec
 ```
 
 Also, simplecov is used for coverage reporting. After the execution of the rake task it will create the `/coverage` folder with coverage reports in pretty HTML format.

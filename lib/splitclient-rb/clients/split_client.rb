@@ -1,8 +1,6 @@
 module SplitIoClient
   class SplitClient
 
-    include SplitIoClient::Engine::Parser
-
     #
     # Creates a new split client instance that connects to split.io API.
     #
@@ -73,7 +71,7 @@ module SplitIoClient
         if split.nil?
           return parsed_treatment(multiple, treatment_label_change_number)
         else
-          treatment_label_change_number = SplitTreatment.new(@segments_repository).call(
+          treatment_label_change_number = SplitIoClient::Engine::Parser::SplitTreatment.new(@segments_repository).call(
             { bucketing_key: bucketing_key, matching_key: matching_key }, split, attributes
           )
         end
@@ -121,7 +119,7 @@ module SplitIoClient
       if multiple
         {
           treatment: treatment_label_change_number[:treatment],
-          label: treatment_label_change_number[:label]
+          label: treatment_label_change_number[:label],
           change_number: treatment_label_change_number[:change_number]
         }
       else
