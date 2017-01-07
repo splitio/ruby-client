@@ -12,10 +12,10 @@ describe Engine::Parser::SplitTreatment do
   let(:archived_split) { { status: 'ARCHIVED' } }
 
   it 'returns killed treatment' do
-    expect(split_treatment.call('foo', killed_split)).to eq({ label: 'killed', treatment: 'default' })
+    expect(split_treatment.call('foo', killed_split)).to eq({ label: 'killed', treatment: 'default', change_number: nil})
   end
 
   it 'returns archived treatment' do
-    expect(split_treatment.call('foo', archived_split)).to eq({ label: 'archived', treatment: Treatments::CONTROL })
+    expect(split_treatment.call('foo', archived_split)).to eq({ label: 'archived', treatment: Treatments::CONTROL, change_number: nil })
   end
 end
