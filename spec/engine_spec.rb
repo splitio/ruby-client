@@ -30,7 +30,7 @@ describe SplitIoClient do
       redis.flushall
     end
 
-    context '#get_treatment returns CONTROL' do
+    context '#get_treatment' do
       before do
         stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
           .to_return(status: 200, body: all_keys_matcher_json)
@@ -43,7 +43,8 @@ describe SplitIoClient do
       it 'returns CONTROL and label for random id' do
         expect(subject.get_treatment('my_random_user_id', 'my_random_feaure', nil, nil, false, true)).to eq(
           treatment: SplitIoClient::Treatments::CONTROL,
-          label: SplitIoClient::Engine::Models::Label::EXCEPTION
+          label: SplitIoClient::Engine::Models::Label::EXCEPTION,
+          change_number: nil
         )
       end
 
@@ -54,7 +55,8 @@ describe SplitIoClient do
       it 'returns CONTROL and label on null id' do
         expect(subject.get_treatment(nil, 'my_random_feaure', nil, nil, false, true)).to eq(
           treatment: SplitIoClient::Treatments::CONTROL,
-          label: SplitIoClient::Engine::Models::Label::EXCEPTION
+          label: SplitIoClient::Engine::Models::Label::EXCEPTION,
+          change_number: nil
         )
       end
 
@@ -65,7 +67,8 @@ describe SplitIoClient do
       it 'returns CONTROL and label on null feature' do
         expect(subject.get_treatment('my_random_user_id', nil, nil, nil, false, true)).to eq(
           treatment: SplitIoClient::Treatments::CONTROL,
-          label: SplitIoClient::Engine::Models::Label::EXCEPTION
+          label: SplitIoClient::Engine::Models::Label::EXCEPTION,
+          change_number: nil
         )
       end
     end
