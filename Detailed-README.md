@@ -152,6 +152,10 @@ split_client.get_treatment('user_id','feature_name', attr: 'val')
 
 *default value* = `Logger.new($stdout)`
 
+**labels_enabled** : Enables sending labels along with sensitive information
+
+*default value* = `true`
+
 **block_until_ready** : The SDK will block your app for provided amount of seconds until it's ready. If timeout expires `SplitIoClient::SDKBlockerTimeoutExpiredException` will be thrown. If `false` provided, then SDK would run in non-blocking mode
 
 *default value* = `false`
