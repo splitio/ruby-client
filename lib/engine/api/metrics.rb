@@ -23,11 +23,7 @@ module SplitIoClient
 
             result = post_api("#{@config.events_uri}/metrics/time", @config, @api_key, metrics_time)
 
-            if result.status / 100 != 2
-              @config.logger.error("Unexpected status code while posting time metrics: #{result.status}")
-            else
-              @config.logger.debug("Metric time reported: #{metrics_time.size}") if @config.debug_enabled
-            end
+            log_status(result, metrics_time.size)
           end
         end
 
@@ -43,14 +39,22 @@ module SplitIoClient
 
             result = post_api("#{@config.events_uri}/metrics/counter", @config, @api_key, metrics_count)
 
-            if result.status / 100 != 2
-              @config.logger.error("Unexpected status code while posting count metrics: #{result.status}")
-            else
-              @config.logger.debug("Metric counts reported: #{metrics_count.size}") if @config.debug_enabled
-            end
+            log_status(result, metrics_count.size)
           end
         end
         @metrics_repository.clear_counts
+      end
+
+      private
+
+      def log_status(result, info_to_log)
+        if result == false
+          @config.logger.error("Failed to make a http request")
+        elsif result.status / 100 != 2
+          @config.logger.error("Unexpected status code while posting time metrics: #{result.status}")
+        else
+          @config.logger.debug("Metric time reported: #{info_to_log}") if @config.debug_enabled
+        end
       end
     end
   end

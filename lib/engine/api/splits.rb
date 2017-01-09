@@ -12,7 +12,9 @@ module SplitIoClient
         prefix = 'splitChangeFetcher'
         splits = get_api("#{@config.base_uri}/splitChanges", @config, @api_key, since: since)
 
-        if splits.status / 100 == 2
+        if splits == false
+          @config.logger.error("Failed to make a http request")
+        elsif splits.status / 100 == 2
           result = splits_with_segment_names(splits.body)
 
           @metrics.count(prefix + '.status.' + splits.status.to_s, 1)
