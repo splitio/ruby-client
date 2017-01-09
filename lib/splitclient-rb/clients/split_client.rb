@@ -1,5 +1,6 @@
 module SplitIoClient
   class SplitClient
+
     #
     # Creates a new split client instance that connects to split.io API.
     #
@@ -21,17 +22,17 @@ module SplitIoClient
       bucketing_key, matching_key = keys_from_key(key)
       bucketing_key = matching_key if bucketing_key.nil?
 
-      treatments_with_labels =
+      treatments_labels_change_numbers =
         @splits_repository.get_splits(split_names).each_with_object({}) do |(name, data), memo|
           memo.merge!(name => get_treatment(key, name, attributes, data, false, true))
         end
 
       if @config.impressions_queue_size > 0
-        @impressions_repository.add_bulk(matching_key, bucketing_key, treatments_with_labels, (Time.now.to_f * 1000.0).to_i)
+        @impressions_repository.add_bulk(matching_key, bucketing_key, treatments_labels_change_numbers, (Time.now.to_f * 1000.0).to_i)
       end
 
-      split_names = treatments_with_labels.keys
-      treatments = treatments_with_labels.values.map { |v| v[:treatment] }
+      split_names = treatments_labels_change_numbers.keys
+      treatments = treatments_labels_change_numbers.values.map { |v| v[:treatment] }
 
       Hash[split_names.zip(treatments)]
     end
@@ -62,22 +63,22 @@ module SplitIoClient
       end
 
       start = Time.now
-      treatment_with_label = { label: Engine::Models::Label::EXCEPTION, treatment: Treatments::CONTROL }
+      treatment_label_change_number = { label: Engine::Models::Label::EXCEPTION, treatment: Treatments::CONTROL }
 
       begin
         split = multiple ? split_data : @splits_repository.get_split(split_name)
 
         if split.nil?
-          return parsed_treatment(multiple, treatment_with_label)
+          return parsed_treatment(multiple, treatment_label_change_number)
         else
-          treatment_with_label = SplitIoClient::Engine::Parser::SplitTreatment.new(@segments_repository).call(
+          treatment_label_change_number = SplitIoClient::Engine::Parser::SplitTreatment.new(@segments_repository).call(
             { bucketing_key: bucketing_key, matching_key: matching_key }, split, attributes
           )
         end
       rescue StandardError => error
         @config.log_found_exception(__method__.to_s, error)
 
-        return parsed_treatment(multiple, treatment_with_label)
+        return parsed_treatment(multiple, treatment_label_change_number)
       end
 
       begin
@@ -87,9 +88,10 @@ module SplitIoClient
           @impressions_repository.add(split_name,
             'key_name' => matching_key,
             'bucketing_key' => bucketing_key,
-            'treatment' => treatment_with_label[:treatment],
-            'label' => treatment_with_label[:label],
-            'time' => (Time.now.to_f * 1000.0).to_i
+            'treatment' => treatment_label_change_number[:treatment],
+            'label' => @config.labels_enabled ? treatment_label_change_number[:label] : nil,
+            'time' => (Time.now.to_f * 1000.0).to_i,
+            'change_number' => treatment_label_change_number[:change_number]
           )
         end
 
@@ -98,10 +100,10 @@ module SplitIoClient
       rescue StandardError => error
         @config.log_found_exception(__method__.to_s, error)
 
-        return parsed_treatment(multiple, treatment_with_label)
+        return parsed_treatment(multiple, treatment_label_change_number)
       end
 
-      parsed_treatment(multiple, treatment_with_label)
+      parsed_treatment(multiple, treatment_label_change_number)
     end
 
     def keys_from_key(key)
@@ -113,14 +115,15 @@ module SplitIoClient
       end
     end
 
-    def parsed_treatment(multiple, treatment_with_label)
+    def parsed_treatment(multiple, treatment_label_change_number)
       if multiple
         {
-          treatment: treatment_with_label[:treatment],
-          label: treatment_with_label[:label]
+          treatment: treatment_label_change_number[:treatment],
+          label: treatment_label_change_number[:label],
+          change_number: treatment_label_change_number[:change_number]
         }
       else
-        treatment_with_label[:treatment]
+        treatment_label_change_number[:treatment]
       end
     end
 
