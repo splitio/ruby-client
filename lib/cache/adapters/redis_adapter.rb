@@ -35,6 +35,7 @@ module SplitIoClient
         end
 
         def map_keys(key)
+          # FIXME: Use HSCAN
           @redis.hkeys(key)
         end
 
@@ -52,6 +53,7 @@ module SplitIoClient
         end
 
         def find_strings_by_prefix(prefix)
+          # FIXME: Use SCAN
           @redis.keys("#{prefix}*")
         end
 
