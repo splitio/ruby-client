@@ -156,10 +156,6 @@ split_client.get_treatment('user_id','feature_name', attr: 'val')
 
 *default value* = `false`
 
-**ip** : Machine IP (used in Redis namespace and sent to the Split API)
-
-*default value* = The SDK will try to get local IP address, it will use `'unknown'` if it fails
-
 **mode** : See [SDK modes section](#sdk-modes).
 
 *default value* = `:standalone`

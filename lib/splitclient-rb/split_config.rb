@@ -54,7 +54,7 @@ module SplitIoClient
       @transport_debug_enabled = opts[:transport_debug_enabled] || SplitConfig.default_debug
       @block_until_ready = opts[:block_until_ready] || false
       @machine_name = SplitConfig.get_hostname
-      @machine_ip = opts[:ip] || SplitConfig.get_ip
+      @machine_ip = SplitConfig.get_ip
 
       startup_log
     end
