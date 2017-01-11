@@ -21,7 +21,10 @@ module SplitIoClient
                   {
                     keyName: i[:impressions]['key_name'],
                     treatment: i[:impressions]['treatment'],
-                    time: i[:impressions]['time']
+                    time: i[:impressions]['time'],
+                    bucketingKey: i[:impressions]['bucketing_key'],
+                    label: i[:impressions]['label'],
+                    changeNumber: i[:impressions]['change_number'],
                   }
                 end
 

@@ -1,6 +1,9 @@
 require 'json'
 require 'thread'
 
+include SplitIoClient::Cache::Stores
+include SplitIoClient::Cache::Senders
+
 module SplitIoClient
   #
   # acts as an api adapater to connect to split endpoints
@@ -56,22 +59,22 @@ module SplitIoClient
 
     # Starts thread which loops constantly and stores splits in the splits_repository of choice
     def split_store
-      SplitIoClient::Cache::Stores::SplitStore.new(@splits_repository, @config, @api_key, @metrics, @sdk_blocker).call
+      SplitStore.new(@splits_repository, @config, @api_key, @metrics, @sdk_blocker).call
     end
 
     # Starts thread which loops constantly and stores segments in the segments_repository of choice
     def segment_store
-      SplitIoClient::Cache::Stores::SegmentStore.new(@segments_repository, @config, @api_key, @metrics, @sdk_blocker).call
+      SegmentStore.new(@segments_repository, @config, @api_key, @metrics, @sdk_blocker).call
     end
 
     # Starts thread which loops constantly and sends impressions to the Split API
     def impressions_sender
-      SplitIoClient::Cache::Senders::ImpressionsSender.new(@impressions_repository, @config, @api_key).call
+      ImpressionsSender.new(@impressions_repository, @config, @api_key).call
     end
 
     # Starts thread which loops constantly and sends metrics to the Split API
     def metrics_sender
-      SplitIoClient::Cache::Senders::MetricsSender.new(@metrics_repository, @config, @api_key).call
+      MetricsSender.new(@metrics_repository, @config, @api_key).call
     end
   end
 end

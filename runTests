@@ -1,0 +1,2 @@
+#!/bin/bash
+SPLITCLIENT_ENV=test bundle exec rspec spec

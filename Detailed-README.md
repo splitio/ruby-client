@@ -152,6 +152,10 @@ split_client.get_treatment('user_id','feature_name', attr: 'val')
 
 *default value* = `Logger.new($stdout)`
 
+**labels_enabled** : Enables sending labels along with sensitive information
+
+*default value* = `true`
+
 **block_until_ready** : The SDK will block your app for provided amount of seconds until it's ready. If timeout expires `SplitIoClient::SDKBlockerTimeoutExpiredException` will be thrown. If `false` provided, then SDK would run in non-blocking mode
 
 *default value* = `false`
@@ -367,7 +371,7 @@ To run the suite of unit tests a rake task is provided.
 
 Make sure redis is running in localhost at redis://127.0.0.1:6379/0 and then just run:
 ```bash
-  SPLITCLIENT_ENV=test bundle exec rspecrake spec
+  SPLITCLIENT_ENV=test bundle exec rspec spec
 ```
 
 Also, simplecov is used for coverage reporting. After the execution of the rake task it will create the `/coverage` folder with coverage reports in pretty HTML format.
