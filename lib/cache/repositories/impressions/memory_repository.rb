@@ -34,7 +34,7 @@ module SplitIoClient
 
           # Get everything from the queue and leave it empty
           def clear
-            @adapter.clear
+            @adapter.clear.map { |impression| impression.update(ip: @config.machine_ip) }
           end
 
           private
