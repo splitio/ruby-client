@@ -332,12 +332,9 @@ module SplitIoClient
     #
     # @return [string]
     def self.get_ip
-      begin
-        Socket::getaddrinfo(Socket.gethostname, 'echo', Socket::AF_INET)[0][3]
-      rescue
-        #unable to get local ip
-        '127.0.0.0'
-      end
+      Socket.ip_address_list.detect { |intf| intf.ipv4_private? }.ip_address
+    rescue StandardError
+      'unknown'
     end
   end
 end

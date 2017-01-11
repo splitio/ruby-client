@@ -39,13 +39,15 @@ module SplitIoClient
           # delete fetched impressions afterwards
           def clear
             impressions = impression_keys.each_with_object([]) do |key, memo|
+              _, _, ip, = key.split('/')
               members = @adapter.random_set_elements(key, @config.impressions_queue_size)
               members.each do |impression|
                 parsed_impression = JSON.parse(impression)
 
                 memo << {
                   feature: parsed_impression['split_name'],
-                  impressions: parsed_impression.reject { |k, _| k == 'split_name' }
+                  impressions: parsed_impression.reject { |k| k == 'split_name' },
+                  ip: ip
                 }
               end
 
@@ -59,7 +61,7 @@ module SplitIoClient
 
           # Get all sets by prefix
           def impression_keys
-            @adapter.find_sets_by_prefix(namespace_key('impressions.'))
+            @adapter.find_sets_by_prefix("#{@config.redis_namespace}/*impressions*")
           end
         end
       end

@@ -7,6 +7,7 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
     let(:repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(adapter, config) }
     let(:sender) { described_class.new(repository, config, nil) }
     let(:formatted_impressions) { sender.send(:formatted_impressions, repository.clear) }
+    let(:ip) { Socket.ip_address_list.detect { |intf| intf.ipv4_private? }.ip_address }
 
     before :each do
       Redis.new.flushall
@@ -34,12 +35,14 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
         {
           testName: 'foo1',
           keyImpressions: [{ keyName: 'matching_key', treatment: 'on', time: 1478113516002, bucketingKey: 'foo1', label: 'custom_label1',
-               changeNumber: 123456 }]
+               changeNumber: 123456 }],
+          ip: ip
         },
         {
           testName: 'foo2',
           keyImpressions: [{ keyName: 'matching_key2', treatment: 'off', time: 1478113518285, bucketingKey: 'foo2', label: 'custom_label2',
-               changeNumber: 123499 }]
+               changeNumber: 123499 }],
+          ip: ip
         }
       ])
     end
