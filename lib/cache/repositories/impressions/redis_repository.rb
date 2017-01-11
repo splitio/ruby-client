@@ -61,7 +61,7 @@ module SplitIoClient
 
           # Get all sets by prefix
           def impression_keys
-            @adapter.find_sets_by_prefix("#{@config.redis_namespace}/*impressions*")
+            @adapter.find_sets_by_prefix("#{@config.redis_namespace}/*/impressions.*")
           end
         end
       end
