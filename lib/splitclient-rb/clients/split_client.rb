@@ -20,7 +20,6 @@ module SplitIoClient
 
     def get_treatments(key, split_names, attributes = nil)
       bucketing_key, matching_key = keys_from_key(key)
-      bucketing_key = matching_key if bucketing_key.nil?
 
       treatments_labels_change_numbers =
         @splits_repository.get_splits(split_names).each_with_object({}) do |(name, data), memo|
@@ -50,7 +49,6 @@ module SplitIoClient
     # @return [String/Hash] Treatment as String or Hash of treatments in case of array of features
     def get_treatment(key, split_name, attributes = nil, split_data = nil, store_impressions = true, multiple = false)
       bucketing_key, matching_key = keys_from_key(key)
-      bucketing_key = matching_key if bucketing_key.nil?
 
       if matching_key.nil?
         @config.logger.warn('matching_key was null for split_name: ' + split_name.to_s)
@@ -111,7 +109,7 @@ module SplitIoClient
       when 'Hash'
         key.values_at(:bucketing_key, :matching_key)
       when 'String'
-        [key, key]
+        [nil, key]
       end
     end
 
