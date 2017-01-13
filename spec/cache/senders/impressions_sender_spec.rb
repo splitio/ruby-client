@@ -65,8 +65,8 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
     end
 
     it 'filters out impressions with the same key/treatment' do
-      repository.add('foo1', 'key_name' => 'matching_key', 'treatment' => 'on', 'time' => 1478113516902)
-      repository.add('foo2', 'key_name' => 'matching_key2', 'treatment' => 'off', 'time' => 1478113518985)
+      repository.add('foo1', 'key_name' => 'matching_key', 'bucketing_key' => 'foo1', 'treatment' => 'on', 'time' => 1478113516902)
+      repository.add('foo2', 'key_name' => 'matching_key2', 'bucketing_key' => 'foo2', 'treatment' => 'off', 'time' => 1478113518985)
 
       expect(formatted_impressions.find { |i| i[:testName] == 'foo1' }[:keyImpressions].size).to eq(1)
       expect(formatted_impressions.find { |i| i[:testName] == 'foo2' }[:keyImpressions].size).to eq(1)

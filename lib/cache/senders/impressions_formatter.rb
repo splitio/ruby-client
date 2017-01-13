@@ -63,6 +63,7 @@ module SplitIoClient
         def impression_hash(impression)
           "#{impression[:feature]}:" \
           "#{impression[:impressions]['key_name']}:" \
+          "#{impression[:impressions]['bucketing_key']}:" \
           "#{impression[:impressions]['treatment']}"
         end
       end
