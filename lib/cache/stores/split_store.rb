@@ -50,7 +50,7 @@ module SplitIoClient
 
           @config.logger.debug("segments seen(#{data[:segment_names].length}): #{data[:segment_names].to_a}") if @config.debug_enabled
 
-          if @config.block_until_ready && !@sdk_blocker.ready?
+          if @config.block_until_ready > 0 && !@sdk_blocker.ready?
             @sdk_blocker.splits_ready!
             @config.logger.info('splits are ready')
           end

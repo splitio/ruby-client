@@ -152,13 +152,13 @@ split_client.get_treatment('user_id','feature_name', attr: 'val')
 
 *default value* = `Logger.new($stdout)`
 
+**ready** : The SDK will block your app for provided amount of seconds until it's ready. If timeout expires `SplitIoClient::SDKBlockerTimeoutExpiredException` will be thrown. If `0` provided, then SDK would run in non-blocking mode
+
+*default value* = `0`
+
 **labels_enabled** : Enables sending labels along with sensitive information
 
 *default value* = `true`
-
-**block_until_ready** : The SDK will block your app for provided amount of seconds until it's ready. If timeout expires `SplitIoClient::SDKBlockerTimeoutExpiredException` will be thrown. If `false` provided, then SDK would run in non-blocking mode
-
-*default value* = `false`
 
 **mode** : See [SDK modes section](#sdk-modes).
 
@@ -215,7 +215,7 @@ end
 
 #### IMPORTANT
 
-For now, SDK does not support both `producer` mode and `block_until_ready`. You must either run SDK in `standalone` mode, or do not use `block_until_ready` option.
+For now, SDK does not support both `producer` mode and `ready`. You must either run SDK in `standalone` mode, or do not use `ready` option.
 
 This begin-rescue-end block is optional, you might want to use it to catch timeout expired exception and apply some logic.
 

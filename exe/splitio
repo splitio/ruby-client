@@ -54,8 +54,8 @@ opt_parser = OptionParser.new do |opts|
     options[:impressions_refresh_rate] = c
   end
 
-  opts.on("--block-until-ready=SECONDS", "Seconds to block the app until SDK is ready or false to run in non-blocking mode") do |c|
-    options[:block_until_ready] = c
+  opts.on("--ready=SECONDS", "Seconds to block the app until SDK is ready or false to run in non-blocking mode") do |c|
+    options[:ready] = c
   end
 
   opts.on("--redis-url=REDIS_URL", "Set base uri for Split SDK") do |c|
