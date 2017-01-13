@@ -16,17 +16,27 @@ module SplitIoClient
           if ENV['SPLITCLIENT_ENV'] == 'test'
             store_splits
           else
-            @sdk_blocker.splits_thread = Thread.new do
-              loop do
-                store_splits
+            splits_thread
 
-                sleep(random_interval(@config.features_refresh_rate))
+            if defined?(PhusionPassenger)
+              PhusionPassenger.on_event(:starting_worker_process) do |forked|
+                splits_thread if forked
               end
             end
           end
         end
 
         private
+
+        def splits_thread
+          @sdk_blocker.splits_thread = Thread.new do
+            loop do
+              store_splits
+
+              sleep(random_interval(@config.features_refresh_rate))
+            end
+          end
+        end
 
         def store_splits
           data = splits_since(@splits_repository.get_change_number)

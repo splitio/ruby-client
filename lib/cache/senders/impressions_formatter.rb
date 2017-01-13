@@ -14,20 +14,26 @@ module SplitIoClient
           return [] if impressions.empty? || filtered_impressions.empty?
 
           formatted_impressions = unique_features(filtered_impressions).each_with_object([]) do |feature, memo|
+            ip = nil
             current_impressions =
               filtered_impressions
-                .select { |i| i[:feature] == feature }
-                .map do |i|
+                .select { |impression| impression[:feature] == feature }
+                .map do |impression|
+                  ip = impression[:ip]
                   {
-                    keyName: i[:impressions]['key_name'],
-                    treatment: i[:impressions]['treatment'],
-                    time: i[:impressions]['time']
+                    keyName: impression[:impressions]['key_name'],
+                    treatment: impression[:impressions]['treatment'],
+                    time: impression[:impressions]['time'],
+                    bucketingKey: impression[:impressions]['bucketing_key'],
+                    label: impression[:impressions]['label'],
+                    changeNumber: impression[:impressions]['change_number'],
                   }
                 end
 
             memo << {
               testName: feature,
-              keyImpressions: current_impressions
+              keyImpressions: current_impressions,
+              ip: ip
             }
           end
 
@@ -37,7 +43,7 @@ module SplitIoClient
         private
 
         def unique_features(impressions)
-          impressions.map { |i| i[:feature] }.uniq
+          impressions.map { |impression| impression[:feature] }.uniq
         end
 
         # Filter seen impressions by impression_hash

@@ -18,13 +18,15 @@ module SplitIoClient
             end
           end
 
-          def add_bulk(key, bucketing_key, treatments, time)
-            treatments.each do |split_name, treatment|
+          def add_bulk(key, bucketing_key, treatments_labels_change_numbers, time)
+            treatments_labels_change_numbers.each do |split_name, treatment_label_number|
               add(
                 split_name,
                 'key_name' => key,
                 'bucketing_key' => bucketing_key,
-                'treatment' => treatment,
+                'treatment' => treatment_label_number[:treatment],
+                'label' => @config.labels_enabled ? treatment_label_number[:label] : nil,
+                'change_number' => treatment_label_number[:change_number],
                 'time' => time
               )
             end
@@ -32,7 +34,7 @@ module SplitIoClient
 
           # Get everything from the queue and leave it empty
           def clear
-            @adapter.clear
+            @adapter.clear.map { |impression| impression.update(ip: @config.machine_ip) }
           end
 
           private

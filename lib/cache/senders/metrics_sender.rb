@@ -11,8 +11,18 @@ module SplitIoClient
         def call
           return if ENV['SPLITCLIENT_ENV'] == 'test'
 
-          post_metrics
-          
+          metrics_thread
+
+          if defined?(PhusionPassenger)
+            PhusionPassenger.on_event(:starting_worker_process) do |forked|
+              metrics_thread if forked
+            end
+          end
+        end
+
+        private
+
+        def metrics_thread
           Thread.new do
             @config.logger.info('Starting metrics service')
 
@@ -23,8 +33,6 @@ module SplitIoClient
             end
           end
         end
-
-        private
 
         def post_metrics
           metrics_client.post

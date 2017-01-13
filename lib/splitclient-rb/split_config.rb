@@ -56,6 +56,8 @@ module SplitIoClient
       @machine_name = SplitConfig.get_hostname
       @machine_ip = SplitConfig.get_ip
 
+      @labels_enabled = opts[:labels_enabled].nil? ? SplitConfig.default_labels_logging : opts[:labels_enabled]
+
       startup_log
     end
 
@@ -126,6 +128,12 @@ module SplitIoClient
     attr_reader :transport_debug_enabled
 
     #
+    # Enable logging labels and sending potentially sensitive information
+    #
+    # @return [Boolean] The value for the labels enabled flag
+    attr_reader :labels_enabled
+
+    #
     # The number of seconds to wait for SDK readiness
     # or false to disable waiting
     # @return [Integer]/[FalseClass]
@@ -161,7 +169,7 @@ module SplitIoClient
     #
     # @return [string] version value for this sdk
     def self.sdk_version
-      'RubyClientSDK-'+SplitIoClient::VERSION
+      'ruby-'+SplitIoClient::VERSION
     end
 
     #
@@ -261,6 +269,14 @@ module SplitIoClient
       false
     end
 
+    #
+    # The default labels logging value
+    #
+    # @return [boolean]
+    def self.default_labels_logging
+      true
+    end
+
     def self.default_redis_url
       'redis://127.0.0.1:6379/0'
     end
@@ -316,12 +332,9 @@ module SplitIoClient
     #
     # @return [string]
     def self.get_ip
-      begin
-        Socket::getaddrinfo(Socket.gethostname, 'echo', Socket::AF_INET)[0][3]
-      rescue
-        #unable to get local ip
-        '127.0.0.0'
-      end
+      Socket.ip_address_list.detect { |intf| intf.ipv4_private? }.ip_address
+    rescue StandardError
+      'unknown'
     end
   end
 end
