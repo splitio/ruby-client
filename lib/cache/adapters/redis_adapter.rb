@@ -5,6 +5,8 @@ module SplitIoClient
     module Adapters
       # Redis adapter used to provide interface to Redis
       class RedisAdapter
+        SCAN_SLICE = 5000
+
         attr_reader :redis
 
         def initialize(redis_url)
@@ -35,7 +37,6 @@ module SplitIoClient
         end
 
         def map_keys(key)
-          # FIXME: Use HSCAN
           @redis.hkeys(key)
         end
 
@@ -53,8 +54,17 @@ module SplitIoClient
         end
 
         def find_strings_by_prefix(prefix)
-          # FIXME: Use SCAN
-          @redis.keys("#{prefix}*")
+          memo = { items: [], cursor: 0 }
+
+          loop do
+            memo[:cursor], items = @redis.scan(memo[:cursor], match: "#{prefix}*", count: SCAN_SLICE)
+
+            memo[:items].push(*items)
+
+            break if memo[:cursor] == '0'
+          end
+
+          memo[:items]
         end
 
         def multiple_strings(keys)
