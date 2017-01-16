@@ -63,7 +63,7 @@ describe SplitIoClient::Cache::Adapters::RedisAdapter do
       adapter.set_string('foo3', 'bar')
       adapter.set_string('bar', 'bar')
 
-      expect(adapter.find_strings_by_prefix('foo')).to match_array(%w(foo foo2 foo3))
+      expect(adapter.find_strings_by_prefix('foo')).to contain_exactly('foo', 'foo2', 'foo3')
     end
 
     it 'returns multiple strings' do
