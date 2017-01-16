@@ -64,6 +64,7 @@ module SplitIoClient
           "#{impression[:feature]}:" \
           "#{impression[:impressions]['key_name']}:" \
           "#{impression[:impressions]['bucketing_key']}:" \
+          "#{impression[:impressions]['change_number']}:" \
           "#{impression[:impressions]['treatment']}"
         end
       end
