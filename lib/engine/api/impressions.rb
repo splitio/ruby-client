@@ -16,10 +16,10 @@ module SplitIoClient
         impressions_by_ip.each do |ip, impressions|
           result = post_api("#{@config.events_uri}/testImpressions/bulk", @config, @api_key, impressions, 'SplitSDKMachineIP' => ip)
 
-          if result.status / 100 != 2
-            @config.logger.error("Unexpected status code while posting impressions: #{result.status}")
-          else
+          if (200..299).include? result.status
             @config.logger.debug("Impressions reported: #{total_impressions(@impressions)}") if @config.debug_enabled
+          else
+            @config.logger.error("Unexpected status code while posting impressions: #{result.status}")
           end
         end
       end
