@@ -21,12 +21,11 @@ module SplitIoClient
       return if @splits_repository.nil?
 
       @splits_repository.splits.each_with_object([]) do |(name, split), memo|
-        split_model = Engine::Models::Split.new(split)
         split_view = build_split_view(name, split)
 
         next if split_view[:name] == nil
 
-        memo << split_view unless split_model.archived?
+        memo << split_view unless Engine::Models::Split.archived?(split)
       end
     end
 
@@ -45,11 +44,13 @@ module SplitIoClient
     #
     # @returns a split view
     def split(split_name)
-      if @splits_repository
-        split = @splits_repository.get_split(split_name)
+      return unless @splits_repository
+      
+      split = @splits_repository.get_split(split_name)
 
-        build_split_view(split_name, split) unless split.nil? or split_model(split).archived?
-      end
+      return if split.nil? || Engine::Models::Split.archived?(split)
+
+      build_split_view(split_name, split)
     end
 
     def build_split_view(name, split)
@@ -69,12 +70,6 @@ module SplitIoClient
           treatments: treatments,
           change_number: split[:changeNumber]
         }
-    end
-
-    private
-
-    def split_model(split)
-      split_model = Engine::Models::Split.new(split)
     end
   end
 end

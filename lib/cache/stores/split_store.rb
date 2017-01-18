@@ -70,7 +70,7 @@ module SplitIoClient
         end
 
         def add_split_unless_archived(split)
-          if split_model(split).archived?
+          if Engine::Models::Split.archived?(split)
             @config.logger.debug("Seeing archived split #{split[:name]}") if @config.debug_enabled
 
             remove_archived_split(split)
@@ -89,10 +89,6 @@ module SplitIoClient
           @config.logger.debug("storing split (#{split[:name]})") if @config.debug_enabled
 
           @splits_repository.add_split(split)
-        end
-
-        def split_model(split)
-          Engine::Models::Split.new(split)
         end
       end
     end
