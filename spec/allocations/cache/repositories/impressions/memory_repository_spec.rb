@@ -4,7 +4,7 @@ include SplitIoClient::Cache::Adapters
 
 describe SplitIoClient::Cache::Repositories::Impressions::MemoryRepository do
   let(:config) { SplitIoClient::SplitConfig.new(impressions_queue_size: 5) }
-  let(:adapter) { MemoryAdapter.new(MemoryAdapters::SizedQueueAdapter.new(3)) }
+  let(:adapter) { MemoryAdapter.new(MemoryAdapters::QueueAdapter.new(3)) }
   let(:repository) { described_class.new(adapter, config) }
   let(:key) { 'foo'.freeze }
   let(:data) { { foo: 'bar' }.freeze }
