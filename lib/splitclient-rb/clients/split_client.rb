@@ -1,6 +1,5 @@
 module SplitIoClient
   class SplitClient
-
     #
     # Creates a new split client instance that connects to split.io API.
     #

@@ -14,6 +14,6 @@ describe SplitIoClient::Cache::Repositories::Impressions::MemoryRepository do
     key
     data
 
-    expect { repository.add(key, data) }.to allocate_max(1).objects
+    expect { repository.add(key, data) }.to allocate_max(3).objects
   end
 end
