@@ -9,7 +9,8 @@ end
 RSpec::Matchers.define :allocate_max do |expected|
   match do |actual|
     return skip('AllocationStats is not available: skipping.') unless defined?(AllocationStats)
-    @trace = actual.is_a?(Proc) ? AllocationStats.trace(&actual) : actual
+
+    @trace = actual.is_a?(Proc) ? AllocationStats.new(burn: 3).trace(&actual) : actual
     @trace.new_allocations.size <= expected
   end
 
@@ -26,7 +27,8 @@ RSpec::Matchers.define :allocate_max do |expected|
   end
 
   failure_message do |actual|
-    "expected max of #{ expected } objects to be allocated; got #{ @trace.new_allocations.size }:\n\n" << output_trace_info(@trace)
+    "expected max of #{ expected } objects to be allocated; " \
+    "got #{ @trace.new_allocations.size }:\n\n" << output_trace_info(@trace)
   end
 
   description do
