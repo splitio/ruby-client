@@ -29,7 +29,7 @@ module SplitIoClient
       @events_uri = (opts[:events_uri] || SplitConfig.default_events_uri).chomp('/')
       @mode = opts[:mode] || SplitConfig.default_mode
       @redis_url = opts[:redis_url] || SplitConfig.default_redis_url
-      @redis_namespace = opts[:redis_namespace] || SplitConfig.default_redis_namespace
+      @redis_namespace = opts[:redis_namespace] ? "#{opts[:redis_namespace]}/#{SplitConfig.default_redis_namespace}" : SplitConfig.default_redis_namespace
       @cache_adapter = SplitConfig.init_cache_adapter(
         opts[:cache_adapter] || SplitConfig.default_cache_adapter, :map_adapter, @redis_url, false
       )
