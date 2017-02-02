@@ -4,7 +4,7 @@ require 'securerandom'
 describe SplitIoClient do
   RSpec.shared_examples 'engine specs' do |cache_adapter|
     let(:config) do
-      { logger: Logger.new('/dev/null'), cache_adapter: cache_adapter }
+      { logger: Logger.new('/dev/null'), cache_adapter: cache_adapter, redis_namespace: 'test' }
     end
 
     subject { SplitIoClient::SplitFactory.new('', config).client }
@@ -81,7 +81,7 @@ describe SplitIoClient do
 
       context 'producer mode' do
         let(:config) do
-          { logger: Logger.new('/dev/null'), mode: :producer, cache_adapter: cache_adapter }
+          { logger: Logger.new('/dev/null'), mode: :producer, cache_adapter: cache_adapter, redis_namespace: 'test' }
         end
 
         it 'stores splits' do
@@ -91,7 +91,7 @@ describe SplitIoClient do
 
       context 'consumer mode' do
         let(:config) do
-          { logger: Logger.new('/dev/null'), mode: :consumer, cache_adapter: cache_adapter }
+          { logger: Logger.new('/dev/null'), mode: :consumer, cache_adapter: cache_adapter, redis_namespace: 'test' }
         end
 
         it 'stores splits' do
@@ -299,7 +299,7 @@ describe SplitIoClient do
 
       context 'when impressions are disabled' do
         let(:config) do
-          { logger: Logger.new('/dev/null'), cache_adapter: cache_adapter, impressions_queue_size: -1 }
+          { logger: Logger.new('/dev/null'), cache_adapter: cache_adapter, impressions_queue_size: -1, redis_namespace: 'test' }
         end
         let(:impressions) { subject.instance_variable_get(:@impressions_repository).clear }
 
