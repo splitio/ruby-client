@@ -1,3 +1,6 @@
+3.2.2
+- Fix issue when segment_store was never invoked
+
 3.2.0
 - Add impression labeling
 
