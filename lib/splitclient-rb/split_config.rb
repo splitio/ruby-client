@@ -282,7 +282,7 @@ module SplitIoClient
     end
 
     def self.default_redis_namespace
-      "SPLITIO/ruby-#{VERSION}"
+      'SPLITIO'
     end
 
     #
