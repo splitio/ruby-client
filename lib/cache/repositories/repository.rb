@@ -12,7 +12,7 @@ module SplitIoClient
       protected
 
       def namespace_key(key)
-        "#{@config.redis_namespace}/#{@config.machine_ip}/#{key}"
+        "#{@config.redis_namespace}/#{key}"
       end
     end
   end
