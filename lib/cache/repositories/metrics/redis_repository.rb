@@ -9,14 +9,14 @@ module SplitIoClient
           end
 
           def add_count(counter, delta)
-            prefixed_name = namespace_key("ruby-#{VERSION}/#{@config.machine_ip}/count.#{counter}")
+            prefixed_name = namespace_key("/ruby-#{VERSION}/#{@config.machine_ip}/count.#{counter}")
             counts = @adapter.find_strings_by_prefix(prefixed_name)
 
             @adapter.inc(prefixed_name, delta)
           end
 
           def add_latency(operation, time_in_ms, binary_search)
-            prefixed_name = namespace_key("ruby-#{VERSION}/#{@config.machine_ip}/latency.#{operation}")
+            prefixed_name = namespace_key("/ruby-#{VERSION}/#{@config.machine_ip}/latency.#{operation}")
             latencies = @adapter.find_strings_by_prefix(prefixed_name)
 
             if operation == 'sdk.get_treatment'
@@ -32,7 +32,7 @@ module SplitIoClient
           end
 
           def counts
-            keys = @adapter.find_strings_by_prefix(namespace_key("ruby-#{VERSION}/#{@config.machine_ip}/count"))
+            keys = @adapter.find_strings_by_prefix(namespace_key("/ruby-#{VERSION}/#{@config.machine_ip}/count"))
 
             return [] if keys.empty?
 
@@ -44,12 +44,12 @@ module SplitIoClient
           def latencies
             collected_latencies = {}
             latencies_array = Array.new(BinarySearchLatencyTracker::BUCKETS.length, 0)
-            keys = @adapter.find_strings_by_prefix(namespace_key("ruby-#{VERSION}/#{@config.machine_ip}/latency"))
+            keys = @adapter.find_strings_by_prefix(namespace_key("/ruby-#{VERSION}/#{@config.machine_ip}/latency"))
 
             return [] if keys.empty?
 
             found_latencies = @adapter.multiple_strings(keys).map do |name, data|
-              [name.gsub(namespace_key("ruby-#{VERSION}/#{@config.machine_ip}/latency."), ''), data]
+              [name.gsub(namespace_key("/ruby-#{VERSION}/#{@config.machine_ip}/latency."), ''), data]
             end.to_h
 
             found_latencies.each do |key, value|
@@ -73,12 +73,12 @@ module SplitIoClient
           end
 
           def clear_counts
-            keys = @adapter.find_strings_by_prefix(namespace_key("ruby-#{VERSION}/#{@config.machine_ip}/count"))
+            keys = @adapter.find_strings_by_prefix(namespace_key("/ruby-#{VERSION}/#{@config.machine_ip}/count"))
             @adapter.delete(keys)
           end
 
           def clear_latencies
-            keys = @adapter.find_strings_by_prefix(namespace_key("ruby-#{VERSION}/#{@config.machine_ip}/latency"))
+            keys = @adapter.find_strings_by_prefix(namespace_key("/ruby-#{VERSION}/#{@config.machine_ip}/latency"))
             @adapter.delete(keys)
           end
 
