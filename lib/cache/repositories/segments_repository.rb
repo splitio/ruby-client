@@ -58,7 +58,7 @@ module SplitIoClient
         private
 
         def segment_data(name)
-          namespace_key("segmentData.#{name}")
+          namespace_key("segment.#{name}")
         end
 
         def add_keys(name, keys)
