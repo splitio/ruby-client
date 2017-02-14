@@ -7,12 +7,11 @@ module SplitIoClient
         end
 
         def call(keys, split, attributes = nil)
-          split_model = Models::Split.new(split)
           @default_treatment = split[:defaultTreatment]
 
-          return treatment(Models::Label::ARCHIVED, Treatments::CONTROL, split[:changeNumber]) if split_model.archived?
+          return treatment(Models::Label::ARCHIVED, Treatments::CONTROL, split[:changeNumber]) if Models::Split.archived?(split)
 
-          if split_model.matchable?
+          if Models::Split.matchable?(split)
             match(split, keys, attributes)
           else
             treatment(Models::Label::KILLED, @default_treatment, split[:changeNumber])
