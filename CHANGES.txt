@@ -1,5 +1,6 @@
 3.2.3
 - Fix Redis namespace issue to align with the spec
+- Allocate less memory by not creating Split model to check if Split is archived
 
 3.2.2
 - Fix issue when segment_store was never invoked
