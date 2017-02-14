@@ -13,7 +13,7 @@ module SplitIoClient
           # Store impression data in Redis
           def add(split_name, data)
             @adapter.add_to_set(
-              namespace_key("ruby-#{VERSION}/#{@config.machine_ip}/impressions.#{split_name}"),
+              namespace_key("/ruby-#{VERSION}/#{@config.machine_ip}/impressions.#{split_name}"),
               data.merge(split_name: split_name).to_json
             )
           end
