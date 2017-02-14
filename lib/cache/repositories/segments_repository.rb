@@ -44,15 +44,15 @@ module SplitIoClient
         end
 
         def ready?
-          @adapter.string(namespace_key('.cache.ready.segments')).to_i != -1
+          @adapter.string(namespace_key('.segments.ready')).to_i != -1
         end
 
         def not_ready!
-          @adapter.set_string(namespace_key('.cache.ready.segments'), -1)
+          @adapter.set_string(namespace_key('.segments.ready'), -1)
         end
 
         def ready!
-          @adapter.set_string(namespace_key('.cache.ready.segments'), Time.now.utc.to_i)
+          @adapter.set_string(namespace_key('.segments.ready'), Time.now.utc.to_i)
         end
 
         private

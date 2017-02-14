@@ -86,15 +86,15 @@ module SplitIoClient
         end
 
         def ready?
-          @adapter.string(namespace_key('.cache.ready.splits')).to_i != -1
+          @adapter.string(namespace_key('.splits.ready')).to_i != -1
         end
 
         def not_ready!
-          @adapter.set_string(namespace_key('.cache.ready.splits'), -1)
+          @adapter.set_string(namespace_key('.splits.ready'), -1)
         end
 
         def ready!
-          @adapter.set_string(namespace_key('.cache.ready.splits'), Time.now.utc.to_i)
+          @adapter.set_string(namespace_key('.splits.ready'), Time.now.utc.to_i)
         end
       end
     end
