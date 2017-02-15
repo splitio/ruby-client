@@ -1,3 +1,6 @@
+3.2.4
+- Allow passing non-string values to get_treatment/get_treatments
+
 3.2.3
 - Fix Redis namespace issue to align with the spec
 - Allocate less memory by not creating Split model to check if Split is archived
