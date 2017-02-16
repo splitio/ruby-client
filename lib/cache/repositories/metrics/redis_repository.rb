@@ -32,7 +32,7 @@ module SplitIoClient
           end
 
           def counts
-            keys = @adapter.find_strings_by_prefix(impressions_metrics_key("#{@config.machine_ip}/count"))
+            keys = @adapter.find_strings_by_prefix(impressions_metrics_key("count"))
 
             return [] if keys.empty?
 
