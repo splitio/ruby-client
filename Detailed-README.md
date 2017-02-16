@@ -164,6 +164,14 @@ split_client.get_treatment('user_id','feature_name', attr: 'val')
 
 *default value* = `:standalone`
 
+**language** : SDK runner language (used in metrics/impressions Redis namespace)
+
+*default value* = `'ruby'`
+
+**version** : SDK runner version (used in metrics/impressions Redis namespace)
+
+*default value* = `current version of Ruby SDK`
+
 #### Cache adapter
 
 The SDK needs some container to store data, i.e. splits/segments/impressions. By default it will store everything in the application's memory, but you can also use Redis.
