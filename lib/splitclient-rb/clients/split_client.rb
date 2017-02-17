@@ -124,13 +124,5 @@ module SplitIoClient
         treatment_label_change_number[:treatment]
       end
     end
-
-    #
-    # method that returns the sdk gem version
-    #
-    # @return [string] version value for this sdk
-    def self.sdk_version
-      'ruby-'+SplitIoClient::VERSION
-    end
   end
 end
