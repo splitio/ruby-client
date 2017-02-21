@@ -179,7 +179,7 @@ describe SplitIoClient do
         )
         impressions = subject.instance_variable_get(:@adapter).impressions_repository.clear
 
-        expect(impressions.first[:impressions]['key_name']).to eq('fake_user_id_1')
+        expect(impressions.first[:impressions]['keyName']).to eq('fake_user_id_1')
       end
 
       it 'validates the feature by bucketing_key for nil matching_key' do
@@ -293,6 +293,7 @@ describe SplitIoClient do
         subject.get_treatments('26', ["sample_feature", "beta_feature"])
 
         expect(impressions.size).to eq(14)
+
         expect(formatted_impressions.find { |i| i[:testName] == 'sample_feature' }[:keyImpressions].size).to eq(6)
         expect(formatted_impressions.find { |i| i[:testName] == 'beta_feature' }[:keyImpressions].size).to eq(6)
       end

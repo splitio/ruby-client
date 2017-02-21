@@ -23,11 +23,11 @@ module SplitIoClient
               treatments_labels_change_numbers.each_slice(IMPRESSIONS_SLICE) do |treatments_labels_change_numbers_slice|
                 treatments_labels_change_numbers_slice.each do |split_name, treatment_label_change_number|
                   add(split_name,
-                    'key_name' => key,
-                    'bucketing_key' => bucketing_key,
+                    'keyName' => key,
+                    'bucketingKey' => bucketing_key,
                     'treatment' => treatment_label_change_number[:treatment],
                     'label' => @config.labels_enabled ? treatment_label_change_number[:label] : nil,
-                    'change_number' => treatment_label_change_number[:change_number],
+                    'changeNumber' => treatment_label_change_number[:change_number],
                     'time' => time
                   )
                 end
