@@ -14,7 +14,7 @@ module SplitIoClient
           def add(split_name, data)
             @adapter.add_to_set(
               impressions_metrics_key("impressions.#{split_name}"),
-              data.merge(split_name: split_name).to_json
+              data.to_json
             )
           end
 
@@ -39,14 +39,15 @@ module SplitIoClient
           # delete fetched impressions afterwards
           def clear
             impressions = impression_keys.each_with_object([]) do |key, memo|
-              _, _, ip, = key.split('/')
+              _, _, ip, _ = key.split('/')
+              split_name = key.split('.').last
               members = @adapter.random_set_elements(key, @config.impressions_queue_size)
               members.each do |impression|
                 parsed_impression = JSON.parse(impression)
 
                 memo << {
-                  feature: parsed_impression['split_name'],
-                  impressions: parsed_impression.reject { |k| k == 'split_name' },
+                  feature: split_name,
+                  impressions: parsed_impression,
                   ip: ip
                 }
               end
