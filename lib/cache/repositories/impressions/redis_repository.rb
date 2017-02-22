@@ -39,7 +39,7 @@ module SplitIoClient
           # delete fetched impressions afterwards
           def clear
             impressions = impression_keys.each_with_object([]) do |key, memo|
-              _, _, ip, _ = key.split('/')
+              ip = key.split('/')[-2]
               split_name = key.split('.').last
               members = @adapter.random_set_elements(key, @config.impressions_queue_size)
               members.each do |impression|
