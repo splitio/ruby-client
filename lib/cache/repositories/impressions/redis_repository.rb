@@ -23,13 +23,12 @@ module SplitIoClient
               treatments_labels_change_numbers.each_slice(IMPRESSIONS_SLICE) do |treatments_labels_change_numbers_slice|
                 treatments_labels_change_numbers_slice.each do |split_name, treatment_label_change_number|
                   add(split_name,
-                    'keyName' => key,
-                    'bucketingKey' => bucketing_key,
-                    'treatment' => treatment_label_change_number[:treatment],
-                    'label' => @config.labels_enabled ? treatment_label_change_number[:label] : nil,
-                    'changeNumber' => treatment_label_change_number[:change_number],
-                    'time' => time
-                  )
+                      'keyName' => key,
+                      'bucketingKey' => bucketing_key,
+                      'treatment' => treatment_label_change_number[:treatment],
+                      'label' => @config.labels_enabled ? treatment_label_change_number[:label] : nil,
+                      'changeNumber' => treatment_label_change_number[:change_number],
+                      'time' => time)
                 end
               end
             end
@@ -40,6 +39,10 @@ module SplitIoClient
           def clear
             impressions = impression_keys.each_with_object([]) do |key, memo|
               ip = key.split('/')[-2] # 'prefix/sdk_lang/ip/impressions.name' -> ip
+              if ip.nil?
+                @config.logger.warn("Impressions IP parse error for key: #{key}")
+                next
+              end
               split_name = key.split('.').last
               members = @adapter.random_set_elements(key, @config.impressions_queue_size)
               members.each do |impression|
