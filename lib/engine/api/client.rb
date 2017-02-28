@@ -9,8 +9,8 @@ module SplitIoClient
         api_client.get(url, params) do |req|
           req.headers = common_headers(api_key, config).merge('Accept-Encoding' => 'gzip')
 
-          req.options.timeout = config.read_timeout
-          req.options.open_timeout = config.connection_timeout
+          req.options[:timeout] = config.read_timeout
+          req.options[:open_timeout] = config.connection_timeout
 
           config.logger.debug("GET #{url} proxy: #{api_client.proxy}") if config.debug_enabled
         end
@@ -28,8 +28,8 @@ module SplitIoClient
 
           req.body = data.to_json
 
-          req.options.timeout = config.read_timeout
-          req.options.open_timeout = config.connection_timeout
+          req.options[:timeout] = config.read_timeout
+          req.options[:open_timeout] = config.connection_timeout
 
           if config.transport_debug_enabled
             config.logger.debug("POST #{url} #{req.body}")
