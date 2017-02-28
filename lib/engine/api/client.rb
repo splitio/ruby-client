@@ -12,7 +12,7 @@ module SplitIoClient
           req.options.timeout = config.read_timeout
           req.options.open_timeout = config.connection_timeout
 
-          config.logger.debug("GET #{url}") if config.debug_enabled
+          config.logger.debug("GET #{url} proxy: #{api_client.proxy}") if config.debug_enabled
         end
       rescue StandardError => e
         config.logger.warn("#{e}\nURL:#{url}\nparams:#{params}")
