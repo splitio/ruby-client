@@ -1,3 +1,6 @@
+3.2.4
+- Fix Faraday compability issue (now compatible with Faraday 0.8.9)
+
 3.2.3
 - Fix Redis namespace issue to align with the spec
 - Allocate less memory by not creating Split model to check if Split is archived
