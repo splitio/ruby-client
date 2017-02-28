@@ -55,15 +55,15 @@ module SplitIoClient
       def common_headers(api_key, config)
         {
           'Authorization' => "Bearer #{api_key}",
-          'SplitSDKVersion' => SplitIoClient::SplitConfig.sdk_version,
+          'SplitSDKVersion' => "#{config.language}-#{config.version}",
           'SplitSDKMachineName' => config.machine_name,
           'SplitSDKMachineIP' => config.machine_ip,
-          'Referer' => referer
+          'Referer' => referer(config)
         }
       end
 
-      def referer
-        result = SplitIoClient::SplitConfig.sdk_version
+      def referer(config)
+        result = "#{config.language}-#{config.version}"
 
         result = "#{result}::#{SplitIoClient::SplitConfig.get_hostname}" unless SplitIoClient::SplitConfig.get_hostname == 'localhost'
 
