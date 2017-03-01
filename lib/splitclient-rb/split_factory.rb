@@ -17,7 +17,7 @@ module SplitIoClient
       @metrics_repository = MetricsRepository.new(@config.metrics_adapter, @config)
 
       @sdk_blocker = SDKBlocker.new(@config, @splits_repository, @segments_repository)
-      @adapter = run_adapter!
+      @adapter = start!
 
       @client = SplitClient.new(@api_key, @config, @adapter, @splits_repository, @segments_repository, @impressions_repository, @metrics_repository)
       @manager = SplitManager.new(@api_key, @config, @adapter, @splits_repository)
@@ -25,8 +25,10 @@ module SplitIoClient
       @sdk_blocker.block if @config.block_until_ready > 0
     end
 
-    def run_adapter!
+    def start!
       SplitAdapter.new(@api_key, @config, @splits_repository, @segments_repository, @impressions_repository, @metrics_repository, @sdk_blocker)
     end
+
+    alias resume! start!
   end
 end

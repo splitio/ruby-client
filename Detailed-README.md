@@ -388,11 +388,9 @@ If you're using Unicorn in the `memory` mode you'll need to include this line in
 
 ```ruby
 after_fork do |server, worker|
-  Rails.configuration.split_factory.run_adapter! if worker.nr > 0
+  Rails.configuration.split_factory.resume! if worker.nr > 0
 end
 ```
-
-This piece of code will resurrect threads after Unicorn forked new worker. You do not need this line if you have only one worker.
 
 Also, you will need to have the following line in your `config/initializers/splitclient.rb`:
 
