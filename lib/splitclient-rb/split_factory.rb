@@ -17,12 +17,16 @@ module SplitIoClient
       @metrics_repository = MetricsRepository.new(@config.metrics_adapter, @config)
 
       @sdk_blocker = SDKBlocker.new(@config, @splits_repository, @segments_repository)
-      @adapter = SplitAdapter.new(@api_key, @config, @splits_repository, @segments_repository, @impressions_repository, @metrics_repository, @sdk_blocker)
+      @adapter = run_adapter!
 
       @client = SplitClient.new(@api_key, @config, @adapter, @splits_repository, @segments_repository, @impressions_repository, @metrics_repository)
       @manager = SplitManager.new(@api_key, @config, @adapter, @splits_repository)
 
       @sdk_blocker.block if @config.block_until_ready > 0
+    end
+
+    def run_adapter!
+      SplitAdapter.new(@api_key, @config, @splits_repository, @segments_repository, @impressions_repository, @metrics_repository, @sdk_blocker)
     end
   end
 end

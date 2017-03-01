@@ -372,6 +372,40 @@ Note: options passed through cli have higher priority than those specified in th
 ```
 bundle exec bin/splitio -h
 ```
+## Server support
+
+Currently SDK supports:
+  - Thin
+  - Puma
+  - Passenger
+  - Unicorn
+
+Other servers should work fine as well, but haven't been tested.
+
+### Unicorn
+
+If you're using Unicorn in the `memory` mode you'll need to include this line in your unicorn config (probably `config/unicorn.rb`):
+
+```ruby
+after_fork do |server, worker|
+  Rails.configuration.split_factory.run_adapter! if worker.nr > 0
+end
+```
+
+This piece of code will resurrect threads after Unicorn forked new worker. You do not need this line if you have only one worker.
+
+Also, you will need to have the following line in your `config/initializers/splitclient.rb`:
+
+```ruby
+Rails.configuration.split_factory = factory
+```
+
+## Framework support
+
+Currently SDK supports:
+  - Rails
+
+SDK should work with other frameworks too, but for now it has been tested only with Rails
 
 ## Development
 
