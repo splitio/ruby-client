@@ -1,8 +1,7 @@
-3.2.5
-- Provide an interface to run SplitAdapter, can be used to resurrect threads
 
 3.2.4
 - Fix Faraday compability issue (now compatible with Faraday 0.8.9)
+- Provide an interface to run SplitAdapter(start and resume), can be used to resurrect threads in Unicorn and Passenger servers
 
 3.2.3
 - Fix Redis namespace issue to align with the spec
