@@ -388,7 +388,7 @@ If you're using Unicorn in the `memory` mode you'll need to include this line in
 
 ```ruby
 after_fork do |server, worker|
-  Rails.configuration.split_factory.resume! if worker.nr > 0
+  Rails.configuration.split_factory.resume!
 end
 ```
 
