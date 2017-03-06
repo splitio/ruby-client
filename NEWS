@@ -1,3 +1,7 @@
+3.2.5
+
+Add config option `disable_http_cache`, which allows to ignore `Cache-control` option, coming from the server.
+
 3.1.0
 
 Now supporting Redis as a cache adapter
