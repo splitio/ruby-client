@@ -229,6 +229,36 @@ rescue SplitIoClient::SDKBlockerTimeoutExpiredException
 end
 ```
 
+#### Unicorn
+
+When using Unicorn without Redis (i.e. in memory mode) it's highly recommended to include the startup code above inside Unicorn's `after_fork` hook:
+
+*unicorn.rb*
+```ruby
+# Unicorn configuration
+after_fork do
+  options = {
+    connection_timeout: 10,
+    read_timeout: 5,
+    features_refresh_rate: 120,
+    segments_refresh_rate: 120,
+    metrics_refresh_rate: 360,
+    impressions_refresh_rate: 360,
+    logger: Logger.new('logfile.log'),
+    cache_adapter: :redis,
+    mode: :standalone,
+    redis_url: 'redis://127.0.0.1:6379/0'
+  }
+  begin
+    split_client = SplitIoClient::SplitFactoryBuilder.build('YOUR_API_KEY', options).client
+  rescue SplitIoClient::SDKBlockerTimeoutExpiredException
+    # Some arbitrary actions
+  end
+end
+```
+
+When initializing the SDK this way, SDK will only run HTTP requests from workers, not master process.
+
 #### IMPORTANT
 
 For now, SDK does not support both `producer` mode and `ready`. You must either run SDK in `standalone` mode, or do not use `ready` option.
