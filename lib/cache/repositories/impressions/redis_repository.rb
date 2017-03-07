@@ -59,6 +59,8 @@ module SplitIoClient
             end
 
             impressions
+          rescue StandardError => e
+            @config.logger.error("Exception while clearing impressions cache: #{e}")
           end
 
           private
@@ -66,6 +68,8 @@ module SplitIoClient
           # Get all sets by prefix
           def impression_keys
             @adapter.find_sets_by_prefix("#{@config.redis_namespace}/*/impressions.*")
+          rescue StandardError => e
+            @config.logger.error("Exception while fetching impression_keys: #{e}")
           end
         end
       end
