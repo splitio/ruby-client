@@ -107,9 +107,9 @@ module SplitIoClient
     def keys_from_key(key)
       case key.class.to_s
       when 'Hash'
-        key.values_at(:bucketing_key, :matching_key)
-      when 'String'
-        [nil, key]
+        key.values_at(:bucketing_key, :matching_key).map { |k| k.nil? ? nil : k.to_s }
+      else
+        [nil, key].map { |k| k.nil? ? nil : k.to_s }
       end
     end
 
