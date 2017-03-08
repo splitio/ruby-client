@@ -41,7 +41,7 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
     end
   end
 
-  include_examples 'impressions specs', MemoryAdapter.new(MemoryAdapters::SizedQueueAdapter.new(3))
+  include_examples 'impressions specs', MemoryAdapter.new(MemoryAdapters::QueueAdapter.new(3))
   include_examples 'impressions specs', RedisAdapter.new(SplitIoClient::SplitConfig.new.redis_url)
 
   context 'queue size less than the actual queue' do

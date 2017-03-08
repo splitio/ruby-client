@@ -53,8 +53,8 @@ module SplitIoClient
       @debug_enabled = opts[:debug_enabled] || SplitConfig.default_debug
       @transport_debug_enabled = opts[:transport_debug_enabled] || SplitConfig.default_debug
       @block_until_ready = opts[:ready] || opts[:block_until_ready] || 0
-      @machine_name = SplitConfig.get_hostname
-      @machine_ip = SplitConfig.get_ip
+      @machine_name = opts[:machine_name] || SplitConfig.get_hostname
+      @machine_ip = opts[:machine_ip] || SplitConfig.get_ip
 
       @language = opts[:language] || 'ruby'
       @version = opts[:version] || SplitIoClient::VERSION

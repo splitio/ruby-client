@@ -13,19 +13,19 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
       Redis.new.flushall
 
       repository.add('foo1',
-        'key_name' => 'matching_key',
-        'bucketing_key' => 'foo1',
+        'keyName' => 'matching_key',
+        'bucketingKey' => 'foo1',
         'treatment' => 'on',
         'label' => 'custom_label1',
-        'change_number' => 123456,
+        'changeNumber' => 123456,
         'time' => 1478113516002
       )
       repository.add('foo2',
-        'key_name' => 'matching_key2',
-        'bucketing_key' => 'foo2',
+        'keyName' => 'matching_key2',
+        'bucketingKey' => 'foo2',
         'treatment' => 'off',
         'label' => 'custom_label2',
-        'change_number' => 123499,
+        'changeNumber' => 123499,
         'time' => 1478113518285
       )
     end
@@ -48,7 +48,7 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
     end
 
     it 'formats multiple impressions for one key' do
-      repository.add('foo2', 'key_name' => 'matching_key3', 'treatment' => 'off', 'time' => 1478113518900)
+      repository.add('foo2', 'keyName' => 'matching_key3', 'treatment' => 'off', 'time' => 1478113518900)
 
       expect(formatted_impressions.find { |i| i[:testName] == 'foo1' }[:keyImpressions]).to match_array(
         [
@@ -65,6 +65,16 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
     end
 
     it 'filters out impressions with the same key/treatment' do
+      repository.add('foo1', 'keyName' => 'matching_key', 'bucketingKey' => 'foo1', 'treatment' => 'on', 'time' => 1478113516902, 'changeNumber' => 123456)
+      repository.add('foo2', 'keyName' => 'matching_key2', 'bucketingKey' => 'foo2', 'treatment' => 'off', 'time' => 1478113518985, 'changeNumber' => 123499)
+
+      expect(formatted_impressions.find { |i| i[:testName] == 'foo1' }[:keyImpressions].size).to eq(1)
+      expect(formatted_impressions.find { |i| i[:testName] == 'foo2' }[:keyImpressions].size).to eq(1)
+    end
+
+    it 'filters out impressions with the same key/treatment legacy' do
+      Redis.new.flushall
+
       repository.add('foo1', 'key_name' => 'matching_key', 'bucketing_key' => 'foo1', 'treatment' => 'on', 'time' => 1478113516902, 'change_number' => 123456)
       repository.add('foo2', 'key_name' => 'matching_key2', 'bucketing_key' => 'foo2', 'treatment' => 'off', 'time' => 1478113518985, 'change_number' => 123499)
 
@@ -78,6 +88,6 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
     end
   end
 
-  include_examples 'impressions sender specs', SplitIoClient::Cache::Adapters::MemoryAdapter.new(SplitIoClient::Cache::Adapters::MemoryAdapters::SizedQueueAdapter.new(3))
+  include_examples 'impressions sender specs', SplitIoClient::Cache::Adapters::MemoryAdapter.new(SplitIoClient::Cache::Adapters::MemoryAdapters::QueueAdapter.new(3))
   include_examples 'impressions sender specs', SplitIoClient::Cache::Adapters::RedisAdapter.new(SplitIoClient::SplitConfig.new.redis_url)
 end
