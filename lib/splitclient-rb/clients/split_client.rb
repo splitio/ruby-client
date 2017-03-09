@@ -125,5 +125,11 @@ module SplitIoClient
         treatment_label_change_number[:treatment]
       end
     end
+    
+    private
+
+    def split_treatment
+      @split_treatment ||= SplitIoClient::Engine::Parser::SplitTreatment.new(@segments_repository)
+    end
   end
 end

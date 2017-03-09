@@ -36,6 +36,3 @@ Gemfile.lock
 
 # Ignore Byebug command history file.
 .byebug_history
-
-# Ignore VIM swap files
-*.swp
