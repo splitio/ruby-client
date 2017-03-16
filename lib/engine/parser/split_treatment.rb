@@ -46,10 +46,11 @@ module SplitIoClient
 
           @segments_repository.adapter.pipelined do
             condition.matchers.each do |matcher|
-              matchers << condition.send(
-                "matcher_#{matcher[:matcherType].downcase}",
-                matcher: matcher, segments_repository: @segments_repository
-              )
+              matchers << if matcher[:negate]
+                condition.negation_matcher(matcher_instance(matcher[:matcherType], condition, matcher))
+              else
+                matcher_instance(matcher[:matcherType], condition, matcher)
+              end
             end
           end
 
@@ -64,6 +65,13 @@ module SplitIoClient
 
         def treatment(label, treatment, change_number = nil)
           { label: label, treatment: treatment, change_number: change_number }
+        end
+
+        def matcher_instance(type, condition, matcher)
+          condition.send(
+            "matcher_#{type.downcase}",
+            matcher: matcher, segments_repository: @segments_repository
+          )
         end
       end
     end
