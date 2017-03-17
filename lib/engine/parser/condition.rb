@@ -1,10 +1,8 @@
 module SplitIoClient
-
   #
   # acts as dto for a condition structure
   #
   class Condition < NoMethodError
-
     #
     # definition of the condition
     #
@@ -16,7 +14,7 @@ module SplitIoClient
       @partitions = set_partitions
     end
 
-    def create_condition_matcher matchers
+    def create_condition_matcher(matchers)
       CombiningMatcher.new(combiner, matchers) unless combiner.nil?
     end
 
@@ -38,20 +36,24 @@ module SplitIoClient
       @data[:matcherGroup][:matchers]
     end
 
-    def matcher_all_keys params
+    def negation_matcher(matcher)
+      NegationMatcher.new(matcher)
+    end
+
+    def matcher_all_keys(_params)
       AllKeysMatcher.new
     end
 
-    #returns UserDefinedSegmentMatcher[object]
-    def matcher_in_segment params
+    # returns UserDefinedSegmentMatcher[object]
+    def matcher_in_segment(params)
       matcher = params[:matcher]
       segment_name = matcher[:userDefinedSegmentMatcherData] && matcher[:userDefinedSegmentMatcherData][:segmentName]
 
       UserDefinedSegmentMatcher.new(params[:segments_repository], segment_name)
     end
 
-    #returns WhitelistMatcher[object] the whitelist for this condition in case it has a whitelist matcher
-    def matcher_whitelist params
+    # returns WhitelistMatcher[object] the whitelist for this condition in case it has a whitelist matcher
+    def matcher_whitelist(params)
       result = nil
       matcher = params[:matcher]
       is_user_whitelist = ((matcher[:keySelector]).nil? || (matcher[:keySelector])[:attribute].nil?)
@@ -60,42 +62,42 @@ module SplitIoClient
       else
         attribute = (matcher[:keySelector])[:attribute]
         white_list = (matcher[:whitelistMatcherData])[:whitelist]
-        result =  {attribute: attribute, value: white_list}
+        result =  { attribute: attribute, value: white_list }
       end
       WhitelistMatcher.new(result)
     end
 
-    def matcher_equal_to params
+    def matcher_equal_to(params)
       matcher = params[:matcher]
       attribute = (matcher[:keySelector])[:attribute]
       value = (matcher[:unaryNumericMatcherData])[:value]
       data_type = (matcher[:unaryNumericMatcherData])[:dataType]
-      EqualToMatcher.new({attribute: attribute, value: value, data_type: data_type})
+      EqualToMatcher.new(attribute: attribute, value: value, data_type: data_type)
     end
 
-    def matcher_greater_than_or_equal_to params
+    def matcher_greater_than_or_equal_to(params)
       matcher = params[:matcher]
       attribute = (matcher[:keySelector])[:attribute]
       value = (matcher[:unaryNumericMatcherData])[:value]
       data_type = (matcher[:unaryNumericMatcherData])[:dataType]
-      GreaterThanOrEqualToMatcher.new({attribute: attribute, value: value, data_type: data_type})
+      GreaterThanOrEqualToMatcher.new(attribute: attribute, value: value, data_type: data_type)
     end
 
-    def matcher_less_than_or_equal_to params
+    def matcher_less_than_or_equal_to(params)
       matcher = params[:matcher]
       attribute = (matcher[:keySelector])[:attribute]
       value = (matcher[:unaryNumericMatcherData])[:value]
       data_type = (matcher[:unaryNumericMatcherData])[:dataType]
-      LessThanOrEqualToMatcher.new({attribute: attribute, value: value, data_type: data_type})
+      LessThanOrEqualToMatcher.new(attribute: attribute, value: value, data_type: data_type)
     end
 
-    def matcher_between params
+    def matcher_between(params)
       matcher = params[:matcher]
       attribute = (matcher[:keySelector])[:attribute]
       start_value = (matcher[:betweenMatcherData])[:start]
       end_value = (matcher[:betweenMatcherData])[:end]
       data_type = (matcher[:betweenMatcherData])[:dataType]
-      BetweenMatcher.new({attribute: attribute, start_value: start_value, end_value: end_value, data_type: data_type})
+      BetweenMatcher.new(attribute: attribute, start_value: start_value, end_value: end_value, data_type: data_type)
     end
 
     #
@@ -106,9 +108,7 @@ module SplitIoClient
 
     #
     # @return [object] the array of partitions for this condition
-    def partitions
-      @partitions
-    end
+    attr_reader :partitions
 
     #
     # converts the partitions hash for this condition into an array of partition objects
