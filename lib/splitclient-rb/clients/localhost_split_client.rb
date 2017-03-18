@@ -24,7 +24,7 @@ module SplitIoClient
     #
     # @return [string] version value for this sdk
     def self.sdk_version
-      'RubyClientSDK-'+SplitIoClient::VERSION
+      'ruby-'+SplitIoClient::VERSION
     end
 
     def get_treatments(key, split_names, attributes = nil)

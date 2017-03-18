@@ -174,6 +174,22 @@ To use Redis, you have to include `redis-rb` in your app's Gemfile.
 
 *default value* = `memory`
 
+**language** : SDK runner language (used in metrics/impressions Redis namespace)
+
+*default value* = `'ruby'`
+
+**version** : SDK runner version (used in metrics/impressions Redis namespace)
+
+*default value* = `current version of Ruby SDK`
+
+**machine_ip** : SDK runner machine ip (used in metrics/impressions Redis namespace)
+
+*default value* = `current host's ip`
+
+**machine_name** : SDK runner machine name (used in metrics/impressions Redis namespace)
+
+*default value* = `current hostname`
+
 **redis_url** : Redis URL or hash with configuration for SDK to connect to.
 
 *default value* = `'redis://127.0.0.1:6379/0'`
