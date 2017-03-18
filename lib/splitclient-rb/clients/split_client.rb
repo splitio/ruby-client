@@ -67,6 +67,7 @@ module SplitIoClient
         split = multiple ? split_data : @splits_repository.get_split(split_name)
 
         if split.nil?
+          @config.logger.debug('split_name: ' + split_name.to_s + ' does not exist. Returning CONTROL')
           return parsed_treatment(multiple, treatment_label_change_number)
         else
           treatment_label_change_number = SplitIoClient::Engine::Parser::SplitTreatment.new(@segments_repository).call(

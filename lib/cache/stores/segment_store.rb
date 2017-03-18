@@ -35,6 +35,7 @@ module SplitIoClient
         end
 
         def blocked_store
+          @config.logger.info('Starting segments fetcher service')
           loop do
             next unless @sdk_blocker.splits_repository.ready?
 
@@ -53,6 +54,7 @@ module SplitIoClient
         end
 
         def unblocked_store
+          @config.logger.info('Starting segments fetcher service')
           loop do
             store_segments
 
