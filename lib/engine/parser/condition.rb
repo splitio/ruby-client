@@ -41,7 +41,7 @@ module SplitIoClient
     end
 
     def matcher_all_keys(_params)
-      AllKeysMatcher.new
+      @matcher_all_keys ||= AllKeysMatcher.new
     end
 
     # returns UserDefinedSegmentMatcher[object]
