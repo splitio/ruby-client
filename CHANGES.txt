@@ -3,6 +3,7 @@
 - Provide an interface to run SplitAdapter(start and resume), can be used to resurrect threads in Unicorn and Passenger servers
 - Allow passing non-string values to get_treatment/get_treatments
 - Better logging when returning CONTROL and label:Exception as well as when restarting threads
+- Add exception logging when failed to clear impressions keys or fetch impressions keys
 
 3.2.3
 - Fix Redis namespace issue to align with the spec
