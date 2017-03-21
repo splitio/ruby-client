@@ -1,14 +1,12 @@
 module SplitIoClient
-
   #
   # class to implement the all keys matcher
   #
   class AllKeysMatcher < NoMethodError
-
     attr_reader :matcher_type
 
     def initialize
-      @matcher_type = "ALL_KEYS"
+      @matcher_type = 'ALL_KEYS'
     end
 
     #
@@ -17,7 +15,7 @@ module SplitIoClient
     # @param key [string] key value to be matched
     #
     # @return [boolean] true for all instances
-    def match?(key, attributes)
+    def match?(_key, _attributes)
       true
     end
 
@@ -30,7 +28,7 @@ module SplitIoClient
     def equals?(obj)
       if obj.nil?
         false
-      elsif self.equal?(obj)
+      elsif equal?(obj)
         true
       elsif !obj.instance_of?(AllKeysMatcher)
         false
@@ -46,7 +44,5 @@ module SplitIoClient
     def to_s
       'in segment all'
     end
-
   end
-
 end
