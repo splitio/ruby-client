@@ -1,5 +1,11 @@
 3.2.4
 - Fix Faraday compability issue (now compatible with Faraday 0.8.9)
+- Provide an interface to run SplitAdapter(start and resume), can be used to resurrect threads in Unicorn and Passenger servers
+- Allow passing non-string values to get_treatment/get_treatments
+- Better logging when returning CONTROL and label:Exception as well as when restarting threads
+- Add exception logging when failed to clear impressions keys or fetch impressions keys
+- Fix Redis naming issues (key_name -> keyName)
+- Fix negation matcher
 
 3.2.3
 - Fix Redis namespace issue to align with the spec

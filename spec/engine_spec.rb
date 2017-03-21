@@ -120,8 +120,18 @@ describe SplitIoClient do
         expect(subject.get_treatment('fake_user_id_1', 'new_feature')).to eq SplitIoClient::Treatments::ON
       end
 
+      it 'validates the feature is on for integer' do
+        expect(subject.get_treatment(222, 'new_feature')).to eq SplitIoClient::Treatments::ON
+      end
+
       it 'validates the feature is on for all ids multiple keys' do
         expect(subject.get_treatments('fake_user_id_1', ['new_feature', 'foo'])).to eq(
+          new_feature: SplitIoClient::Treatments::ON, foo: SplitIoClient::Treatments::CONTROL
+        )
+      end
+
+      it 'validates the feature is on for all ids multiple keys for integer key' do
+        expect(subject.get_treatments(222, ['new_feature', 'foo'])).to eq(
           new_feature: SplitIoClient::Treatments::ON, foo: SplitIoClient::Treatments::CONTROL
         )
       end
@@ -132,13 +142,22 @@ describe SplitIoClient do
         expect(subject.get_treatment(key, 'new_feature')).to eq SplitIoClient::Treatments::ON
         impressions = subject.instance_variable_get(:@impressions_repository).clear
 
-        expect(impressions.first[:impressions]['key_name']).to eq('fake_user_id_1')
+        expect(impressions.first[:impressions]['keyName']).to eq('fake_user_id_1')
       end
 
       it 'validates the feature by bucketing_key for nil matching_key' do
         key = { bucketing_key: 'fake_user_id_1' }
 
         expect(subject.get_treatment(key, 'new_feature')).to eq "control"
+      end
+
+      it 'validates the feature by bucketing_key' do
+        key = { bucketing_key: 'bucketing_key', matching_key: 222 }
+
+        expect(subject.get_treatment(key, 'new_feature')).to eq SplitIoClient::Treatments::ON
+        impressions = subject.instance_variable_get(:@impressions_repository).clear
+
+        expect(impressions.first[:impressions]['keyName']).to eq('222')
       end
 
       it 'validates the feature returns default treatment for non matching ids' do
