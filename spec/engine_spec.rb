@@ -134,6 +134,23 @@ describe SplitIoClient do
         expect(subject.get_treatments(222, ['new_feature', 'foo'])).to eq(
           new_feature: SplitIoClient::Treatments::ON, foo: SplitIoClient::Treatments::CONTROL
         )
+        impressions = subject.instance_variable_get(:@impressions_repository).clear
+        expect(impressions.collect { |i| i[:feature] }).to match_array %w(foo new_feature)
+      end
+
+      it 'validates the feature is on for all ids multiple keys for integer key' do
+        expect(subject.get_treatments(222, ['new_feature', 'foo'])).to eq(
+          new_feature: SplitIoClient::Treatments::ON, foo: SplitIoClient::Treatments::CONTROL
+        )
+        expect(subject.get_treatments({ matching_key: 222, bucketing_key: 'foo' }, ['new_feature', 'foo'])).to eq(
+          new_feature: SplitIoClient::Treatments::ON, foo: SplitIoClient::Treatments::CONTROL
+        )
+        impressions = subject.instance_variable_get(:@impressions_repository).clear
+        expect(ImpressionsFormatter
+          .new(subject.instance_variable_get(:@impressions_repository))
+          .call(impressions)
+          .select { |im| im[:testName] == 'new_feature' }[0][:keyImpressions].size
+        ).to eq(2)
       end
 
       it 'validates the feature by bucketing_key' do
