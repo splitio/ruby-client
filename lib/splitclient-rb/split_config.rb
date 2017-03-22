@@ -308,7 +308,7 @@ module SplitIoClient
     def startup_log
       return if ENV['SPLITCLIENT_ENV'] == 'test'
 
-      @logger.info("Loaded SDK in the #{@mode} mode")
+      @logger.info("Loaded Ruby SDK v#{VERSION} in the #{@mode} mode")
       @logger.info("Loaded cache class: #{@cache_adapter.class}")
     end
 
