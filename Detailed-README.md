@@ -136,9 +136,15 @@ split_client.get_treatment('user_id','feature_name', attr: 'val')
 
 **impressions_refresh_rate** : The SDK sends information on who got what treatment at what time back to Split servers to power analytics. This parameter controls how often this data is sent to Split servers in seconds
 
+*default value* = `60`
+
 **impressions_queue_size** : The size of the impressions queue in case of `cache_adapter == :memory` and the size impressions batch to be fetched from Redis in case of `cache_adapter == :redis`. Use `-1` to disable impressions.
 
 *default value* = `60`
+
+**impressions_slice_size** : The size of the impressions slice in which they are stored in the repository
+
+*default value* = `1000`
 
 **debug_enabled** : Enables extra logging
 

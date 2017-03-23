@@ -8,27 +8,28 @@ module SplitIoClient
             @config = config
           end
 
-          # Store impression data in the selected adapter
+          # Store impression data in the memory adapter if choice
           def add(split_name, data)
             @adapter.add_to_queue(feature: split_name, impressions: data)
           rescue ThreadError # queue is full
             if random_sampler.rand(1..1000) <= 2 # log only 0.2 % of the time
               @config.logger.warn("Dropping impressions. Current size is #{@config.impressions_queue_size}. " \
-                                  "Consider increasing impressions_queue_size")
+                                  'Consider increasing impressions_queue_size')
             end
           end
 
-          def add_bulk(key, bucketing_key, treatments_labels_change_numbers, time)
-            treatments_labels_change_numbers.each do |split_name, treatment_label_number|
-              add(
-                split_name,
-                'keyName' => key,
-                'bucketingKey' => bucketing_key,
-                'treatment' => treatment_label_number[:treatment],
-                'label' => @config.labels_enabled ? treatment_label_number[:label] : nil,
-                'changeNumber' => treatment_label_number[:change_number],
-                'time' => time
-              )
+          # Store impressions in bulk
+          def add_bulk(key, bucketing_key, treatments, time)
+            treatments.each_slice(@config.impressions_slice_size) do |treatments_slice|
+              treatments_slice.each do |split_name, treatment|
+                add(split_name,
+                    'keyName' => key,
+                    'bucketingKey' => bucketing_key,
+                    'treatment' => treatment[:treatment],
+                    'label' => @config.labels_enabled ? treatment[:label] : nil,
+                    'changeNumber' => treatment[:change_number],
+                    'time' => time)
+              end
             end
           end
 

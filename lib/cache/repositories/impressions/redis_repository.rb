@@ -3,8 +3,6 @@ module SplitIoClient
     module Repositories
       module Impressions
         class RedisRepository < Repository
-          IMPRESSIONS_SLICE = 1000
-
           def initialize(adapter, config)
             @adapter = adapter
             @config = config
@@ -18,16 +16,17 @@ module SplitIoClient
             )
           end
 
-          def add_bulk(key, bucketing_key, treatments_labels_change_numbers, time)
+          # Store impressions in bulk
+          def add_bulk(key, bucketing_key, treatments, time)
             @adapter.redis.pipelined do
-              treatments_labels_change_numbers.each_slice(IMPRESSIONS_SLICE) do |treatments_labels_change_numbers_slice|
-                treatments_labels_change_numbers_slice.each do |split_name, treatment_label_change_number|
+              treatments.each_slice(@config.impressions_slice_size) do |treatments_slice|
+                treatments_slice.each do |split_name, treatment|
                   add(split_name,
                       'keyName' => key,
                       'bucketingKey' => bucketing_key,
-                      'treatment' => treatment_label_change_number[:treatment],
-                      'label' => @config.labels_enabled ? treatment_label_change_number[:label] : nil,
-                      'changeNumber' => treatment_label_change_number[:change_number],
+                      'treatment' => treatment[:treatment],
+                      'label' => @config.labels_enabled ? treatment[:label] : nil,
+                      'changeNumber' => treatment[:change_number],
                       'time' => time)
                 end
               end
