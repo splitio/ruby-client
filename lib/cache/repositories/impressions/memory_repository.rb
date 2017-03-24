@@ -8,7 +8,7 @@ module SplitIoClient
             @config = config
           end
 
-          # Store impression data in the memory adapter if choice
+          # Store impression data in the memory adapter of choice
           def add(split_name, data)
             @adapter.add_to_queue(feature: split_name, impressions: data)
           rescue ThreadError # queue is full
