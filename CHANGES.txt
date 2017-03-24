@@ -5,7 +5,7 @@
 - Better logging when returning CONTROL and label:Exception as well as when restarting threads
 - Add exception logging when failed to clear impressions keys or fetch impressions keys
 - Fix Redis naming issues (key_name -> keyName)
-- Fix negation matcher
+- Fix negation matcher. Negation had not effect and was ignored.
 
 3.2.3
 - Fix Redis namespace issue to align with the spec
