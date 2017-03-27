@@ -4,9 +4,9 @@ module SplitIoClient
   #
   class Treatments < NoMethodError
     # Constants to represent treatment values
-    CONTROL = 'control'
-    OFF = 'off'
-    ON = 'on'
+    CONTROL = 'control'.freeze
+    OFF = 'off'.freeze
+    ON = 'on'.freeze
 
     # get the actual value for the given treatment type
     #
@@ -15,12 +15,12 @@ module SplitIoClient
     # @return [Treatment] treatment type value
     def self.get_type(type)
       case type
-        when 'on'
-          return ON
-        when 'off', 'control'
-          return CONTROL
-        else # default return off
-          return CONTROL
+      when 'on'
+        ON
+      when 'off', 'control'
+        return CONTROL
+      else # default return off
+        CONTROL
       end
     end
 
