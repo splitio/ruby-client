@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe SplitIoClient::Cache::Stores::SegmentStore do
   let(:metrics_repository) { SplitIoClient::Cache::Repositories::MetricsRepository.new(config.metrics_adapter, config) }
-  let(:metrics) { SplitIoClient::Metrics.new(100, config, metrics_repository) }
+  let(:metrics) { SplitIoClient::Metrics.new(config, metrics_repository) }
   let(:segments_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/segments/segments.json'))) }
   let(:segments_json2) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/segments/segments2.json'))) }
   let(:splits_with_segments_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/splits/splits3.json'))) }

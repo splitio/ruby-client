@@ -4,7 +4,7 @@ describe SplitIoClient::Api::Splits do
   let(:splits_api) { described_class.new('', config, metrics) }
   let(:config) { SplitIoClient::SplitConfig.new }
   let(:metrics_repository) { SplitIoClient::Cache::Repositories::MetricsRepository.new(config.metrics_adapter, config) }
-  let(:metrics) { SplitIoClient::Metrics.new(100, config, metrics_repository) }
+  let(:metrics) { SplitIoClient::Metrics.new(config, metrics_repository) }
   let(:splits) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/splits/splits.json'))) }
 
   before do
