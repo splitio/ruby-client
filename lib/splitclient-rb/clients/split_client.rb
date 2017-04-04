@@ -77,32 +77,40 @@ module SplitIoClient
       rescue StandardError => error
         @config.log_found_exception(__method__.to_s, error)
 
+        store_impression(split_name, matching_key, bucketing_key, treatment_label_change_number, store_impressions)
+
         return parsed_treatment(multiple, treatment_label_change_number)
       end
 
       begin
         latency = (Time.now - start) * 1000.0
-        if @config.impressions_queue_size > 0 && store_impressions && split
-          # Disable impressions if @config.impressions_queue_size == -1
-          @impressions_repository.add(split_name,
-            'keyName' => matching_key,
-            'bucketingKey' => bucketing_key,
-            'treatment' => treatment_label_change_number[:treatment],
-            'label' => @config.labels_enabled ? treatment_label_change_number[:label] : nil,
-            'time' => (Time.now.to_f * 1000.0).to_i,
-            'changeNumber' => treatment_label_change_number[:change_number]
-          )
-        end
+        # Disable impressions if @config.impressions_queue_size == -1
+        split && store_impression(split_name, matching_key, bucketing_key, treatment_label_change_number, store_impressions)
 
         # Measure
         @adapter.metrics.time('sdk.get_treatment', latency)
       rescue StandardError => error
         @config.log_found_exception(__method__.to_s, error)
 
+        store_impression(split_name, matching_key, bucketing_key, treatment_label_change_number, store_impressions)
+
         return parsed_treatment(multiple, treatment_label_change_number)
       end
 
       parsed_treatment(multiple, treatment_label_change_number)
+    end
+
+    def store_impression(split_name, matching_key, bucketing_key, treatment, store_impressions)
+      return if @config.impressions_queue_size <= 0 || !store_impressions
+
+      @impressions_repository.add(split_name,
+        'keyName' => matching_key,
+        'bucketingKey' => bucketing_key,
+        'treatment' => treatment[:treatment],
+        'label' => @config.labels_enabled ? treatment[:label] : nil,
+        'time' => (Time.now.to_f * 1000.0).to_i,
+        'changeNumber' => treatment[:change_number]
+      )
     end
 
     def keys_from_key(key)
