@@ -1,5 +1,5 @@
 3.3.0
-- Add support for murmur hash
+- Add support for traffic allocation
 
 3.2.4
 - Fix Faraday compability issue (now compatible with Faraday 0.8.9)
