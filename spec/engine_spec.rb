@@ -377,6 +377,12 @@ describe SplitIoClient do
           expect(subject.get_treatment('00b0', 'Traffic_Allocation_UI3')).to eq(SplitIoClient::Treatments::OFF)
         end
 
+        it 'returns expected treatment when traffic alllocation is 0' do
+          expect(subject.get_treatment('01', 'Traffic_Allocation_UI4')).to eq(SplitIoClient::Treatments::ON)
+          expect(subject.get_treatment('ab', 'Traffic_Allocation_UI4')).to eq(SplitIoClient::Treatments::ON)
+          expect(subject.get_treatment('00b0', 'Traffic_Allocation_UI4')).to eq(SplitIoClient::Treatments::ON)
+        end
+
         it 'returns "not in split" label' do
           subject.get_treatment('test', 'Traffic_Allocation_UI2')
           impressions_repository = subject.instance_variable_get(:@impressions_repository)

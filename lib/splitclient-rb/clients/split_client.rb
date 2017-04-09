@@ -77,7 +77,11 @@ module SplitIoClient
       rescue StandardError => error
         @config.log_found_exception(__method__.to_s, error)
 
-        store_impression(split_name, matching_key, bucketing_key, treatment_label_change_number, store_impressions)
+        store_impression(
+          split_name, matching_key, bucketing_key,
+          { treatment: SplitIoClient::Treatments::CONTROL, label: Models::Label::EXCEPTION },
+          store_impressions
+        )
 
         return parsed_treatment(multiple, treatment_label_change_number)
       end
@@ -92,7 +96,11 @@ module SplitIoClient
       rescue StandardError => error
         @config.log_found_exception(__method__.to_s, error)
 
-        store_impression(split_name, matching_key, bucketing_key, treatment_label_change_number, store_impressions)
+        store_impression(
+          split_name, matching_key, bucketing_key,
+          { treatment: SplitIoClient::Treatments::CONTROL, label: Models::Label::EXCEPTION },
+          store_impressions
+        )
 
         return parsed_treatment(multiple, treatment_label_change_number)
       end
