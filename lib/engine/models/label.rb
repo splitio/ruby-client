@@ -6,7 +6,7 @@ module SplitIoClient
         NO_RULE_MATCHED = 'no rule matched'.freeze
         EXCEPTION = 'exception'.freeze
         KILLED = 'killed'.freeze
-        NOT_IN_SPLIT = 'not included in Split'.freeze
+        NOT_IN_SPLIT = 'not in split'.freeze
       end
     end
   end
