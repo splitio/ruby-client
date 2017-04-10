@@ -142,7 +142,11 @@ split_client.get_treatment('user_id','feature_name', attr: 'val')
 
 *default value* = `60`
 
-**impressions_slice_size** : The size of the impressions slice in which they are stored in the repository
+**impressions_slice_size** : The size of the impressions slice in which they are stored in the repository and posted to the API
+
+*default value* = `1000`
+
+**metrics_slice_size** : The size of the metrics slice in which they are stored in the repository and posted to the API
 
 *default value* = `1000`
 

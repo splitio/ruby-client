@@ -32,7 +32,7 @@ module SplitIoClient
       @segments_repository = segments_repository
       @impressions_repository = impressions_repository
       @metrics_repository = metrics_repository
-      @metrics = Metrics.new(100, @config, @metrics_repository)
+      @metrics = SplitIoClient::Metrics.new(@config, @metrics_repository)
       @sdk_blocker = sdk_blocker
 
       start_based_on_mode(@config.mode)

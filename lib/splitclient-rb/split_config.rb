@@ -37,7 +37,9 @@ module SplitIoClient
       @read_timeout = opts[:read_timeout] || SplitConfig.default_read_timeout
       @features_refresh_rate = opts[:features_refresh_rate] || SplitConfig.default_features_refresh_rate
       @segments_refresh_rate = opts[:segments_refresh_rate] || SplitConfig.default_segments_refresh_rate
+
       @metrics_refresh_rate = opts[:metrics_refresh_rate] || SplitConfig.default_metrics_refresh_rate
+      @metrics_slice_size = opts[:metrics_slice_size] || SplitConfig.default_metrics_slice_size
 
       @impressions_refresh_rate = opts[:impressions_refresh_rate] || SplitConfig.default_impressions_refresh_rate
       @impressions_queue_size = opts[:impressions_queue_size] || SplitConfig.default_impressions_queue_size
@@ -254,6 +256,10 @@ module SplitIoClient
     end
 
     def self.default_impressions_slice_size
+      1000
+    end
+
+    def self.default_metrics_slice_size
       1000
     end
 

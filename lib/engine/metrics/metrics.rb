@@ -1,13 +1,8 @@
 module SplitIoClient
-
   #
   # class to handle cached metrics
   #
   class Metrics < NoMethodError
-
-    @counter
-    @delta
-
     #
     # cached latencies
     #
@@ -26,14 +21,7 @@ module SplitIoClient
     # @return [object] array of gauges
     attr_accessor :gauges
 
-    #
-    # quese size for cached arrays
-    #
-    # @return [int] queue size
-    attr_accessor :queue_size
-
-    def initialize(queue_size, config, repository)
-      @queue_size = queue_size
+    def initialize(config, repository)
       @binary_search = SplitIoClient::BinarySearchLatencyTracker.new
 
       @config = config
