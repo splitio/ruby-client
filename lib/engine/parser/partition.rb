@@ -1,5 +1,4 @@
 module SplitIoClient
-
   #
   # acts as dto for a partition structure
   #
@@ -30,8 +29,7 @@ module SplitIoClient
     #
     # @return [boolean] true if the partition is empty false otherwise
     def is_empty?
-      @data.empty? ? true : false
+      @data.empty?
     end
   end
-
 end
