@@ -19,6 +19,7 @@ describe SplitIoClient do
     let(:segment_matcher2_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), 'test_data/splits/engine/segment_matcher2.json'))) }
     let(:whitelist_matcher_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), 'test_data/splits/engine/whitelist_matcher.json'))) }
     let(:impressions_test_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), 'test_data/splits/engine/impressions_test.json'))) }
+    let(:traffic_allocation_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), 'test_data/splits/splits_traffic_allocation.json'))) }
 
     before :each do
       redis = Redis.new
@@ -355,6 +356,38 @@ describe SplitIoClient do
           expect(subject.get_treatment('21', "sample_feature")).to eq(SplitIoClient::Treatments::OFF)
 
           expect(impressions).to eq([])
+        end
+      end
+
+      context 'traffic allocations' do
+        before do
+          stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+            .to_return(status: 200, body: traffic_allocation_json)
+        end
+
+        it 'returns expected treatment' do
+          expect(subject.get_treatment('01', 'Traffic_Allocation_UI')).to eq(SplitIoClient::Treatments::OFF)
+          expect(subject.get_treatment('ab', 'Traffic_Allocation_UI')).to eq(SplitIoClient::Treatments::OFF)
+          expect(subject.get_treatment('00b0', 'Traffic_Allocation_UI')).to eq(SplitIoClient::Treatments::OFF)
+        end
+
+        it 'returns expected treatment when traffic alllocation < 100' do
+          expect(subject.get_treatment('01', 'Traffic_Allocation_UI3')).to eq(SplitIoClient::Treatments::OFF)
+          expect(subject.get_treatment('ab', 'Traffic_Allocation_UI3')).to eq(SplitIoClient::Treatments::OFF)
+          expect(subject.get_treatment('00b0', 'Traffic_Allocation_UI3')).to eq(SplitIoClient::Treatments::OFF)
+        end
+
+        it 'returns expected treatment when traffic alllocation is 0' do
+          expect(subject.get_treatment('01', 'Traffic_Allocation_UI4')).to eq(SplitIoClient::Treatments::ON)
+          expect(subject.get_treatment('ab', 'Traffic_Allocation_UI4')).to eq(SplitIoClient::Treatments::ON)
+          expect(subject.get_treatment('00b0', 'Traffic_Allocation_UI4')).to eq(SplitIoClient::Treatments::ON)
+        end
+
+        it 'returns "not in split" label' do
+          subject.get_treatment('test', 'Traffic_Allocation_UI2')
+          impressions_repository = subject.instance_variable_get(:@impressions_repository)
+
+          expect(impressions_repository.clear[0][:impressions]['label']).to eq(SplitIoClient::Engine::Models::Label::NOT_IN_SPLIT)
         end
       end
     end
