@@ -19,11 +19,11 @@ module RSpec
     end
 
     def with_clean_redis(&block)
-      redis.flushall            # clean before run
+      redis.flushall # clean before run
       begin
         yield
       ensure
-        redis.flushall          # clean up after run
+        redis.flushall # clean up after run
       end
     end
 
