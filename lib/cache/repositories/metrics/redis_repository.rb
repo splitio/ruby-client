@@ -9,14 +9,14 @@ module SplitIoClient
           end
 
           def add_count(counter, delta)
-            prefixed_name = namespace_key("count.#{counter}")
+            prefixed_name = impressions_metrics_key("count.#{counter}")
             counts = @adapter.find_strings_by_prefix(prefixed_name)
 
             @adapter.inc(prefixed_name, delta)
           end
 
           def add_latency(operation, time_in_ms, binary_search)
-            prefixed_name = namespace_key("latency.#{operation}")
+            prefixed_name = impressions_metrics_key("latency.#{operation}")
             latencies = @adapter.find_strings_by_prefix(prefixed_name)
 
             if operation == 'sdk.get_treatment'
@@ -32,24 +32,24 @@ module SplitIoClient
           end
 
           def counts
-            keys = @adapter.find_strings_by_prefix(namespace_key('count'))
+            keys = @adapter.find_strings_by_prefix(impressions_metrics_key("count"))
 
             return [] if keys.empty?
 
             @adapter.multiple_strings(keys).map do |name, data|
-              [name.gsub(namespace_key('count.'), ''), data]
+              [name.gsub(impressions_metrics_key('count.'), ''), data]
             end.to_h
           end
 
           def latencies
             collected_latencies = {}
             latencies_array = Array.new(BinarySearchLatencyTracker::BUCKETS.length, 0)
-            keys = @adapter.find_strings_by_prefix(namespace_key('latency'))
+            keys = @adapter.find_strings_by_prefix(impressions_metrics_key('latency'))
 
             return [] if keys.empty?
 
             found_latencies = @adapter.multiple_strings(keys).map do |name, data|
-              [name.gsub(namespace_key('latency.'), ''), data]
+              [name.gsub(impressions_metrics_key('latency.'), ''), data]
             end.to_h
 
             found_latencies.each do |key, value|
@@ -73,12 +73,12 @@ module SplitIoClient
           end
 
           def clear_counts
-            keys = @adapter.find_strings_by_prefix(namespace_key('count'))
+            keys = @adapter.find_strings_by_prefix(impressions_metrics_key('count'))
             @adapter.delete(keys)
           end
 
           def clear_latencies
-            keys = @adapter.find_strings_by_prefix(namespace_key('latency'))
+            keys = @adapter.find_strings_by_prefix(impressions_metrics_key('latency'))
             @adapter.delete(keys)
           end
 

@@ -10,7 +10,7 @@ module SplitIoClient
           @adapter = adapter
           @config = config
 
-          @adapter.set_bool(namespace_key('ready'), false)
+          @adapter.set_bool(namespace_key('.ready'), false)
         end
 
         # Receives segment data, adds and removes segements from the store
@@ -32,33 +32,33 @@ module SplitIoClient
         end
 
         def used_segment_names
-          @adapter.get_set(namespace_key('segments.registered'))
+          @adapter.get_set(namespace_key('.segments.registered'))
         end
 
         def set_change_number(name, last_change)
-          @adapter.set_string(namespace_key("segment.#{name}.till"), last_change)
+          @adapter.set_string(namespace_key(".segment.#{name}.till"), last_change)
         end
 
         def get_change_number(name)
-          @adapter.string(namespace_key("segment.#{name}.till")) || -1
+          @adapter.string(namespace_key(".segment.#{name}.till")) || -1
         end
 
         def ready?
-          @adapter.string(namespace_key('cache.ready.segments')).to_i != -1
+          @adapter.string(namespace_key('.segments.ready')).to_i != -1
         end
 
         def not_ready!
-          @adapter.set_string(namespace_key('cache.ready.segments'), -1)
+          @adapter.set_string(namespace_key('.segments.ready'), -1)
         end
 
         def ready!
-          @adapter.set_string(namespace_key('cache.ready.segments'), Time.now.utc.to_i)
+          @adapter.set_string(namespace_key('.segments.ready'), Time.now.utc.to_i)
         end
 
         private
 
         def segment_data(name)
-          namespace_key("segmentData.#{name}")
+          namespace_key(".segment.#{name}")
         end
 
         def add_keys(name, keys)

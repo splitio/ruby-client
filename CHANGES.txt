@@ -1,3 +1,25 @@
+4.0.0
+- Add support for murmur3 algo
+
+3.3.0
+- Add support for traffic allocation
+
+3.2.4
+- Fix Faraday compability issue (now compatible with Faraday 0.8.9)
+- Provide an interface to run SplitAdapter(start and resume), can be used to resurrect threads in Unicorn and Passenger servers
+- Allow passing non-string values to get_treatment/get_treatments
+- Better logging when returning CONTROL and label:Exception as well as when restarting threads
+- Add exception logging when failed to clear impressions keys or fetch impressions keys
+- Fix Redis naming issues (key_name -> keyName)
+- Fix negation matcher. Negation had not effect and was ignored.
+
+3.2.3
+- Fix Redis namespace issue to align with the spec
+- Allocate less memory by not creating Split model to check if Split is archived
+
+3.2.2
+- Fix issue when segment_store was never invoked
+
 3.2.0
 - Add impression labeling
 

@@ -66,6 +66,7 @@ module SplitIoClient
         split = multiple ? split_data : @splits_repository.get_split(split_name)
 
         if split.nil?
+          @config.logger.debug("split_name: #{split_name} does not exist. Returning CONTROL")
           return parsed_treatment(multiple, treatment_label_change_number)
         else
           treatment_label_change_number = SplitIoClient::Engine::Parser::SplitTreatment.new(@segments_repository).call(
@@ -75,27 +76,30 @@ module SplitIoClient
       rescue StandardError => error
         @config.log_found_exception(__method__.to_s, error)
 
+        store_impression(
+          split_name, matching_key, bucketing_key,
+          { treatment: SplitIoClient::Treatments::CONTROL, label: Engine::Models::Label::EXCEPTION },
+          store_impressions
+        )
+
         return parsed_treatment(multiple, treatment_label_change_number)
       end
 
       begin
         latency = (Time.now - start) * 1000.0
-        if @config.impressions_queue_size > 0 && store_impressions && split
-          # Disable impressions if @config.impressions_queue_size == -1
-          @impressions_repository.add(split_name,
-            'key_name' => matching_key,
-            'bucketing_key' => bucketing_key,
-            'treatment' => treatment_label_change_number[:treatment],
-            'label' => @config.labels_enabled ? treatment_label_change_number[:label] : nil,
-            'time' => (Time.now.to_f * 1000.0).to_i,
-            'change_number' => treatment_label_change_number[:change_number]
-          )
-        end
+        # Disable impressions if @config.impressions_queue_size == -1
+        split && store_impression(split_name, matching_key, bucketing_key, treatment_label_change_number, store_impressions)
 
         # Measure
         @adapter.metrics.time('sdk.get_treatment', latency)
       rescue StandardError => error
         @config.log_found_exception(__method__.to_s, error)
+
+        store_impression(
+          split_name, matching_key, bucketing_key,
+          { treatment: SplitIoClient::Treatments::CONTROL, label: Engine::Models::Label::EXCEPTION },
+          store_impressions
+        )
 
         return parsed_treatment(multiple, treatment_label_change_number)
       end
@@ -103,12 +107,25 @@ module SplitIoClient
       parsed_treatment(multiple, treatment_label_change_number)
     end
 
+    def store_impression(split_name, matching_key, bucketing_key, treatment, store_impressions)
+      return if @config.impressions_queue_size <= 0 || !store_impressions
+
+      @impressions_repository.add(split_name,
+        'keyName' => matching_key,
+        'bucketingKey' => bucketing_key,
+        'treatment' => treatment[:treatment],
+        'label' => @config.labels_enabled ? treatment[:label] : nil,
+        'time' => (Time.now.to_f * 1000.0).to_i,
+        'changeNumber' => treatment[:change_number]
+      )
+    end
+
     def keys_from_key(key)
-      case key
-      when Hash
-        key.values_at(:bucketing_key, :matching_key)
-      when String
-        [nil, key]
+      case key.class.to_s
+      when 'Hash'
+        key.values_at(:bucketing_key, :matching_key).map { |k| k.nil? ? nil : k.to_s }
+      else
+        [nil, key].map { |k| k.nil? ? nil : k.to_s }
       end
     end
 
@@ -124,12 +141,10 @@ module SplitIoClient
       end
     end
 
-    #
-    # method that returns the sdk gem version
-    #
-    # @return [string] version value for this sdk
-    def self.sdk_version
-      'ruby-'+SplitIoClient::VERSION
+    private
+
+    def split_treatment
+      @split_treatment ||= SplitIoClient::Engine::Parser::SplitTreatment.new(@segments_repository)
     end
   end
 end

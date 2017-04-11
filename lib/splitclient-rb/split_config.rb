@@ -29,7 +29,7 @@ module SplitIoClient
       @events_uri = (opts[:events_uri] || SplitConfig.default_events_uri).chomp('/')
       @mode = opts[:mode] || SplitConfig.default_mode
       @redis_url = opts[:redis_url] || SplitConfig.default_redis_url
-      @redis_namespace = opts[:redis_namespace] || SplitConfig.default_redis_namespace
+      @redis_namespace = opts[:redis_namespace] ? "#{opts[:redis_namespace]}.#{SplitConfig.default_redis_namespace}" : SplitConfig.default_redis_namespace
       @cache_adapter = SplitConfig.init_cache_adapter(
         opts[:cache_adapter] || SplitConfig.default_cache_adapter, :map_adapter, @redis_url, false
       )
@@ -53,8 +53,11 @@ module SplitIoClient
       @debug_enabled = opts[:debug_enabled] || SplitConfig.default_debug
       @transport_debug_enabled = opts[:transport_debug_enabled] || SplitConfig.default_debug
       @block_until_ready = opts[:ready] || opts[:block_until_ready] || 0
-      @machine_name = SplitConfig.get_hostname
-      @machine_ip = SplitConfig.get_ip
+      @machine_name = opts[:machine_name] || SplitConfig.get_hostname
+      @machine_ip = opts[:machine_ip] || SplitConfig.get_ip
+
+      @language = opts[:language] || 'ruby'
+      @version = opts[:version] || SplitIoClient::VERSION
 
       @labels_enabled = opts[:labels_enabled].nil? ? SplitConfig.default_labels_logging : opts[:labels_enabled]
 
@@ -142,6 +145,9 @@ module SplitIoClient
     attr_reader :machine_ip
     attr_reader :machine_name
 
+    attr_reader :language
+    attr_reader :version
+
     attr_reader :features_refresh_rate
     attr_reader :segments_refresh_rate
     attr_reader :metrics_refresh_rate
@@ -162,14 +168,6 @@ module SplitIoClient
     # @return [Config] The default split client configuration.
     def self.default
       SplitConfig.new
-    end
-
-    #
-    # method that returns the sdk gem version
-    #
-    # @return [string] version value for this sdk
-    def self.sdk_version
-      'ruby-'+SplitIoClient::VERSION
     end
 
     #
@@ -286,7 +284,7 @@ module SplitIoClient
     end
 
     def self.default_redis_namespace
-      "SPLITIO/ruby-#{VERSION}"
+      'SPLITIO'
     end
 
     #
@@ -314,7 +312,7 @@ module SplitIoClient
     def startup_log
       return if ENV['SPLITCLIENT_ENV'] == 'test'
 
-      @logger.info("Loaded SDK in the #{@mode} mode")
+      @logger.info("Loaded Ruby SDK v#{VERSION} in the #{@mode} mode")
       @logger.info("Loaded cache class: #{@cache_adapter.class}")
     end
 

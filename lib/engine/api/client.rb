@@ -9,10 +9,10 @@ module SplitIoClient
         api_client.get(url, params) do |req|
           req.headers = common_headers(api_key, config).merge('Accept-Encoding' => 'gzip')
 
-          req.options.timeout = config.read_timeout
-          req.options.open_timeout = config.connection_timeout
+          req.options[:timeout] = config.read_timeout
+          req.options[:open_timeout] = config.connection_timeout
 
-          config.logger.debug("GET #{url}") if config.debug_enabled
+          config.logger.debug("GET #{url} proxy: #{api_client.proxy}") if config.debug_enabled
         end
       rescue StandardError => e
         config.logger.warn("#{e}\nURL:#{url}\nparams:#{params}")
@@ -28,8 +28,8 @@ module SplitIoClient
 
           req.body = data.to_json
 
-          req.options.timeout = config.read_timeout
-          req.options.open_timeout = config.connection_timeout
+          req.options[:timeout] = config.read_timeout
+          req.options[:open_timeout] = config.connection_timeout
 
           if config.transport_debug_enabled
             config.logger.debug("POST #{url} #{req.body}")
@@ -55,15 +55,15 @@ module SplitIoClient
       def common_headers(api_key, config)
         {
           'Authorization' => "Bearer #{api_key}",
-          'SplitSDKVersion' => SplitIoClient::SplitConfig.sdk_version,
+          'SplitSDKVersion' => "#{config.language}-#{config.version}",
           'SplitSDKMachineName' => config.machine_name,
           'SplitSDKMachineIP' => config.machine_ip,
-          'Referer' => referer
+          'Referer' => referer(config)
         }
       end
 
-      def referer
-        result = SplitIoClient::SplitConfig.sdk_version
+      def referer(config)
+        result = "#{config.language}-#{config.version}"
 
         result = "#{result}::#{SplitIoClient::SplitConfig.get_hostname}" unless SplitIoClient::SplitConfig.get_hostname == 'localhost'
 
