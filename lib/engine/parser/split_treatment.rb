@@ -21,10 +21,25 @@ module SplitIoClient
         private
 
         def match(split, keys, attributes)
+          in_rollout = false
+          key = keys[:bucketing_key] ? keys[:bucketing_key] : keys[:matching_key]
+
           split[:conditions].each do |c|
             condition = SplitIoClient::Condition.new(c)
 
             next if condition.empty?
+
+            if !in_rollout && condition.type == SplitIoClient::Condition::TYPE_ROLLOUT
+              if split[:trafficAllocation] < 100
+                bucket = Splitter.bucket(Splitter.hash(key, split[:trafficAllocationSeed].to_i))
+
+                if bucket >= split[:trafficAllocation]
+                  return treatment(Models::Label::NOT_IN_SPLIT, @default_treatment, split[:changeNumber])
+                end
+              end
+
+              in_rollout = true
+            end
 
             if matcher_type(condition).match?(keys[:matching_key], attributes)
               key = keys[:bucketing_key] ? keys[:bucketing_key] : keys[:matching_key]

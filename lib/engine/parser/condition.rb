@@ -3,6 +3,8 @@ module SplitIoClient
   # acts as dto for a condition structure
   #
   class Condition < NoMethodError
+    TYPE_ROLLOUT = 'ROLLOUT'.freeze
+    TYPE_WHITELIST = 'WHITELIST'.freeze
     #
     # definition of the condition
     #
@@ -34,6 +36,12 @@ module SplitIoClient
     # @return [object] the matchers array value for this condition
     def matchers
       @data[:matcherGroup][:matchers]
+    end
+
+    #
+    # @return [string] condition type
+    def type
+      @data[:conditionType]
     end
 
     def negation_matcher(matcher)
