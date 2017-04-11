@@ -27,7 +27,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "pry"
   spec.add_development_dependency "pry-byebug"
   spec.add_development_dependency "simplecov"
-  spec.add_development_dependency "redis"
   spec.add_development_dependency "allocation_stats"
 
   spec.add_runtime_dependency "json", "~> 1.8"
