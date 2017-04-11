@@ -14,3 +14,5 @@ RSpec.configure do |config|
 end
 
 require 'splitclient-rb'
+
+Dir[File.dirname(__FILE__) + '/support/**/*.rb'].each { |f| require f }

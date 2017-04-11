@@ -1,3 +1,8 @@
+4.0.0
+
+Add support for murmur3 hashing algorithm
+Optimize gem memory usage
+
 3.3.0
 
 Add support for traffic allocation

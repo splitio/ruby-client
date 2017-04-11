@@ -1,3 +1,7 @@
+4.0.0
+- Add support for murmur3 algo
+- Optimize memory usage
+
 3.3.0
 - Add support for traffic allocation
 

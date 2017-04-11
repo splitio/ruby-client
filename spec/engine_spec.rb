@@ -104,6 +104,11 @@ describe SplitIoClient do
         expect(subject.get_treatment('fake_user_id_1', 'test_feature')).to eq SplitIoClient::Treatments::ON
         expect(subject.get_treatment('fake_user_id_2', 'test_feature')).to eq SplitIoClient::Treatments::ON
       end
+
+      xit 'allocates minimum objects' do
+        expect { subject.get_treatment('fake_user_id_1', 'test_feature') }.to allocate_max(283).objects
+        expect(subject.get_treatment('fake_user_id_1', 'test_feature')).to eq SplitIoClient::Treatments::ON
+      end
     end
 
     context 'in segment matcher' do
