@@ -23,6 +23,7 @@ module SplitIoClient
         def match(split, keys, attributes)
           in_rollout = false
           key = keys[:bucketing_key] ? keys[:bucketing_key] : keys[:matching_key]
+          legacy_algo = (split[:algo] == 1 || split[:algo] == nil) ? true : false
 
           split[:conditions].each do |c|
             condition = SplitIoClient::Condition.new(c)
@@ -31,7 +32,7 @@ module SplitIoClient
 
             if !in_rollout && condition.type == SplitIoClient::Condition::TYPE_ROLLOUT
               if split[:trafficAllocation] < 100
-                bucket = Splitter.bucket(Splitter.hash(key, split[:trafficAllocationSeed].to_i))
+                bucket = Splitter.bucket(Splitter.count_hash(key, split[:trafficAllocationSeed].to_i, legacy_algo))
 
                 if bucket >= split[:trafficAllocation]
                   return treatment(Models::Label::NOT_IN_SPLIT, @default_treatment, split[:changeNumber])

@@ -79,7 +79,7 @@ module SplitIoClient
 
         store_impression(
           split_name, matching_key, bucketing_key,
-          { treatment: SplitIoClient::Treatments::CONTROL, label: Models::Label::EXCEPTION },
+          { treatment: SplitIoClient::Treatments::CONTROL, label: Engine::Models::Label::EXCEPTION },
           store_impressions
         )
 
@@ -98,7 +98,7 @@ module SplitIoClient
 
         store_impression(
           split_name, matching_key, bucketing_key,
-          { treatment: SplitIoClient::Treatments::CONTROL, label: Models::Label::EXCEPTION },
+          { treatment: SplitIoClient::Treatments::CONTROL, label: Engine::Models::Label::EXCEPTION },
           store_impressions
         )
 
