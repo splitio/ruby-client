@@ -28,7 +28,7 @@ module SplitIoClient
 
             if matcher_type(condition).match?(keys[:matching_key], attributes)
               key = keys[:bucketing_key] ? keys[:bucketing_key] : keys[:matching_key]
-              result = Splitter.get_treatment(key, split[:seed], condition.partitions)
+              result = Splitter.get_treatment(key, split[:seed], condition.partitions, split[:algo])
 
               if result.nil?
                 return treatment(Models::Label::NO_RULE_MATCHED, @default_treatment, split[:changeNumber])

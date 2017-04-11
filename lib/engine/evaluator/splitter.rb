@@ -25,7 +25,9 @@ module SplitIoClient
       # @param partitions [object] array of partitions
       #
       # @return traetment [object] treatment value
-      def get_treatment(id, seed, partitions)
+      def get_treatment(id, seed, partitions, legacy_algo)
+        legacy = (legacy_algo == 1 || legacy_algo == nil) ? true : false
+
         if partitions.empty?
           return Treatments::CONTROL
         end
@@ -34,7 +36,7 @@ module SplitIoClient
           return (partitions.first).treatment
         end
 
-        return get_treatment_for_key(bucket(count_hash(id, seed)), partitions)
+        return get_treatment_for_key(bucket(count_hash(id, seed, legacy_algo)), partitions)
       end
 
       # returns a hash value for the give key, seed pair
@@ -43,8 +45,44 @@ module SplitIoClient
       # @param seed [Fixnum] seed for the user key
       #
       # @return hash [String] hash value
-      def count_hash(key, seed)
+      def count_hash(key, seed, legacy)
+        legacy ? legacy_hash(key, seed) : murmur_hash(key, seed)
+      end
+
+      def murmur_hash(key, seed)
         Digest::MurmurHash3_x86_32.rawdigest(key, [seed].pack('L'))
+      end
+
+      def legacy_hash(key, seed)
+        h = 0
+
+        for i in 0..key.length-1
+          h = to_int32(31 * h + key[i].ord)
+        end
+
+        h^seed
+      end
+
+      #
+      # misc method to convert ruby number to int 32 since overflow is handled different to java
+      #
+      # @param number [number] ruby number value
+      #
+      # @return [int] returns the int 32 value of the provided number
+      def to_int32(number)
+        begin
+          sign = number < 0 ? -1 : 1
+          abs = number.abs
+          return 0 if abs == 0 || abs == Float::INFINITY
+        rescue
+          return 0
+        end
+
+        pos_int = sign * abs.floor
+        int_32bit = pos_int % 2**32
+
+        return int_32bit - 2**32 if int_32bit >= 2**31
+        int_32bit
       end
 
       #

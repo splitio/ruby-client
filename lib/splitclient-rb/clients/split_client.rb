@@ -125,7 +125,7 @@ module SplitIoClient
         treatment_label_change_number[:treatment]
       end
     end
-    
+
     private
 
     def split_treatment
