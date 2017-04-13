@@ -1,3 +1,6 @@
+4.1.0
+- Add set matchers
+
 4.0.0
 - Add support for murmur3 algo
 - Optimize memory usage
