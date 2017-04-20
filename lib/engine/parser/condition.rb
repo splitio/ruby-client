@@ -108,6 +108,7 @@ module SplitIoClient
       BetweenMatcher.new(attribute: attribute, start_value: start_value, end_value: end_value, data_type: data_type)
     end
 
+
     def matcher_part_of_set(params)
       PartOfSetMatcher.new(
         params[:matcher][:keySelector][:attribute],
@@ -124,6 +125,27 @@ module SplitIoClient
 
     def matcher_contains_any(params)
       ContainsAnyMatcher.new(
+        params[:matcher][:keySelector][:attribute],
+        params[:matcher][:whitelistMatcherData][:whitelist]
+      )
+    end
+
+    def matcher_starts_with(params)
+      StartsWithMatcher.new(
+        params[:matcher][:keySelector][:attribute],
+        params[:matcher][:whitelistMatcherData][:whitelist]
+      )
+    end
+
+    def matcher_contains(params)
+      ContainsMatcher.new(
+        params[:matcher][:keySelector][:attribute],
+        params[:matcher][:whitelistMatcherData][:whitelist]
+      )
+    end
+
+    def matcher_ends_with(params)
+      EndsWithMatcher.new(
         params[:matcher][:keySelector][:attribute],
         params[:matcher][:whitelistMatcherData][:whitelist]
       )

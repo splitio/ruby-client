@@ -10,6 +10,7 @@ describe SplitIoClient::ContainsAnyMatcher do
   end
 
   it 'does not match' do
+    expect(described_class.new('attr', %w()).match?(nil, attr: %w(a b c))).to be(false)
     expect(described_class.new('attr', remote_array).match?(nil, attr: %w())).to be(false)
     expect(described_class.new('attr', remote_array).match?(nil, attr: %w(d))).to be(false)
     expect(described_class.new('attr', remote_array).match?(nil, attr: %w(d e f))).to be(false)
