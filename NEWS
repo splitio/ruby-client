@@ -1,3 +1,7 @@
+4.1.0
+
+Introduce set matchers: part of set, contains all and contains any, starts with, ends with and contains.
+
 4.0.0
 
 Add support for murmur3 hashing algorithm
