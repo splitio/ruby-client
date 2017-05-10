@@ -108,23 +108,29 @@ module SplitIoClient
       BetweenMatcher.new(attribute: attribute, start_value: start_value, end_value: end_value, data_type: data_type)
     end
 
-
-    def matcher_part_of_set(params)
-      PartOfSetMatcher.new(
+    def matcher_equal_to_set(params)
+      EqualToSetMatcher.new(
         params[:matcher][:keySelector][:attribute],
         params[:matcher][:whitelistMatcherData][:whitelist]
       )
     end
 
-    def matcher_contains_all(params)
+    def matcher_contains_any_of_set(params)
+      ContainsAnyMatcher.new(
+        params[:matcher][:keySelector][:attribute],
+        params[:matcher][:whitelistMatcherData][:whitelist]
+      )
+    end
+
+    def matcher_contains_all_of_set(params)
       ContainsAllMatcher.new(
         params[:matcher][:keySelector][:attribute],
         params[:matcher][:whitelistMatcherData][:whitelist]
       )
     end
 
-    def matcher_contains_any(params)
-      ContainsAnyMatcher.new(
+    def matcher_part_of_set(params)
+      PartOfSetMatcher.new(
         params[:matcher][:keySelector][:attribute],
         params[:matcher][:whitelistMatcherData][:whitelist]
       )
@@ -137,15 +143,15 @@ module SplitIoClient
       )
     end
 
-    def matcher_contains(params)
-      ContainsMatcher.new(
+    def matcher_ends_with(params)
+      EndsWithMatcher.new(
         params[:matcher][:keySelector][:attribute],
         params[:matcher][:whitelistMatcherData][:whitelist]
       )
     end
 
-    def matcher_ends_with(params)
-      EndsWithMatcher.new(
+    def matcher_contains_string(params)
+      ContainsMatcher.new(
         params[:matcher][:keySelector][:attribute],
         params[:matcher][:whitelistMatcherData][:whitelist]
       )
