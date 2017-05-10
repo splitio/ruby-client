@@ -30,6 +30,8 @@ module SplitIoClient
         @impressions_repository.add_bulk(
           matching_key, bucketing_key, treatments_labels_change_numbers, (Time.now.to_f * 1000.0).to_i
         )
+
+        route_impressions(split_names, matching_key, bucketing_key, treatments_labels_change_numbers, attributes)
       end
 
       split_names = treatments_labels_change_numbers.keys
@@ -87,8 +89,13 @@ module SplitIoClient
 
         store_impression(
           split_name, matching_key, bucketing_key,
+<<<<<<< HEAD
           { treatment: SplitIoClient::Engine::Models::Treatment::CONTROL, label: Engine::Models::Label::EXCEPTION },
           store_impressions
+=======
+          { treatment: SplitIoClient::Treatments::CONTROL, label: Engine::Models::Label::EXCEPTION },
+          store_impressions, attributes
+>>>>>>> Add ImpressionListener support
         )
 
         return parsed_treatment(multiple, treatment_data)
@@ -97,7 +104,11 @@ module SplitIoClient
       begin
         latency = (Time.now - start) * 1000.0
         # Disable impressions if @config.impressions_queue_size == -1
+<<<<<<< HEAD
         split && store_impression(split_name, matching_key, bucketing_key, treatment_data, store_impressions)
+=======
+        split && store_impression(split_name, matching_key, bucketing_key, treatment_label_change_number, store_impressions, attributes)
+>>>>>>> Add ImpressionListener support
 
         # Measure
         @adapter.metrics.time('sdk.get_treatment', latency)
@@ -106,8 +117,13 @@ module SplitIoClient
 
         store_impression(
           split_name, matching_key, bucketing_key,
+<<<<<<< HEAD
           { treatment: SplitIoClient::Engine::Models::Treatment::CONTROL, label: Engine::Models::Label::EXCEPTION },
           store_impressions
+=======
+          { treatment: SplitIoClient::Treatments::CONTROL, label: Engine::Models::Label::EXCEPTION },
+          store_impressions, attributes
+>>>>>>> Add ImpressionListener support
         )
 
         return parsed_treatment(multiple, treatment_data)
@@ -116,7 +132,9 @@ module SplitIoClient
       parsed_treatment(multiple, treatment_data)
     end
 
-    def store_impression(split_name, matching_key, bucketing_key, treatment, store_impressions)
+    def store_impression(split_name, matching_key, bucketing_key, treatment, store_impressions, attributes)
+      route_impression(split_name, matching_key, bucketing_key, treatment, attributes) if @config.impression_listener && store_impressions
+
       return if @config.impressions_queue_size <= 0 || !store_impressions
 
       @impressions_repository.add(split_name,
@@ -127,6 +145,30 @@ module SplitIoClient
         'time' => (Time.now.to_f * 1000.0).to_i,
         'changeNumber' => treatment[:change_number]
       )
+    end
+
+    def route_impression(split_name, matching_key, bucketing_key, treatment, attributes)
+      impression_router.add(
+        split_name: split_name,
+        matching_key: matching_key,
+        bucketing_key: bucketing_key,
+        treatment: treatment,
+        attributes: attributes
+      )
+    end
+
+    def route_impressions(split_names, matching_key, bucketing_key, treatments_labels_change_numbers, attributes)
+      impression_router.add_bulk(
+        split_names: split_names,
+        matching_key: matching_key,
+        bucketing_key: bucketing_key,
+        treatments_labels_change_numbers: treatments_labels_change_numbers,
+        attributes: attributes
+      )
+    end
+
+    def impression_router
+      @impression_router ||= SplitIoClient::ImpressionRouter.new(@config)
     end
 
     def keys_from_key(key)

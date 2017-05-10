@@ -61,6 +61,9 @@ module SplitIoClient
 
       @labels_enabled = opts[:labels_enabled].nil? ? SplitConfig.default_labels_logging : opts[:labels_enabled]
 
+      @impression_listener = opts[:impression_listener]
+      @impression_listener_refresh_rate = opts[:impression_listener_refresh_rate] || SplitConfig.default_impression_listener_refresh_rate
+
       startup_log
     end
 
@@ -152,6 +155,9 @@ module SplitIoClient
     attr_reader :segments_refresh_rate
     attr_reader :metrics_refresh_rate
     attr_reader :impressions_refresh_rate
+
+    attr_reader :impression_listener
+    attr_reader :impression_listener_refresh_rate
 
     #
     # Wow big the impressions queue is before dropping impressions. -1 to disable it.
@@ -248,6 +254,10 @@ module SplitIoClient
     end
 
     def self.default_impressions_refresh_rate
+      60
+    end
+
+    def self.default_impression_listener_refresh_rate
       60
     end
 
