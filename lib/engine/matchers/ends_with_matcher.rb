@@ -14,7 +14,7 @@ module SplitIoClient
 
       return false if @suffix_list.empty?
 
-      @suffix_list.any? { |suffix| value.end_with? suffix }
+      @suffix_list.any? { |suffix| value.to_s.end_with? suffix }
     end
   end
 end
