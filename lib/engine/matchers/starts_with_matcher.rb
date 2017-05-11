@@ -14,7 +14,7 @@ module SplitIoClient
 
       return false if @prefix_list.empty?
 
-      @prefix_list.any? { |prefix| value.start_with? prefix }
+      @prefix_list.any? { |prefix| value.to_s.start_with? prefix }
     end
   end
 end
