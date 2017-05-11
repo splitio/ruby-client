@@ -14,7 +14,7 @@ module SplitIoClient
 
       return false if @substr_list.empty?
 
-      @substr_list.any? { |substr| value.include? substr }
+      @substr_list.any? { |substr| value.to_s.include? substr }
     end
   end
 end
