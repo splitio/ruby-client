@@ -19,7 +19,7 @@ module SplitIoClient
     # @param key [string] key value to be matched
     #
     # @return [boolean] evaluation of the key against the segment
-    def match?(key, attributes)
+    def match?(key, _split_treatment, attributes)
       @segments_repository.in_segment?(@segment_name, key)
     end
 

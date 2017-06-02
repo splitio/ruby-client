@@ -157,6 +157,13 @@ module SplitIoClient
       )
     end
 
+    def matcher_in_split_treatment(params)
+      DependencyMatcher.new(
+        params[:matcher][:dependencyMatcherData][:split],
+        params[:matcher][:dependencyMatcherData][:treatments]
+      )
+    end
+
     #
     # @return [object] the negate value for this condition
     def negate

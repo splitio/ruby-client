@@ -26,7 +26,9 @@ module SplitIoClient
         end
 
       if @config.impressions_queue_size > 0
-        @impressions_repository.add_bulk(matching_key, bucketing_key, treatments_labels_change_numbers, (Time.now.to_f * 1000.0).to_i)
+        @impressions_repository.add_bulk(
+          matching_key, bucketing_key, treatments_labels_change_numbers, (Time.now.to_f * 1000.0).to_i
+        )
       end
 
       split_names = treatments_labels_change_numbers.keys
@@ -69,7 +71,10 @@ module SplitIoClient
           @config.logger.debug("split_name: #{split_name} does not exist. Returning CONTROL")
           return parsed_treatment(multiple, treatment_label_change_number)
         else
-          treatment_label_change_number = SplitIoClient::Engine::Parser::SplitTreatment.new(@segments_repository).call(
+          treatment_label_change_number =
+            SplitIoClient::Engine::Parser::SplitTreatment.new(
+              @segments_repository, @splits_repository
+            ).call(
             { bucketing_key: bucketing_key, matching_key: matching_key }, split, attributes
           )
         end
@@ -144,7 +149,9 @@ module SplitIoClient
     private
 
     def split_treatment
-      @split_treatment ||= SplitIoClient::Engine::Parser::SplitTreatment.new(@segments_repository)
+      @split_treatment ||= SplitIoClient::Engine::Parser::SplitTreatment.new(
+        @segments_repository, @splits_repository
+      )
     end
   end
 end

@@ -9,7 +9,7 @@ module SplitIoClient
       @substr_list = substr_list
     end
 
-    def match?(_key, data)
+    def match?(_key, _split_treatment, data)
       value = data.fetch(@attribute) { |attr| data[attr.to_s] || data[attr.to_sym] }
 
       return false if @substr_list.empty?

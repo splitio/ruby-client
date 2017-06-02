@@ -2,14 +2,20 @@ module SplitIoClient
   module Engine
     module Parser
       class SplitTreatment
-        def initialize(segments_repository)
+        def initialize(segments_repository, splits_repository)
+          @splits_repository = splits_repository
           @segments_repository = segments_repository
         end
 
         def call(keys, split, attributes = nil)
+          # DependencyMatcher here, split is actually a split_name in this case
+          split = @splits_repository.get_split(split) if split.is_a? String
+
           @default_treatment = split[:defaultTreatment]
 
-          return treatment(Models::Label::ARCHIVED, Treatments::CONTROL, split[:changeNumber]) if Models::Split.archived?(split)
+          if Models::Split.archived?(split)
+            return treatment(Models::Label::ARCHIVED, Treatments::CONTROL, split[:changeNumber])
+          end
 
           if Models::Split.matchable?(split)
             match(split, keys, attributes)
@@ -42,7 +48,7 @@ module SplitIoClient
               in_rollout = true
             end
 
-            if matcher_type(condition).match?(keys[:matching_key], attributes)
+            if matcher_type(condition).match?(keys[:matching_key], self, attributes)
               key = keys[:bucketing_key] ? keys[:bucketing_key] : keys[:matching_key]
               result = Splitter.get_treatment(key, split[:seed], condition.partitions, split[:algo])
 

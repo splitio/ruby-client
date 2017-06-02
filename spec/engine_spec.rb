@@ -18,6 +18,7 @@ describe SplitIoClient do
     let(:segment_matcher_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), 'test_data/splits/engine/segment_matcher.json'))) }
     let(:segment_matcher2_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), 'test_data/splits/engine/segment_matcher2.json'))) }
     let(:whitelist_matcher_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), 'test_data/splits/engine/whitelist_matcher.json'))) }
+    let(:dependency_matcher_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), 'test_data/splits/engine/dependency_matcher.json'))) }
     let(:impressions_test_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), 'test_data/splits/engine/impressions_test.json'))) }
     let(:traffic_allocation_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), 'test_data/splits/splits_traffic_allocation.json'))) }
 
@@ -251,6 +252,17 @@ describe SplitIoClient do
 
       it 'validates the feature is on for all ids' do
         expect(subject.get_treatment('fake_user_id_2', 'test_whitelist')).to eq SplitIoClient::Treatments::OFF
+      end
+    end
+
+    context 'dependency matcher' do
+      before do
+        stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+          .to_return(status: 200, body: dependency_matcher_json)
+      end
+
+      it 'returns on treatment' do
+        expect(subject.get_treatment('fake_user_id_1', 'test_dependency')).to eq SplitIoClient::Treatments::ON
       end
     end
 
