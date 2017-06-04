@@ -11,7 +11,9 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
     let(:split_adapter) do
       SplitIoClient::SplitAdapter.new(nil, SplitIoClient::SplitConfig.new(mode: :nil), nil, nil, nil, nil, nil)
     end
-    let(:ip) { Socket.ip_address_list.detect { |intf| intf.ipv4_private? }.ip_address }
+    let(:ip) do
+      Socket.ip_address_list.detect { |intf| intf.ipv4_private? || intf.ipv4_loopback? }.ip_address
+    end
 
     before :each do
       Redis.new.flushall

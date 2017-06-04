@@ -9,6 +9,7 @@ module SplitIoClient
 
         def call(keys, split, attributes = nil)
           # DependencyMatcher here, split is actually a split_name in this case
+          # TODO: Cache splits in case of DependencyMatcher
           split = @splits_repository.get_split(split) if split.is_a? String
 
           @default_treatment = split[:defaultTreatment]
