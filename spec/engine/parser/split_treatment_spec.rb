@@ -17,6 +17,6 @@ describe Engine::Parser::SplitTreatment do
   end
 
   it 'returns archived treatment' do
-    expect(split_treatment.call('foo', archived_split)).to eq({ label: 'archived', treatment: Treatments::CONTROL, change_number: nil })
+    expect(split_treatment.call('foo', archived_split)).to eq({ label: 'archived', treatment: SplitIoClient::Engine::Models::Treatment::CONTROL, change_number: nil })
   end
 end

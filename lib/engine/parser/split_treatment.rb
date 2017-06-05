@@ -15,7 +15,7 @@ module SplitIoClient
           @default_treatment = split[:defaultTreatment]
 
           if Models::Split.archived?(split)
-            return treatment(Models::Label::ARCHIVED, Treatments::CONTROL, split[:changeNumber])
+            return treatment(Models::Label::ARCHIVED, SplitIoClient::Engine::Models::Treatment::CONTROL, split[:changeNumber])
           end
 
           if Models::Split.matchable?(split)

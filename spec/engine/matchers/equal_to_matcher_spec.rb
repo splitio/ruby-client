@@ -24,7 +24,7 @@ describe SplitIoClient::EqualToMatcher do
     end
 
     it 'validates the treatment is ON for correct attribute value' do
-      expect(subject.get_treatment(user, feature, matching_attributes)).to eq SplitIoClient::Treatments::ON
+      expect(subject.get_treatment(user, feature, matching_attributes)).to eq SplitIoClient::Engine::Models::Treatment::ON
     end
 
     it 'validates the treatment is the default treatment for incorrect attributes hash and nil' do
@@ -44,8 +44,8 @@ describe SplitIoClient::EqualToMatcher do
     end
 
     it 'validates the treatment is ON for 0 and -0 attribute values' do
-      expect(subject.get_treatment(user, feature, matching_zero_attributes)).to eq SplitIoClient::Treatments::ON
-      expect(subject.get_treatment(user, feature, matching_negative_zero_attributes)).to eq SplitIoClient::Treatments::ON
+      expect(subject.get_treatment(user, feature, matching_zero_attributes)).to eq SplitIoClient::Engine::Models::Treatment::ON
+      expect(subject.get_treatment(user, feature, matching_negative_zero_attributes)).to eq SplitIoClient::Engine::Models::Treatment::ON
     end
 
     it 'validates the treatment is the default treatment for <> 0 and -0 attribute values' do
@@ -63,7 +63,7 @@ describe SplitIoClient::EqualToMatcher do
     end
 
     it 'validates the treatment is on for negative attribute value' do
-      expect(subject.get_treatment(user, feature, matching_negative_attributes)).to eq SplitIoClient::Treatments::ON
+      expect(subject.get_treatment(user, feature, matching_negative_attributes)).to eq SplitIoClient::Engine::Models::Treatment::ON
     end
 
     it 'validates the treatment is the default treatment for negative attribute value' do
@@ -83,8 +83,8 @@ describe SplitIoClient::EqualToMatcher do
     end
 
     it 'validates the treatment is ON for correct number attribute value' do
-      expect(subject.get_treatment(user, feature, matching_attributes_1)).to eq SplitIoClient::Treatments::ON
-      expect(subject.get_treatment(user, feature, matching_attributes_2)).to eq SplitIoClient::Treatments::ON
+      expect(subject.get_treatment(user, feature, matching_attributes_1)).to eq SplitIoClient::Engine::Models::Treatment::ON
+      expect(subject.get_treatment(user, feature, matching_attributes_2)).to eq SplitIoClient::Engine::Models::Treatment::ON
     end
 
     it 'validates the treatment is the default treatment for incorrect number attributes hash and nil' do

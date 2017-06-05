@@ -44,12 +44,12 @@ module SplitIoClient
     def get_treatment(id, feature, attributes = nil)
       unless id
         @config.logger.warn('id was null for feature: ' + feature)
-        return Treatments::CONTROL
+        return SplitIoClient::Engine::Models::Treatment::CONTROL
       end
 
       unless feature
         @config.logger.warn('feature was null for id: ' + id)
-        return Treatments::CONTROL
+        return SplitIoClient::Engine::Models::Treatment::CONTROL
       end
 
       result = get_localhost_treatment(feature)
@@ -83,7 +83,7 @@ module SplitIoClient
     def get_localhost_treatment(feature)
       treatment = @localhost_mode_features.select { |h| h[:feature] == feature }.last || {}
 
-      treatment[:treatment] || Treatments::CONTROL
+      treatment[:treatment] || SplitIoClient::Engine::Models::Treatment::CONTROL
     end
   end
 end

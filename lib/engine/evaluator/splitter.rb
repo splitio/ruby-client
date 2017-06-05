@@ -29,7 +29,7 @@ module SplitIoClient
         legacy = (legacy_algo == 1 || legacy_algo == nil) ? true : false
 
         if partitions.empty?
-          return Treatments::CONTROL
+          return SplitIoClient::Engine::Models::Treatment::CONTROL
         end
 
         if hundred_percent_one_treatment?(partitions)
@@ -101,7 +101,7 @@ module SplitIoClient
           end
         end
 
-        return Treatments::CONTROL
+        return SplitIoClient::Engine::Models::Treatment::CONTROL
       end
 
       #

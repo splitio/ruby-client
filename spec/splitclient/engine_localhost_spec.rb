@@ -25,8 +25,8 @@ describe SplitIoClient do
     end
 
     it 'validates a non existing feature has control as treatment for any user id in local mode' do
-      expect(subject.get_treatment(user_id_1, "weird_local_feature")).to eq(SplitIoClient::Treatments::CONTROL)
-      expect(subject.get_treatment(user_id_2, "non_existent_local_feature")).to eq(SplitIoClient::Treatments::CONTROL)
+      expect(subject.get_treatment(user_id_1, "weird_local_feature")).to eq(SplitIoClient::Engine::Models::Treatment::CONTROL)
+      expect(subject.get_treatment(user_id_2, "non_existent_local_feature")).to eq(SplitIoClient::Engine::Models::Treatment::CONTROL)
     end
 
     it 'receives updated features' do

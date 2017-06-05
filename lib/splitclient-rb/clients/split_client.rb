@@ -50,28 +50,28 @@ module SplitIoClient
     # @return [String/Hash] Treatment as String or Hash of treatments in case of array of features
     def get_treatment(key, split_name, attributes = nil, split_data = nil, store_impressions = true, multiple = false)
       bucketing_key, matching_key = keys_from_key(key)
+      treatment_data = { label: Engine::Models::Label::EXCEPTION, treatment: SplitIoClient::Engine::Models::Treatment::CONTROL }
 
       if matching_key.nil?
         @config.logger.warn('matching_key was null for split_name: ' + split_name.to_s)
-        return parsed_treatment(multiple, { label: Engine::Models::Label::EXCEPTION, treatment: Treatments::CONTROL })
+        return parsed_treatment(multiple, treatment_data)
       end
 
       if split_name.nil?
         @config.logger.warn('split_name was null for key: ' + key)
-        return parsed_treatment(multiple, { label: Engine::Models::Label::EXCEPTION, treatment: Treatments::CONTROL })
+        return parsed_treatment(multiple, treatment_data)
       end
 
       start = Time.now
-      treatment_label_change_number = { label: Engine::Models::Label::EXCEPTION, treatment: Treatments::CONTROL }
 
       begin
         split = multiple ? split_data : @splits_repository.get_split(split_name)
 
         if split.nil?
           @config.logger.debug("split_name: #{split_name} does not exist. Returning CONTROL")
-          return parsed_treatment(multiple, treatment_label_change_number)
+          return parsed_treatment(multiple, treatment_data)
         else
-          treatment_label_change_number =
+          treatment_data =
             SplitIoClient::Engine::Parser::SplitTreatment.new(
               @segments_repository, @splits_repository
             ).call(
@@ -83,17 +83,17 @@ module SplitIoClient
 
         store_impression(
           split_name, matching_key, bucketing_key,
-          { treatment: SplitIoClient::Treatments::CONTROL, label: Engine::Models::Label::EXCEPTION },
+          { treatment: SplitIoClient::SplitIoClient::Engine::Models::Treatment::CONTROL, label: Engine::Models::Label::EXCEPTION },
           store_impressions
         )
 
-        return parsed_treatment(multiple, treatment_label_change_number)
+        return parsed_treatment(multiple, treatment_data)
       end
 
       begin
         latency = (Time.now - start) * 1000.0
         # Disable impressions if @config.impressions_queue_size == -1
-        split && store_impression(split_name, matching_key, bucketing_key, treatment_label_change_number, store_impressions)
+        split && store_impression(split_name, matching_key, bucketing_key, treatment_data, store_impressions)
 
         # Measure
         @adapter.metrics.time('sdk.get_treatment', latency)
@@ -102,14 +102,14 @@ module SplitIoClient
 
         store_impression(
           split_name, matching_key, bucketing_key,
-          { treatment: SplitIoClient::Treatments::CONTROL, label: Engine::Models::Label::EXCEPTION },
+          { treatment: SplitIoClient::SplitIoClient::Engine::Models::Treatment::CONTROL, label: Engine::Models::Label::EXCEPTION },
           store_impressions
         )
 
-        return parsed_treatment(multiple, treatment_label_change_number)
+        return parsed_treatment(multiple, treatment_data)
       end
 
-      parsed_treatment(multiple, treatment_label_change_number)
+      parsed_treatment(multiple, treatment_data)
     end
 
     def store_impression(split_name, matching_key, bucketing_key, treatment, store_impressions)
@@ -134,15 +134,15 @@ module SplitIoClient
       end
     end
 
-    def parsed_treatment(multiple, treatment_label_change_number)
+    def parsed_treatment(multiple, treatment_data)
       if multiple
         {
-          treatment: treatment_label_change_number[:treatment],
-          label: treatment_label_change_number[:label],
-          change_number: treatment_label_change_number[:change_number]
+          treatment: treatment_data[:treatment],
+          label: treatment_data[:label],
+          change_number: treatment_data[:change_number]
         }
       else
-        treatment_label_change_number[:treatment]
+        treatment_data[:treatment]
       end
     end
 
