@@ -66,3 +66,9 @@ require 'engine/models/split'
 require 'engine/models/label'
 require 'engine/models/treatment'
 require 'splitclient-rb_utilitites'
+
+module SplitIoClient
+  def self.root
+    File.dirname(__dir__)
+  end
+end
