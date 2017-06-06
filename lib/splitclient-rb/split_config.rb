@@ -260,7 +260,7 @@ module SplitIoClient
     #
     # @return [object]
     def self.default_logger
-      Logger.new($stdout)
+      (defined?(Rails) && Rails.logger) ? Rails.logger : Logger.new($stdout)
     end
 
     #
