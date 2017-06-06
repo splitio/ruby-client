@@ -258,7 +258,7 @@ module SplitIoClient
     end
 
     def self.default_impression_listener_refresh_rate
-      60
+      0
     end
 
     def self.default_impressions_queue_size
