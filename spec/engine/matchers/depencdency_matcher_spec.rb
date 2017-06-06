@@ -14,4 +14,14 @@ describe SplitIoClient::DependencyMatcher do
 
     expect(described_class.new('foo', %w(on yes true)).match?('foo', split_treatment, nil)).to eq(false)
   end
+
+  xit 'caches values' do
+    allow(split_treatment).to receive(:call).with({ matching_key: 'foo' }, 'foo', nil).and_return(treatment: 'yes')
+    expect(split_treatment).to receive(:call).exactly(1).times
+
+    matcher = described_class.new('foo', %w(on yes true))
+
+    matcher.match?('foo', split_treatment, nil)
+    matcher.match?('foo', split_treatment, nil)
+  end
 end
