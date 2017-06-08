@@ -40,7 +40,7 @@ module SplitIoClient
             next unless @sdk_blocker.splits_repository.ready?
 
             store_segments
-            @config.logger.debug("Segment names: #{@segments_repository.used_segment_names.to_a}") if @config.debug_enabled
+            @config.logger.debug("Segment names: #{@segments_repository.used_segment_names.to_a}, pid: #{Process.pid}") if @config.debug_enabled
 
             unless @sdk_blocker.ready?
               @sdk_blocker.segments_ready!

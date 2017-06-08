@@ -9,7 +9,7 @@ module SplitIoClient
 
       def post
         if @impressions.empty?
-          @config.logger.debug('No impressions to report') if @config.debug_enabled
+          @config.logger.debug("No impressions to report, pid: #{Process.pid}") if @config.debug_enabled
           return
         end
 
@@ -17,9 +17,9 @@ module SplitIoClient
           result = post_api("#{@config.events_uri}/testImpressions/bulk", @config, @api_key, impressions, 'SplitSDKMachineIP' => ip)
 
           if (200..299).include? result.status
-            @config.logger.debug("Impressions reported: #{total_impressions(@impressions)}") if @config.debug_enabled
+            @config.logger.debug("Impressions reported: #{total_impressions(@impressions)}, pid: #{Process.pid}") if @config.debug_enabled
           else
-            @config.logger.error("Unexpected status code while posting impressions: #{result.status}")
+            @config.logger.error("Unexpected status code while posting impressions: #{result.status}, pid: #{Process.pid}")
           end
         end
       end

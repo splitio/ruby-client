@@ -51,9 +51,9 @@ module SplitIoClient
         if result == false
           @config.logger.error("Failed to make a http request")
         elsif (200..299).include? result.status
-          @config.logger.debug("Metric time reported: #{info_to_log}") if @config.debug_enabled
+          @config.logger.debug("Metric time reported: #{info_to_log}, pid: #{Process.pid}") if @config.debug_enabled
         else
-          @config.logger.error("Unexpected status code while posting time metrics: #{result.status}")
+          @config.logger.error("Unexpected status code while posting time metrics: #{result.status}, pid: #{Process.pid}")
         end
       end
     end

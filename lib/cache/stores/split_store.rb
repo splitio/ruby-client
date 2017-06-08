@@ -87,7 +87,7 @@ module SplitIoClient
         end
 
         def store_split(split)
-          @config.logger.debug("storing split (#{split[:name]})") if @config.debug_enabled
+          @config.logger.debug("storing split (#{split[:name]}), pid: #{Process.pid}") if @config.debug_enabled
 
           @splits_repository.add_split(split)
         end
