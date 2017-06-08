@@ -263,6 +263,13 @@ describe SplitIoClient do
       it 'returns on treatment' do
         expect(subject.get_treatment('fake_user_id_1', 'test_dependency')).to eq Treatment::ON
       end
+
+      it 'produces only 1 impression' do
+        expect(subject.get_treatment('fake_user_id_1', 'test_dependency')).to eq Treatment::ON
+        impressions = subject.instance_variable_get(:@impressions_repository).clear
+
+        expect(impressions.size).to eq(1)
+      end
     end
 
     context 'killed feature' do
