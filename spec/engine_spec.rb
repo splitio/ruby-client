@@ -263,11 +263,6 @@ describe SplitIoClient do
       it 'returns on treatment' do
         expect(subject.get_treatment('fake_user_id_1', 'test_dependency')).to eq Treatment::ON
       end
-
-      xit 'uses cache' do
-        expect(subject).to receive(:get_treatment).exactly(1).times
-        subject.get_treatments('fake_user_id_1', %w(test_dependency test_whitelist))
-      end
     end
 
     context 'killed feature' do

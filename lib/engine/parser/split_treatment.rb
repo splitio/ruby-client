@@ -2,9 +2,10 @@ module SplitIoClient
   module Engine
     module Parser
       class SplitTreatment
-        def initialize(segments_repository, splits_repository)
+        def initialize(segments_repository, splits_repository, multiple = false)
           @splits_repository = splits_repository
           @segments_repository = segments_repository
+          @multiple = multiple
           @cache = {}
         end
 
@@ -12,7 +13,7 @@ module SplitIoClient
           # DependencyMatcher here, split is actually a split_name in this case
           cache_result = split.is_a? String
           split = @splits_repository.get_split(split) if cache_result
-          digest = Digest::MD5.hexdigest("#{keys}#{split}#{attributes}")
+          digest = Digest::MD5.hexdigest("#{{matching_key: keys[:matching_key]}}#{split}#{attributes}")
 
           @default_treatment = split[:defaultTreatment]
 
@@ -20,8 +21,8 @@ module SplitIoClient
             return treatment_hash(Models::Label::ARCHIVED, Models::Treatment::CONTROL, split[:changeNumber])
           end
 
-          result = if Models::Split.matchable?(split)
-            if cache_result && @cache[digest]
+          treatment = if Models::Split.matchable?(split)
+            if @multiple && @cache[digest]
               @cache[digest]
             else
               match(split, keys, attributes)
@@ -30,8 +31,9 @@ module SplitIoClient
             treatment_hash(Models::Label::KILLED, @default_treatment, split[:changeNumber])
           end
 
-          @cache[digest] = result if cache_result
-          return result
+          @cache[digest] = treatment if cache_result
+
+          treatment
         end
 
         private

@@ -19,7 +19,7 @@ module SplitIoClient
 
     def get_treatments(key, split_names, attributes = nil)
       bucketing_key, matching_key = keys_from_key(key)
-      split_treatment = Engine::Parser::SplitTreatment.new(@segments_repository, @splits_repository)
+      split_treatment = Engine::Parser::SplitTreatment.new(@segments_repository, @splits_repository, true)
 
       treatments_labels_change_numbers =
         @splits_repository.get_splits(split_names).each_with_object({}) do |(name, data), memo|
