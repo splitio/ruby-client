@@ -31,7 +31,7 @@ module SplitIoClient
         private
 
         def impressions_thread
-          Thread.new do
+          @config.threads[:impressions_sender] = Thread.new do
             @config.logger.info('Starting impressions service')
 
             loop do

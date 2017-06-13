@@ -138,6 +138,12 @@ module SplitIoClient
             block.call
           end
         end
+
+        def clear(prefix)
+          keys = @redis.keys("#{prefix}*")
+
+          keys.map { |key| @redis.del(key) }
+        end
       end
     end
   end

@@ -10,6 +10,11 @@ module SplitIoClient
             @current_size = Concurrent::AtomicFixnum.new(0)
           end
 
+          def clear(_ = nil)
+            @queue = Queue.new
+            @current_size = Concurrent::AtomicFixnum.new(0)
+          end
+
           # Adds data to queue in non-blocking mode
           def add_to_queue(data)
             fail ThreadError if @current_size.value >= @max_size

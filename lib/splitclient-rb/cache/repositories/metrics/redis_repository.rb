@@ -85,6 +85,12 @@ module SplitIoClient
           def clear_gauges
             # TODO
           end
+
+          def clear
+            clear_counts
+            clear_latencies
+            clear_gauges
+          end
         end
       end
     end

@@ -118,6 +118,19 @@ module SplitIoClient
       parsed_treatment(multiple, treatment_data)
     end
 
+    def destroy
+      @config.logger.info('Destroying split client')
+
+      @config.threads.each do |name, thread|
+        Thread.kill(thread)
+      end
+
+      @impressions_repository.clear
+      @metrics_repository.clear
+      @splits_repository.clear
+      @segments_repository.clear
+    end
+
     def store_impression(split_name, matching_key, bucketing_key, treatment, store_impressions, attributes)
       route_impression(split_name, matching_key, bucketing_key, treatment, attributes) if @config.impression_listener && store_impressions
 

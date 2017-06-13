@@ -64,6 +64,8 @@ module SplitIoClient
       @impression_listener = opts[:impression_listener]
       @impression_listener_refresh_rate = opts[:impression_listener_refresh_rate] || SplitConfig.default_impression_listener_refresh_rate
 
+      @threads = {}
+
       startup_log
     end
 
@@ -167,6 +169,8 @@ module SplitIoClient
 
     attr_reader :redis_url
     attr_reader :redis_namespace
+
+    attr_accessor :threads
 
     #
     # The default split client configuration
