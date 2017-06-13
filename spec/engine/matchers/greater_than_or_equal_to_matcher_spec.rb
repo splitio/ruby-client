@@ -23,7 +23,7 @@ describe SplitIoClient::GreaterThanOrEqualToMatcher do
     end
 
     it 'validates the treatment is ON for correct attribute value' do
-      expect(subject.get_treatment(user, feature, matching_attributes)).to eq SplitIoClient::Engine::Models::Treatment::ON
+      expect(subject.get_treatment(user, feature, matching_attributes)).to eq 'on'
     end
 
     it 'validates the treatment is the default treatment for incorrect attributes hash and nil' do
@@ -43,7 +43,7 @@ describe SplitIoClient::GreaterThanOrEqualToMatcher do
     end
 
     it 'validates the treatment is ON for correct negative attribute value' do
-      expect(subject.get_treatment(user, feature, matching_negative_attributes)).to eq SplitIoClient::Engine::Models::Treatment::ON
+      expect(subject.get_treatment(user, feature, matching_negative_attributes)).to eq 'on'
     end
 
     it 'validates the treatment is the default treatment for incorrect negative attribute value' do
@@ -67,8 +67,8 @@ describe SplitIoClient::GreaterThanOrEqualToMatcher do
     end
 
     it 'validates the treatment is ON for correct attribute value' do
-      expect(subject.get_treatment(user, feature, matching_attributes_1)).to eq SplitIoClient::Engine::Models::Treatment::ON
-      expect(subject.get_treatment(user, feature, matching_attributes_2)).to eq SplitIoClient::Engine::Models::Treatment::ON
+      expect(subject.get_treatment(user, feature, matching_attributes_1)).to eq 'on'
+      expect(subject.get_treatment(user, feature, matching_attributes_2)).to eq 'on'
     end
 
     it 'validates the treatment is the default treatment for incorrect attributes hash and nil' do
