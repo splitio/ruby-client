@@ -20,7 +20,7 @@ module SplitIoClient
       end
     end
 
-    def match?(key, _split_treatment, whitelist_data)
+    def match?(key, _evaluator, whitelist_data)
       matches = false
       if !(@matcher_type == "ATTR_WHITELIST")
         matches = @whitelist.include?(key)

@@ -31,14 +31,14 @@ module SplitIoClient
     # @param key [string] key value to be matched
     #
     # @return [boolean] match value for combiner delegates
-    def match?(key, split_treatment, attributes)
+    def match?(key, evaluator, attributes)
       if @matcher_list.empty?
         return false
       end
 
       case @combiner
         when Combiners::AND
-          return and_eval(key, split_treatment, attributes)
+          return and_eval(key, evaluator, attributes)
         else
           @logger.error('Invalid combiner type')
           return false
@@ -49,13 +49,13 @@ module SplitIoClient
     # auxiliary method to evaluate each of the matchers within the combiner
     #
     # @param key [string] key value to be matched
-    # @param split_treatment [SplitTreatment] used in dependency_matcher
+    # @param evaluator [Evaluator] used in dependency_matcher
     # @param attributes [hash]  attributes to pass to the treatment class
     #
     # @return [boolean] match value for combiner delegates
-    def and_eval(key, split_treatment, attributes)
+    def and_eval(key, evaluator, attributes)
       @matcher_list.each do |delegate|
-        matched = delegate.match?(key, split_treatment, attributes)
+        matched = delegate.match?(key, evaluator, attributes)
 
         return false unless matched
       end

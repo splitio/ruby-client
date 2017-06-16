@@ -1,7 +1,7 @@
 module SplitIoClient
   class DependencyMatcher
     def self.matcher_type
-      'IN_SPLIT_TREATMENT'.freeze
+      'IN_evaluator'.freeze
     end
 
     def initialize(split, treatments)
@@ -9,8 +9,8 @@ module SplitIoClient
       @treatments = treatments
     end
 
-    def match?(key, split_treatment, attributes)
-      @treatments.include? split_treatment.call({ matching_key: key }, @split, attributes)[:treatment]
+    def match?(key, evaluator, attributes)
+      @treatments.include? evaluator.call({ matching_key: key }, @split, attributes)[:treatment]
     end
   end
 end

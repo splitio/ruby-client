@@ -157,7 +157,7 @@ module SplitIoClient
       )
     end
 
-    def matcher_in_split_treatment(params)
+    def matcher_in_evaluator(params)
       DependencyMatcher.new(
         params[:matcher][:dependencyMatcherData][:split],
         params[:matcher][:dependencyMatcherData][:treatments]

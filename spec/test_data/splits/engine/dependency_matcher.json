@@ -53,7 +53,7 @@
                 "combiner":"AND",
                 "matchers":[
                    {
-                      "matcherType":"IN_SPLIT_TREATMENT",
+                      "matcherType":"IN_evaluator",
                       "negate":false,
                       "userDefinedSegmentMatcherData":null,
                       "dependencyMatcherData":{

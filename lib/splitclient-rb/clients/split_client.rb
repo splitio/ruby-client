@@ -19,11 +19,11 @@ module SplitIoClient
 
     def get_treatments(key, split_names, attributes = nil)
       bucketing_key, matching_key = keys_from_key(key)
-      split_treatment = Engine::Parser::SplitTreatment.new(@segments_repository, @splits_repository, true)
+      evaluator = Engine::Parser::Evaluator.new(@segments_repository, @splits_repository, true)
 
       treatments_labels_change_numbers =
         @splits_repository.get_splits(split_names).each_with_object({}) do |(name, data), memo|
-          memo.merge!(name => get_treatment(key, name, attributes, data, false, true, split_treatment))
+          memo.merge!(name => get_treatment(key, name, attributes, data, false, true, evaluator))
         end
 
       if @config.impressions_queue_size > 0
@@ -47,16 +47,16 @@ module SplitIoClient
     # @param split_data [Hash] split data, when provided this method doesn't fetch splits_repository for the data
     # @param store_impressions [Boolean] impressions aren't stored if this flag is false
     # @param multiple [Hash] internal flag to signal if method is called by get_treatments
-    # @param split_treatment [SplitTreatment] SplitTreatment class instance, used to cache treatments
+    # @param evaluator [Evaluator] Evaluator class instance, used to cache treatments
     #
     # @return [String/Hash] Treatment as String or Hash of treatments in case of array of features
     def get_treatment(
         key, split_name, attributes = nil, split_data = nil, store_impressions = true,
-        multiple = false, split_treatment = nil
+        multiple = false, evaluator = nil
       )
       bucketing_key, matching_key = keys_from_key(key)
       treatment_data = { label: Engine::Models::Label::EXCEPTION, treatment: SplitIoClient::Engine::Models::Treatment::CONTROL }
-      split_treatment ||= Engine::Parser::SplitTreatment.new(@segments_repository, @splits_repository)
+      evaluator ||= Engine::Parser::Evaluator.new(@segments_repository, @splits_repository)
 
       if matching_key.nil?
         @config.logger.warn('matching_key was null for split_name: ' + split_name.to_s)
@@ -78,7 +78,7 @@ module SplitIoClient
           return parsed_treatment(multiple, treatment_data)
         else
           treatment_data =
-            split_treatment.call(
+            evaluator.call(
             { bucketing_key: bucketing_key, matching_key: matching_key }, split, attributes
           )
         end

@@ -1,7 +1,7 @@
 module SplitIoClient
   module Engine
     module Parser
-      class SplitTreatment
+      class Evaluator
         def initialize(segments_repository, splits_repository, multiple = false)
           @splits_repository = splits_repository
           @segments_repository = segments_repository
