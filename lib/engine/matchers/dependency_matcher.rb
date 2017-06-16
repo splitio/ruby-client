@@ -9,8 +9,8 @@ module SplitIoClient
       @treatments = treatments
     end
 
-    def match?(key, split_treatment, data)
-      @treatments.include? split_treatment.call({ matching_key: key }, @split, data)[:treatment]
+    def match?(key, split_treatment, attributes)
+      @treatments.include? split_treatment.call({ matching_key: key }, @split, attributes)[:treatment]
     end
   end
 end

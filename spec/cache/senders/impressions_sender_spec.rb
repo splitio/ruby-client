@@ -7,9 +7,7 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
     let(:repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(adapter, config) }
     let(:sender) { described_class.new(repository, config, nil) }
     let(:formatted_impressions) { sender.send(:formatted_impressions, repository.clear) }
-    let(:ip) do
-      Socket.ip_address_list.detect { |intf| intf.ipv4_private? || intf.ipv4_loopback? }.ip_address
-    end
+    let(:ip) { SplitIoClient::SplitConfig.get_ip }
 
     before :each do
       Redis.new.flushall

@@ -49,14 +49,18 @@ module SplitIoClient
     # auxiliary method to evaluate each of the matchers within the combiner
     #
     # @param key [string] key value to be matched
+    # @param split_treatment [SplitTreatment] used in dependency_matcher
+    # @param attributes [hash]  attributes to pass to the treatment class
     #
     # @return [boolean] match value for combiner delegates
     def and_eval(key, split_treatment, attributes)
-      result = true
       @matcher_list.each do |delegate|
-        result &= delegate.match?(key, split_treatment, attributes)
+        matched = delegate.match?(key, split_treatment, attributes)
+
+        return false unless matched
       end
-      result
+
+      true
     end
 
     #
