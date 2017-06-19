@@ -1,7 +1,8 @@
 require 'spec_helper'
 
 describe SplitIoClient do
-  subject { SplitIoClient::SplitFactory.new('').manager }
+  let(:factory) { SplitIoClient::SplitFactory.new('') }
+  subject { factory.manager }
   let(:splits) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../test_data/splits/splits.json'))) }
   let(:segments) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../test_data/segments/engine_segments.json'))) }
 
@@ -37,6 +38,18 @@ describe SplitIoClient do
         'uber_feature',
         subject.instance_variable_get(:@splits_repository).get_split('uber_feature'))[:treatments]
       ).to match_array(%w(on off))
+    end
+  end
+
+  describe 'client destroy' do
+    before { factory.client.destroy }
+
+    it 'returns empty array for #splits' do
+      expect(subject.splits).to eq([])
+    end
+
+    it 'returns empty array for #split_names' do
+      expect(subject.split_names).to eq([])
     end
   end
 end

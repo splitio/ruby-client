@@ -119,16 +119,16 @@ module SplitIoClient
     end
 
     def destroy
-      @config.logger.info('Destroying split client')
+      @config.logger.info('Split client shutdown started...') if @config.debug_enabled
 
-      @config.threads.each do |name, thread|
-        Thread.kill(thread)
-      end
+      @config.threads.each { |name, thread| Thread.kill(thread) }
 
       @impressions_repository.clear
       @metrics_repository.clear
       @splits_repository.clear
       @segments_repository.clear
+
+      @config.logger.info('Split client shutdown complete') if @config.debug_enabled
     end
 
     def store_impression(split_name, matching_key, bucketing_key, treatment, store_impressions, attributes)
