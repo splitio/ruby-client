@@ -1,7 +1,7 @@
 module SplitIoClient
   class DependencyMatcher
     def self.matcher_type
-      'IN_evaluator'.freeze
+      'IN_SPLIT_TREATMENT'.freeze
     end
 
     def initialize(split, treatments)
