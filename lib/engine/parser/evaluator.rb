@@ -60,7 +60,7 @@ module SplitIoClient
               in_rollout = true
             end
 
-            if matcher_type(condition).match?(keys[:matching_key], self, attributes)
+            if matcher_type(condition).match?(keys[:matching_key], keys[:bucketing_key], self, attributes)
               key = keys[:bucketing_key] ? keys[:bucketing_key] : keys[:matching_key]
               result = Splitter.get_treatment(key, split[:seed], condition.partitions, split[:algo])
 

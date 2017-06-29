@@ -9,8 +9,8 @@ module SplitIoClient
       @treatments = treatments
     end
 
-    def match?(key, evaluator, attributes)
-      @treatments.include? evaluator.call({ matching_key: key }, @split, attributes)[:treatment]
+    def match?(matching_key, bucketing_key, evaluator, attributes)
+      @treatments.include? evaluator.call({ matching_key: matching_key, bucketing_key: bucketing_key }, @split, attributes)[:treatment]
     end
   end
 end

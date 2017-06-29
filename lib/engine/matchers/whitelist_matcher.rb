@@ -20,10 +20,10 @@ module SplitIoClient
       end
     end
 
-    def match?(key, _evaluator, whitelist_data)
+    def match?(matching_key, _bucketing_key, _evaluator, whitelist_data)
       matches = false
       if !(@matcher_type == "ATTR_WHITELIST")
-        matches = @whitelist.include?(key)
+        matches = @whitelist.include?(matching_key)
       else
         if (!whitelist_data.nil? && whitelist_data.key?(@attribute.to_sym))
           value = whitelist_data[@attribute.to_sym]
