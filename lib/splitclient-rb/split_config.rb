@@ -334,9 +334,7 @@ module SplitIoClient
     #
     # @return [string]
     def self.get_ip
-      Socket.ip_address_list.detect { |intf| intf.ipv4_private? }.ip_address
-    rescue StandardError
-      'unknown'
+      Socket.ip_address_list.detect { |intf| intf.ipv4_private? || intf.ipv4_loopback? }.ip_address
     end
   end
 end

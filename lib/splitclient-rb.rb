@@ -39,8 +39,7 @@ require 'engine/api/splits'
 require 'engine/parser/condition'
 require 'engine/parser/partition'
 require 'engine/parser/split_adapter'
-require 'engine/parser/split_treatment'
-require 'engine/partitions/treatments'
+require 'engine/parser/evaluator'
 require 'engine/matchers/combiners'
 require 'engine/matchers/combining_matcher'
 require 'engine/matchers/all_keys_matcher'
@@ -59,9 +58,17 @@ require 'engine/matchers/contains_all_matcher'
 require 'engine/matchers/starts_with_matcher'
 require 'engine/matchers/ends_with_matcher'
 require 'engine/matchers/contains_matcher'
+require 'engine/matchers/dependency_matcher'
 require 'engine/evaluator/splitter'
 require 'engine/metrics/metrics'
 require 'engine/metrics/binary_search_latency_tracker'
 require 'engine/models/split'
 require 'engine/models/label'
+require 'engine/models/treatment'
 require 'splitclient-rb_utilitites'
+
+module SplitIoClient
+  def self.root
+    File.dirname(__dir__)
+  end
+end

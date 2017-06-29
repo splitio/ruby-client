@@ -1,3 +1,7 @@
+4.2.0 (June 8, 2017)
+- Add dependency matcher
+- Pass bucketing_key to `match?` method
+
 4.1.0 (April 16, 2017)
 - Add new string/set matchers
 - Use Rails logger if available. Now we do not pollute STDOUT by default
