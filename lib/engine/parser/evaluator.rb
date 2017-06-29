@@ -15,8 +15,6 @@ module SplitIoClient
           split = @splits_repository.get_split(split) if cache_result
           digest = Digest::MD5.hexdigest("#{{matching_key: keys[:matching_key]}}#{split}#{attributes}")
 
-          @default_treatment = split[:defaultTreatment]
-
           if Models::Split.archived?(split)
             return treatment_hash(Models::Label::ARCHIVED, Models::Treatment::CONTROL, split[:changeNumber])
           end
@@ -28,7 +26,7 @@ module SplitIoClient
               match(split, keys, attributes)
             end
           else
-            treatment_hash(Models::Label::KILLED, @default_treatment, split[:changeNumber])
+            treatment_hash(Models::Label::KILLED, split[:defaultTreatment], split[:changeNumber])
           end
 
           @cache[digest] = treatment if cache_result
@@ -53,7 +51,7 @@ module SplitIoClient
                 bucket = Splitter.bucket(Splitter.count_hash(key, split[:trafficAllocationSeed].to_i, legacy_algo))
 
                 if bucket >= split[:trafficAllocation]
-                  return treatment_hash(Models::Label::NOT_IN_SPLIT, @default_treatment, split[:changeNumber])
+                  return treatment_hash(Models::Label::NOT_IN_SPLIT, split[:defaultTreatment], split[:changeNumber])
                 end
               end
 
@@ -65,14 +63,14 @@ module SplitIoClient
               result = Splitter.get_treatment(key, split[:seed], condition.partitions, split[:algo])
 
               if result.nil?
-                return treatment_hash(Models::Label::NO_RULE_MATCHED, @default_treatment, split[:changeNumber])
+                return treatment_hash(Models::Label::NO_RULE_MATCHED, split[:defaultTreatment], split[:changeNumber])
               else
                 return treatment_hash(c[:label], result, split[:changeNumber])
               end
             end
           end
 
-          treatment_hash(Models::Label::NO_RULE_MATCHED, @default_treatment, split[:changeNumber])
+          treatment_hash(Models::Label::NO_RULE_MATCHED, split[:defaultTreatment], split[:changeNumber])
         end
 
         def matcher_type(condition)
