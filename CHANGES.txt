@@ -1,6 +1,7 @@
 4.2.0 (June 8, 2017)
 - Add support for split dependency on other splits
 - Pass bucketing_key to `match?` method
+- faraday_middleware >= 0.10
 
 4.1.0 (April 16, 2017)
 - Add new string/set matchers
