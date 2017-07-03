@@ -30,12 +30,12 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "allocation_stats"
 
   spec.add_runtime_dependency "json", "~> 1.8"
-  spec.add_runtime_dependency "thread_safe"
+  spec.add_runtime_dependency "thread_safe", ">= 0.3"
   spec.add_runtime_dependency "concurrent-ruby", "~> 1.0"
-  spec.add_runtime_dependency "faraday"
-  spec.add_runtime_dependency "faraday-http-cache"
+  spec.add_runtime_dependency "faraday", ">= 0.10"
+  spec.add_runtime_dependency "faraday-http-cache", ">= 0.10"
   spec.add_runtime_dependency "faraday_middleware", ">= 0.10"
   spec.add_runtime_dependency "net-http-persistent", "<= 2.9.4"
-  spec.add_runtime_dependency "redis"
-  spec.add_runtime_dependency "digest-murmurhash"
+  spec.add_runtime_dependency "redis", "~> 3.2"
+  spec.add_runtime_dependency "digest-murmurhash", ">= 1.1"
 end
