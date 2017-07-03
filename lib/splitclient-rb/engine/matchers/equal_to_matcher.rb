@@ -38,7 +38,7 @@ module SplitIoClient
           return value
         when "DATETIME"
           value = value/1000 if is_sdk_data
-          return ::Utilities.to_milis_zero_out_from_hour value
+          return SplitIoClient::Utilities.to_milis_zero_out_from_hour value
         else
           @logger.error('Invalid data type')
       end

@@ -1,5 +1,3 @@
-require 'engine/matchers/combiners'
-
 module SplitIoClient
   #
   # class to implement the combining matcher
