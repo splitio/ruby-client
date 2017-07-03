@@ -29,7 +29,7 @@ module SplitIoClient
             loop do
               post_metrics
 
-              sleep(::Utilities.randomize_interval(@config.metrics_refresh_rate))
+              sleep(SplitIoClient::Utilities.randomize_interval(@config.metrics_refresh_rate))
             end
           end
         end

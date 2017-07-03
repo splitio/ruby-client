@@ -37,7 +37,7 @@ module SplitIoClient
             loop do
               post_impressions
 
-              sleep(::Utilities.randomize_interval(@config.impressions_refresh_rate))
+              sleep(SplitIoClient::Utilities.randomize_interval(@config.impressions_refresh_rate))
             end
           end
         end

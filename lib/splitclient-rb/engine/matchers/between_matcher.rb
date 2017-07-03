@@ -1,28 +1,31 @@
 module SplitIoClient
 
-  class LessThanOrEqualToMatcher < NoMethodError
+  class BetweenMatcher < NoMethodError
 
     attr_reader :matcher_type
 
     def initialize(attribute_hash)
-      @matcher_type = "LESS_THAN_OR_EQUAL_TO"
+      @matcher_type = "BETWEEN"
       @attribute = attribute_hash[:attribute]
       @data_type = attribute_hash[:data_type]
-      @value = get_formatted_value attribute_hash[:value], true
+      @start_value = get_formatted_value attribute_hash[:start_value], true
+      @end_value = get_formatted_value attribute_hash[:end_value], true
     end
 
     def match?(_matching_key, _bucketing_key, _evaluator, attributes)
       matches = false
       if (!attributes.nil? && attributes.key?(@attribute.to_sym))
         param_value = get_formatted_value(attributes[@attribute.to_sym])
-        matches = param_value.is_a?(Integer) ? (param_value <= @value) : false
+        matches = param_value.is_a?(Integer) ? ((param_value >= @start_value) && (param_value <= @end_value)) : false
       end
+
+      matches
     end
 
     def equals?(obj)
       if obj.nil?
         false
-      elsif !obj.instance_of?(LessThanOrEqualToMatcher)
+      elsif !obj.instance_of?(BetweenMatcher)
         false
       elsif self.equal?(obj)
         true
@@ -37,13 +40,12 @@ module SplitIoClient
         when "NUMBER"
           return value
         when "DATETIME"
-          value = value/1000 if is_sdk_data # sdk returns already miliseconds, turning to seconds to do a correct zero_our
-          return ::Utilities.to_milis_zero_out_from_seconds value
+          value = value/1000 if is_sdk_data
+          return SplitIoClient::Utilities.to_milis_zero_out_from_seconds value
         else
           @logger.error('Invalid data type')
       end
     end
-
   end
 
 end

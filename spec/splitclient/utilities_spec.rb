@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Utilities do
+describe SplitIoClient::Utilities do
 
   describe "utilities epoch convertions returns correct values" do
     let(:string_date) { "2007-11-03 13:18:05 UTC" }
