@@ -1,3 +1,6 @@
+4.2.1 (July 11, 2017)
+- Fix IP address fetching
+
 4.2.0 (June 8, 2017)
 - Add support for split dependency on other splits
 - Pass bucketing_key to `match?` method

@@ -334,7 +334,12 @@ module SplitIoClient
     #
     # @return [string]
     def self.get_ip
-      Socket.ip_address_list.detect { |intf| intf.ipv4_private? || intf.ipv4_loopback? }.ip_address
+      loopback_ip = Socket.ip_address_list.find { |ip| ip.ipv4_loopback? }
+      private_ip = Socket.ip_address_list.find { |ip| ip.ipv4_private? }
+
+      addr_info = private_ip || loopback_ip
+
+      addr_info.ip_address
     end
   end
 end
