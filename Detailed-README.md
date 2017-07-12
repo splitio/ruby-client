@@ -362,6 +362,18 @@ And you should get something like this:
 ]
  ```
 
+### Logging
+
+Ruby SDK makes use of Ruby stdlib's `Logger` class to log errors/events, default option is: `Logger.new($stdout)`.
+
+You can configure the following options in the config file:
+
+```
+logger: Logger.new('logfile.log'), # you can specify your own Logger class instance here
+debug_enabled: true, # used for more verbose logging, including more debug information (false is the default)
+transport_debug_enabled: true # used for log transport data (mostly http requests, false is the default)
+```
+
 ### SDK Modes
 
 By default SDK would run alongside with your application and will be run in `standalone` mode, which includes two modes:
@@ -475,6 +487,14 @@ This will generate a file gemspec with the right version, then:
 
 ```bash
 gem push splitclient-rb-<VERSION>.gem
+```
+
+## Benchmarking
+
+To benchmark hashing algorithms (currently we're using MurmurHash) you'll need to run:
+
+```bash
+bundle exec rake benchmark_hashing_algorithm
 ```
 
 ## Contributing

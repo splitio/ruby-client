@@ -189,12 +189,7 @@ module SplitIoClient
     def self.init_cache_adapter(adapter, data_structure, redis_url = nil, impressions_queue_size = nil)
       case adapter
       when :memory
-        # takes :memory_adapter (symbol) and returns MemoryAdapter (string)
-        adapter = SplitIoClient::Cache::Adapters::MemoryAdapters.const_get(
-          data_structure.to_s.split('_').collect(&:capitalize).join
-        ).new(impressions_queue_size)
-
-        SplitIoClient::Cache::Adapters::MemoryAdapter.new(adapter)
+        SplitIoClient::Cache::Adapters::MemoryAdapter.new(map_memory_adapter(data_structure, impressions_queue_size))
       when :redis
         begin
           require 'redis'
@@ -203,6 +198,15 @@ module SplitIoClient
         end
 
         SplitIoClient::Cache::Adapters::RedisAdapter.new(redis_url)
+      end
+    end
+
+    def self.map_memory_adapter(name, queue_size)
+      case name
+      when :map_adapter
+        SplitIoClient::Cache::Adapters::MemoryAdapters::MapAdapter.new
+      when :queue_adapter
+        SplitIoClient::Cache::Adapters::MemoryAdapters::QueueAdapter.new(queue_size)
       end
     end
 
@@ -268,7 +272,7 @@ module SplitIoClient
     #
     # @return [object]
     def self.default_logger
-      Logger.new($stdout)
+      (defined?(Rails) && Rails.logger) ? Rails.logger : Logger.new($stdout)
     end
 
     #
@@ -342,9 +346,12 @@ module SplitIoClient
     #
     # @return [string]
     def self.get_ip
-      Socket.ip_address_list.detect { |intf| intf.ipv4_private? }.ip_address
-    rescue StandardError
-      'unknown'
+      loopback_ip = Socket.ip_address_list.find { |ip| ip.ipv4_loopback? }
+      private_ip = Socket.ip_address_list.find { |ip| ip.ipv4_private? }
+
+      addr_info = private_ip || loopback_ip
+
+      addr_info.ip_address
     end
   end
 end

@@ -18,7 +18,7 @@ module SplitIoClient
           @localhost_mode_features = []
           store_features(splits_file)
 
-          sleep(::Utilities.randomize_interval(reload_rate))
+          sleep(SplitIoClient::Utilities.randomize_interval(reload_rate))
         end
       end
     end
