@@ -11,7 +11,7 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
     let(:split_adapter) do
       SplitIoClient::SplitAdapter.new(nil, SplitIoClient::SplitConfig.new(mode: :nil), nil, nil, nil, nil, nil)
     end
-    let(:ip) { Socket.ip_address_list.detect { |intf| intf.ipv4_private? }.ip_address }
+    let(:ip) { SplitIoClient::SplitConfig.get_ip }
 
     before :each do
       Redis.new.flushall
@@ -41,7 +41,7 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
     end
   end
 
-  include_examples 'impressions specs', MemoryAdapter.new(MemoryAdapters::SizedQueueAdapter.new(3))
+  include_examples 'impressions specs', MemoryAdapter.new(MemoryAdapters::QueueAdapter.new(3))
   include_examples 'impressions specs', RedisAdapter.new(SplitIoClient::SplitConfig.new.redis_url)
 
   context 'queue size less than the actual queue' do

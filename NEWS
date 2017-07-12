@@ -1,6 +1,19 @@
-3.2.5
+4.2.0
 
-Add config option `disable_http_cache`, which allows to ignore `Cache-control` option, coming from the server.
+Introduce dependency matcher, which allows treatment of one split to depend on the evaluation of another.
+
+4.1.0
+
+Introduce set matchers: part of set, contains all and contains any, starts with, ends with and contains.
+
+4.0.0
+
+Add support for murmur3 hashing algorithm
+Optimize gem memory usage
+
+3.3.0
+
+Add support for traffic allocation
 
 3.1.0
 
