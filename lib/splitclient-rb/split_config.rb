@@ -38,6 +38,7 @@ module SplitIoClient
       @features_refresh_rate = opts[:features_refresh_rate] || SplitConfig.default_features_refresh_rate
       @segments_refresh_rate = opts[:segments_refresh_rate] || SplitConfig.default_segments_refresh_rate
       @metrics_refresh_rate = opts[:metrics_refresh_rate] || SplitConfig.default_metrics_refresh_rate
+      @disable_http_cache = opts[:disable_http_cache] || false
 
       @impressions_refresh_rate = opts[:impressions_refresh_rate] || SplitConfig.default_impressions_refresh_rate
       @impressions_queue_size = opts[:impressions_queue_size] || SplitConfig.default_impressions_queue_size
@@ -152,6 +153,7 @@ module SplitIoClient
     attr_reader :segments_refresh_rate
     attr_reader :metrics_refresh_rate
     attr_reader :impressions_refresh_rate
+    attr_reader :disable_http_cache
 
     #
     # Wow big the impressions queue is before dropping impressions. -1 to disable it.

@@ -6,7 +6,7 @@ module SplitIoClient
   module Api
     class Client
       def get_api(url, config, api_key, params = {})
-        api_client.get(url, params) do |req|
+        api_client.get(url, params.merge(seed(config))) do |req|
           req.headers = common_headers(api_key, config).merge('Accept-Encoding' => 'gzip')
 
           req.options[:timeout] = config.read_timeout
@@ -68,6 +68,10 @@ module SplitIoClient
         result = "#{result}::#{SplitIoClient::SplitConfig.get_hostname}" unless SplitIoClient::SplitConfig.get_hostname == 'localhost'
 
         result
+      end
+
+      def seed(config)
+        config.disable_http_cache ? { seed: Time.now.to_i } : {}
       end
     end
   end
