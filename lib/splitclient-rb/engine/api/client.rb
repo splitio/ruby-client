@@ -47,7 +47,7 @@ module SplitIoClient
 
       def api_client
         @api_client ||= Faraday.new do |builder|
-          builder.use FaradayMiddleware::Gzip
+          builder.use FaradayMiddleware::Gzip if defined? FaradayMiddleware::Gzip
           builder.adapter :net_http_persistent
         end
       end
