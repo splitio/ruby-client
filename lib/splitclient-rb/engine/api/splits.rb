@@ -44,6 +44,8 @@ module SplitIoClient
           end.flatten
 
         parsed_splits
+      rescue JSON::ParserError => e
+        Logger.new('log/json_parser_errors.log').error("JSON parser error: #{splits_json}")
       end
 
       def segment_names(split)
