@@ -5,6 +5,8 @@ require 'faraday_middleware'
 module SplitIoClient
   module Api
     class Client
+      RUBY_ENCODING = '1.9'.respond_to?(:force_encoding)
+
       def get_api(url, config, api_key, params = {})
         faraday_response = api_client.get(url, params) do |req|
           req.headers = common_headers(api_key, config).merge('Accept-Encoding' => 'gzip')
@@ -74,7 +76,12 @@ module SplitIoClient
 
       def unzip_response(faraday_response)
         io = StringIO.new(faraday_response.body)
-        gzip_reader = Zlib::GzipReader.new(io)
+
+        gzip_reader = if RUBY_ENCODING
+          Zlib::GzipReader.new(io, :encoding => 'ASCII-8BIT')
+        else
+          Zlib::GzipReader.new(io)
+        end
 
         faraday_response.env[:body] = gzip_reader.read
 
