@@ -79,6 +79,8 @@ module SplitIoClient
         faraday_response.env[:body] = gzip_reader.read
 
         faraday_response
+      rescue Zlib::GzipFile::Error
+        faraday_response
       end
     end
   end
