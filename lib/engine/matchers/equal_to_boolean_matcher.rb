@@ -12,6 +12,8 @@ module SplitIoClient
     def match?(_key, data)
       value = data.fetch(@attribute) { |attr| data[attr.to_s] || data[attr.to_sym] }
 
+      value = [true, false].include?(value) ? value : value.to_s.downcase == 'true'
+
       value == @boolean
     end
   end
