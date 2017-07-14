@@ -13,5 +13,7 @@ describe SplitIoClient::EqualToBooleanMatcher do
     expect(described_class.new('value', true).match?(nil, nil, nil, value: 'false')).to eq(false)
     expect(described_class.new('value', true).match?(nil, nil, nil, value: 'whatever but true')).to eq(false)
     expect(described_class.new('value', false).match?(nil, nil, nil, value: true)).to eq(false)
+    expect(described_class.new('value', false).match?(nil, nil, nil, value: '')).to eq(false)
+    expect(described_class.new('value', false).match?(nil, nil, nil, {})).to eq(false)
   end
 end
