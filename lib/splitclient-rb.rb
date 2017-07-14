@@ -31,6 +31,7 @@ require 'splitclient-rb/split_factory_builder'
 require 'splitclient-rb/localhost_split_factory'
 require 'splitclient-rb/split_config'
 
+require 'splitclient-rb/engine/api/faraday_middleware/gzip'
 require 'splitclient-rb/engine/api/client'
 require 'splitclient-rb/engine/api/impressions'
 require 'splitclient-rb/engine/api/metrics'

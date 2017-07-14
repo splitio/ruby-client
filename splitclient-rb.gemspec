@@ -33,9 +33,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "thread_safe", ">= 0.3"
   spec.add_runtime_dependency "concurrent-ruby", "~> 1.0"
   spec.add_runtime_dependency "faraday", ">= 0.8"
-  spec.add_runtime_dependency "faraday-http-cache", ">= 2.0"
-  spec.add_runtime_dependency "faraday_middleware", "= 0.8"
-  spec.add_runtime_dependency "net-http-persistent", "<= 2.9.4"
+  spec.add_runtime_dependency "net-http-persistent", "~> 2.9"
   spec.add_runtime_dependency "redis", "~> 3.2"
   spec.add_runtime_dependency "digest-murmurhash", ">= 1.1"
 end

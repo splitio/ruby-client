@@ -1,6 +1,4 @@
-require 'faraday/http_cache'
-require 'bundler/vendor/net/http/persistent' unless defined?(Net::HTTP)
-require 'faraday_middleware'
+require 'net/http/persistent'
 
 module SplitIoClient
   module Api
@@ -8,7 +6,7 @@ module SplitIoClient
       RUBY_ENCODING = '1.9'.respond_to?(:force_encoding)
 
       def get_api(url, config, api_key, params = {})
-        faraday_response = api_client.get(url, params) do |req|
+        api_client.get(url, params) do |req|
           req.headers = common_headers(api_key, config).merge('Accept-Encoding' => 'gzip')
 
           req.options[:timeout] = config.read_timeout
@@ -16,8 +14,6 @@ module SplitIoClient
 
           config.logger.debug("GET #{url} proxy: #{api_client.proxy}") if config.debug_enabled
         end
-
-        defined?(FaradayMiddleware::Gzip) ? faraday_response : unzip_response(faraday_response)
       rescue StandardError => e
         config.logger.warn("#{e}\nURL:#{url}\nparams:#{params}")
 
@@ -51,7 +47,7 @@ module SplitIoClient
 
       def api_client
         @api_client ||= Faraday.new do |builder|
-          builder.use FaradayMiddleware::Gzip if defined? FaradayMiddleware::Gzip
+          builder.use SplitIoClient::FaradayMiddleware::Gzip
           builder.adapter :net_http_persistent
         end
       end
@@ -72,22 +68,6 @@ module SplitIoClient
         result = "#{result}::#{SplitIoClient::SplitConfig.get_hostname}" unless SplitIoClient::SplitConfig.get_hostname == 'localhost'
 
         result
-      end
-
-      def unzip_response(faraday_response)
-        io = StringIO.new(faraday_response.body)
-
-        gzip_reader = if RUBY_ENCODING
-          Zlib::GzipReader.new(io, :encoding => 'ASCII-8BIT')
-        else
-          Zlib::GzipReader.new(io)
-        end
-
-        faraday_response.env[:body] = gzip_reader.read
-
-        faraday_response
-      rescue Zlib::GzipFile::Error
-        faraday_response
       end
     end
   end
