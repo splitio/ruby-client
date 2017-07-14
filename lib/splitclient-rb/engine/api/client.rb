@@ -6,7 +6,7 @@ module SplitIoClient
   module Api
     class Client
       def get_api(url, config, api_key, params = {})
-        api_client.get(url, params) do |req|
+        faraday_response = api_client.get(url, params) do |req|
           req.headers = common_headers(api_key, config).merge('Accept-Encoding' => 'gzip')
 
           req.options[:timeout] = config.read_timeout
@@ -14,6 +14,8 @@ module SplitIoClient
 
           config.logger.debug("GET #{url} proxy: #{api_client.proxy}") if config.debug_enabled
         end
+
+        defined?(FaradayMiddleware::Gzip) ? faraday_response : unzip_response(faraday_response)
       rescue StandardError => e
         config.logger.warn("#{e}\nURL:#{url}\nparams:#{params}")
 
@@ -68,6 +70,15 @@ module SplitIoClient
         result = "#{result}::#{SplitIoClient::SplitConfig.get_hostname}" unless SplitIoClient::SplitConfig.get_hostname == 'localhost'
 
         result
+      end
+
+      def unzip_response(faraday_response)
+        io = StringIO.new(faraday_response.body)
+        gzip_reader = Zlib::GzipReader.new(io)
+
+        faraday_response.env[:body] = gzip_reader.read
+
+        faraday_response
       end
     end
   end
