@@ -164,6 +164,20 @@ module SplitIoClient
       )
     end
 
+    def matcher_equal_to_boolean(params)
+      EqualToBooleanMatcher.new(
+        params[:matcher][:keySelector][:attribute],
+        params[:matcher][:booleanMatcherData]
+      )
+    end
+
+    def matcher_matches_string(params)
+      MatchesStringMatcher.new(
+        params[:matcher][:keySelector][:attribute],
+        params[:matcher][:stringMatcherData]
+      )
+    end
+
     #
     # @return [object] the negate value for this condition
     def negate
