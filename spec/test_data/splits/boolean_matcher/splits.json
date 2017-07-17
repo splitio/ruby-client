@@ -1,0 +1,50 @@
+{
+  "splits": [
+    {
+       "orgId":"cee838c0-b3eb-11e5-855f-4eacec19f7bf",
+       "environment":"cf2d09f0-b3eb-11e5-855f-4eacec19f7bf",
+       "name":"test_boolean",
+       "trafficTypeId":"u",
+       "trafficTypeName":"User",
+       "seed":-195840228,
+       "status":"ACTIVE",
+       "killed":false,
+       "defaultTreatment":"default",
+       "conditions":[
+          {
+             "matcherGroup":{
+                "combiner":"AND",
+                "matchers":[
+                   {
+                      "keySelector":{
+                         "trafficType":"user",
+                         "attribute":"created"
+                      },
+                      "matcherType":"EQUAL_TO_BOOLEAN",
+                      "negate":false,
+                      "userDefinedSegmentMatcherData":null,
+                      "whitelistMatcherData":null,
+                      "unaryNumericMatcherData":null,
+                      "booleanMatcherData": true
+                   }
+                ]
+             },
+             "partitions":[
+                {
+                   "treatment":"on",
+                   "size":100
+                },
+                {
+                   "treatment":"off",
+                   "size":0
+                },
+                {
+                   "treatment":"default",
+                   "size":0
+                }
+             ]
+          }
+       ]
+    }
+  ]
+}
