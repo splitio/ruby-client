@@ -1,10 +1,7 @@
-4.3.0
+4.2.0
 
 Introduce new matchers: boolean and regexp (string).
 Remove unneeded dependencies
-
-4.2.0
-
 Introduce dependency matcher, which allows treatment of one split to depend on the evaluation of another.
 
 4.1.0

@@ -1,13 +1,9 @@
-4.3.0 (July 18, 2017)
+4.2.0 (July 18, 2017)
 - Add new boolean/regexp matchers
-- Remove unneeded dependencies (faraday_middleware, faraday-http-cache)
-
-4.2.1 (July 11, 2017)
-- Fix IP address fetching
-
-4.2.0 (June 8, 2017)
 - Add support for split dependency on other splits
 - Pass bucketing_key to `match?` method
+- Fix IP address fetching
+- Remove unneeded dependencies (faraday_middleware, faraday-http-cache)
 
 4.1.0 (April 16, 2017)
 - Add new string/set matchers
