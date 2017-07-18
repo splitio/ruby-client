@@ -1,10 +1,10 @@
-require 'faraday/http_cache'
-require 'bundler/vendor/net/http/persistent' unless defined?(Net::HTTP)
-require 'faraday_middleware'
+require 'net/http/persistent'
 
 module SplitIoClient
   module Api
     class Client
+      RUBY_ENCODING = '1.9'.respond_to?(:force_encoding)
+
       def get_api(url, config, api_key, params = {})
         api_client.get(url, params) do |req|
           req.headers = common_headers(api_key, config).merge('Accept-Encoding' => 'gzip')
@@ -47,7 +47,7 @@ module SplitIoClient
 
       def api_client
         @api_client ||= Faraday.new do |builder|
-          builder.use FaradayMiddleware::Gzip
+          builder.use SplitIoClient::FaradayMiddleware::Gzip
           builder.adapter :net_http_persistent
         end
       end

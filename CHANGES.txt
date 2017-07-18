@@ -1,3 +1,6 @@
+4.3.1 (July 17, 2017)
+- Remove unneeded dependencies (faraday_middleware, faraday-http-cache)
+
 4.3.0 (July 14, 2017)
 - Add new boolean/regexp matchers
 
