@@ -1,3 +1,9 @@
+4.2.0
+
+Introduce new matchers: boolean and regexp (string).
+Remove unneeded dependencies
+Introduce dependency matcher, which allows treatment of one split to depend on the evaluation of another.
+
 4.1.0
 
 Introduce set matchers: part of set, contains all and contains any, starts with, ends with and contains.

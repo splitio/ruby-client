@@ -260,7 +260,7 @@ module SplitIoClient
     #
     # @return [object]
     def self.default_logger
-      Logger.new($stdout)
+      (defined?(Rails) && Rails.logger) ? Rails.logger : Logger.new($stdout)
     end
 
     #
@@ -334,9 +334,12 @@ module SplitIoClient
     #
     # @return [string]
     def self.get_ip
-      Socket.ip_address_list.detect { |intf| intf.ipv4_private? }.ip_address
-    rescue StandardError
-      'unknown'
+      loopback_ip = Socket.ip_address_list.find { |ip| ip.ipv4_loopback? }
+      private_ip = Socket.ip_address_list.find { |ip| ip.ipv4_private? }
+
+      addr_info = private_ip || loopback_ip
+
+      addr_info.ip_address
     end
   end
 end

@@ -1,5 +1,13 @@
+4.2.0 (July 18, 2017)
+- Add new boolean/regexp matchers
+- Add support for split dependency on other splits
+- Pass bucketing_key to `match?` method
+- Fix IP address fetching
+- Remove unneeded dependencies (faraday_middleware, faraday-http-cache)
+
 4.1.0 (April 16, 2017)
 - Add new string/set matchers
+- Use Rails logger if available. Now we do not pollute STDOUT by default
 
 4.0.0
 - Add support for murmur3 algo

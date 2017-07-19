@@ -18,6 +18,9 @@ describe SplitIoClient do
 
     stub_request(:get, "https://sdk.split.io/api/segmentChanges/demo?since=-1")
       .to_return(status: 200, body: [])
+
+    stub_request(:get, "https://sdk.split.io/api/segmentChanges/employees?since=-1")
+      .to_return(status: 200, body: [])
   end
 
   it 'validates the feature is "default" for id when segment used does not exist' do
