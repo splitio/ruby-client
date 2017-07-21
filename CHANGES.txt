@@ -1,3 +1,6 @@
+4.2.1 (July 20, 2017)
+- Coerce string to regexp for Regexp matcher
+
 4.2.0 (July 18, 2017)
 - Add new boolean/regexp matchers
 - Add support for split dependency on other splits
