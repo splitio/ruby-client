@@ -424,9 +424,20 @@ Currently SDK supports:
 
 Other servers should work fine as well, but haven't been tested.
 
-### Unicorn
+### Unicorn and Puma in cluster mode (only for "memory mode")
 
-If you're using Unicorn in the `memory` mode you'll need to include this line in your unicorn config (probably `config/unicorn.rb`):
+During the start of your application SDK spawns multiple threads, each thread has an infinite loop inside which is used to fetch splits/segments or send impressions/metrics.
+Several servers like Unicorn and Puma in cluster mode (i.e. with `workers` > 0) spawn multiple child processes, but when child process is spawn it does not recreate threads, which existed in the parent process, that's why if you use Unicorn or Puma in cluster mode you need to make two small extra steps.
+
+For both servers you will need to have the following line in your `config/initializers/splitclient.rb`:
+
+```ruby
+Rails.configuration.split_factory = factory
+```
+
+#### Unicorn
+
+If you're using Unicorn you'll need to include this line in your Unicorn config (probably `config/unicorn.rb`):
 
 ```ruby
 after_fork do |server, worker|
@@ -434,11 +445,19 @@ after_fork do |server, worker|
 end
 ```
 
-Also, you will need to have the following line in your `config/initializers/splitclient.rb`:
+By doing that SDK will recreate threads for each new worker, besides master.
+
+#### Puma
+
+For those who use Puma in cluster mode add this to your Puma config (probably `config/puma.rb`):
 
 ```ruby
-Rails.configuration.split_factory = factory
+on_worker_boot do |worker_number|
+  Rails.configuration.split_factory.resume! if worker_number.nr > 0
+end
 ```
+
+By doing that SDK will recreate threads for each new worker, besides master.
 
 ## Framework support
 
