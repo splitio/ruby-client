@@ -45,7 +45,7 @@ module SplitIoClient
     # @returns a split view
     def split(split_name)
       return unless @splits_repository
-      
+
       split = @splits_repository.get_split(split_name)
 
       return if split.nil? || Engine::Models::Split.archived?(split)
@@ -56,12 +56,14 @@ module SplitIoClient
     def build_split_view(name, split)
       return {} unless split
 
-      treatments =
-        if split[:conditions] && split[:conditions][0][:partitions]
-          split[:conditions][0][:partitions].map { |partition| partition[:treatment] }
-        else
-          []
-        end
+      begin
+        treatments = split[:conditions]
+          .detect { |c| c[:conditionType] == 'ROLLOUT' }[:partitions]
+          .map { |partition| partition[:treatment] }
+      rescue StandardError
+        treatments = []
+      end
+
 
         {
           name: name,
