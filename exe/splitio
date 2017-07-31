@@ -5,6 +5,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 require 'optparse'
 require 'yaml'
+require 'erb'
 require_relative '../lib/splitclient-rb'
 
 ARGV << '-h' if ARGV.empty?
@@ -84,7 +85,8 @@ begin
    exit(1)
  end
 
-config = YAML.load_file(config_path)
+config = eval(ERB.new(YAML.load_file(config_path).to_s).result)
+
 config
   .merge!(mode: :producer, cache_adapter: :redis)
   .merge!(options)
