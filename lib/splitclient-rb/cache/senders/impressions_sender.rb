@@ -32,12 +32,18 @@ module SplitIoClient
 
         def impressions_thread
           @config.threads[:impressions_sender] = Thread.new do
-            @config.logger.info('Starting impressions service')
+            begin
+              @config.logger.info('Starting impressions service')
 
-            loop do
+              loop do
+                post_impressions
+
+                sleep(SplitIoClient::Utilities.randomize_interval(@config.impressions_refresh_rate))
+              end
+            rescue SplitIoClient::ImpressionShutdownException
               post_impressions
 
-              sleep(SplitIoClient::Utilities.randomize_interval(@config.impressions_refresh_rate))
+              @impressions_repository.clear
             end
           end
         end
