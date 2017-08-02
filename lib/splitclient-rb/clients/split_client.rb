@@ -124,7 +124,7 @@ module SplitIoClient
         'bucketingKey' => bucketing_key,
         'treatment' => treatment[:treatment],
         'label' => @config.labels_enabled ? treatment[:label] : nil,
-        'time' => (Time.now.to_f * 1000.0).to_i,
+        'time' => (Time.now.utc.to_f * 1000.0).to_i,
         'changeNumber' => treatment[:change_number]
       )
     end
