@@ -42,7 +42,10 @@ describe SplitIoClient do
   end
 
   describe 'client destroy' do
-    before { factory.client.destroy }
+    before do
+      factory.client.instance_variable_get(:@config).threads[:impressions_sender] = Thread.new {}
+      factory.client.destroy
+    end
 
     it 'returns empty array for #splits' do
       expect(subject.splits).to eq([])

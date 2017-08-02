@@ -424,6 +424,7 @@ describe SplitIoClient do
       it 'returns control' do
         expect(subject.get_treatment('fake_user_id_1', 'test_feature')).to eq 'on'
 
+        subject.instance_variable_get(:@config).threads[:impressions_sender] = Thread.new {}
         subject.destroy
 
         expect(subject.get_treatment('fake_user_id_1', 'test_feature')).to eq 'control'
