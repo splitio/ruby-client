@@ -12,7 +12,7 @@ module SplitIoClient
 
           def clear(_ = nil)
             @queue = Queue.new
-            @current_size = Concurrent::AtomicFixnum.new(0)
+            @current_size.value = 0
           end
 
           # Adds data to queue in non-blocking mode
