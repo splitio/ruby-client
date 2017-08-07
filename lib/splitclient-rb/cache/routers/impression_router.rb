@@ -40,7 +40,11 @@ module SplitIoClient
     def router_thread
       Thread.new do
         loop do
-          @listener.log(@queue.pop)
+          begin
+            @listener.log(@queue.pop)
+          rescue StandardError => error
+            @config.log_found_exception(__method__.to_s, error)
+          end
         end
       end
     end

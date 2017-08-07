@@ -89,13 +89,8 @@ module SplitIoClient
 
         store_impression(
           split_name, matching_key, bucketing_key,
-<<<<<<< HEAD
-          { treatment: SplitIoClient::Engine::Models::Treatment::CONTROL, label: Engine::Models::Label::EXCEPTION },
-          store_impressions
-=======
-          { treatment: SplitIoClient::Treatments::CONTROL, label: Engine::Models::Label::EXCEPTION },
+          { treatment: SplitIoClient::Engine::Models::Treatment::CONTROL, label: SplitIoClient::Engine::Models::Label::EXCEPTION },
           store_impressions, attributes
->>>>>>> Add ImpressionListener support
         )
 
         return parsed_treatment(multiple, treatment_data)
@@ -104,11 +99,7 @@ module SplitIoClient
       begin
         latency = (Time.now - start) * 1000.0
         # Disable impressions if @config.impressions_queue_size == -1
-<<<<<<< HEAD
-        split && store_impression(split_name, matching_key, bucketing_key, treatment_data, store_impressions)
-=======
-        split && store_impression(split_name, matching_key, bucketing_key, treatment_label_change_number, store_impressions, attributes)
->>>>>>> Add ImpressionListener support
+        split && store_impression(split_name, matching_key, bucketing_key, treatment_data, store_impressions, attributes)
 
         # Measure
         @adapter.metrics.time('sdk.get_treatment', latency)
@@ -117,13 +108,8 @@ module SplitIoClient
 
         store_impression(
           split_name, matching_key, bucketing_key,
-<<<<<<< HEAD
-          { treatment: SplitIoClient::Engine::Models::Treatment::CONTROL, label: Engine::Models::Label::EXCEPTION },
-          store_impressions
-=======
-          { treatment: SplitIoClient::Treatments::CONTROL, label: Engine::Models::Label::EXCEPTION },
+          { treatment: SplitIoClient::Engine::Models::Treatment::CONTROL, label: SplitIoClient::Engine::Models::Label::EXCEPTION },
           store_impressions, attributes
->>>>>>> Add ImpressionListener support
         )
 
         return parsed_treatment(multiple, treatment_data)

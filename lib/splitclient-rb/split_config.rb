@@ -312,7 +312,7 @@ module SplitIoClient
     def log_found_exception(caller, exn)
       error_traceback = "#{exn.inspect} #{exn}\n\t#{exn.backtrace.join("\n\t")}"
       error = "[splitclient-rb] Unexpected exception in #{caller}: #{error_traceback}"
-      @logger.error(error)
+      @logger.warn(error)
     end
 
     #
