@@ -122,7 +122,9 @@ module SplitIoClient
       @config.logger.info('Split client shutdown started...') if @config.debug_enabled
 
       @config.threads[:impressions_sender].raise(SplitIoClient::ImpressionShutdownException)
-      @config.threads.reject { |k, _| k == :impressions_sender }.each { |name, thread| Thread.kill(thread) }
+      @config.threads.reject { |k, _| k == :impressions_sender }.each do |name, thread|
+        Thread.kill(thread)
+      end
 
       @metrics_repository.clear
       @splits_repository.clear

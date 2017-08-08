@@ -38,7 +38,7 @@ module SplitIoClient
     private
 
     def router_thread
-      Thread.new do
+      @config.threads[:impression_router] = Thread.new do
         loop do
           begin
             @listener.log(@queue.pop)
