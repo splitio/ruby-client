@@ -17,12 +17,6 @@ module SplitIoClient
             store_splits
           else
             splits_thread
-
-            if defined?(PhusionPassenger)
-              PhusionPassenger.on_event(:starting_worker_process) do |forked|
-                splits_thread if forked
-              end
-            end
           end
         end
 
