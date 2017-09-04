@@ -480,6 +480,16 @@ end
 
 By doing that SDK will recreate threads for each new worker, besides master.
 
+#### Phusion Passenger
+
+Passenger users will have to include this in the config file `config/passenger.rb`:
+
+```ruby
+PhusionPassenger.on_event(:starting_worker_process) do |forked|
+  Rails.configuration.split_factory.resume! if forked
+end
+```
+
 ## Framework support
 
 Currently SDK supports:

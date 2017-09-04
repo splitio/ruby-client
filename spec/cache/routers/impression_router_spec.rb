@@ -24,7 +24,7 @@ describe SplitIoClient::ImpressionRouter do
   it 'logs multiple impressions' do
     expect(dbl).to receive(:log).at_least(1).times
 
-    sleep 1
+    sleep 2
 
     described_class.new(config).add_bulk(impressions)
   end
