@@ -29,7 +29,7 @@ module SplitIoClient
         private
 
         def splits_thread
-          @sdk_blocker.splits_thread = Thread.new do
+          @config.threads[:split_store] = @sdk_blocker.splits_thread = Thread.new do
             @config.logger.info('Starting splits fetcher service')
             loop do
               store_splits

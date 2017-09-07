@@ -10,6 +10,10 @@ module SplitIoClient
             @map = Concurrent::Map.new
           end
 
+          def clear(_ = nil)
+            initialize
+          end
+
           # Map
           def initialize_map(key)
             @map[key] = Concurrent::Map.new

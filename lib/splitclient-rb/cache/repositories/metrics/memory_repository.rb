@@ -71,6 +71,12 @@ module SplitIoClient
             @gauges = []
           end
 
+          def clear
+            clear_counts
+            clear_latencies
+            clear_gauges
+          end
+
           #
           # small class to act as DTO for counts
           #

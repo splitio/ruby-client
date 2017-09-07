@@ -11,7 +11,7 @@ module SplitIoClient
 
       protected
 
-      def namespace_key(key)
+      def namespace_key(key = '')
         "#{@config.redis_namespace}#{key}"
       end
 

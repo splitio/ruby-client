@@ -5,7 +5,7 @@ module SplitIoClient
       class MetricsRepository < Repository
         extend Forwardable
         def_delegators :@adapter, :add_count, :add_latency, :add_gauge, :counts, :latencies, :gauges,
-                       :clear_counts, :clear_latencies, :clear_gauges
+                       :clear_counts, :clear_latencies, :clear_gauges, :clear
 
         def initialize(adapter, config)
           @config = config

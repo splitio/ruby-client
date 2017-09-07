@@ -118,6 +118,21 @@ module SplitIoClient
       parsed_treatment(multiple, treatment_data)
     end
 
+    def destroy
+      @config.logger.info('Split client shutdown started...') if @config.debug_enabled
+
+      @config.threads[:impressions_sender].raise(SplitIoClient::ImpressionShutdownException)
+      @config.threads.reject { |k, _| k == :impressions_sender }.each do |name, thread|
+        Thread.kill(thread)
+      end
+
+      @metrics_repository.clear
+      @splits_repository.clear
+      @segments_repository.clear
+
+      @config.logger.info('Split client shutdown complete') if @config.debug_enabled
+    end
+
     def store_impression(split_name, matching_key, bucketing_key, treatment, store_impressions, attributes)
       route_impression(split_name, matching_key, bucketing_key, treatment, attributes) if @config.impression_listener && store_impressions
 
