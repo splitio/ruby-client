@@ -9,9 +9,7 @@ module SplitIoClient
       @substr_list = substr_list
     end
 
-    def match?(_matching_key, _bucketing_key, _evaluator, data)
-      value = data.fetch(@attribute) { |attr| data[attr.to_s] || data[attr.to_sym] }
-
+    def match?(value, _matching_key, _bucketing_key, _evaluator)
       return false if @substr_list.empty?
 
       @substr_list.any? { |substr| value.to_s.include? substr }

@@ -9,9 +9,7 @@ module SplitIoClient
       @boolean = boolean
     end
 
-    def match?(_matching_key, _bucketing_key, _evaluator, data)
-      value = data.fetch(@attribute) { |attr| data[attr.to_s] || data[attr.to_sym] }
-
+    def match?(value, _matching_key, _bucketing_key, _evaluator)
       value = false if value.to_s.downcase == 'false'
       value = true if value.to_s.downcase == 'true'
 
