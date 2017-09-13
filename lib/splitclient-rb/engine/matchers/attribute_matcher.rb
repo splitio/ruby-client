@@ -5,7 +5,7 @@ module SplitIoClient
       @matcher = matcher
     end
 
-    def match?(matching_key, bucketing_key, evaluator, attributes)
+    def match?(matching_key, bucketing_key = nil, evaluator = nil, attributes = {})
       if @attribute != nil
         return false unless attributes
 
