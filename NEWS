@@ -1,6 +1,7 @@
 4.3.0
 
 Add support for impression listener, there is an ability to use user-defined class to capture all impressions
+Now you can apply attribute matcher to the traffic type
 
 4.2.0
 
