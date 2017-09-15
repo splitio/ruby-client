@@ -27,11 +27,12 @@ module SplitIoClient
         end
 
       if @config.impressions_queue_size > 0
+        time = (Time.now.to_f * 1000.0).to_i
         @impressions_repository.add_bulk(
-          matching_key, bucketing_key, treatments_labels_change_numbers, (Time.now.to_f * 1000.0).to_i
+          matching_key, bucketing_key, treatments_labels_change_numbers, time
         )
 
-        route_impressions(split_names, matching_key, bucketing_key, treatments_labels_change_numbers, attributes)
+        route_impressions(split_names, matching_key, bucketing_key, time, treatments_labels_change_numbers, attributes)
       end
 
       split_names = treatments_labels_change_numbers.keys
@@ -134,7 +135,8 @@ module SplitIoClient
     end
 
     def store_impression(split_name, matching_key, bucketing_key, treatment, store_impressions, attributes)
-      route_impression(split_name, matching_key, bucketing_key, treatment, attributes) if @config.impression_listener && store_impressions
+      time = (Time.now.to_f * 1000.0).to_i
+      route_impression(split_name, matching_key, bucketing_key, time, treatment, attributes) if @config.impression_listener && store_impressions
 
       return if @config.impressions_queue_size <= 0 || !store_impressions
 
@@ -143,26 +145,28 @@ module SplitIoClient
         'bucketingKey' => bucketing_key,
         'treatment' => treatment[:treatment],
         'label' => @config.labels_enabled ? treatment[:label] : nil,
-        'time' => (Time.now.to_f * 1000.0).to_i,
+        'time' => time,
         'changeNumber' => treatment[:change_number]
       )
     end
 
-    def route_impression(split_name, matching_key, bucketing_key, treatment, attributes)
+    def route_impression(split_name, matching_key, bucketing_key, time, treatment, attributes)
       impression_router.add(
         split_name: split_name,
         matching_key: matching_key,
         bucketing_key: bucketing_key,
+        time: time,
         treatment: treatment,
         attributes: attributes
       )
     end
 
-    def route_impressions(split_names, matching_key, bucketing_key, treatments_labels_change_numbers, attributes)
+    def route_impressions(split_names, matching_key, bucketing_key, time, treatments_labels_change_numbers, attributes)
       impression_router.add_bulk(
         split_names: split_names,
         matching_key: matching_key,
         bucketing_key: bucketing_key,
+        time: time,
         treatments_labels_change_numbers: treatments_labels_change_numbers,
         attributes: attributes
       )
