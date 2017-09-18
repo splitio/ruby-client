@@ -3,12 +3,10 @@ module SplitIoClient
     protected
 
     def initialize(attribute, remote_array)
-      @attribute = attribute
       @remote_set = remote_array.to_set
     end
 
-    def local_set(data, attribute)
-      data = data.fetch(attribute) { |attr| data[attr.to_s] || data[attr.to_sym] }
+    def local_set(data)
       # Allow user to pass individual elements as well
       local_array = data.kind_of?(Array) ? data : [data]
 

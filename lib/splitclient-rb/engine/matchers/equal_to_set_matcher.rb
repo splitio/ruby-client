@@ -8,8 +8,8 @@ module SplitIoClient
       super(attribute, remote_array)
     end
 
-    def match?(_matching_key, _bucketing_key, _evaluator, data)
-      local_set(data, @attribute) == @remote_set
+    def match?(data, bucketing_key, _evaluator, _attributes)
+      local_set(data) == @remote_set
     end
   end
 end
