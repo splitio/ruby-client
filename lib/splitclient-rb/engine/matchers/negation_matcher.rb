@@ -1,16 +1,12 @@
 module SplitIoClient
-
   #
   # class to implement the negation of a matcher
   #
-  class NegationMatcher < NoMethodError
+  class NegationMatcher
+    MATCHER_TYPE = 'NEGATION_MATCHER'.freeze
 
-    @matcher = nil
-
-    def initialize(matcher)
-      unless matcher.nil?
-        @matcher = matcher
-      end
+    def initialize(matcher = nil)
+      @matcher = matcher
     end
 
     #
@@ -19,8 +15,20 @@ module SplitIoClient
     # @param key [string] key value to be matched
     #
     # @return [boolean] evaluation of the negation matcher
-    def match?(matching_key, bucketing_key, evaluator, attributes)
-      !@matcher.match?(matching_key, bucketing_key, evaluator, attributes)
+    def match?(args)
+      !@matcher.match?(args)
+    end
+
+    def respond_to?(method)
+      @matcher.respond_to? method
+    end
+
+    def attribute
+      @matcher.attribute
+    end
+
+    def string_type?
+      @matcher.string_type?
     end
 
     #
@@ -46,9 +54,7 @@ module SplitIoClient
     #
     # @reutrn [string] string value of this matcher
     def to_s
-      'not ' + @matcher.to_s
+      "not #{@matcher}"
     end
-
   end
-
 end

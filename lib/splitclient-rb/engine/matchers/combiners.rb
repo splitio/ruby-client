@@ -1,13 +1,9 @@
 module SplitIoClient
-
   #
   # class to represent combiner values
   #
-  class Combiners < NoMethodError
-
+  class Combiners
     # available combiners of the sdk
-    AND = 'AND'
-
+    AND = 'AND'.freeze
   end
-
 end

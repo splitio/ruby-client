@@ -2,63 +2,57 @@ module SplitIoClient
   #
   # class to implement the combining matcher
   #
-  class CombiningMatcher < NoMethodError
+  class CombiningMatcher
+    MATCHER_TYPE = 'COMBINING_MATCHER'.freeze
 
-    #
-    # list of matcher within the combiner
-    #
-    @matcher_list = []
-
-    #
-    # combiner value
-    #
-    @combiner = ''
-
-    def initialize(combiner, delegates)
-      unless delegates.nil?
-        @matcher_list = delegates
-      end
-      unless combiner.nil?
-        @combiner = combiner
-      end
+    def initialize(combiner = '', matchers = [])
+      @combiner = combiner
+      @matchers = matchers
     end
 
     #
     # evaluates if the key matches the matchers within the combiner
     #
-    # @param key [string] key value to be matched
+    # @param matching_key [string] key value to be matched
+    # @param bucketing_key [string] bucketing key to be matched
+    # @param evaluator [instance of Evaluator class]
+    # @param attributes [hash]
     #
-    # @return [boolean] match value for combiner delegates
-    def match?(matching_key, bucketing_key, evaluator, attributes)
-      if @matcher_list.empty?
-        return false
-      end
+    # @return [boolean]
+    def match?(args)
+      return false if @matchers.empty?
 
       case @combiner
-        when Combiners::AND
-          return and_eval(matching_key, bucketing_key, evaluator, attributes)
-        else
-          @logger.error('Invalid combiner type')
-          return false
+      when Combiners::AND
+        return eval_and(args)
+      else
+        @logger.error('Invalid combiner type')
       end
+
+      false
     end
 
     #
     # auxiliary method to evaluate each of the matchers within the combiner
     #
-    # @param key [string] key value to be matched
+    # @param matching_key [string] key value to be matched
+    # @param bucketing_key [string] bucketing key to be matched
     # @param evaluator [Evaluator] used in dependency_matcher
     # @param attributes [hash]  attributes to pass to the treatment class
     #
     # @return [boolean] match value for combiner delegates
-    def and_eval(matching_key, bucketing_key, evaluator, attributes)
-      @matcher_list.each do |delegate|
-        matched = delegate.match?(matching_key, bucketing_key, evaluator, attributes)
-
-        return false unless matched
+    def eval_and(args)
+      @matchers.all? do |matcher|
+        if match_with_key?(matcher)
+          matcher.match?(value: args[:matching_key])
+        else
+          matcher.match?(args)
+        end
       end
+    end
 
-      true
+    def match_with_key?(matcher)
+      matcher.respond_to?(:attribute) && matcher.attribute.nil? && matcher.string_type?
     end
 
     #
@@ -84,14 +78,7 @@ module SplitIoClient
     #
     # @reutrn [string] string value of this matcher
     def to_s
-      result = ''
-      @matcher_list.each_with_index do |matcher, i|
-        result += matcher.to_s
-        result += ' ' + @combiner if i != 0
-      end
-      result
+      @matcher_list.map(&:to_s).join("#{@combiner} ")
     end
-
   end
-
 end

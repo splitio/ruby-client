@@ -1,16 +1,24 @@
 module SplitIoClient
   class MatchesStringMatcher
-    def self.matcher_type
-      'MATCHES_STRING'.freeze
-    end
+    MATCHER_TYPE = 'MATCHES_STRING'.freeze
+
+    attr_reader :attribute
 
     def initialize(attribute, regexp_string)
       @attribute = attribute
       @regexp_string = @regexp_string.is_a?(Regexp) ? regexp_string : Regexp.new(regexp_string)
     end
 
-    def match?(value, _matching_key, _bucketing_key, _evaluator)
+    def match?(args)
+      value = args[:attributes].fetch(@attribute) do |a|
+        args[:attributes][a.to_s] || args[:attributes][a.to_sym]
+      end
+
       (value =~ @regexp_string) != nil
+    end
+
+    def string_type?
+      true
     end
   end
 end

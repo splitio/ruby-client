@@ -4,13 +4,13 @@ describe SplitIoClient::MatchesStringMatcher do
   let(:regexp_file) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/regexp/data.txt'))) }
 
   it 'matches' do
-    expect(described_class.new('value', %r{fo.}).match?('foo', nil, nil, nil)).to eq(true)
-    expect(described_class.new('value', 'foo').match?('foo', nil, nil, nil)).to eq(true)
+    expect(described_class.new('value', %r{fo.}).match?(attributes: { value: 'foo' })).to eq(true)
+    expect(described_class.new('value', 'foo').match?(attributes: { value: 'foo' })).to eq(true)
   end
 
   it 'does not match' do
-    expect(described_class.new('value', %r{fo.}).match?('bar', nil, nil, nil)).to eq(false)
-    expect(described_class.new('value', 'foo').match?('bar', nil, nil, nil)).to eq(false)
+    expect(described_class.new('value', %r{fo.}).match?(attributes: { value: 'bar' })).to eq(false)
+    expect(described_class.new('value', 'foo').match?(attributes: { value: 'bar' })).to eq(false)
   end
 
   it 'matches sample regexps from file' do
@@ -18,7 +18,7 @@ describe SplitIoClient::MatchesStringMatcher do
       regexp_str, test_str, result_str = str.split('#')
 
       expect(
-        described_class.new('key', Regexp.new(regexp_str)).match?(test_str, nil, nil, nil)
+        described_class.new('key', Regexp.new(regexp_str)).match?(attributes: { key: test_str })
       ).to eq(result_str == 'true')
     end
   end

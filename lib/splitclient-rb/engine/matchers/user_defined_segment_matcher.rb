@@ -1,14 +1,11 @@
 module SplitIoClient
-
   #
   # class to implement the user defined matcher
   #
-  class UserDefinedSegmentMatcher < NoMethodError
-
-    attr_reader :matcher_type
+  class UserDefinedSegmentMatcher
+    MATCHER_TYPE = 'IN_SEGMENT'.freeze
 
     def initialize(segments_repository, segment_name)
-      @matcher_type = "IN_SEGMENT"
       @segments_repository = segments_repository
       @segment_name = segment_name
     end
@@ -19,8 +16,8 @@ module SplitIoClient
     # @param key [string] key value to be matched
     #
     # @return [boolean] evaluation of the key against the segment
-    def match?(matching_key, _bucketing_key, _evaluator, attributes)
-      @segments_repository.in_segment?(@segment_name, matching_key)
+    def match?(args)
+      @segments_repository.in_segment?(@segment_name, args[:value] || args[:matching_key])
     end
 
     #
@@ -39,6 +36,10 @@ module SplitIoClient
       else
         false
       end
+    end
+
+    def string_type?
+      false
     end
   end
 end
