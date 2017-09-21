@@ -42,6 +42,8 @@ module SplitIoClient
     #
     # @return [boolean] match value for combiner delegates
     def eval_and(args)
+      # Convert all keys to symbols
+      args[:attributes] = args[:attributes].inject({}){ |memo, (k,v)| memo[k.to_sym] = v; memo } if args && args[:attributes]
       @matchers.all? do |matcher|
         if match_with_key?(matcher)
           matcher.match?(value: args[:matching_key])
