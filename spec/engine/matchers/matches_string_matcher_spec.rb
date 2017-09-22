@@ -6,11 +6,17 @@ describe SplitIoClient::MatchesStringMatcher do
   it 'matches' do
     expect(described_class.new('value', %r{fo.}).match?(attributes: { value: 'foo' })).to eq(true)
     expect(described_class.new('value', 'foo').match?(attributes: { value: 'foo' })).to eq(true)
+
+    expect(described_class.new('value', %r{fo.}).match?(value: 'foo')).to eq(true)
+    expect(described_class.new('value', 'foo').match?(value: 'foo')).to eq(true)
   end
 
   it 'does not match' do
     expect(described_class.new('value', %r{fo.}).match?(attributes: { value: 'bar' })).to eq(false)
     expect(described_class.new('value', 'foo').match?(attributes: { value: 'bar' })).to eq(false)
+
+    expect(described_class.new('value', %r{fo.}).match?(value: 'bar')).to eq(false)
+    expect(described_class.new('value', 'foo').match?(value: 'bar')).to eq(false)
   end
 
   it 'matches sample regexps from file' do

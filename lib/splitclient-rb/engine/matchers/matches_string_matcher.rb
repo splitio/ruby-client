@@ -10,7 +10,7 @@ module SplitIoClient
     end
 
     def match?(args)
-      value = args[:attributes].fetch(@attribute) do |a|
+      value = args[:value] || args[:attributes].fetch(@attribute) do |a|
         args[:attributes][a.to_s] || args[:attributes][a.to_sym]
       end
 
