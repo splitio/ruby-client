@@ -1,3 +1,3 @@
 module SplitIoClient
-  VERSION = '4.3.0.canary.2'
+  VERSION = '4.3.0.canary.3'
 end

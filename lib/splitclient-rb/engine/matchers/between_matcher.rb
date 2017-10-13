@@ -1,25 +1,25 @@
 module SplitIoClient
+  class BetweenMatcher
+    MATCHER_TYPE = 'BETWEEN'.freeze
 
-  class BetweenMatcher < NoMethodError
-
-    attr_reader :matcher_type
+    attr_reader :attribute
 
     def initialize(attribute_hash)
-      @matcher_type = "BETWEEN"
       @attribute = attribute_hash[:attribute]
       @data_type = attribute_hash[:data_type]
-      @start_value = get_formatted_value attribute_hash[:start_value], true
-      @end_value = get_formatted_value attribute_hash[:end_value], true
+      @start_value = formatted_value(attribute_hash[:start_value], true)
+      @end_value = formatted_value(attribute_hash[:end_value], true)
     end
 
-    def match?(value, _matching_key, _bucketing_key, _evaluator)
-      matches = false
-      if !value.nil?
-        param_value = get_formatted_value(value)
-        matches = param_value.is_a?(Integer) ? ((param_value >= @start_value) && (param_value <= @end_value)) : false
-      end
+    def match?(args)
+      return false if !args.key?(:attributes) && !args.key?(:value)
+      return false if args.key?(:value) && args[:value].nil?
+      return false if args.key?(:attributes) && args[:attributes].nil?
 
-      matches
+      value = formatted_value(args[:value] || args[:attributes][@attribute.to_sym])
+      return false unless value.is_a?(Integer)
+
+      (@start_value..@end_value).include? value
     end
 
     def equals?(obj)
@@ -34,18 +34,23 @@ module SplitIoClient
       end
     end
 
+    def string_type?
+      false
+    end
+
     private
-    def get_formatted_value(value, is_sdk_data = false)
+
+    def formatted_value(value, sdk_data = false)
       case @data_type
-        when "NUMBER"
-          return value
-        when "DATETIME"
-          value = value/1000 if is_sdk_data
-          return SplitIoClient::Utilities.to_milis_zero_out_from_seconds value
-        else
-          @logger.error('Invalid data type')
+      when 'NUMBER'
+        value
+      when 'DATETIME'
+        value = value / 1000 if sdk_data
+
+        SplitIoClient::Utilities.to_milis_zero_out_from_seconds(value)
+      else
+        @logger.error('Invalid data type')
       end
     end
   end
-
 end
