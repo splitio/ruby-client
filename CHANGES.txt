@@ -1,4 +1,4 @@
-4.3.0 (Sept 14th, 2017)
+4.3.0 (Oct 13th, 2017)
 - Add impression listener
 - Add support for client shutdown (destroy())
 - Add "time" to the routed impressions
