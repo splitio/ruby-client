@@ -27,9 +27,12 @@ module SplitIoClient
         end
 
       if @config.impressions_queue_size > 0
+        time = (Time.now.to_f * 1000.0).to_i
         @impressions_repository.add_bulk(
-          matching_key, bucketing_key, treatments_labels_change_numbers, (Time.now.to_f * 1000.0).to_i
+          matching_key, bucketing_key, treatments_labels_change_numbers, time
         )
+
+        route_impressions(split_names, matching_key, bucketing_key, time, treatments_labels_change_numbers, attributes)
       end
 
       split_names = treatments_labels_change_numbers.keys
@@ -87,8 +90,8 @@ module SplitIoClient
 
         store_impression(
           split_name, matching_key, bucketing_key,
-          { treatment: SplitIoClient::Engine::Models::Treatment::CONTROL, label: Engine::Models::Label::EXCEPTION },
-          store_impressions
+          { treatment: SplitIoClient::Engine::Models::Treatment::CONTROL, label: SplitIoClient::Engine::Models::Label::EXCEPTION },
+          store_impressions, attributes
         )
 
         return parsed_treatment(multiple, treatment_data)
@@ -97,7 +100,7 @@ module SplitIoClient
       begin
         latency = (Time.now - start) * 1000.0
         # Disable impressions if @config.impressions_queue_size == -1
-        split && store_impression(split_name, matching_key, bucketing_key, treatment_data, store_impressions)
+        split && store_impression(split_name, matching_key, bucketing_key, treatment_data, store_impressions, attributes)
 
         # Measure
         @adapter.metrics.time('sdk.get_treatment', latency)
@@ -106,8 +109,8 @@ module SplitIoClient
 
         store_impression(
           split_name, matching_key, bucketing_key,
-          { treatment: SplitIoClient::Engine::Models::Treatment::CONTROL, label: Engine::Models::Label::EXCEPTION },
-          store_impressions
+          { treatment: SplitIoClient::Engine::Models::Treatment::CONTROL, label: SplitIoClient::Engine::Models::Label::EXCEPTION },
+          store_impressions, attributes
         )
 
         return parsed_treatment(multiple, treatment_data)
@@ -116,7 +119,25 @@ module SplitIoClient
       parsed_treatment(multiple, treatment_data)
     end
 
-    def store_impression(split_name, matching_key, bucketing_key, treatment, store_impressions)
+    def destroy
+      @config.logger.info('Split client shutdown started...') if @config.debug_enabled
+
+      @config.threads[:impressions_sender].raise(SplitIoClient::ImpressionShutdownException)
+      @config.threads.reject { |k, _| k == :impressions_sender }.each do |name, thread|
+        Thread.kill(thread)
+      end
+
+      @metrics_repository.clear
+      @splits_repository.clear
+      @segments_repository.clear
+
+      @config.logger.info('Split client shutdown complete') if @config.debug_enabled
+    end
+
+    def store_impression(split_name, matching_key, bucketing_key, treatment, store_impressions, attributes)
+      time = (Time.now.to_f * 1000.0).to_i
+      route_impression(split_name, matching_key, bucketing_key, time, treatment, attributes) if @config.impression_listener && store_impressions
+
       return if @config.impressions_queue_size <= 0 || !store_impressions
 
       @impressions_repository.add(split_name,
@@ -124,9 +145,35 @@ module SplitIoClient
         'bucketingKey' => bucketing_key,
         'treatment' => treatment[:treatment],
         'label' => @config.labels_enabled ? treatment[:label] : nil,
-        'time' => (Time.now.to_f * 1000.0).to_i,
+        'time' => time,
         'changeNumber' => treatment[:change_number]
       )
+    end
+
+    def route_impression(split_name, matching_key, bucketing_key, time, treatment, attributes)
+      impression_router.add(
+        split_name: split_name,
+        matching_key: matching_key,
+        bucketing_key: bucketing_key,
+        time: time,
+        treatment: treatment,
+        attributes: attributes
+      )
+    end
+
+    def route_impressions(split_names, matching_key, bucketing_key, time, treatments_labels_change_numbers, attributes)
+      impression_router.add_bulk(
+        split_names: split_names,
+        matching_key: matching_key,
+        bucketing_key: bucketing_key,
+        time: time,
+        treatments_labels_change_numbers: treatments_labels_change_numbers,
+        attributes: attributes
+      )
+    end
+
+    def impression_router
+      @impression_router ||= SplitIoClient::ImpressionRouter.new(@config)
     end
 
     def keys_from_key(key)

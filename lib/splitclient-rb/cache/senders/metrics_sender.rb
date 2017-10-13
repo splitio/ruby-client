@@ -23,7 +23,7 @@ module SplitIoClient
         private
 
         def metrics_thread
-          Thread.new do
+          @config.threads[:metrics_sender] = Thread.new do
             @config.logger.info('Starting metrics service')
 
             loop do

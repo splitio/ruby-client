@@ -96,6 +96,10 @@ module SplitIoClient
         def ready!
           @adapter.set_string(namespace_key('.splits.ready'), Time.now.utc.to_i)
         end
+
+        def clear
+          @adapter.clear(namespace_key)
+        end
       end
     end
   end

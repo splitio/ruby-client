@@ -1,36 +1,36 @@
 module SplitIoClient
-
   #
   # class to implement the user defined matcher
   #
   class WhitelistMatcher < NoMethodError
+    MATCHER_TYPE = 'WHITELIST_MATCHER'
 
-    attr_reader :matcher_type
-
-    # variable that contains the keys of the whitelist
-    @whitelist = []
+    attr_reader :attribute
 
     def initialize(whitelist_data)
-      if whitelist_data.instance_of? Array
-        @whitelist = whitelist_data unless whitelist_data.nil?
-      elsif whitelist_data.instance_of? Hash
-        @matcher_type = "ATTR_WHITELIST"
+      @whitelist = case whitelist_data
+      when Array
+        whitelist_data
+      when Hash
+        @matcher_type = 'ATTR_WHITELIST'
         @attribute = whitelist_data[:attribute]
-        @whitelist = whitelist_data[:value] unless whitelist_data[:value].nil?
+
+        whitelist_data[:value]
+      else
+        []
       end
     end
 
-    def match?(matching_key, _bucketing_key, _evaluator, whitelist_data)
-      matches = false
-      if !(@matcher_type == "ATTR_WHITELIST")
-        matches = @whitelist.include?(matching_key)
-      else
-        if (!whitelist_data.nil? && whitelist_data.key?(@attribute.to_sym))
-          value = whitelist_data[@attribute.to_sym]
-          matches = @whitelist.include?(value)
-        end
-      end
-      matches
+    def match?(args)
+      return @whitelist.include?(args[:value] || args[:matching_key]) unless @matcher_type == 'ATTR_WHITELIST'
+
+      return false if !args.key?(:attributes) && !args.key?(:value)
+      return false if args.key?(:value) && args[:value].nil?
+      return false if args.key?(:attributes) && args[:attributes].nil?
+
+      return @whitelist.include?(args[:value] || args[:attributes][@attribute.to_sym])
+
+      false
     end
 
     #
@@ -51,14 +51,16 @@ module SplitIoClient
       end
     end
 
+    def string_type?
+      true
+    end
+
     #
     # function to print string value for this matcher
     #
     # @reutrn [string] string value of this matcher
     def to_s
-      'in segment ' + @whitelist.to_s
+      "in segment #{@whitelist}"
     end
-
   end
-
 end

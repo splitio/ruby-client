@@ -1,3 +1,5 @@
+require 'set'
+
 module SplitIoClient
   class SetMatcher
     protected
@@ -8,7 +10,7 @@ module SplitIoClient
     end
 
     def local_set(data, attribute)
-      data = data.fetch(attribute) { |attr| data[attr.to_s] || data[attr.to_sym] }
+      data = data.fetch(attribute) { |a| data[a.to_s] || data[a.to_sym] }
       # Allow user to pass individual elements as well
       local_array = data.kind_of?(Array) ? data : [data]
 

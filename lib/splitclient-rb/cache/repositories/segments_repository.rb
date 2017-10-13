@@ -55,6 +55,10 @@ module SplitIoClient
           @adapter.set_string(namespace_key('.segments.ready'), Time.now.utc.to_i)
         end
 
+        def clear
+          @adapter.clear(namespace_key)
+        end
+
         private
 
         def segment_data(name)

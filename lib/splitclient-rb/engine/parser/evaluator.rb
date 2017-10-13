@@ -58,15 +58,21 @@ module SplitIoClient
               in_rollout = true
             end
 
-            if matcher_type(condition).match?(keys[:matching_key], keys[:bucketing_key], self, attributes)
-              key = keys[:bucketing_key] ? keys[:bucketing_key] : keys[:matching_key]
-              result = Splitter.get_treatment(key, split[:seed], condition.partitions, split[:algo])
+            condition_matched = matcher_type(condition).match?(
+              matching_key: keys[:matching_key],
+              bucketing_key: keys[:bucketing_key],
+              evaluator: self,
+              attributes: attributes
+            )
 
-              if result.nil?
-                return treatment_hash(Models::Label::NO_RULE_MATCHED, split[:defaultTreatment], split[:changeNumber])
-              else
-                return treatment_hash(c[:label], result, split[:changeNumber])
-              end
+            next unless condition_matched
+
+            result = Splitter.get_treatment(key, split[:seed], condition.partitions, split[:algo])
+
+            if result.nil?
+              return treatment_hash(Models::Label::NO_RULE_MATCHED, split[:defaultTreatment], split[:changeNumber])
+            else
+              return treatment_hash(c[:label], result, split[:changeNumber])
             end
           end
 

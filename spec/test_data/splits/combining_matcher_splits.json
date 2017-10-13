@@ -1,120 +1,115 @@
 {
-    "splits":[
-      {
-         "orgId":null,
-         "environment":null,
-         "trafficTypeId":null,
-         "trafficTypeName":null,
-         "name":"RUBY_anding",
-         "seed":-2068277448,
-         "status":"ACTIVE",
-         "killed":false,
-         "defaultTreatment":"V1",
-         "conditions":[
-            {
-               "matcherGroup":{
-                  "combiner":"AND",
-                  "matchers":[
-                     {
-                        "keySelector":{
-                           "trafficType":"user",
-                           "attribute":null
-                        },
-                        "matcherType":"IN_SEGMENT",
-                        "negate":false,
-                        "userDefinedSegmentMatcherData":{
-                           "segmentName":"employees"
-                        },
-                        "whitelistMatcherData":null,
-                        "unaryNumericMatcherData":null,
-                        "betweenMatcherData":null
-                     },
-                     {
-                        "keySelector":{
-                           "trafficType":"user",
-                           "attribute":"join"
-                        },
-                        "matcherType":"BETWEEN",
-                        "negate":false,
-                        "userDefinedSegmentMatcherData":null,
-                        "whitelistMatcherData":null,
-                        "unaryNumericMatcherData":null,
-                        "betweenMatcherData":{
-                           "dataType":"DATETIME",
-                           "start":1461280821126,
-                           "end":1462071600000
-                        }
-                     },
-                     {
-                        "keySelector":{
-                           "trafficType":"user",
-                           "attribute":"custom_attribute"
-                        },
-                        "matcherType":"WHITELIST",
-                        "negate":false,
-                        "userDefinedSegmentMatcherData":null,
-                        "whitelistMatcherData":{
-                           "whitelist":[
-                              "usa",
-                              "argentina"
-                           ]
-                        },
-                        "unaryNumericMatcherData":null,
-                        "betweenMatcherData":null
-                     }
-                  ]
-               },
-               "partitions":[
-                  {
-                     "treatment":"V1",
-                     "size":0
-                  },
-                  {
-                     "treatment":"V2",
-                     "size":100
-                  },
-                  {
-                     "treatment":"V3",
-                     "size":0
-                  }
-               ]
-            },
-            {
-               "matcherGroup":{
-                  "combiner":"AND",
-                  "matchers":[
-                     {
-                        "keySelector":{
-                           "trafficType":"user",
-                           "attribute":null
-                        },
-                        "matcherType":"IN_SEGMENT",
-                        "negate":false,
-                        "userDefinedSegmentMatcherData":{
-                           "segmentName":"employees"
-                        },
-                        "whitelistMatcherData":null,
-                        "unaryNumericMatcherData":null,
-                        "betweenMatcherData":null
-                     }
-                  ]
-               },
-               "partitions":[
-                  {
-                     "treatment":"V1",
-                     "size":0
-                  },
-                  {
-                     "treatment":"V2",
-                     "size":0
-                  },
-                  {
-                     "treatment":"V3",
-                     "size":100
-                  }
-               ]
-            }
-         ]
-      }
-  ]
+  "splits": [{
+    "trafficTypeName": "user",
+    "name": "PASSENGER_anding",
+    "trafficAllocation": 100,
+    "trafficAllocationSeed": -1740914610,
+    "seed": 1288528654,
+    "status": "ACTIVE",
+    "killed": false,
+    "defaultTreatment": "V-olVc",
+    "changeNumber": 1505760087172,
+    "algo": 2,
+    "conditions": [{
+      "conditionType": "ROLLOUT",
+      "matcherGroup": {
+        "combiner": "AND",
+        "matchers": [{
+          "keySelector": {
+            "trafficType": "user",
+            "attribute": null
+          },
+          "matcherType": "IN_SEGMENT",
+          "negate": false,
+          "userDefinedSegmentMatcherData": {
+            "segmentName": "employees"
+          },
+          "whitelistMatcherData": null,
+          "unaryNumericMatcherData": null,
+          "betweenMatcherData": null,
+          "booleanMatcherData": null,
+          "dependencyMatcherData": null,
+          "stringMatcherData": null
+        }, {
+          "keySelector": {
+            "trafficType": "user",
+            "attribute": "join"
+          },
+          "matcherType": "BETWEEN",
+          "negate": false,
+          "userDefinedSegmentMatcherData": null,
+          "whitelistMatcherData": null,
+          "unaryNumericMatcherData": null,
+          "betweenMatcherData": {
+            "dataType": "DATETIME",
+            "start": 1461280821126,
+            "end": 1462071600000
+          },
+          "booleanMatcherData": null,
+          "dependencyMatcherData": null,
+          "stringMatcherData": null
+        }, {
+          "keySelector": {
+            "trafficType": "user",
+            "attribute": "custom_attribute"
+          },
+          "matcherType": "WHITELIST",
+          "negate": false,
+          "userDefinedSegmentMatcherData": null,
+          "whitelistMatcherData": {
+            "whitelist": ["usa", "argentina"]
+          },
+          "unaryNumericMatcherData": null,
+          "betweenMatcherData": null,
+          "booleanMatcherData": null,
+          "dependencyMatcherData": null,
+          "stringMatcherData": null
+        }]
+      },
+      "partitions": [{
+        "treatment": "V-olVc",
+        "size": 0
+      }, {
+        "treatment": "V-YZKS",
+        "size": 100
+      }, {
+        "treatment": "V-ocMj",
+        "size": 0
+      }],
+      "label": "in segment employees and join between 2016-04-21 11:20PM and 2016-05-01 03:00AM and custom_attribute in list [usa, argentina]"
+    }, {
+      "conditionType": "ROLLOUT",
+      "matcherGroup": {
+        "combiner": "AND",
+        "matchers": [{
+          "keySelector": {
+            "trafficType": "user",
+            "attribute": null
+          },
+          "matcherType": "IN_SEGMENT",
+          "negate": false,
+          "userDefinedSegmentMatcherData": {
+            "segmentName": "employees"
+          },
+          "whitelistMatcherData": null,
+          "unaryNumericMatcherData": null,
+          "betweenMatcherData": null,
+          "booleanMatcherData": null,
+          "dependencyMatcherData": null,
+          "stringMatcherData": null
+        }]
+      },
+      "partitions": [{
+        "treatment": "V-olVc",
+        "size": 0
+      }, {
+        "treatment": "V-YZKS",
+        "size": 0
+      }, {
+        "treatment": "V-ocMj",
+        "size": 100
+      }],
+      "label": "in segment employees"
+    }]
+  }]
 }

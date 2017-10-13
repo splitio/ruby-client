@@ -7,7 +7,7 @@ require 'optparse'
 require 'yaml'
 require_relative '../lib/splitclient-rb'
 
-ARGV << '-h' if ARGV.empty?
+# ARGV << '-h' if ARGV.empty?
 
 config_path = ''
 options = {}
@@ -84,9 +84,13 @@ begin
    exit(1)
  end
 
-config = YAML.load_file(config_path)
+config = config_path != '' ? YAML.load_file(config_path) : {}
 config
   .merge!(mode: :producer, cache_adapter: :redis)
   .merge!(options)
+  .merge!(api_key: ENV['API_KEY'] || config[:api_key])
+  .merge!(base_uri: ENV['SDK_URI'] || config[:base_uri])
+  .merge!(events_uri: ENV['EVENTS_URI'] || config[:events_uri])
+  # IDENTIFY_BASE_URI
 
 SplitIoClient::SplitFactory.new(config[:api_key], config)

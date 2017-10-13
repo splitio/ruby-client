@@ -414,6 +414,22 @@ describe SplitIoClient do
         end
       end
     end
+
+    describe 'client destroy' do
+      before do
+        stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+          .to_return(status: 200, body: all_keys_matcher_json)
+      end
+
+      it 'returns control' do
+        expect(subject.get_treatment('fake_user_id_1', 'test_feature')).to eq 'on'
+
+        subject.instance_variable_get(:@config).threads[:impressions_sender] = Thread.new {}
+        subject.destroy
+
+        expect(subject.get_treatment('fake_user_id_1', 'test_feature')).to eq 'control'
+      end
+    end
   end
 
   include_examples 'engine specs', :memory

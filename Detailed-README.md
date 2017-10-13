@@ -364,6 +364,27 @@ debug_enabled: true, # used for more verbose logging, including more debug infor
 transport_debug_enabled: true # used for log transport data (mostly http requests, false is the default)
 ```
 
+### Impression Listener
+
+In order to capture every single impression in your app SDK provides option called Impression Listener. It works pretty straightforward: you define a class which must have instance method called `log`, which must receive 1 argument `impression`. Let's say you have the following impression listener class:
+
+```ruby
+class MyImpressionListener
+  def log(impression)
+    Logger.new($stdout).info(impression)
+  end
+end
+```
+
+Nothing fancy here, it just takes impression and logs it to the stdout. Now, to actually use this class you'll need to specify it in your config (i.e. initializer) like this:
+
+```ruby
+{
+  # other options
+  impression_listener: MyImpressionListener.new # do remember to initialize your class here
+}
+```
+
 ### SDK Modes
 
 By default SDK would run alongside with your application and will be run in `standalone` mode, which includes two modes:
@@ -458,6 +479,14 @@ end
 ```
 
 By doing that SDK will recreate threads for each new worker, besides master.
+
+## Proxy support
+
+SDK respects http_proxy environment variable, all you need to do to use proxy is assign your proxy address to that variable in the format:
+
+```
+http_proxy=http://username:password@hostname:port
+```
 
 ## Framework support
 

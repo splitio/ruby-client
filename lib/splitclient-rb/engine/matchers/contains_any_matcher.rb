@@ -1,15 +1,19 @@
 module SplitIoClient
   class ContainsAnyMatcher < SetMatcher
-    def self.matcher_type
-      'CONTAINS_ANY'.freeze
-    end
+    MATCHER_TYPE = 'CONTAINS_ANY'.freeze
+
+    attr_reader :attribute
 
     def initialize(attribute, remote_array)
       super(attribute, remote_array)
     end
 
-    def match?(_matching_key, _bucketing_key, _evaluator, data)
-      local_set(data, @attribute).intersect? @remote_set
+    def match?(args)
+      local_set(args[:attributes], @attribute).intersect? @remote_set
+    end
+
+    def string_type?
+      false
     end
   end
 end

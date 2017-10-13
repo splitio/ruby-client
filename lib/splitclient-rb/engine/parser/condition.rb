@@ -17,7 +17,7 @@ module SplitIoClient
     end
 
     def create_condition_matcher(matchers)
-      CombiningMatcher.new(combiner, matchers) unless combiner.nil?
+      CombiningMatcher.new(combiner, matchers) if combiner
     end
 
     #
