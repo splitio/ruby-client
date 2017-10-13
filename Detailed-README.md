@@ -480,6 +480,14 @@ end
 
 By doing that SDK will recreate threads for each new worker, besides master.
 
+## Proxy support
+
+SDK respects http_proxy environment variable, all you need to do to use proxy is assign your proxy address to that variable in the format:
+
+```
+http_proxy=http://username:password@hostname:port
+```
+
 ## Framework support
 
 Currently SDK supports:
