@@ -6,7 +6,8 @@ module SplitIoClient
       RUBY_ENCODING = '1.9'.respond_to?(:force_encoding)
 
       def get_api(url, config, api_key, params = {})
-        api_client.get(url, params) do |req|
+        parsed_url = URI.parse(url)
+        api_client(url).get(parsed_url.request_uri, params) do |req|
           req.headers = common_headers(api_key, config).merge('Accept-Encoding' => 'gzip')
 
           req.options[:timeout] = config.read_timeout
@@ -21,7 +22,8 @@ module SplitIoClient
       end
 
       def post_api(url, config, api_key, data, headers = {}, params = {})
-        api_client.post(url) do |req|
+        parsed_url = URI.parse(url)
+        api_client(url).post(parsed_url.request_uri) do |req|
           req.headers = common_headers(api_key, config)
             .merge('Content-Type' => 'application/json')
             .merge(headers)
@@ -45,8 +47,9 @@ module SplitIoClient
 
       private
 
-      def api_client
-        @api_client ||= Faraday.new do |builder|
+      def api_client(url)
+        parsed_url = URI.parse(url)
+        @api_client ||= Faraday.new("#{parsed_url.scheme}://#{parsed_url.host}") do |builder|
           builder.use SplitIoClient::FaradayMiddleware::Gzip
           builder.adapter :net_http_persistent
         end
