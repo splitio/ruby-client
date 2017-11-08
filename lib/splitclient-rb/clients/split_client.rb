@@ -90,7 +90,10 @@ module SplitIoClient
 
         store_impression(
           split_name, matching_key, bucketing_key,
-          { treatment: SplitIoClient::Engine::Models::Treatment::CONTROL, label: SplitIoClient::Engine::Models::Label::EXCEPTION },
+          {
+            treatment: SplitIoClient::Engine::Models::Treatment::CONTROL,
+            label: SplitIoClient::Engine::Models::Label::EXCEPTION
+          },
           store_impressions, attributes
         )
 
@@ -109,7 +112,10 @@ module SplitIoClient
 
         store_impression(
           split_name, matching_key, bucketing_key,
-          { treatment: SplitIoClient::Engine::Models::Treatment::CONTROL, label: SplitIoClient::Engine::Models::Label::EXCEPTION },
+          {
+            treatment: SplitIoClient::Engine::Models::Treatment::CONTROL,
+            label: SplitIoClient::Engine::Models::Label::EXCEPTION
+          },
           store_impressions, attributes
         )
 
@@ -148,6 +154,9 @@ module SplitIoClient
         'time' => time,
         'changeNumber' => treatment[:change_number]
       )
+    rescue StandardError => error
+      @config.log_found_exception(__method__.to_s, error)
+      @config.logger.warn('Failed to store impression')
     end
 
     def route_impression(split_name, matching_key, bucketing_key, time, treatment, attributes)
