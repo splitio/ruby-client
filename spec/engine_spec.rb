@@ -430,6 +430,20 @@ describe SplitIoClient do
         expect(subject.get_treatment('fake_user_id_1', 'test_feature')).to eq 'control'
       end
     end
+
+    describe 'redis outage' do
+      before do
+        stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+          .to_return(status: 200, body: all_keys_matcher_json)
+      end
+
+      it 'returns control' do
+        allow(subject.instance_variable_get(:@impressions_repository))
+          .to receive(:add).and_raise(Redis::CannotConnectError)
+
+        expect { subject.store_impression('', '', '', {}, '', '') }.not_to raise_error
+      end
+    end
   end
 
   include_examples 'engine specs', :memory
