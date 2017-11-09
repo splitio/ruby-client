@@ -156,7 +156,6 @@ module SplitIoClient
       )
     rescue StandardError => error
       @config.log_found_exception(__method__.to_s, error)
-      @config.logger.warn('Failed to store impression')
     end
 
     def route_impression(split_name, matching_key, bucketing_key, time, treatment, attributes)
