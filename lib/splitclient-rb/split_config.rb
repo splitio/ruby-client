@@ -313,10 +313,13 @@ module SplitIoClient
     # custom logger of exceptions
     #
     # @return [void]
-    def log_found_exception(caller, exn)
-      error_traceback = "#{exn.inspect} #{exn}\n\t#{exn.backtrace.join("\n\t")}"
-      error = "[splitclient-rb] Unexpected exception in #{caller}: #{error_traceback}"
-      @logger.warn(error)
+    def log_found_exception(caller, error)
+      message = ''
+
+      message << "[splitclient-rb] Unexpected exception in #{caller}: #{error.inspect} #{error}"
+      message << "\n\t#{error.backtrace.join("\n\t")}" if @debug_enabled
+
+      @logger.warn(message)
     end
 
     #
