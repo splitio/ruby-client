@@ -44,7 +44,7 @@ describe SplitIoClient do
       it 'returns CONTROL and label for random id' do
         expect(subject.get_treatment('my_random_user_id', 'my_random_feaure', nil, nil, false, true)).to eq(
           treatment: Treatment::CONTROL,
-          label: Label::EXCEPTION,
+          label: Label::DEFINITION_NOT_FOUND,
           change_number: nil
         )
       end
@@ -56,7 +56,7 @@ describe SplitIoClient do
       it 'returns CONTROL and label on null id' do
         expect(subject.get_treatment(nil, 'my_random_feaure', nil, nil, false, true)).to eq(
           treatment: Treatment::CONTROL,
-          label: Label::EXCEPTION,
+          label: Label::DEFINITION_NOT_FOUND,
           change_number: nil
         )
       end
@@ -68,7 +68,7 @@ describe SplitIoClient do
       it 'returns CONTROL and label on null feature' do
         expect(subject.get_treatment('my_random_user_id', nil, nil, nil, false, true)).to eq(
           treatment: Treatment::CONTROL,
-          label: Label::EXCEPTION,
+          label: Label::DEFINITION_NOT_FOUND,
           change_number: nil
         )
       end
