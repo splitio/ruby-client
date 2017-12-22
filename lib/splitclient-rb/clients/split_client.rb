@@ -58,7 +58,7 @@ module SplitIoClient
         multiple = false, evaluator = nil
       )
       bucketing_key, matching_key = keys_from_key(key)
-      treatment_data = { label: Engine::Models::Label::EXCEPTION, treatment: SplitIoClient::Engine::Models::Treatment::CONTROL }
+      treatment_data = { label: Engine::Models::Label::DEFINITION_NOT_FOUND, treatment: SplitIoClient::Engine::Models::Treatment::CONTROL }
       evaluator ||= Engine::Parser::Evaluator.new(@segments_repository, @splits_repository)
 
       if matching_key.nil?
