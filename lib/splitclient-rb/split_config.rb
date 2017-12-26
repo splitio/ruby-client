@@ -37,13 +37,16 @@ module SplitIoClient
       @read_timeout = opts[:read_timeout] || SplitConfig.default_read_timeout
       @features_refresh_rate = opts[:features_refresh_rate] || SplitConfig.default_features_refresh_rate
       @segments_refresh_rate = opts[:segments_refresh_rate] || SplitConfig.default_segments_refresh_rate
+
       @metrics_refresh_rate = opts[:metrics_refresh_rate] || SplitConfig.default_metrics_refresh_rate
+      @metrics_slice_size = opts[:metrics_slice_size] || SplitConfig.default_metrics_slice_size
 
       @impressions_refresh_rate = opts[:impressions_refresh_rate] || SplitConfig.default_impressions_refresh_rate
       @impressions_queue_size = opts[:impressions_queue_size] || SplitConfig.default_impressions_queue_size
       @impressions_adapter = SplitConfig.init_cache_adapter(
         opts[:cache_adapter] || SplitConfig.default_cache_adapter, :queue_adapter, @redis_url, @impressions_queue_size
       )
+      @impressions_slice_size = opts[:impressions_slice_size] || SplitConfig.default_impressions_slice_size
 
       @metrics_adapter = SplitConfig.init_cache_adapter(
         opts[:cache_adapter] || SplitConfig.default_cache_adapter, :map_adapter, @redis_url, false
@@ -166,6 +169,7 @@ module SplitIoClient
     #
     # @return [Integer]
     attr_reader :impressions_queue_size
+    attr_reader :impressions_slice_size
 
     attr_reader :redis_url
     attr_reader :redis_namespace
@@ -267,6 +271,14 @@ module SplitIoClient
 
     def self.default_impressions_queue_size
       5000
+    end
+
+    def self.default_impressions_slice_size
+      1000
+    end
+
+    def self.default_metrics_slice_size
+      1000
     end
 
     #
