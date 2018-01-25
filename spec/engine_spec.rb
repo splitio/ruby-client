@@ -444,6 +444,33 @@ describe SplitIoClient do
         expect { subject.store_impression('', '', '', {}, '', '') }.not_to raise_error
       end
     end
+
+    describe 'events' do
+      before do
+        stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+          .to_return(status: 200, body: all_keys_matcher_json)
+      end
+
+      it 'fetches and deletes events' do
+        subject.track('key', 'traffic_type', 'event_type', 'value')
+
+        events = subject.instance_variable_get(:@events_repository).clear
+
+        expect(events.map { |e| JSON.parse(e).reject { |k, _| k == 'timestamp' } }).to eq(
+          [
+            {
+              "key"=>"key",
+              "trafficTypeName"=>"traffic_type",
+              "eventTypeId"=>"event_type",
+              "value"=>"value",
+              "timestamp"=>1516702050442
+            }.reject { |k, _| k == 'timestamp' }
+          ]
+        )
+
+        expect(events.clear).to eq([])
+      end
+    end
   end
 
   include_examples 'engine specs', :memory

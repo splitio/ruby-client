@@ -66,6 +66,12 @@ module SplitIoClient
 
       @threads = {}
 
+      @events_push_rate = opts[:events_push_rate] || SplitConfig.default_events_push_rate
+      @events_queue_size = opts[:events_queue_size] || SplitConfig.default_events_queue_size
+      @events_adapter = SplitConfig.init_cache_adapter(
+        opts[:cache_adapter] || SplitConfig.default_cache_adapter, :map_adapter, @redis_url, false
+      )
+
       startup_log
     end
 
@@ -109,6 +115,12 @@ module SplitIoClient
     #
     # @return [Symbol] Metrics adapter
     attr_reader :metrics_adapter
+
+    #
+    # The cache adapter to store events in
+    #
+    # @return [Object] Metrics adapter
+    attr_reader :events_adapter
 
     #
     # The connection timeout for network connections in seconds.
@@ -162,7 +174,7 @@ module SplitIoClient
     attr_reader :impression_listener_refresh_rate
 
     #
-    # Wow big the impressions queue is before dropping impressions. -1 to disable it.
+    # How big the impressions queue is before dropping impressions. -1 to disable it.
     #
     # @return [Integer]
     attr_reader :impressions_queue_size
@@ -171,6 +183,18 @@ module SplitIoClient
     attr_reader :redis_namespace
 
     attr_accessor :threads
+
+    #
+    # The schedule time for events flush after the first one
+    #
+    # @return [Integer]
+    attr_reader :events_push_rate
+
+    #
+    # The max size of the events queue
+    #
+    # @return [Integer]
+    attr_reader :events_queue_size
 
     #
     # The default split client configuration
@@ -267,6 +291,14 @@ module SplitIoClient
 
     def self.default_impressions_queue_size
       5000
+    end
+
+    def self.default_events_push_rate
+      60
+    end
+
+    def self.default_events_queue_size
+      500
     end
 
     #
