@@ -65,7 +65,7 @@ module SplitIoClient
       def referer(config)
         result = "#{config.language}-#{config.version}"
 
-        result = "#{result}::#{SplitIoClient::SplitConfig.get_hostname}" unless SplitIoClient::SplitConfig.get_hostname == 'localhost'
+        result = "#{result}::#{SplitIoClient::SplitConfig.machine_hostname}" unless SplitIoClient::SplitConfig.machine_hostname == 'localhost'
 
         result
       end

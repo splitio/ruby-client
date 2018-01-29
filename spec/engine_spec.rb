@@ -5,11 +5,13 @@ include SplitIoClient::Engine::Models
 
 describe SplitIoClient do
   RSpec.shared_examples 'engine specs' do |cache_adapter|
-    let(:config) do
-      { logger: Logger.new('/dev/null'), cache_adapter: cache_adapter, redis_namespace: 'test' }
+    subject do
+      SplitIoClient::SplitFactory.new('',
+        logger: Logger.new('/dev/null'),
+        cache_adapter: cache_adapter,
+        redis_namespace: 'test'
+      ).client
     end
-
-    subject { SplitIoClient::SplitFactory.new('', config).client }
 
     let(:segments_json) { File.read(File.join(SplitIoClient.root, 'spec/test_data/segments/engine_segments.json')) }
     let(:segments2_json) { File.read(File.join(SplitIoClient.root, 'spec/test_data/segments/engine_segments2.json')) }
@@ -81,20 +83,12 @@ describe SplitIoClient do
       end
 
       context 'producer mode' do
-        let(:config) do
-          { logger: Logger.new('/dev/null'), mode: :producer, cache_adapter: cache_adapter, redis_namespace: 'test' }
-        end
-
         it 'stores splits' do
           expect(subject.instance_variable_get(:@adapter).splits_repository.splits.size).to eq(1)
         end
       end
 
       context 'consumer mode' do
-        let(:config) do
-          { logger: Logger.new('/dev/null'), mode: :consumer, cache_adapter: cache_adapter, redis_namespace: 'test' }
-        end
-
         it 'stores splits' do
           expect(subject.instance_variable_get(:@adapter).splits_repository.splits.size).to eq(0)
         end
@@ -332,7 +326,9 @@ describe SplitIoClient do
 
     describe 'impressions' do
       let(:impressions) { subject.instance_variable_get(:@impressions_repository).clear }
-      let(:formatted_impressions) { SplitIoClient::Cache::Senders::ImpressionsSender.new(nil, config, nil).send(:formatted_impressions, impressions) }
+      let(:formatted_impressions) do
+        SplitIoClient::Cache::Senders::ImpressionsSender.new(nil, config, nil).send(:formatted_impressions, impressions)
+      end
 
       before do
         stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
@@ -359,9 +355,6 @@ describe SplitIoClient do
       end
 
       context 'when impressions are disabled' do
-        let(:config) do
-          { logger: Logger.new('/dev/null'), cache_adapter: cache_adapter, impressions_queue_size: -1, redis_namespace: 'test' }
-        end
         let(:impressions) { subject.instance_variable_get(:@impressions_repository).clear }
 
         it 'works when impressions are disabled for get_treatments' do
@@ -451,28 +444,36 @@ describe SplitIoClient do
           .to_return(status: 200, body: all_keys_matcher_json)
       end
 
+      let(:split_config) { SplitIoClient::SplitConfig.new }
+
       it 'fetches and deletes events' do
         subject.track('key', 'traffic_type', 'event_type', 'value')
 
-        events = subject.instance_variable_get(:@events_repository).clear
+        event = subject.instance_variable_get(:@events_repository).clear.first
 
-        expect(events.map { |e| JSON.parse(e).reject { |k, _| k == 'timestamp' } }).to eq(
-          [
-            {
-              "key"=>"key",
-              "trafficTypeName"=>"traffic_type",
-              "eventTypeId"=>"event_type",
-              "value"=>"value",
-              "timestamp"=>1516702050442
-            }.reject { |k, _| k == 'timestamp' }
-          ]
+        expect(event[:m]).to eq(
+          s: "#{split_config.language}-#{split_config.version}",
+          i: split_config.machine_ip,
+          n: split_config.machine_name
         )
 
-        expect(events.clear).to eq([])
+        expect(event[:e].reject { |e| e == :timestamp }).to eq(
+          key: 'key',
+          trafficTypeName: 'traffic_type',
+          eventTypeId: 'event_type',
+          value: 'value',
+        )
+
+        expect(subject.instance_variable_get(:@events_repository).clear).to eq([])
       end
     end
   end
+end
 
+describe SplitIoClient do
   include_examples 'engine specs', :memory
+end
+
+describe SplitIoClient do
   include_examples 'engine specs', :redis
 end

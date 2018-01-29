@@ -11,7 +11,7 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
     let(:split_adapter) do
       SplitIoClient::SplitAdapter.new(nil, SplitIoClient::SplitConfig.new(mode: :nil), nil, nil, nil, nil, nil)
     end
-    let(:ip) { SplitIoClient::SplitConfig.get_ip }
+    let(:ip) { SplitIoClient::SplitConfig.machine_ip }
 
     before :each do
       Redis.new.flushall

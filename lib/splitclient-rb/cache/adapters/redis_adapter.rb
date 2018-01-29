@@ -119,9 +119,7 @@ module SplitIoClient
         end
 
         # Queue
-        def add_to_queue(key, val, max_size)
-          @redis.del(key) if @redis.llen(key) >= max_size
-
+        def add_to_queue(key, val)
           @redis.rpush(key, val)
         end
 

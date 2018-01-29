@@ -53,8 +53,8 @@ module SplitIoClient
       @debug_enabled = opts[:debug_enabled] || SplitConfig.default_debug
       @transport_debug_enabled = opts[:transport_debug_enabled] || SplitConfig.default_debug
       @block_until_ready = opts[:ready] || opts[:block_until_ready] || 0
-      @machine_name = opts[:machine_name] || SplitConfig.get_hostname
-      @machine_ip = opts[:machine_ip] || SplitConfig.get_ip
+      @machine_name = opts[:machine_name] || SplitConfig.machine_hostname
+      @machine_ip = opts[:machine_ip] || SplitConfig.machine_ip
 
       @language = opts[:language] || 'ruby'
       @version = opts[:version] || SplitIoClient::VERSION
@@ -69,7 +69,7 @@ module SplitIoClient
       @events_push_rate = opts[:events_push_rate] || SplitConfig.default_events_push_rate
       @events_queue_size = opts[:events_queue_size] || SplitConfig.default_events_queue_size
       @events_adapter = SplitConfig.init_cache_adapter(
-        opts[:cache_adapter] || SplitConfig.default_cache_adapter, :map_adapter, @redis_url, false
+        opts[:cache_adapter] || SplitConfig.default_cache_adapter, :queue_adapter, @redis_url, @events_queue_size
       )
 
       startup_log
@@ -216,10 +216,10 @@ module SplitIoClient
       'https://events.split.io/api/'
     end
 
-    def self.init_cache_adapter(adapter, data_structure, redis_url = nil, impressions_queue_size = nil)
+    def self.init_cache_adapter(adapter, data_structure, redis_url = nil, queue_size = nil)
       case adapter
       when :memory
-        SplitIoClient::Cache::Adapters::MemoryAdapter.new(map_memory_adapter(data_structure, impressions_queue_size))
+        SplitIoClient::Cache::Adapters::MemoryAdapter.new(map_memory_adapter(data_structure, queue_size))
       when :redis
         begin
           require 'redis'
@@ -369,20 +369,17 @@ module SplitIoClient
     # gets the hostname where the sdk gem is running
     #
     # @return [string]
-    def self.get_hostname
-      begin
-        Socket.gethostname
-      rescue
-        #unable to get hostname
-        'localhost'
-      end
+    def self.machine_hostname
+      Socket.gethostname
+    rescue
+      'localhost'.freeze
     end
 
     #
     # gets the ip where the sdk gem is running
     #
     # @return [string]
-    def self.get_ip
+    def self.machine_ip
       loopback_ip = Socket.ip_address_list.find { |ip| ip.ipv4_loopback? }
       private_ip = Socket.ip_address_list.find { |ip| ip.ipv4_private? }
 
