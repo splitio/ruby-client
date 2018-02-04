@@ -1,3 +1,6 @@
+4.4.0 (Feb 5th, 2018)
+- Add track API
+
 4.3.2 (Dec 19th, 2017)
 - Add DEFINITION_NOT_FOUND and rename NO_RULE_MATCHED labels
 

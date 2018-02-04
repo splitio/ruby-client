@@ -49,7 +49,7 @@ module SplitIoClient
                 parsed_impression = JSON.parse(impression)
 
                 memo << {
-                  feature: split_name.to_sym,
+                  feature: split_name,
                   impressions: parsed_impression,
                   ip: ip
                 }
