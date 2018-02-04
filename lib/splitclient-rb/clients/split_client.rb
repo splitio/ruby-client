@@ -137,6 +137,7 @@ module SplitIoClient
       @metrics_repository.clear
       @splits_repository.clear
       @segments_repository.clear
+      @events_repository.clear
 
       @config.logger.info('Split client shutdown complete') if @config.debug_enabled
     end

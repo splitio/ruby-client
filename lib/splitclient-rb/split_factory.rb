@@ -27,7 +27,7 @@ module SplitIoClient
     end
 
     def start!
-      SplitAdapter.new(@api_key, @config, @splits_repository, @segments_repository, @impressions_repository, @metrics_repository, @sdk_blocker)
+      SplitAdapter.new(@api_key, @config, @splits_repository, @segments_repository, @impressions_repository, @metrics_repository, @events_repository, @sdk_blocker)
     end
 
     alias resume! start!
