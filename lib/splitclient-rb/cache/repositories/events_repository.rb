@@ -4,7 +4,7 @@ module SplitIoClient
       # Repository which forwards events interface to the selected adapter
       class EventsRepository < Repository
         extend Forwardable
-        def_delegators :@adapter, :add, :add_bulk, :clear, :empty?
+        def_delegators :@adapter, :add, :clear
 
         def initialize(adapter, config)
           @config = config

@@ -10,7 +10,7 @@ describe SplitIoClient::SplitClient do
   let(:impressions_repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(queue_adapter, config) }
   let(:metrics_repository) { SplitIoClient::Cache::Repositories::MetricsRepository.new(map_adapter, config) }
 
-  let(:client) { SplitIoClient::SplitClient.new('', config, splits_repository, segments_repository, impressions_repository, metrics_repository) }
+  let(:client) { SplitIoClient::SplitClient.new('', config, splits_repository, segments_repository, impressions_repository, metrics_repository, nil) }
 
   context 'control' do
     it 'allocates minimum objects' do
