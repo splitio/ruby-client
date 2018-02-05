@@ -148,12 +148,12 @@ describe SplitIoClient do
         )
       end
 
-      it 'validates the feature is on for all ids multiple keys for integer key' do
+      it "[#{cache_adapter}] validates the feature is on for all ids multiple keys for integer key" do
         expect(subject.get_treatments(222, ['new_feature', 'foo'])).to eq(
           new_feature: 'on', foo: Treatment::CONTROL
         )
         impressions = subject.instance_variable_get(:@impressions_repository).clear
-        expect(impressions.collect { |i| i[:feature] }).to match_array %w(foo new_feature)
+        expect(impressions.collect { |i| i[:feature] }).to match_array %i(foo new_feature)
       end
 
       it 'validates the feature is on for all ids multiple keys for integer key' do
@@ -167,7 +167,7 @@ describe SplitIoClient do
         expect(ImpressionsFormatter
           .new(subject.instance_variable_get(:@impressions_repository))
           .call(impressions)
-          .select { |im| im[:testName] == 'new_feature' }[0][:keyImpressions].size
+          .select { |im| im[:testName] == :new_feature }[0][:keyImpressions].size
         ).to eq(2)
       end
 
@@ -370,8 +370,8 @@ describe SplitIoClient do
 
         expect(impressions.size).to eq(14)
 
-        expect(formatted_impressions.find { |i| i[:testName] == 'sample_feature' }[:keyImpressions].size).to eq(6)
-        expect(formatted_impressions.find { |i| i[:testName] == 'beta_feature' }[:keyImpressions].size).to eq(6)
+        expect(formatted_impressions.find { |i| i[:testName] == :sample_feature }[:keyImpressions].size).to eq(6)
+        expect(formatted_impressions.find { |i| i[:testName] == :beta_feature }[:keyImpressions].size).to eq(6)
       end
 
       context 'when impressions are disabled' do
