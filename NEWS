@@ -1,6 +1,6 @@
 4.4.0
 
-Add track() API
+Add the ability to send event data to split service (.track() api)
 
 4.3.0
 
