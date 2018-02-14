@@ -55,6 +55,9 @@ module SplitIoClient
       result = get_localhost_treatment(feature)
     end
 
+    def track
+    end
+
     private
 
     #
