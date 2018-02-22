@@ -1,6 +1,9 @@
 4.4.0 (Feb 5th, 2018)
 - Add track API
 
+4.3.3 (Feb 22th, 2018)
+- Allow usage of Redis >= 3.2, not only ~> 3.2
+
 4.3.2 (Dec 19th, 2017)
 - Add DEFINITION_NOT_FOUND and rename NO_RULE_MATCHED labels
 
