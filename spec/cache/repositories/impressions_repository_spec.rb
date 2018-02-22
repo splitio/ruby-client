@@ -11,7 +11,7 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
     let(:split_adapter) do
       SplitIoClient::SplitAdapter.new(nil, SplitIoClient::SplitConfig.new(mode: :nil), nil, nil, nil, nil, nil)
     end
-    let(:ip) { SplitIoClient::SplitConfig.get_ip }
+    let(:ip) { SplitIoClient::SplitConfig.machine_ip }
 
     before :each do
       Redis.new.flushall
@@ -23,8 +23,8 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
 
       expect(repository.clear).to match_array(
         [
-          { feature: 'foo1', impressions: { 'key_name' => 'matching_key', 'treatment' => 'on', 'time' => 1478113516002 }, ip: ip },
-          { feature: 'foo2', impressions: { 'key_name' => 'matching_key2', 'treatment' => 'off', 'time' => 1478113518285 }, ip: ip },
+          { feature: :foo1, impressions: { 'key_name' => 'matching_key', 'treatment' => 'on', 'time' => 1478113516002 }, ip: ip },
+          { feature: :foo2, impressions: { 'key_name' => 'matching_key2', 'treatment' => 'off', 'time' => 1478113518285 }, ip: ip },
         ]
       )
 

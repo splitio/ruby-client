@@ -5,11 +5,13 @@ include SplitIoClient::Engine::Models
 
 describe SplitIoClient do
   RSpec.shared_examples 'engine specs' do |cache_adapter|
-    let(:config) do
-      { logger: Logger.new('/dev/null'), cache_adapter: cache_adapter, redis_namespace: 'test' }
+    subject do
+      SplitIoClient::SplitFactory.new('',
+        logger: Logger.new('/dev/null'),
+        cache_adapter: cache_adapter,
+        redis_namespace: 'test'
+      ).client
     end
-
-    subject { SplitIoClient::SplitFactory.new('', config).client }
 
     let(:segments_json) { File.read(File.join(SplitIoClient.root, 'spec/test_data/segments/engine_segments.json')) }
     let(:segments2_json) { File.read(File.join(SplitIoClient.root, 'spec/test_data/segments/engine_segments2.json')) }
@@ -81,8 +83,13 @@ describe SplitIoClient do
       end
 
       context 'producer mode' do
-        let(:config) do
-          { logger: Logger.new('/dev/null'), mode: :producer, cache_adapter: cache_adapter, redis_namespace: 'test' }
+        subject do
+          SplitIoClient::SplitFactory.new('',
+            logger: Logger.new('/dev/null'),
+            cache_adapter: cache_adapter,
+            redis_namespace: 'test',
+            mode: :producer
+          ).client
         end
 
         it 'stores splits' do
@@ -91,8 +98,13 @@ describe SplitIoClient do
       end
 
       context 'consumer mode' do
-        let(:config) do
-          { logger: Logger.new('/dev/null'), mode: :consumer, cache_adapter: cache_adapter, redis_namespace: 'test' }
+        subject do
+          SplitIoClient::SplitFactory.new('',
+            logger: Logger.new('/dev/null'),
+            cache_adapter: cache_adapter,
+            redis_namespace: 'test',
+            mode: :consumer
+          ).client
         end
 
         it 'stores splits' do
@@ -136,12 +148,12 @@ describe SplitIoClient do
         )
       end
 
-      it 'validates the feature is on for all ids multiple keys for integer key' do
+      it "[#{cache_adapter}] validates the feature is on for all ids multiple keys for integer key" do
         expect(subject.get_treatments(222, ['new_feature', 'foo'])).to eq(
           new_feature: 'on', foo: Treatment::CONTROL
         )
         impressions = subject.instance_variable_get(:@impressions_repository).clear
-        expect(impressions.collect { |i| i[:feature] }).to match_array %w(foo new_feature)
+        expect(impressions.collect { |i| i[:feature] }).to match_array %i(foo new_feature)
       end
 
       it 'validates the feature is on for all ids multiple keys for integer key' do
@@ -155,7 +167,7 @@ describe SplitIoClient do
         expect(ImpressionsFormatter
           .new(subject.instance_variable_get(:@impressions_repository))
           .call(impressions)
-          .select { |im| im[:testName] == 'new_feature' }[0][:keyImpressions].size
+          .select { |im| im[:testName] == :new_feature }[0][:keyImpressions].size
         ).to eq(2)
       end
 
@@ -332,7 +344,11 @@ describe SplitIoClient do
 
     describe 'impressions' do
       let(:impressions) { subject.instance_variable_get(:@impressions_repository).clear }
-      let(:formatted_impressions) { SplitIoClient::Cache::Senders::ImpressionsSender.new(nil, config, nil).send(:formatted_impressions, impressions) }
+      let(:formatted_impressions) do
+        SplitIoClient::Cache::Senders::ImpressionsSender
+          .new(nil, {}, nil)
+          .send(:formatted_impressions, impressions)
+      end
 
       before do
         stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
@@ -354,13 +370,18 @@ describe SplitIoClient do
 
         expect(impressions.size).to eq(14)
 
-        expect(formatted_impressions.find { |i| i[:testName] == 'sample_feature' }[:keyImpressions].size).to eq(6)
-        expect(formatted_impressions.find { |i| i[:testName] == 'beta_feature' }[:keyImpressions].size).to eq(6)
+        expect(formatted_impressions.find { |i| i[:testName] == :sample_feature }[:keyImpressions].size).to eq(6)
+        expect(formatted_impressions.find { |i| i[:testName] == :beta_feature }[:keyImpressions].size).to eq(6)
       end
 
       context 'when impressions are disabled' do
-        let(:config) do
-          { logger: Logger.new('/dev/null'), cache_adapter: cache_adapter, impressions_queue_size: -1, redis_namespace: 'test' }
+        subject do
+          SplitIoClient::SplitFactory.new('',
+            logger: Logger.new('/dev/null'),
+            cache_adapter: cache_adapter,
+            redis_namespace: 'test',
+            impressions_queue_size: -1
+          ).client
         end
         let(:impressions) { subject.instance_variable_get(:@impressions_repository).clear }
 
@@ -444,8 +465,43 @@ describe SplitIoClient do
         expect { subject.store_impression('', '', '', {}, '', '') }.not_to raise_error
       end
     end
-  end
 
+    describe 'events' do
+      before do
+        stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+          .to_return(status: 200, body: all_keys_matcher_json)
+      end
+
+      let(:split_config) { SplitIoClient::SplitConfig.new }
+
+      it 'fetches and deletes events' do
+        subject.track('key', 'traffic_type', 'event_type', 'value')
+
+        event = subject.instance_variable_get(:@events_repository).clear.first
+
+        expect(event[:m]).to eq(
+          s: "#{split_config.language}-#{split_config.version}",
+          i: split_config.machine_ip,
+          n: split_config.machine_name
+        )
+
+        expect(event[:e].reject { |e| e == :timestamp }).to eq(
+          key: 'key',
+          trafficTypeName: 'traffic_type',
+          eventTypeId: 'event_type',
+          value: 'value',
+        )
+
+        expect(subject.instance_variable_get(:@events_repository).clear).to eq([])
+      end
+    end
+  end
+end
+
+describe SplitIoClient do
   include_examples 'engine specs', :memory
+end
+
+describe SplitIoClient do
   include_examples 'engine specs', :redis
 end

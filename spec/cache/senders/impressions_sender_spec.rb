@@ -7,7 +7,7 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
     let(:repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(adapter, config) }
     let(:sender) { described_class.new(repository, config, nil) }
     let(:formatted_impressions) { sender.send(:formatted_impressions, repository.clear) }
-    let(:ip) { SplitIoClient::SplitConfig.get_ip }
+    let(:ip) { SplitIoClient::SplitConfig.machine_ip }
 
     before :each do
       Redis.new.flushall
@@ -33,13 +33,13 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
     it 'formats impressions to be sent' do
       expect(formatted_impressions).to match_array([
         {
-          testName: 'foo1',
+          testName: :foo1,
           keyImpressions: [{ keyName: 'matching_key', treatment: 'on', time: 1478113516002, bucketingKey: 'foo1', label: 'custom_label1',
                changeNumber: 123456 }],
           ip: ip
         },
         {
-          testName: 'foo2',
+          testName: :foo2,
           keyImpressions: [{ keyName: 'matching_key2', treatment: 'off', time: 1478113518285, bucketingKey: 'foo2', label: 'custom_label2',
                changeNumber: 123499 }],
           ip: ip
@@ -50,13 +50,13 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
     it 'formats multiple impressions for one key' do
       repository.add('foo2', 'keyName' => 'matching_key3', 'treatment' => 'off', 'time' => 1478113518900)
 
-      expect(formatted_impressions.find { |i| i[:testName] == 'foo1' }[:keyImpressions]).to match_array(
+      expect(formatted_impressions.find { |i| i[:testName] == :foo1 }[:keyImpressions]).to match_array(
         [
           { keyName: 'matching_key', treatment: 'on', time: 1478113516002, bucketingKey: 'foo1', label: 'custom_label1', changeNumber: 123456 }
         ]
       )
 
-      expect(formatted_impressions.find { |i| i[:testName] == 'foo2' }[:keyImpressions]).to match_array(
+      expect(formatted_impressions.find { |i| i[:testName] == :foo2 }[:keyImpressions]).to match_array(
         [
           { keyName: 'matching_key2', treatment: 'off', time: 1478113518285, bucketingKey: 'foo2', label: 'custom_label2', changeNumber: 123499 },
           { keyName: 'matching_key3', treatment: 'off', time: 1478113518900, bucketingKey: nil, label: nil, changeNumber: nil }
@@ -68,8 +68,8 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
       repository.add('foo1', 'keyName' => 'matching_key', 'bucketingKey' => 'foo1', 'treatment' => 'on', 'time' => 1478113516902, 'changeNumber' => 123456)
       repository.add('foo2', 'keyName' => 'matching_key2', 'bucketingKey' => 'foo2', 'treatment' => 'off', 'time' => 1478113518985, 'changeNumber' => 123499)
 
-      expect(formatted_impressions.find { |i| i[:testName] == 'foo1' }[:keyImpressions].size).to eq(1)
-      expect(formatted_impressions.find { |i| i[:testName] == 'foo2' }[:keyImpressions].size).to eq(1)
+      expect(formatted_impressions.find { |i| i[:testName] == :foo1 }[:keyImpressions].size).to eq(1)
+      expect(formatted_impressions.find { |i| i[:testName] == :foo2 }[:keyImpressions].size).to eq(1)
     end
 
     it 'filters out impressions with the same key/treatment legacy' do
@@ -78,8 +78,8 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
       repository.add('foo1', 'key_name' => 'matching_key', 'bucketing_key' => 'foo1', 'treatment' => 'on', 'time' => 1478113516902, 'change_number' => 123456)
       repository.add('foo2', 'key_name' => 'matching_key2', 'bucketing_key' => 'foo2', 'treatment' => 'off', 'time' => 1478113518985, 'change_number' => 123499)
 
-      expect(formatted_impressions.find { |i| i[:testName] == 'foo1' }[:keyImpressions].size).to eq(1)
-      expect(formatted_impressions.find { |i| i[:testName] == 'foo2' }[:keyImpressions].size).to eq(1)
+      expect(formatted_impressions.find { |i| i[:testName] == :foo1 }[:keyImpressions].size).to eq(1)
+      expect(formatted_impressions.find { |i| i[:testName] == :foo2 }[:keyImpressions].size).to eq(1)
     end
 
     it 'returns the total number of impressions' do
