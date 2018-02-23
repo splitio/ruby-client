@@ -78,6 +78,9 @@ require 'splitclient-rb/engine/models/label'
 require 'splitclient-rb/engine/models/treatment'
 require 'splitclient-rb/utilitites'
 
+# C extension
+require 'murmurhash/murmurhash_mri'
+
 module SplitIoClient
   def self.root
     File.dirname(__dir__)

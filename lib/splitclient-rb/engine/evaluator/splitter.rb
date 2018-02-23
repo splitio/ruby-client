@@ -1,5 +1,3 @@
-require 'digest/murmurhash'
-
 module SplitIoClient
   # Misc class in charge of providing hash functions and
   # determination of treatment based on concept of buckets
@@ -50,7 +48,7 @@ module SplitIoClient
       end
 
       def murmur_hash(key, seed)
-        Digest::MurmurHash3_x86_32.rawdigest(key, [seed].pack('L'))
+        Digest::MurmurHashMRI3_x86_32.rawdigest(key, [seed].pack('L'))
       end
 
       def legacy_hash(key, seed)

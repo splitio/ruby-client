@@ -36,3 +36,12 @@ Gemfile.lock
 
 # Ignore Byebug command history file.
 .byebug_history
+
+# Ignore built extensions
+lib/murmurhash/murmurhash.bundle
+lib/murmurhash/murmurhash.so
+lib/murmurhash/murmurhash.jar
+
+ext/murmurhash/murmurhash.bundle
+ext/murmurhash/murmurhash.so
+ext/murmurhash/murmurhash.jar
