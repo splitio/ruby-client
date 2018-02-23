@@ -118,6 +118,21 @@ module SplitIoClient
           @redis.srandmember(key, count)
         end
 
+        # Queue
+        def add_to_queue(key, val)
+          @redis.rpush(key, val)
+        end
+
+        def get_from_queue(key, count)
+          items = @redis.lrange(key, 0, count - 1)
+          fetched_count = items.size
+          items_to_remove = (fetched_count == count) ? count : fetched_count
+
+          @redis.ltrim(key, items_to_remove, -1)
+
+          items
+        end
+
         # General
         def exists?(key)
           @redis.exists(key)

@@ -6,13 +6,14 @@ module SplitIoClient
     # @param api_key [String] the API key for your split account
     #
     # @return [SplitIoClient] split.io client instance
-    def initialize(api_key, config = {}, adapter = nil, splits_repository, segments_repository, impressions_repository, metrics_repository)
+    def initialize(api_key, config = {}, adapter = nil, splits_repository, segments_repository, impressions_repository, metrics_repository, events_repository)
       @config = config
 
       @splits_repository = splits_repository
       @segments_repository = segments_repository
       @impressions_repository = impressions_repository
       @metrics_repository = metrics_repository
+      @events_repository = events_repository
 
       @adapter = adapter
     end
@@ -136,6 +137,7 @@ module SplitIoClient
       @metrics_repository.clear
       @splits_repository.clear
       @segments_repository.clear
+      @events_repository.clear
 
       @config.logger.info('Split client shutdown complete') if @config.debug_enabled
     end
@@ -182,6 +184,10 @@ module SplitIoClient
 
     def impression_router
       @impression_router ||= SplitIoClient::ImpressionRouter.new(@config)
+    end
+
+    def track(key, traffic_type, event_type, value = nil)
+      @events_repository.add(key, traffic_type, event_type, (Time.now.to_f * 1000).to_i, value)
     end
 
     def keys_from_key(key)

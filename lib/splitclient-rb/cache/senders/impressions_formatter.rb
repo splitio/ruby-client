@@ -31,7 +31,7 @@ module SplitIoClient
                 end
 
             memo << {
-              testName: feature,
+              testName: feature.to_sym,
               keyImpressions: current_impressions,
               ip: ip
             }

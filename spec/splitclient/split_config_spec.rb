@@ -25,8 +25,8 @@ describe SplitIoClient do
       expect(configs.impressions_refresh_rate).to eq SplitIoClient::SplitConfig.default_impressions_refresh_rate
       expect(configs.impressions_queue_size).to eq SplitIoClient::SplitConfig.default_impressions_queue_size
       expect(configs.debug_enabled).to eq SplitIoClient::SplitConfig.default_debug
-      expect(configs.machine_name).to eq SplitIoClient::SplitConfig.get_hostname
-      expect(configs.machine_ip).to eq SplitIoClient::SplitConfig.get_ip
+      expect(configs.machine_name).to eq SplitIoClient::SplitConfig.machine_hostname
+      expect(configs.machine_ip).to eq SplitIoClient::SplitConfig.machine_ip
     end
 
     it 'stores and retrieves correctly the customized values' do

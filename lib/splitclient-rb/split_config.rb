@@ -53,8 +53,8 @@ module SplitIoClient
       @debug_enabled = opts[:debug_enabled] || SplitConfig.default_debug
       @transport_debug_enabled = opts[:transport_debug_enabled] || SplitConfig.default_debug
       @block_until_ready = opts[:ready] || opts[:block_until_ready] || 0
-      @machine_name = opts[:machine_name] || SplitConfig.get_hostname
-      @machine_ip = opts[:machine_ip] || SplitConfig.get_ip
+      @machine_name = opts[:machine_name] || SplitConfig.machine_hostname
+      @machine_ip = opts[:machine_ip] || SplitConfig.machine_ip
 
       @language = opts[:language] || 'ruby'
       @version = opts[:version] || SplitIoClient::VERSION
@@ -65,6 +65,12 @@ module SplitIoClient
       @impression_listener_refresh_rate = opts[:impression_listener_refresh_rate] || SplitConfig.default_impression_listener_refresh_rate
 
       @threads = {}
+
+      @events_push_rate = opts[:events_push_rate] || SplitConfig.default_events_push_rate
+      @events_queue_size = opts[:events_queue_size] || SplitConfig.default_events_queue_size
+      @events_adapter = SplitConfig.init_cache_adapter(
+        opts[:cache_adapter] || SplitConfig.default_cache_adapter, :queue_adapter, @redis_url, @events_queue_size
+      )
 
       startup_log
     end
@@ -109,6 +115,12 @@ module SplitIoClient
     #
     # @return [Symbol] Metrics adapter
     attr_reader :metrics_adapter
+
+    #
+    # The cache adapter to store events in
+    #
+    # @return [Object] Metrics adapter
+    attr_reader :events_adapter
 
     #
     # The connection timeout for network connections in seconds.
@@ -162,7 +174,7 @@ module SplitIoClient
     attr_reader :impression_listener_refresh_rate
 
     #
-    # Wow big the impressions queue is before dropping impressions. -1 to disable it.
+    # How big the impressions queue is before dropping impressions. -1 to disable it.
     #
     # @return [Integer]
     attr_reader :impressions_queue_size
@@ -171,6 +183,18 @@ module SplitIoClient
     attr_reader :redis_namespace
 
     attr_accessor :threads
+
+    #
+    # The schedule time for events flush after the first one
+    #
+    # @return [Integer]
+    attr_reader :events_push_rate
+
+    #
+    # The max size of the events queue
+    #
+    # @return [Integer]
+    attr_reader :events_queue_size
 
     #
     # The default split client configuration
@@ -192,10 +216,10 @@ module SplitIoClient
       'https://events.split.io/api/'
     end
 
-    def self.init_cache_adapter(adapter, data_structure, redis_url = nil, impressions_queue_size = nil)
+    def self.init_cache_adapter(adapter, data_structure, redis_url = nil, queue_size = nil)
       case adapter
       when :memory
-        SplitIoClient::Cache::Adapters::MemoryAdapter.new(map_memory_adapter(data_structure, impressions_queue_size))
+        SplitIoClient::Cache::Adapters::MemoryAdapter.new(map_memory_adapter(data_structure, queue_size))
       when :redis
         begin
           require 'redis'
@@ -269,6 +293,14 @@ module SplitIoClient
       5000
     end
 
+    def self.default_events_push_rate
+      60
+    end
+
+    def self.default_events_queue_size
+      500
+    end
+
     #
     # The default logger object
     #
@@ -337,20 +369,17 @@ module SplitIoClient
     # gets the hostname where the sdk gem is running
     #
     # @return [string]
-    def self.get_hostname
-      begin
-        Socket.gethostname
-      rescue
-        #unable to get hostname
-        'localhost'
-      end
+    def self.machine_hostname
+      Socket.gethostname
+    rescue
+      'localhost'.freeze
     end
 
     #
     # gets the ip where the sdk gem is running
     #
     # @return [string]
-    def self.get_ip
+    def self.machine_ip
       loopback_ip = Socket.ip_address_list.find { |ip| ip.ipv4_loopback? }
       private_ip = Socket.ip_address_list.find { |ip| ip.ipv4_private? }
 
