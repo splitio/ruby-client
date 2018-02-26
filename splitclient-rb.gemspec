@@ -14,11 +14,24 @@ Gem::Specification.new do |spec|
   spec.homepage      = "https://github.com/splitio/ruby-client"
   spec.license       = "Apache 2.0"
 
-  spec.files         = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
+  spec.files         = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(spec|features|ext)/}) }
+
   spec.bindir        = "exe"
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
-  spec.extensions    = ["ext/murmurhash/extconf.rb"]
+
+  if defined?(JRUBY_VERSION)
+    spec.platform = 'java'
+    spec.files << 'ext/murmurhash/MurmurHash3.java'
+  else
+    spec.files.concat(%w(
+      ext/murmurhash/3_x86_32.c
+      ext/extconf.rb
+      murmurhash.c
+      murmurhash.h)
+    )
+    spec.extensions = ["ext/murmurhash/extconf.rb"]
+  end
 
   spec.add_development_dependency "bundler", "~> 1.11"
   spec.add_development_dependency "rake", "~> 10.0"

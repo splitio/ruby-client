@@ -48,7 +48,12 @@ module SplitIoClient
       end
 
       def murmur_hash(key, seed)
-        Digest::MurmurHashMRI3_x86_32.rawdigest(key, [seed].pack('L'))
+        case RUBY_PLATFORM
+        when 'java' 
+          Java::MurmurHash3.murmurhash3_x86_32(key, seed)
+        else
+          Digest::MurmurHashMRI3_x86_32.rawdigest(key, [seed].pack('L'))
+        end
       end
 
       def legacy_hash(key, seed)

@@ -1,3 +1,8 @@
+4.5.0 (Mar 2nd, 2018)
+
+- Move MurmurHash3 implementation inside the gem
+- Add native Java MurmurHash3 implementation -> now support JRuby
+
 4.4.0 (Feb 5th, 2018)
 - Add track API
 

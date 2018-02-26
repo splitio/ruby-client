@@ -23,8 +23,17 @@ describe SplitIoClient::Splitter do
     end
   end
 
-  include_examples 'murmur3 sample data', File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/hash/murmur3-sample-data-v2.csv'))
-  include_examples 'murmur3 sample data', File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/hash/murmur3-sample-data-non-alpha-numeric-v2.csv'))
+  include_examples(
+    'murmur3 sample data',
+    File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/hash/murmur3-sample-data-v2.csv'))
+  )
+  include_examples(
+    'murmur3 sample data',
+    File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/hash/murmur3-sample-data-non-alpha-numeric-v2.csv'))
+  )
 
-  include_examples 'legacy hash sample data', File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/hash/sample-data.csv'))
+  include_examples(
+    'legacy hash sample data',
+    File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/hash/sample-data.csv'))
+  )
 end
