@@ -6,8 +6,8 @@ describe SplitIoClient::Splitter do
       File.foreach(file) do |row|
         seed, key, hash, bucket = row.split(',')
 
-        expect(described_class.count_hash(key, seed.to_i, false)).to eq(hash.to_i)
-        expect(described_class.bucket(hash.to_i)).to eq(bucket.to_i)
+        expect(described_class.new.count_hash(key, seed.to_i, false)).to eq(hash.to_i)
+        expect(described_class.new.bucket(hash.to_i)).to eq(bucket.to_i)
       end
     end
   end
@@ -17,8 +17,8 @@ describe SplitIoClient::Splitter do
       File.foreach(file) do |row|
         seed, key, hash, bucket = row.split(',')
 
-        expect(described_class.count_hash(key, seed.to_i, true)).to eq(hash.to_i)
-        expect(described_class.bucket(hash.to_i)).to eq(bucket.to_i)
+        expect(described_class.new.count_hash(key, seed.to_i, true)).to eq(hash.to_i)
+        expect(described_class.new.bucket(hash.to_i)).to eq(bucket.to_i)
       end
     end
   end
