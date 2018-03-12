@@ -30,6 +30,7 @@ describe SplitIoClient do
     end
 
     it 'receives updated features' do
+      skip if RUBY_PLATFORM == 'java'
       expect(reloaded_factory.get_treatment(user_id_2, "local_feature2")).to eq("local_treatment2")
 
       allow(File).to receive(:open).and_return(split_file2)

@@ -9,6 +9,7 @@ end
 RSpec::Matchers.define :allocate_max do |expected|
   match do |actual|
     return skip('AllocationStats is not available: skipping.') unless defined?(AllocationStats)
+    return skip if RUBY_PLATFORM == 'java'
 
     @trace = actual.is_a?(Proc) ? AllocationStats.new(burn: 3).trace(&actual) : actual
     @trace.new_allocations.size <= expected

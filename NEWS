@@ -1,3 +1,7 @@
+4.5.0
+
+Add JRuby support
+
 4.4.0
 
 Add the ability to send event data to split service (.track() api)

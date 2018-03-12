@@ -326,7 +326,7 @@ describe SplitIoClient do
 
         for i in 0..(j-1)
           key = SecureRandom.hex(20)
-          treatment = SplitIoClient::Splitter.get_treatment(key, 123, partitions)
+          treatment = SplitIoClient::Splitter.new.get_treatment(key, 123, partitions)
           treatments[treatment.to_i - 1] += 1
         end
 

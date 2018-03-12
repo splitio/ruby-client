@@ -1,4 +1,3 @@
-require 'pry'
 require 'concurrent'
 require 'simplecov'
 require 'redis_helper'
