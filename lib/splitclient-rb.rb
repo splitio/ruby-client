@@ -1,3 +1,5 @@
+require 'forwardable'
+
 require 'splitclient-rb/version'
 
 require 'splitclient-rb/exceptions/impressions_shutdown_exception'
