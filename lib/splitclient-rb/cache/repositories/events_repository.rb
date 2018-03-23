@@ -1,5 +1,3 @@
-require 'forwardable'
-
 module SplitIoClient
   module Cache
     module Repositories
