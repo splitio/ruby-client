@@ -1,3 +1,5 @@
+require 'forwardable'
+
 require 'splitclient-rb/version'
 
 require 'splitclient-rb/exceptions/impressions_shutdown_exception'
@@ -77,6 +79,9 @@ require 'splitclient-rb/engine/models/split'
 require 'splitclient-rb/engine/models/label'
 require 'splitclient-rb/engine/models/treatment'
 require 'splitclient-rb/utilitites'
+
+# C extension
+require 'murmurhash/murmurhash_mri'
 
 module SplitIoClient
   def self.root

@@ -1,3 +1,5 @@
+[ ![Codeship Status for splitio/ruby-client](https://app.codeship.com/projects/306c6b60-c164-0133-e179-16471d4e6045/status?branch=master)](https://app.codeship.com/projects/137510)
+
 # Split Ruby SDK
 
 This SDK is designed to work with [Split](https://www.split.io), the platform for controlled rollouts, serving features to your users via the Split feature flag to manage your complete customer experience.
