@@ -26,9 +26,9 @@ Gem::Specification.new do |spec|
   else
     spec.files.concat(%w(
       ext/murmurhash/3_x86_32.c
-      ext/extconf.rb
-      murmurhash.c
-      murmurhash.h)
+      ext/murmurhash/extconf.rb
+      ext/murmurhash/murmurhash.c
+      ext/murmurhash/murmurhash.h)
     )
     spec.extensions = ["ext/murmurhash/extconf.rb"]
   end
