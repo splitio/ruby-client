@@ -1,6 +1,7 @@
 4.5.1 (Mar 23rd, 2018)
 - Fix Forwardable load issue
 - Fix native extension path issue
+- Add .jar executable to the gem
 
 4.5.0 (Mar 2nd, 2018)
 
