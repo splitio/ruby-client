@@ -22,7 +22,10 @@ Gem::Specification.new do |spec|
 
   if defined?(JRUBY_VERSION)
     spec.platform = 'java'
-    spec.files << 'ext/murmurhash/MurmurHash3.java'
+    spec.files.concat(%w(
+      ext/murmurhash/MurmurHash3.java
+      lib/murmurhash/murmurhash.jar)
+    )
   else
     spec.files.concat(%w(
       ext/murmurhash/3_x86_32.c
