@@ -1,9 +1,10 @@
 require 'spec_helper'
 
 describe SplitIoClient::ImpressionRouter do
-  let(:dbl) { double }
-  let(:config) { SplitIoClient::SplitConfig.new(impression_listener: dbl) }
-  let(:impressions) do {
+  let(:listener) { nil }
+  let(:config) { SplitIoClient::SplitConfig.new(impression_listener: listener) }
+  let(:impressions) do
+    {
       split_names: %w(ruby ruby_1),
       matching_key: 'dan',
       bucketing_key: nil,
@@ -15,19 +16,62 @@ describe SplitIoClient::ImpressionRouter do
     }
   end
 
-  xit 'logs single impression' do
-    expect(dbl).to receive(:log).with(foo: 'foo')
+  subject { described_class.new(config) }
 
-    sleep 1
-
-    described_class.new(config).add(foo: 'foo')
+  # Pass execution from the main thread to the subject's router_thread
+  # to let the router_thread process the impression queue.
+  #
+  # Assumes ImpressionRouter#initialize starts router_thread and
+  # Queue#pop suspends its calling thread when the receiver is empty.
+  def wait_for_router_thread
+    Thread.pass until config.threads[:impression_router].status != 'run'
   end
 
-  xit 'logs multiple impressions' do
-    expect(dbl).to receive(:log).at_least(1).times
+  describe '#add' do
+    context 'when the config specifies an impression listener' do
+      let(:listener) { double }
 
-    sleep 1
+      it 'logs a single impression' do
+        expect(listener).to receive(:log).with(foo: 'foo')
 
-    described_class.new(config).add_bulk(impressions)
+        subject.add(foo: 'foo')
+
+        wait_for_router_thread
+      end
+    end
+
+    context 'when the config does not specify an impression listener' do
+      it 'ignores single impressions' do
+        expect(config).not_to receive(:log_found_exception)
+
+        subject.add(foo: 'foo')
+
+        wait_for_router_thread
+      end
+    end
+  end
+
+  describe '#add_bulk' do
+    context 'when the config specifies an impression listener' do
+      let(:listener) { double }
+
+      it 'logs multiple impressions' do
+        expect(listener).to receive(:log).twice
+
+        subject.add_bulk(impressions)
+
+        wait_for_router_thread
+      end
+    end
+
+    context 'when the config does not specify an impression listener' do
+      it 'ignores multiple impressions' do
+        expect(config).not_to receive(:log_found_exception)
+
+        subject.add_bulk(impressions)
+
+        wait_for_router_thread
+      end
+    end
   end
 end
