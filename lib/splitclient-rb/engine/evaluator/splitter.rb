@@ -42,7 +42,7 @@ module SplitIoClient
         return (partitions.first).treatment
       end
 
-      return get_treatment_for_key(bucket(count_hash(id, seed, legacy_algo)), partitions)
+      return get_treatment_for_key(bucket(count_hash(id, seed, legacy)), partitions)
     end
 
     # returns a hash value for the give key, seed pair
