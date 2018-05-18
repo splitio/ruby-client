@@ -1,4 +1,7 @@
-4.5.1 (May 16th, 2018)
+5.0.0 (May 18th, 2018)
+- Fix bug where the sdk picked the wrong hashing algo. This is a breaking change. 
+
+4.5.2 (May 16th, 2018)
 - do not return control when a split has custom attr and I don't pass attributes to get_treatment
 
 4.5.1 (Mar 23rd, 2018)

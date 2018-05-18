@@ -1,3 +1,11 @@
+5.0.0
+
+This is a breaking change in how users buckets are allocated.
+Ruby SDK was wrongly picking up the right buckets and defauled to 
+use a "legacy hashing" instead of our moder murmur3 algo which is
+what other SDKs use. Please reach out to support@split.io for help
+on how to upgrade to this release.
+
 4.5.0
 
 Add JRuby support
