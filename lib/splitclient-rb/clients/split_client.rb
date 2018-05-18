@@ -18,7 +18,7 @@ module SplitIoClient
       @adapter = adapter
     end
 
-    def get_treatments(key, split_names, attributes = nil)
+    def get_treatments(key, split_names, attributes = {})
       bucketing_key, matching_key = keys_from_key(key)
       evaluator = Engine::Parser::Evaluator.new(@segments_repository, @splits_repository, true)
 
@@ -55,7 +55,7 @@ module SplitIoClient
     #
     # @return [String/Hash] Treatment as String or Hash of treatments in case of array of features
     def get_treatment(
-        key, split_name, attributes = nil, split_data = nil, store_impressions = true,
+        key, split_name, attributes = {}, split_data = nil, store_impressions = true,
         multiple = false, evaluator = nil
       )
       bucketing_key, matching_key = keys_from_key(key)
