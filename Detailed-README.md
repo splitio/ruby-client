@@ -462,23 +462,23 @@ If you're using Unicorn you'll need to include this line in your Unicorn config 
 
 ```ruby
 after_fork do |server, worker|
-  Rails.configuration.split_factory.resume! if worker.nr > 0
+  Rails.configuration.split_factory.resume!
 end
 ```
 
-By doing that SDK will recreate threads for each new worker, besides master.
+By doing that SDK will recreate threads for each new worker.
 
 #### Puma
 
 For those who use Puma in cluster mode add this to your Puma config (probably `config/puma.rb`):
 
 ```ruby
-on_worker_boot do |worker_number|
-  Rails.configuration.split_factory.resume! if worker_number.nr > 0
+on_worker_boot do
+  Rails.configuration.split_factory.resume!
 end
 ```
 
-By doing that SDK will recreate threads for each new worker, besides master.
+By doing that SDK will recreate threads for each new worker.
 
 ## Proxy support
 
