@@ -447,8 +447,11 @@ Other servers should work fine as well, but haven't been tested.
 
 ### Unicorn and Puma in cluster mode (only for "memory mode")
 
-During the start of your application SDK spawns multiple threads, each thread has an infinite loop inside which is used to fetch splits/segments or send impressions/metrics.
-Several servers like Unicorn and Puma in cluster mode (i.e. with `workers` > 0) spawn multiple child processes, but when child process is spawn it does not recreate threads, which existed in the parent process, that's why if you use Unicorn or Puma in cluster mode you need to make two small extra steps.
+During the start of your application, the SDK spawns multiple threads. Each thread has an infinite loop inside,
+which is used to fetch splits/segments or send impressions/metrics to the Split service continuously.
+When using Unicorn or Puma in cluster mode (i.e. with `workers` > 0) the application
+server will spawn multiple child processes, but they won't recreate the threads that existed in the parent process.
+So, if your application is running in Unicorn or Puma in cluster mode you need to make two small extra steps.
 
 For both servers you will need to have the following line in your `config/initializers/splitclient.rb`:
 
@@ -458,27 +461,37 @@ Rails.configuration.split_factory = factory
 
 #### Unicorn
 
-If you're using Unicorn you'll need to include this line in your Unicorn config (probably `config/unicorn.rb`):
+If you’re using Unicorn you’ll need to include these lines in your Unicorn config (likely `config/unicorn.rb`):
 
 ```ruby
+before_fork do |server, worker|
+  # keep your existing before_fork code if any
+  Rails.configuration.split_factory.stop!
+end
+
 after_fork do |server, worker|
-  Rails.configuration.split_factory.resume! if worker.nr > 0
+  # keep your existing after_fork code if any
+  Rails.configuration.split_factory.resume!
 end
 ```
-
-By doing that SDK will recreate threads for each new worker, besides master.
 
 #### Puma
 
-For those who use Puma in cluster mode add this to your Puma config (probably `config/puma.rb`):
+If using Puma in cluster mode, add these lines to your Puma config (likely `config/puma.rb`):
 
 ```ruby
-on_worker_boot do |worker_number|
-  Rails.configuration.split_factory.resume! if worker_number.nr > 0
+before_fork do
+  # keep your existing before_fork code if any
+  Rails.configuration.split_factory.stop!
+end
+
+on_worker_boot do
+  # keep your existing on_worker_boot code if any
+  Rails.configuration.split_factory.resume!
 end
 ```
 
-By doing that SDK will recreate threads for each new worker, besides master.
+By doing the above, the SDK will recreate the threads for each new worker and prevent the master process (that doesn't handle requests) from needlessly querying the Split service.
 
 ## Proxy support
 
