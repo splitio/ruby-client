@@ -1,3 +1,8 @@
+5.0.1
+
+Adding stop! method to the factory. 
+With this method the user will be able to stop the threads that queries the Split Service. This will be used in the before_fork configuration in Puma and Unicorn to stop the threads in the master process.
+
 5.0.0
 
 This is a breaking change in how users buckets are allocated.

@@ -1,3 +1,6 @@
+5.0.1 (July 19th, 2018)
+- Adds stop! method to the factory for gracefully stopping the SDK.
+
 5.0.0 (May 18th, 2018)
 - Fix bug where the sdk picked the wrong hashing algo. This is a breaking change. 
 

@@ -30,6 +30,10 @@ module SplitIoClient
       SplitAdapter.new(@api_key, @config, @splits_repository, @segments_repository, @impressions_repository, @metrics_repository, @events_repository, @sdk_blocker)
     end
 
+    def stop!
+      @config.threads.each { |_, t| t.exit }
+    end
+
     alias resume! start!
   end
 end
