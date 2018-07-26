@@ -41,7 +41,8 @@ module SplitIoClient
       @config.threads[:impression_router] = Thread.new do
         loop do
           begin
-            @listener.log(@queue.pop)
+            impression = @queue.pop
+            @listener.log(impression) if @listener
           rescue StandardError => error
             @config.log_found_exception(__method__.to_s, error)
           end
