@@ -144,9 +144,8 @@ module SplitIoClient
 
     def store_impression(split_name, matching_key, bucketing_key, treatment, store_impressions, attributes)
       time = (Time.now.to_f * 1000.0).to_i
-      route_impression(split_name, matching_key, bucketing_key, time, treatment, attributes) if @config.impression_listener && store_impressions
 
-      return if @config.impressions_queue_size <= 0 || !store_impressions
+      return unless @config.impressions_queue_size > 0 && store_impressions
 
       @impressions_repository.add(split_name,
         'keyName' => matching_key,
@@ -156,6 +155,9 @@ module SplitIoClient
         'time' => time,
         'changeNumber' => treatment[:change_number]
       )
+
+      route_impression(split_name, matching_key, bucketing_key, time, treatment, attributes)
+
     rescue StandardError => error
       @config.log_found_exception(__method__.to_s, error)
     end
