@@ -152,7 +152,7 @@ describe SplitIoClient do
         expect(subject.get_treatments(222, ['new_feature', 'foo'])).to eq(
           new_feature: 'on', foo: Treatment::CONTROL
         )
-        impressions = subject.instance_variable_get(:@impressions_repository).clear
+        impressions = subject.instance_variable_get(:@impressions_repository).get_batch
         expect(impressions.collect { |i| i[:feature] }).to match_array %i(foo new_feature)
       end
 
@@ -163,7 +163,7 @@ describe SplitIoClient do
         expect(subject.get_treatments({ matching_key: 222, bucketing_key: 'foo' }, ['new_feature', 'foo'])).to eq(
           new_feature: 'on', foo: Treatment::CONTROL
         )
-        impressions = subject.instance_variable_get(:@impressions_repository).clear
+        impressions = subject.instance_variable_get(:@impressions_repository).get_batch
         expect(ImpressionsFormatter
           .new(subject.instance_variable_get(:@impressions_repository))
           .call(impressions)
@@ -175,7 +175,7 @@ describe SplitIoClient do
         key = { bucketing_key: 'bucketing_key', matching_key: 'fake_user_id_1' }
 
         expect(subject.get_treatment(key, 'new_feature')).to eq 'on'
-        impressions = subject.instance_variable_get(:@impressions_repository).clear
+        impressions = subject.instance_variable_get(:@impressions_repository).get_batch
 
         expect(impressions.first[:impressions]['keyName']).to eq('fake_user_id_1')
       end
@@ -190,7 +190,7 @@ describe SplitIoClient do
         key = { bucketing_key: 'bucketing_key', matching_key: 222 }
 
         expect(subject.get_treatment(key, 'new_feature')).to eq 'on'
-        impressions = subject.instance_variable_get(:@impressions_repository).clear
+        impressions = subject.instance_variable_get(:@impressions_repository).get_batch
 
         expect(impressions.first[:impressions]['keyName']).to eq('222')
       end
@@ -231,7 +231,7 @@ describe SplitIoClient do
           new_feature: 'on',
           new_feature2: 'on',
         )
-        impressions = subject.instance_variable_get(:@adapter).impressions_repository.clear
+        impressions = subject.instance_variable_get(:@adapter).impressions_repository.get_batch
 
         expect(impressions.first[:impressions]['keyName']).to eq('fake_user_id_1')
       end
@@ -278,7 +278,7 @@ describe SplitIoClient do
 
       it 'produces only 1 impression' do
         expect(subject.get_treatment('fake_user_id_1', 'test_dependency')).to eq 'on'
-        impressions = subject.instance_variable_get(:@impressions_repository).clear
+        impressions = subject.instance_variable_get(:@impressions_repository).get_batch
 
         expect(impressions.size).to eq(1)
       end
@@ -343,7 +343,7 @@ describe SplitIoClient do
     end
 
     describe 'impressions' do
-      let(:impressions) { subject.instance_variable_get(:@impressions_repository).clear }
+      let(:impressions) { subject.instance_variable_get(:@impressions_repository).get_batch }
       let(:formatted_impressions) do
         SplitIoClient::Cache::Senders::ImpressionsSender
           .new(nil, {}, nil)
@@ -383,7 +383,7 @@ describe SplitIoClient do
             impressions_queue_size: -1
           ).client
         end
-        let(:impressions) { subject.instance_variable_get(:@impressions_repository).clear }
+        let(:impressions) { subject.instance_variable_get(:@impressions_repository).get_batch }
 
         it 'works when impressions are disabled for get_treatments' do
           expect(subject.get_treatments('21', ["sample_feature", "beta_feature"])).to eq(
@@ -431,7 +431,7 @@ describe SplitIoClient do
           subject.get_treatment('test', 'Traffic_Allocation_UI2')
           impressions_repository = subject.instance_variable_get(:@impressions_repository)
 
-          expect(impressions_repository.clear[0][:impressions]['label']).to eq(Label::NOT_IN_SPLIT)
+          expect(impressions_repository.get_batch[0][:impressions]['label']).to eq(Label::NOT_IN_SPLIT)
         end
       end
     end

@@ -5,7 +5,7 @@ include SplitIoClient::Cache::Adapters
 
 describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
   RSpec.shared_examples 'impressions specs' do |cache_adapter|
-    let(:config) { SplitIoClient::SplitConfig.new(impressions_queue_size: 5) }
+    let(:config) { SplitIoClient::SplitConfig.new(impressions_queue_size: 5, impressions_bulk_size: 1) }
     let(:adapter) { cache_adapter }
     let(:repository) { described_class.new(adapter, config) }
     let(:split_adapter) do
@@ -21,14 +21,14 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
       repository.add('foo1', 'key_name' => 'matching_key', 'treatment' => 'on', 'time' => 1478113516002)
       repository.add('foo2', 'key_name' => 'matching_key2', 'treatment' => 'off', 'time' => 1478113518285)
 
-      expect(repository.clear).to match_array(
+      expect(repository.get_batch).to match_array(
         [
           { feature: :foo1, impressions: { 'key_name' => 'matching_key', 'treatment' => 'on', 'time' => 1478113516002 }, ip: ip },
           { feature: :foo2, impressions: { 'key_name' => 'matching_key2', 'treatment' => 'off', 'time' => 1478113518285 }, ip: ip },
         ]
       )
 
-      expect(repository.clear).to eq([])
+      expect(repository.get_batch).to eq([])
     end
 
     it 'adds impressions in bulk' do
@@ -58,8 +58,8 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
     let(:repository) { described_class.new(adapter, config) }
 
     it 'returns impressions' do
-      expect(repository.clear.size).to eq(2)
-      expect(repository.clear.size).to eq(1)
+      expect(repository.get_batch.size).to eq(2)
+      expect(repository.get_batch.size).to eq(1)
     end
   end
 end
