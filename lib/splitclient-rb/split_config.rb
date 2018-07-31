@@ -22,6 +22,7 @@ module SplitIoClient
     # @option opts [Object] :logger a logger to user for messages from the client. Defaults to stdout
     # @option opts [Boolean] :debug_enabled (false) The value for the debug flag
     # @option opts [Int] :impressions_queue_size how big the impressions queue is before dropping impressions. -1 to disable it.
+    # @option opts [#log] :impression_listener this object will capture all impressions and process them through `#log`
     #
     # @return [type] SplitConfig with configuration options
     def initialize(opts = {})

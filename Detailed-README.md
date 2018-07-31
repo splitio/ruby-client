@@ -366,7 +366,9 @@ transport_debug_enabled: true # used for log transport data (mostly http request
 
 ### Impression Listener
 
-In order to capture every single impression in your app SDK provides option called Impression Listener. It works pretty straightforward: you define a class which must have instance method called `log`, which must receive 1 argument `impression`. Let's say you have the following impression listener class:
+The SDK provides an optional featured called Impression Listener, that captures every single impression in your app.
+
+To set up an Impression Listener, define a class that implements a `log` instance method, which must receive the `impression` argument. As an example you could define your listener as follows:
 
 ```ruby
 class MyImpressionListener
@@ -376,7 +378,7 @@ class MyImpressionListener
 end
 ```
 
-Nothing fancy here, it just takes impression and logs it to the stdout. Now, to actually use this class you'll need to specify it in your config (i.e. initializer) like this:
+Nothing fancy here, the listener just takes an impression and logs it to the stdout. Now, to actually use this class you'll need to specify it as an option in your config (i.e. initializer) like this:
 
 ```ruby
 {
