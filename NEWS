@@ -1,3 +1,8 @@
+5.0.2
+
+Turn Impression Listener into an optional SDK feature.
+Prevents the impression thread from being started if a listener is not in place
+
 5.0.1
 
 Adding stop! method to the factory. 

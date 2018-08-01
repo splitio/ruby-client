@@ -1,3 +1,6 @@
+5.0.2 (July 31st, 2018)
+- Prevents the impression thread from being started if a listener is not in place
+
 5.0.1 (July 19th, 2018)
 - Adds stop! method to the factory for gracefully stopping the SDK.
 

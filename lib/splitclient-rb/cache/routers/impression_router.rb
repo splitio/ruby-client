@@ -5,6 +5,9 @@ module SplitIoClient
     def initialize(config)
       @config = config
       @listener = config.impression_listener
+
+      return unless @listener
+
       @queue = Queue.new
       router_thread
 
@@ -16,12 +19,12 @@ module SplitIoClient
     end
 
     def add(impression)
-      @queue.push(impression)
+      enqueue(impression)
     end
 
     def add_bulk(impressions)
       impressions[:split_names].each do |split_name|
-        @queue.push(
+        enqueue(
           split_name: split_name.to_s,
           matching_key: impressions[:matching_key],
           bucketing_key: impressions[:bucketing_key],
@@ -36,6 +39,10 @@ module SplitIoClient
     end
 
     private
+
+    def enqueue(impression)
+      @queue.push(impression) if @listener
+    end
 
     def router_thread
       @config.threads[:impression_router] = Thread.new do
