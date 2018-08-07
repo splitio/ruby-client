@@ -62,4 +62,28 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
       expect(repository.get_batch.size).to eq(1)
     end
   end
+
+  context 'redis exception raised on #get_batch' do
+    before do
+      Redis.new.flushall
+
+      repository.add('foo1', 'key_name' => 'matching_key', 'treatment' => 'on', 'time' => 1478113516002)
+    end
+
+    let(:config) { SplitIoClient::SplitConfig.new(impressions_queue_size: 1) }
+    let(:adapter) { RedisAdapter.new(SplitIoClient::SplitConfig.new.redis_url) }
+    let(:repository) { described_class.new(adapter, config) }
+
+    it 'returns empty array when adapter#random_set_elements raises an exception' do
+      allow_any_instance_of(RedisAdapter).to receive(:random_set_elements).and_throw(RuntimeError)
+
+      expect(repository.get_batch).to eq([])
+    end
+
+    it 'returns empty array when adapter#find_sets_by_prefix raises an exception' do
+      allow_any_instance_of(RedisAdapter).to receive(:find_sets_by_prefix).and_throw(RuntimeError)
+
+      expect(repository.get_batch).to eq([])
+    end
+  end
 end
