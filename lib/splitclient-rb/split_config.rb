@@ -21,9 +21,9 @@ module SplitIoClient
     # @option opts [Int] :impressions_refresh_rate
     # @option opts [Object] :logger a logger to user for messages from the client. Defaults to stdout
     # @option opts [Boolean] :debug_enabled (false) The value for the debug flag
-    # @option opts [Int] :impressions_queue_size how big the impressions queue is before dropping impressions. -1 to disable it.
+    # @option opts [Int] :impressions_queue_size Size of the impressions queue in the memory repository. Once reached, newer impressions will be dropped
+    # @option opts [Int] :impressions_bulk_size Max number of impressions to be sent to the backend on each post
     # @option opts [#log] :impression_listener this object will capture all impressions and process them through `#log`
-    #
     # @return [type] SplitConfig with configuration options
     def initialize(opts = {})
       @base_uri = (opts[:base_uri] || SplitConfig.default_base_uri).chomp('/')
@@ -45,6 +45,10 @@ module SplitIoClient
       @impressions_adapter = SplitConfig.init_cache_adapter(
         opts[:cache_adapter] || SplitConfig.default_cache_adapter, :queue_adapter, @redis_url, @impressions_queue_size
       )
+      #Safeguard for users of older SDK versions.
+      @disable_impressions = @impressions_queue_size == -1
+      #Safeguard for users of older SDK versions.
+      @impressions_bulk_size = opts[:impressions_bulk_size] || @impressions_queue_size > 0 ? @impressions_queue_size : 0
 
       @metrics_adapter = SplitConfig.init_cache_adapter(
         opts[:cache_adapter] || SplitConfig.default_cache_adapter, :map_adapter, @redis_url, false
@@ -179,6 +183,8 @@ module SplitIoClient
     #
     # @return [Integer]
     attr_reader :impressions_queue_size
+    attr_reader :impressions_bulk_size
+    attr_reader :disable_impressions
 
     attr_reader :redis_url
     attr_reader :redis_namespace

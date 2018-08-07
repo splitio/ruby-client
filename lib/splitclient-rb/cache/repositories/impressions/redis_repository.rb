@@ -3,7 +3,6 @@ module SplitIoClient
     module Repositories
       module Impressions
         class RedisRepository < Repository
-          IMPRESSIONS_SLICE = 1000
 
           def initialize(adapter, config)
             @adapter = adapter
@@ -18,25 +17,23 @@ module SplitIoClient
             )
           end
 
-          def add_bulk(key, bucketing_key, treatments_labels_change_numbers, time)
+          def add_bulk(key, bucketing_key, treatments, time)
             @adapter.redis.pipelined do
-              treatments_labels_change_numbers.each_slice(IMPRESSIONS_SLICE) do |treatments_labels_change_numbers_slice|
-                treatments_labels_change_numbers_slice.each do |split_name, treatment_label_change_number|
-                  add(split_name,
-                      'keyName' => key,
-                      'bucketingKey' => bucketing_key,
-                      'treatment' => treatment_label_change_number[:treatment],
-                      'label' => @config.labels_enabled ? treatment_label_change_number[:label] : nil,
-                      'changeNumber' => treatment_label_change_number[:change_number],
-                      'time' => time)
-                end
+              treatments.each do |split_name, treatment|
+                add(split_name,
+                    'keyName' => key,
+                    'bucketingKey' => bucketing_key,
+                    'treatment' => treatment[:treatment],
+                    'label' => @config.labels_enabled ? treatment[:label] : nil,
+                    'changeNumber' => treatment[:change_number],
+                    'time' => time)
               end
             end
           end
 
-          # Get random impressions from redis in batches of size @config.impressions_queue_size,
+          # Get random impressions from redis in batches of size @config.impressions_bulk_size,
           # delete fetched impressions afterwards
-          def clear
+          def get_batch
             impressions = impression_keys.each_with_object([]) do |key, memo|
               ip = key.split('/')[-2] # 'prefix/sdk_lang/ip/impressions.name' -> ip
               if ip.nil?
@@ -44,7 +41,7 @@ module SplitIoClient
                 next
               end
               split_name = key.split('.').last
-              members = @adapter.random_set_elements(key, @config.impressions_queue_size)
+              members = @adapter.random_set_elements(key, @config.impressions_bulk_size)
               members.each do |impression|
                 parsed_impression = JSON.parse(impression)
 
@@ -61,6 +58,8 @@ module SplitIoClient
             impressions
           rescue StandardError => e
             @config.logger.error("Exception while clearing impressions cache: #{e}")
+
+            []
           end
 
           private
@@ -70,6 +69,8 @@ module SplitIoClient
             @adapter.find_sets_by_prefix("#{@config.redis_namespace}/*/impressions.*")
           rescue StandardError => e
             @config.logger.error("Exception while fetching impression_keys: #{e}")
+
+            []
           end
         end
       end

@@ -27,7 +27,7 @@ module SplitIoClient
           memo.merge!(name => get_treatment(key, name, attributes, data, false, true, evaluator))
         end
 
-      if @config.impressions_queue_size > 0
+      unless @config.disable_impressions
         time = (Time.now.to_f * 1000.0).to_i
         @impressions_repository.add_bulk(
           matching_key, bucketing_key, treatments_labels_change_numbers, time
@@ -103,7 +103,6 @@ module SplitIoClient
 
       begin
         latency = (Time.now - start) * 1000.0
-        # Disable impressions if @config.impressions_queue_size == -1
         split && store_impression(split_name, matching_key, bucketing_key, treatment_data, store_impressions, attributes)
 
         # Measure
@@ -145,7 +144,7 @@ module SplitIoClient
     def store_impression(split_name, matching_key, bucketing_key, treatment, store_impressions, attributes)
       time = (Time.now.to_f * 1000.0).to_i
 
-      return unless @config.impressions_queue_size > 0 && store_impressions
+      return if @config.disable_impressions || !store_impressions
 
       @impressions_repository.add(split_name,
         'keyName' => matching_key,
