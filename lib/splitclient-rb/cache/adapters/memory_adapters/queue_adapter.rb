@@ -24,19 +24,21 @@ module SplitIoClient
             @current_size.increment
           end
 
-          # Get all items from the queue
           def clear
+            get_batch(@current_size.value)
+          end
+
+          def get_batch(size)
             items = []
-
-            loop do
+            size.times do
               items << @queue.pop(true)
-
               @current_size.decrement
             end
-
-          rescue ThreadError
+            items
+            rescue ThreadError
             items
           end
+
         end
       end
     end

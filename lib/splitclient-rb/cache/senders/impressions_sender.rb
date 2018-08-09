@@ -9,8 +9,7 @@ module SplitIoClient
         end
 
         def call
-          # Disable impressions if @config.impressions_queue_size == -1
-          if @config.impressions_queue_size < 0
+          if @config.disable_impressions
             @config.logger.info('Disabling impressions service by config')
             return
           end
