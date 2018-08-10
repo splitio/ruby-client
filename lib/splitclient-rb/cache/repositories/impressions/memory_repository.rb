@@ -3,6 +3,7 @@ module SplitIoClient
     module Repositories
       module Impressions
         class MemoryRepository
+
           def initialize(adapter, config)
             @adapter = adapter
             @config = config
@@ -18,23 +19,25 @@ module SplitIoClient
             end
           end
 
-          def add_bulk(key, bucketing_key, treatments_labels_change_numbers, time)
-            treatments_labels_change_numbers.each do |split_name, treatment_label_number|
+          def add_bulk(key, bucketing_key, treatments, time)
+            treatments.each do |split_name, treatment|
               add(
                 split_name,
                 'keyName' => key,
                 'bucketingKey' => bucketing_key,
-                'treatment' => treatment_label_number[:treatment],
-                'label' => @config.labels_enabled ? treatment_label_number[:label] : nil,
-                'changeNumber' => treatment_label_number[:change_number],
+                'treatment' => treatment[:treatment],
+                'label' => @config.labels_enabled ? treatment[:label] : nil,
+                'changeNumber' => treatment[:change_number],
                 'time' => time
               )
             end
           end
 
-          # Get everything from the queue and leave it empty
-          def clear
-            @adapter.clear.map { |impression| impression.update(ip: @config.machine_ip) }
+          def get_batch
+            return [] if @config.impressions_bulk_size == 0
+            @adapter.get_batch(@config.impressions_bulk_size).map do |impression|
+              impression.update(ip: @config.machine_ip)
+            end
           end
 
           private
