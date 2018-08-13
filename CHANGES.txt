@@ -1,3 +1,6 @@
+5.0.3 (August 13th, 2018)
+- Add `impressions_bulk_size` option to set the max number of impressions to be sent to the Split backend on each post.
+
 5.0.2 (July 31st, 2018)
 - Prevents the impression thread from being started if a listener is not in place
 

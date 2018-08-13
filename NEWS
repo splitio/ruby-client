@@ -1,3 +1,9 @@
+5.0.3
+
+Creates a new configuration parameter (impressions_bulk_size) to manage the max number of impressions sent to the Split backend on each post.
+Changes impressions_queue_size so that it manages only the queue size in the memory adapter.
+A backwards compatibility fail safe is included for users of previous SDK versions.
+
 5.0.2
 
 Turn Impression Listener into an optional SDK feature.
