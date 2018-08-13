@@ -6,7 +6,7 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
     let(:adapter) { cache_adapter }
     let(:repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(adapter, config) }
     let(:sender) { described_class.new(repository, config, nil) }
-    let(:formatted_impressions) { sender.send(:formatted_impressions, repository.clear) }
+    let(:formatted_impressions) { sender.send(:formatted_impressions, repository.get_batch) }
     let(:ip) { SplitIoClient::SplitConfig.machine_ip }
 
     before :each do

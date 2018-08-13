@@ -7,7 +7,7 @@ module SplitIoClient
         end
 
         def call(raw_impressions)
-          impressions = raw_impressions ? raw_impressions : @impressions_repository.clear
+          impressions = raw_impressions ? raw_impressions : @impressions_repository.get_batch
           formatted_impressions = []
           filtered_impressions = filter_impressions(impressions)
 
