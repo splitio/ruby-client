@@ -1,325 +1,134 @@
 # Split Ruby SDK
 
-Ruby SDK for Split software, provided as a gem that can be installed to your Ruby application.
+Ruby [Split](https://www.split.io/) SDK client.
 
 ## Installation
----
 
- - Once the gem is published you can install it with the following steps:
+Install by running:
 
-	Add this line to your application's Gemfile:
+    $ gem install splitclient-rb
 
-	```ruby
-	gem 'splitclient-rb'
-	```
+If using [Bundler](https://bundler.io/), add this line to your `Gemfile`:
 
-	And then execute:
+```ruby
+gem 'splitclient-rb'
+```
 
-	    $ bundle install
+And then run:
 
-	Or install it yourself as:
+    $ bundle install
 
-	    $ gem install splitclient-rb
+Or use any specific branch by adding the following to your `Gemfile` instead:
 
- - You can also use the most recent version from github:
-
-	Add these lines to you application's `Gemfile`:
-	```ruby
-	gem 'splitclient-rb', git: 'https://github.com/splitio/ruby-client.git',
-	```
-	You can also use any specific branch if necessary:
-	```ruby
-	gem 'splitclient-rb', git: 'https://github.com/splitio/ruby-client.git', branch: 'development'
-	```
-	And then execute:
-
-	    $ bundle install
+```ruby
+gem 'splitclient-rb', git: 'https://github.com/splitio/ruby-client.git', branch: 'branch_name'
+```
 
 ## Usage
 
 ### Quick Setup
 ---
 
-Within your application you need the following:
-
-Require the Split client:
+Within your application, include the Split client using Ruby's `require`:
 ```ruby
 require 'splitclient-rb'
 ```
 
-Create a new split client instance with your API key:
+Then, create a new split client instance with your API key, which can be found in your Organization Settings page, in the APIs tab.
+
 ```ruby
-factory  = SplitIoClient::SplitFactoryBuilder.build('YOUR_API_KEY').client
+factory  = SplitIoClient::SplitFactoryBuilder.build('YOUR_API_KEY')
 split_client = factory.client
-```
-
-For advance use cases you can also obtain a `manager` instance from the factory.
-```ruby
-manager = factory.manager
-```
-
-#### Localhost mode
-
-You can run SDK in so called "localhost" mode. In this mode SDK won't hit Split API and return treatments based on ".split" file on your local machine. The format of this file is two columns separated by whitespace. The left column is the Split name, the right column is the treatment name. Here is a sample file:
-
-```
-# this is a comment
-
-# split_client.get_treatment('foo', 'reporting_v2') => 'on'
-
-reporting_v2 on
-double_writes_to_cassandra off
-new-navigation v3
-
-```
-
-To use SDK in the localhost mode you should pass `localhost` as an API key like this:
-
-```ruby
-factory = SplitIoClient::SplitFactoryBuilder.build('localhost', path: '/where/to-look-for/<file_name>')
-split_client = factory.client
-```
-
-By default SDK will look in your home directory (i.e. `~`) for a `.split` file, but you can specify a different
-file name (full path) to look for the file (note: you must provide absolute path):
-
-When in localhost mode you can make use of the SDK ability to automatically refresh splits from file, to do that just specify reload rate in seconds like this:
-
-```ruby
-factory = SplitIoClient::SplitFactoryBuilder.build('localhost', path: '/where/to-look-for/<file_name>', reload_rate: 3)
 ```
 
 ### Ruby on Rails
 ---
 
-Create an initializer: `config/initializers/splitclient.rb` and then initialize the split client:
+Create an initializer (typically `config/initializers/split_client.rb`) with the following code:
 
 ```ruby
 Rails.configuration.split_client = SplitIoClient::SplitFactoryBuilder.build('YOUR_API_KEY').client
 ```
-In your controllers, access the client using:
+And use the snippet below to access the client in your controllers:
 
 ```ruby
 Rails.application.config.split_client
 ```
 
-### Configuration
+### Using the SDK
 ---
 
-Split client's default configuration should be sufficient for most scenarios. However you can also provide custom configuration when initializing the client using an optional hash of options.
-
-The following values can be customized:
-
-**base_uri** :  URI for the api endpoints
-
-*defualt value* = `https://sdk.split.io/api/`
-
-**connection_timeout** :  timeout for network connections in seconds
-
-*default value* = `5`
-
-**read_timeout** : timeout for requests in seconds
-
-*default value* = `5`
-
-**features_refresh_rate** : The SDK polls Split servers for changes to feature roll-out plans. This parameter controls this polling period in seconds
-split_client.get_treatment('user_id','feature_name', attr: 'val')
-*default value* = `30`
-
-**segments_refresh_rate** : The SDK polls Split servers for changes to segment definitions. This parameter controls this polling period in seconds
-
-*default value* = `60`
-
-**metrics_refresh_rate** : The SDK sends diagnostic metrics to Split servers. This parameters controls this metric flush period in seconds
-
-*default value* = `60`
-
-**impressions_refresh_rate** : The SDK sends information on who got what treatment at what time back to Split servers to power analytics. This parameter controls how often this data is sent to Split servers in seconds
-
-**impressions_queue_size** : The size of the impressions queue in case of `cache_adapter == :memory`.
-
-**impressions_bulk_size** : Max number of impressions to be sent to the backend on each post. Defaults to `impressions_queue_size`.
-
-*default value* = `60`
-
-**debug_enabled** : Enables extra logging
-
-*default value* = `false`
-
-**transport_debug_enabled** : Enables extra transport logging
-
-*default value* = `false`
-
-**logger** : default logger for messages and errors
-
-*default value* = `Logger.new($stdout)`
-
-**ready** : The SDK will block your app for provided amount of seconds until it's ready. If timeout expires `SplitIoClient::SDKBlockerTimeoutExpiredException` will be thrown. If `0` provided, then SDK would run in non-blocking mode
-
-*default value* = `0`
-
-**labels_enabled** : Enables sending labels along with sensitive information
-
-*default value* = `true`
-
-**mode** : See [SDK modes section](#sdk-modes).
-
-*default value* = `:standalone`
-
-#### Cache adapter
-
-The SDK needs some container to store data, i.e. splits/segments/impressions. By default it will store everything in the application's memory, but you can also use Redis.
-
-To use Redis, you have to include `redis-rb` in your app's Gemfile.
-
-**cache_adapter** : Supported options: `:memory`, `:redis`
-
-*default value* = `memory`
-
-**language** : SDK runner language (used in metrics/impressions Redis namespace)
-
-*default value* = `'ruby'`
-
-**version** : SDK runner version (used in metrics/impressions Redis namespace)
-
-*default value* = `current version of Ruby SDK`
-
-**machine_ip** : SDK runner machine ip (used in metrics/impressions Redis namespace)
-
-*default value* = `current host's ip`
-
-**machine_name** : SDK runner machine name (used in metrics/impressions Redis namespace)
-
-*default value* = `current hostname`
-
-**redis_url** : Redis URL or hash with configuration for SDK to connect to.
-
-*default value* = `'redis://127.0.0.1:6379/0'`
-
-You can also use Sentinel like this:
+In its simplest form, using the SDK is reduced to calling the `get_treatment` method of the SDK client to decide what version of your features your customers should be served for a specific feature and user. You can then use an if-else-if block for the different treatments that you defined in the Split UI:
 
 ```ruby
-SENTINELS = [{host: '127.0.0.1', port: 26380},
-             {host: '127.0.0.1', port: 26381}]
+treatment = split_client.get_treatment('user_id', 'feature_name');
 
-redis_connection = { url: 'redis://mymaster', sentinels: SENTINELS, role: :master }
-
-options = {
-  # Other options here
-  redis_url: redis_connection
-}
-```
-
-Example using Redis
-```ruby
-options = {
-  connection_timeout: 10,
-  read_timeout: 5,
-  features_refresh_rate: 120,
-  segments_refresh_rate: 120,
-  metrics_refresh_rate: 360,
-  impressions_refresh_rate: 360,
-  logger: Logger.new('logfile.log'),
-  cache_adapter: :redis,
-  mode: :standalone,
-  redis_url: 'redis://127.0.0.1:6379/0'
-}
-begin
-  split_client = SplitIoClient::SplitFactoryBuilder.build('YOUR_API_KEY', options).client
-rescue SplitIoClient::SDKBlockerTimeoutExpiredException
-  # Some arbitrary actions
+if treatment == 'on'
+  # insert code here to show on treatment
+elsif treatment == 'off'
+  # insert code here to show off treatment
+else
+  # handle the client returning the control treatment
 end
 ```
 
-#### Unicorn
+For features that use targeting rules based on user attributes, you can call the `get_treatment` method the following way:
 
-When using Unicorn without Redis (i.e. in memory mode) it's highly recommended to include the startup code above inside Unicorn's `after_fork` hook:
-
-*unicorn.rb*
-```ruby
-# Unicorn configuration
-after_fork do
-  options = {
-    connection_timeout: 10,
-    read_timeout: 5,
-    features_refresh_rate: 120,
-    segments_refresh_rate: 120,
-    metrics_refresh_rate: 360,
-    impressions_refresh_rate: 360,
-    logger: Logger.new('logfile.log'),
-    cache_adapter: :redis,
-    mode: :standalone,
-    redis_url: 'redis://127.0.0.1:6379/0'
-  }
-  begin
-    split_client = SplitIoClient::SplitFactoryBuilder.build('YOUR_API_KEY', options).client
-  rescue SplitIoClient::SDKBlockerTimeoutExpiredException
-    # Some arbitrary actions
-  end
-end
-```
-
-When initializing the SDK this way, SDK will only run HTTP requests from workers, not master process.
-
-#### IMPORTANT
-
-For now, SDK does not support both `producer` mode and `ready`. You must either run SDK in `standalone` mode, or do not use `ready` option.
-
-This begin-rescue-end block is optional, you might want to use it to catch timeout expired exception and apply some logic.
-
-### Execution
----
-
-In your application code you just need to call the `get_treatment` method with the required parameters for key and feature name:
 ```ruby
 split_client.get_treatment('user_id','feature_name', attr: 'val')
 ```
 
-For example
+e.g.
 ```ruby
 if split_client.get_treatment('employee_user_01','view_main_list', age: 35)
    my_app.display_main_list
 end
 ```
 
-Also, you can use different keys for actually getting treatment and sending impressions to the server:
+Also, you can you can provide two different keys - one for matching and the other for bucketing:
 ```ruby
 split_client.get_treatment(
-	{ matching_key: 'user_id', bucketing_key: 'private_user_id' },
+	{ matching_key: 'subscriber_id', bucketing_key: 'user_id' },
 	'feature_name',
 	attr: 'val'
 )
 ```
-When it might be useful? Say, you have a user browsing your website and not signed up yet. You assign some internal id to that user (i.e. bucketing_key) and after user signs up you assign him a matching_key.
-By doing this you can provide both anonymous and signed up user with the same treatment.
+An scenario that requires the usage of both keys is a visitor user that browses the site and at some point gets logged into the system: as an anonymous visitor, the user browses the home page and is given the `new_homepage` treatment based on her visitor id. If the visitor signs up and turns into a subscriber, then upon being given her `subscriber_id`, Split may decide to give her the old_homepage treatment. This is of course, the opposite of the desired outcome, as the visitor's entire homepage experience would change as soon as she signs up.
 
-`bucketing_key` may be `nil` in that case `matching_key` would be used as a key, so calling
+ Split solves this situation by introducing the concept of a matching_key and a bucketing key. By providing the `subscriber_id` as the `matching_key` and the `visitor_id` as the `bucketing_key`, Split will give the same treatment back to the user that it used to give to the visitor.
+
+ **Note**: read more about this topic [here](https://docs.split.io/docs/anonymous-to-logged-in).
+
+The `bucketing_key` may be `nil`. In that case the `matching_key` would be used instead, so calling:
 ```ruby
 split_client.get_treatment(
-	{ matching_key: 'user_id' },
+	{ matching_key: 'subscriber_id' },
 	'feature_name',
 	attr: 'val'
 )
 ```
-Is exactly the same as calling
+It's exactly the same as calling:
 ```ruby
-split_client.get_treatment('user_id' ,'feature_name', attr: 'val')
+split_client.get_treatment('subscriber_id' ,'feature_name', attr: 'val')
 ```
-`bucketing_key` must not be nil
+**Important:** `bucketing_key` must not be nil.
 
-Also you can use the split manager:
+#### Split Manager
+
+For some advanced use cases you can use the Split Manager. To get a `manager` instance, do:
 
 ```ruby
 split_manager = SplitIoClient::SplitFactoryBuilder.build('your_api_key', options).manager
 ```
+_Or simply call `#manager` in your factory instance if you built it previously._
 
-With the manager you can get a list of your splits by doing:
+As an example, using the manager you could get a list of your splits by doing:
 
 ```ruby
-manager.splits
+split_manager.splits
 ```
 
-And you should get something like this:
+Which would produce an output similar to:
 
 ```ruby
 [
@@ -354,23 +163,196 @@ And you should get something like this:
 ]
  ```
 
+ #### Localhost Mode
+
+ You can run the SDK in _localhost_ mode. In this mode, the SDK won't actually communicate with the Split API, but it'll rather return treatments based on a `.split` file on your local environment. This file must be a list of `split_name treatment_name_to_be_returned` entries. e.g.:
+
+ ```
+ reporting_v2 on
+ double_writes_to_cassandra off
+ new-navigation v3
+ ```
+
+Using the file above, when calling:
+```ruby
+split_client.get_treatment('foo', 'reporting_v2')
+```
+
+The split client will return `on`. Note that this will be true for any bucketing or matching key.
+
+ To configure the SDK to work in localhost mode, use `localhost` as the API key:
+
+ ```ruby
+ factory = SplitIoClient::SplitFactoryBuilder.build('localhost', path: '/where/to-look-for/<file_name>')
+ split_client = factory.client
+ ```
+
+ By default, the SDK will look in your home directory (i.e. `~`) for the `.split` file. You can change this location by specifying an absolute path instead.
+
+ When in localhost mode, you can make use of the SDK ability to automatically refresh the splits from the `.split` file. To do that, just specify a reload rate in seconds when building the split factory instance, like this:
+
+ ```ruby
+ factory = SplitIoClient::SplitFactoryBuilder.build('localhost', path: '/where/to-look-for/<file_name>', reload_rate: 3)
+ ```
+
+## Advanced Configuration
+
+Split client's default configuration should cover most scenarios. However, you can also provide custom configuration settings when initializing the factory using a hash of options. e.g.:
+
+```ruby
+options = {
+  impressions_refresh_rate: 10,
+  debug_enabled: true,
+  transport_debug_enabled: false
+}
+
+factory = SplitIoClient::SplitFactoryBuilder.build('your_api_key'], options)
+```
+
+The following values can be customized:
+
+**base_uri** :  URI for the api endpoints.
+
+*default value* = `https://sdk.split.io/api/`
+
+**connection_timeout** : Http client connection timeout (in seconds).
+
+*default value* = `5`
+
+**read_timeout** : Http socket read timeout (in seconds).
+
+*default value* = `5`
+
+**features_refresh_rate** : The SDK polls Split servers for changes to feature Splits every X seconds, where X is this property's value.
+
+*default value* = `30`
+
+**segments_refresh_rate** : The SDK polls Split servers for changes to segments every X seconds, where X is this property's value.
+
+*default value* = `60`
+
+**metrics_refresh_rate** : The SDK sends and flushes diagnostic metrics to Split servers every X seconds where X is this property's value.
+
+*default value* = `60`
+
+**impressions_refresh_rate** : The treatment log captures which customer saw what treatment ("on", "off", etc) at what time. This parameter controls how often this log is flushed back to Split servers to power analytics (in seconds).
+
+*default value* = `60`
+
+**impressions_queue_size** : The size of the impressions queue in case of `cache_adapter == :memory`.
+
+*default value* = 5000
+
+**impressions_bulk_size** : Maximum number of impressions to be sent to Split servers on each post.
+
+*default value* = defaults to `impressions_queue_size`
+
+**debug_enabled** : Enables extra logging (verbose mode).
+
+*default value* = `false`
+
+**transport_debug_enabled** : Super verbose mode that prints network payloads among others.
+
+*default value* = `false`
+
+**logger** : Default logger for messages and errors.
+
+*default value* = `Logger.new($stdout)`
+
+**impression_listener** : Route impressions' information to a location of your choice (in addition to the SDK servers). _See [Impression Listener](#impression-listener) section for specifics._
+
+*default value* = (no impression listener)
+
+**block_until_ready** : The SDK will block your app for the provided amount of seconds until it's ready. A `SplitIoClient::SDKBlockerTimeoutExpiredException` will be thrown If the provided time expires. When `0` is provided, the SDK runs in non-blocking mode.
+
+*default value* = `0`
+
+**labels_enabled** : Allows preventing labels from being sent to the Split servers, as they may contain sensitive information.
+
+*default value* = `true`
+
+**mode** : See [SDK Modes](#sdk-modes).
+
+*default value* = `:standalone`
+
+**cache_adapter** : Where to store data (splits, segments, and impressions) in between calls to the the Split servers. Supported options are `:memory` (default) and `:redis`.
+
+_To use Redis, include `redis-rb` in your app's Gemfile._
+
+*default value* = `:memory`
+
+**language** : SDK language (used in the Redis namespace for metrics and impressions, also included in requests' headers).
+
+*default value* = `'ruby'`
+
+**version** : SDK version (used in the Redis namespace for metrics and impressions, also included in requests' headers).
+
+*default value* = (current version of the SDK)
+
+**machine_ip** : SDK machine ip (used in the Redis namespace for metrics and impressions, also included in requests' headers).
+
+*default value* = (your current host's ip)
+
+**machine_name** : SDK machine name (used in the Redis namespace for metrics and impressions, also included in requests' headers).
+
+*default value* = (your current hostname)
+
+**redis_url** : Redis URL or hash with configuration for the SDK to connect to. See [Redis#initialize](https://www.rubydoc.info/github/redis/redis-rb/Redis%3Ainitialize) for detailed information.
+
+*default value* = `'redis://127.0.0.1:6379/0'`
+
+_You can also use [Redis Sentinel](https://redis.io/topics/sentinel) by providing an array of sentinels in the Redis configuration:_
+
+```ruby
+SENTINELS = [{host: '127.0.0.1', port: 26380},
+             {host: '127.0.0.1', port: 26381}]
+
+options = {
+  # Other options here
+  redis_url: { url: 'redis://mymaster', sentinels: SENTINELS, role: :master }
+}
+```
+### Sample Configuration Using Redis
+---
+
+```ruby
+options = {
+  connection_timeout: 10,
+  read_timeout: 5,
+  features_refresh_rate: 120,
+  segments_refresh_rate: 120,
+  metrics_refresh_rate: 360,
+  impressions_refresh_rate: 360,
+  logger: Logger.new('logfile.log'),
+  cache_adapter: :redis,
+  mode: :standalone,
+  redis_url: 'redis://127.0.0.1:6379/0'
+}
+begin
+  split_client = SplitIoClient::SplitFactoryBuilder.build('YOUR_API_KEY', options).client
+rescue SplitIoClient::SDKBlockerTimeoutExpiredException
+  # Code to treat raised exception
+end
+```
+
 ### Logging
+---
 
-Ruby SDK makes use of Ruby stdlib's `Logger` class to log errors/events, default option is: `Logger.new($stdout)`.
+By default, the SDK makes use of Ruby stdlib's `Logger` class to log errors and events. You can change the following options when configuring the SDK in your application:
 
-You can configure the following options in the config file:
-
+```ruby
+logger: Logger.new('logfile.log'), # Logger class instance.
+debug_enabled: true, # Verbose logging.
+transport_debug_enabled: true # Super verbose logging, including http request data.
 ```
-logger: Logger.new('logfile.log'), # you can specify your own Logger class instance here
-debug_enabled: true, # used for more verbose logging, including more debug information (false is the default)
-transport_debug_enabled: true # used for log transport data (mostly http requests, false is the default)
-```
 
-### Impression Listener
+_Refer to [Advanced Configuration](#advanced-configuration) for more information._
+
+#### Impression Listener
 
 The SDK provides an optional featured called Impression Listener, that captures every single impression in your app.
 
-To set up an Impression Listener, define a class that implements a `log` instance method, which must receive the `impression` argument. As an example you could define your listener as follows:
+To set up an Impression Listener, define a class that implements a `log` instance method, which must receive the `impression` argument. e.g.:
 
 ```ruby
 class MyImpressionListener
@@ -380,76 +362,39 @@ class MyImpressionListener
 end
 ```
 
-Nothing fancy here, the listener just takes an impression and logs it to the stdout. Now, to actually use this class you'll need to specify it as an option in your config (i.e. initializer) like this:
+In the example above, the listener simply takes an impression and logs it to the stdout. By providing a specific listener, you could send this information to a location of your choice. To use this feature, you need to specify the class name in the corresponding option of your configuration (i.e. initializer) like this:
 
 ```ruby
 {
   # other options
-  impression_listener: MyImpressionListener.new # do remember to initialize your class here
+  impression_listener: MyImpressionListener.new # remember to initialize your class here
 }
 ```
 
 ### SDK Modes
-
-By default SDK would run alongside with your application and will be run in `standalone` mode, which includes two modes:
-- `producer` - storing information from the Splits API in the chosen cache
-- `consumer` - retrieving data from the cache and providing `get_treatment` interface
-
-As you might think, you can choose between these 3 modes by providing `mode` option in the config.
-
-#### Producer mode
-
-If you have, say, one Redis cache which is used by several Split SDKs at once, e.g.: Python and Ruby, you want to have only one of them to write data to Redis, so it would remain consistent. That's why we have producer mode.
-
-SDK can be ran in `producer` mode both in the scope of the application (e.g. as a part of the Rails app), and as a separate process. Let's see what steps are needed to run it as a separate process:
-
-- You need to create a config file with .yml extension. All options specified in the above example section are valid, but you should write them in the YAML format, like this:
-
-```yaml
 ---
-:api_key: 'SECRET_API_KEY'
-:connection_timeout: 10
-:read_timeout: 5
-:features_refresh_rate: 120
-:segments_refresh_rate: 120
-:metrics_refresh_rate: 360
-:impressions_refresh_rate: 360
-:cache_adapter: :redis
-:mode: :producer
-:redis_url: 'redis://127.0.0.1:6379/0'
-```
 
+The SDK is capable of running in two different modes to fit in different infrastructure configurations:
 
-- Install binstubs
-```ruby
-bundle binstubs splitclient-rb
-```
+- `:standalone` - (default) : The SDK will retrieve information (e.g. split definitions) periodically from the Split servers, and store it in the chosen cache (memory / Redis). It'll also store the application execution information (e.g. impressions) in the cache and send it periodically to the Split servers. As it name implies, in this mode, the SDK neither relies nor synchronizes with any other component.
+- `:consumer` - If using a load balancer or more than one SDK in your application, guaranteeing that all changes in split definitions are picked up by all SDK instances at the same time is highly recommended in order to ensure consistent results across your infrastructure (i.e. getting the same treatment for a specific split and user pair). To achieve this, use the [Split Synchronizer](https://docs.split.io/docs/split-synchronizer)) and setup your SDKs to work in the `consumer` mode. Setting the components this way, all communication with the Split server is orchestrated by the Synchronizer, while the SDKs pick up definitions and store the execution information from / into a shared Redis data store.
 
-- Run the executable provided by the SDK:
-```ruby
-bundle exec bin/splitio -c ~/path/to/config/file.yml
-```
+_You can choose between these 2 modes setting the `mode` option in the config._
 
-Also, you can pass options directly to the cli command, like this:
-```
-bundle exec bin/splitio -c ~/path/to/config/file.yml --debug
-```
+## SDK Server Compatibility
 
-Note: options passed through cli have higher priority than those specified in the configuration file. To see the full list of supported options you can run:
-```
-bundle exec bin/splitio -h
-```
-## Server support
-
-Currently SDK supports:
+The Split Ruby SDK has been tested as a standalone app as well as using the following web servers:
   - Thin
   - Puma
   - Passenger
   - Unicorn
 
-Other servers should work fine as well, but haven't been tested.
+For other setups, please reach out to [support@split.io](mailto:support@split.io).
 
-### Unicorn and Puma in cluster mode (only for "memory mode")
+### Server Compatibility Notes
+---
+
+#### Unicorn and Puma in cluster mode (only for "memory mode")
 
 During the start of your application, the SDK spawns multiple threads. Each thread has an infinite loop inside,
 which is used to fetch splits/segments or send impressions/metrics to the Split service continuously.
@@ -497,91 +442,75 @@ end
 
 By doing the above, the SDK will recreate the threads for each new worker and prevent the master process (that doesn't handle requests) from needlessly querying the Split service.
 
-## Proxy support
+## Proxy Support
 
-SDK respects http_proxy environment variable, all you need to do to use proxy is assign your proxy address to that variable in the format:
+SDK uses the `http_proxy` environment variable. Assign your proxy address to the variable value in the following format, and the SDK will make use of it:
 
 ```
 http_proxy=http://username:password@hostname:port
 ```
 
-## Framework support
+## Development Notes
 
-Currently SDK supports:
-  - Rails
+Check out the repository and run `bin/setup` to install dependencies. You can also run `bin/console` to get an interactive prompt.
 
-SDK should work with other frameworks too, but for now it has been tested only with Rails
+To install this gem onto your local machine, run `bundle exec rake install`.
 
-## Development
+### Tests & Coverage
+---
 
-After checking out the repo, run `bin/setup` to install dependencies. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+The gem uses `rspec` for unit testing. You can find the files for the unit tests and the specs helper file (`spec_helper.rb`) under the default `/spec` folder.
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+To run all the specs in the `spec` folder, use the provided rake task (_make sure Redis is running in localhost_):
 
-## Coverage
-
-The gem uses rspec for unit testing. Under the default `/spec` folder you will find the files for the unit tests and the specs helper file ( spec_helper.rb ). If a new spec file with new unit tests is required you just simply need to create it under the spec folder and all its test will be executed on the next rspec execution.
-
-To run the suite of unit tests a rake task is provided.
-
-Make sure redis is running in localhost at redis://127.0.0.1:6379/0 and then just run:
 ```bash
   SPLITCLIENT_ENV=test bundle exec rspec spec
 ```
 
-Also, simplecov is used for coverage reporting. After the execution of the rake task it will create the `/coverage` folder with coverage reports in pretty HTML format.
-Right now, the code coverage of the gem is at about 95%.
+`Simplecov` is used for coverage reporting. Upon executing the rake task it will store the reports in the `/coverage` folder.
 
-## Release
+### Benchmarks
+---
 
-```bash
-gem build splitclient-rb.gemspec
-```
-
-This will generate a file gemspec with the right version, then:
-
-```bash
-gem push splitclient-rb-<VERSION>.gem
-```
-
-## Benchmarking
-
-To benchmark hashing algorithms (currently we're using MurmurHash) you'll need to run:
+To benchmark the hashing algorithms (MurmurHash) run:
 
 ```bash
 bundle exec rake benchmark_hashing_algorithm
 ```
 
-## Contributing
+### Contribute
+---
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/splitio/ruby-client.
 
-## Gem version publish
+### Release
+---
 
-To build a new version of the gem, after you have finished the desired changes, documented the CHANGES.txt and the NEWS, as well as named it properly in the version.rb. This steps assume that all of your new cool features and fixes have been merged into development, and into master branches of the ruby-client repo. Once that is ready to go, you will have to run the build command to obtain a .gem file:
+To build and release a new version of the gem, document any changes into the `CHANGES.txt` and the `NEWS` files. Then, increase the version number in `version.rb`.
+**Note**: This step assumes that all new features and fixes have been merged into the `development` branch, tested, validated, and finally merged into the `master` branch of the `ruby-client` repository.
+
+To build a new version of the gem after making the changes specified above, run:
 
 ```bash
 gem build splitclient-rb.gemspec
 ```
 
-That will generate a splitclient-rb-x.x.x.gem file, with the corresponding version information on it.
-To publish this new version of the gem at rubygems.org you must run the following command:
+That will generate a `splitclient-rb-x.x.x.gem` file, with the corresponding version information on it.
+To release the new version of the gem at [rubygems.org](rubygems.org) run the following command:
 
 ```bash
 gem push splitclient-rb-x.x.x.gem
 ```
 
-A valid rubygems username and password will be required.
+_A valid rubygems username and password is required._
 
-After this action, the new splitclient-rb-x.x.x version is available for its use from any ruby app.
+Once released, `splitclient-rb-x.x.x` version will be available for use in any ruby application.
 
-So for instance in a rails app Gemfile, you could add the:
+To get a specific gem version in a Rails application that uses Bundler, add this line to your gemfile:
 
 ```ruby
 gem 'splitclient-rb', '~> x.x.x'
 ```
-
-line to have the latest version of the gem ready to be used.
 
 ## License
 
