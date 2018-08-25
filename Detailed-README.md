@@ -111,7 +111,7 @@ It's exactly the same as calling:
 ```ruby
 split_client.get_treatment('subscriber_id' ,'feature_name', attr: 'val')
 ```
-**Important:** `bucketing_key` must not be nil.
+**Important:** `matching_key` cannot be nil.
 
 #### Split Manager
 
