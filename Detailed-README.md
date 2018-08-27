@@ -281,6 +281,10 @@ _To use Redis, include `redis-rb` in your app's Gemfile._
 
 *default value* = `:memory`
 
+**redis_namespace** : Prefix to add to elements in Redis cache when having to share redis with other applications.
+
+*default value* = `SPLITIO`
+
 **language** : SDK language (used in the Redis namespace for metrics and impressions, also included in requests' headers).
 
 *default value* = `'ruby'`

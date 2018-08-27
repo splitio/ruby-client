@@ -50,13 +50,13 @@ describe SplitIoClient::Cache::Stores::SegmentStore do
     end
 
     it 'updates added/removed' do
-      segments = segment_store.send(:segments_api).send(:fetch_segments, 'employees', '', -1)
-      expect(segments.first[:added]).to eq(%w[max dan])
-      expect(segments.first[:removed]).to eq([])
+      segments = segment_store.send(:segments_api).send(:fetch_segment_changes, 'employees', -1)
+      expect(segments[:added]).to eq(%w[max dan])
+      expect(segments[:removed]).to eq([])
 
-      segments = segment_store.send(:segments_api).send(:fetch_segments, 'employees', '', 1_473_863_075_059)
-      expect(segments.first[:added]).to eq([])
-      expect(segments.first[:removed]).to eq([])
+      segments = segment_store.send(:segments_api).send(:fetch_segment_changes, 'employees', 1_473_863_075_059)
+      expect(segments[:added]).to eq([])
+      expect(segments[:removed]).to eq([])
     end
   end
 
@@ -76,13 +76,13 @@ describe SplitIoClient::Cache::Stores::SegmentStore do
     end
 
     it 'updates added/removed' do
-      segments = segment_store.send(:segments_api).send(:fetch_segments, 'employees', '', -1)
-      expect(segments.first[:added]).to eq(%w[max dan])
-      expect(segments.first[:removed]).to eq([])
+      segments = segment_store.send(:segments_api).send(:fetch_segment_changes, 'employees', -1)
+      expect(segments[:added]).to eq(%w[max dan])
+      expect(segments[:removed]).to eq([])
 
-      segments = segment_store.send(:segments_api).send(:fetch_segments, 'employees', '', 1_473_863_075_059)
-      expect(segments.first[:added]).to eq([])
-      expect(segments.first[:removed]).to eq([])
+      segments = segment_store.send(:segments_api).send(:fetch_segment_changes, 'employees', 1_473_863_075_059)
+      expect(segments[:added]).to eq([])
+      expect(segments[:removed]).to eq([])
     end
   end
 end

@@ -18,7 +18,8 @@ describe SplitIoClient::Cache::Stores::SplitStore do
   end
 
   context 'memory adapter' do
-    let(:config) { SplitIoClient::SplitConfig.new }
+    let(:log) { StringIO.new }
+    let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log)) }
     let(:adapter) { SplitIoClient::Cache::Adapters::MemoryAdapters::MapAdapter.new }
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(adapter, config) }
     let(:store) { described_class.new(splits_repository, config, '', metrics) }
@@ -49,6 +50,13 @@ describe SplitIoClient::Cache::Stores::SplitStore do
 
       archived_split = store.splits_repository.splits['test_1_ruby']
       expect(archived_split).to be_nil
+    end
+
+    it 'rescues from error when split_store#splits_since raises an exception' do
+      allow_any_instance_of(SplitStore).to receive(:splits_since).and_throw(RuntimeError)
+
+      expect { store.send(:store_splits) }.to_not raise_error
+      expect(log.string).to include('Unexpected exception in store_splits')
     end
   end
 
