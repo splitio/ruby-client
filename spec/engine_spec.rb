@@ -1,29 +1,50 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 require 'securerandom'
 
-include SplitIoClient::Engine::Models
-
-describe SplitIoClient do
+describe SplitIoClient, type: :client do
   RSpec.shared_examples 'engine specs' do |cache_adapter|
     subject do
       SplitIoClient::SplitFactory.new('',
-        logger: Logger.new('/dev/null'),
-        cache_adapter: cache_adapter,
-        redis_namespace: 'test'
-      ).client
+                                      logger: Logger.new('/dev/null'),
+                                      cache_adapter: cache_adapter,
+                                      redis_namespace: 'test').client
     end
 
-    let(:segments_json) { File.read(File.join(SplitIoClient.root, 'spec/test_data/segments/engine_segments.json')) }
-    let(:segments2_json) { File.read(File.join(SplitIoClient.root, 'spec/test_data/segments/engine_segments2.json')) }
-    let(:all_keys_matcher_json) { File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/engine/all_keys_matcher.json')) }
-    let(:killed_json) { File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/engine/killed.json')) }
-    let(:segment_deleted_matcher_json) { File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/engine/segment_deleted_matcher.json')) }
-    let(:segment_matcher_json) { File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/engine/segment_matcher.json')) }
-    let(:segment_matcher2_json) { File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/engine/segment_matcher2.json')) }
-    let(:whitelist_matcher_json) { File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/engine/whitelist_matcher.json')) }
-    let(:dependency_matcher_json) { File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/engine/dependency_matcher.json')) }
-    let(:impressions_test_json) { File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/engine/impressions_test.json')) }
-    let(:traffic_allocation_json) { File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/splits_traffic_allocation.json')) }
+    let(:segments_json) do
+      File.read(File.join(SplitIoClient.root, 'spec/test_data/segments/engine_segments.json'))
+    end
+    let(:segments2_json) do
+      File.read(File.join(SplitIoClient.root, 'spec/test_data/segments/engine_segments2.json'))
+    end
+    let(:all_keys_matcher_json) do
+      File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/engine/all_keys_matcher.json'))
+    end
+    let(:killed_json) do
+      File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/engine/killed.json'))
+    end
+    let(:segment_deleted_matcher_json) do
+      File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/engine/segment_deleted_matcher.json'))
+    end
+    let(:segment_matcher_json) do
+      File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/engine/segment_matcher.json'))
+    end
+    let(:segment_matcher2_json) do
+      File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/engine/segment_matcher2.json'))
+    end
+    let(:whitelist_matcher_json) do
+      File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/engine/whitelist_matcher.json'))
+    end
+    let(:dependency_matcher_json) do
+      File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/engine/dependency_matcher.json'))
+    end
+    let(:impressions_test_json) do
+      File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/engine/impressions_test.json'))
+    end
+    let(:traffic_allocation_json) do
+      File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/splits_traffic_allocation.json'))
+    end
 
     before :each do
       Redis.new.flushall
@@ -40,37 +61,38 @@ describe SplitIoClient do
       end
 
       it 'returns CONTROL for random id' do
-        expect(subject.get_treatment('my_random_user_id', 'my_random_feaure')).to eq Treatment::CONTROL
+        expect(subject.get_treatment('my_random_user_id', 'my_random_feaure'))
+          .to eq SplitIoClient::Engine::Models::Treatment::CONTROL
       end
 
       it 'returns CONTROL and label for random id' do
         expect(subject.get_treatment('my_random_user_id', 'my_random_feaure', nil, nil, false, true)).to eq(
-          treatment: Treatment::CONTROL,
-          label: Label::DEFINITION_NOT_FOUND,
+          treatment: SplitIoClient::Engine::Models::Treatment::CONTROL,
+          label: SplitIoClient::Engine::Models::Label::DEFINITION_NOT_FOUND,
           change_number: nil
         )
       end
 
       it 'returns CONTROL on null id' do
-        expect(subject.get_treatment(nil, 'my_random_feaure')).to eq Treatment::CONTROL
+        expect(subject.get_treatment(nil, 'my_random_feaure')).to eq SplitIoClient::Engine::Models::Treatment::CONTROL
       end
 
       it 'returns CONTROL and label on null id' do
         expect(subject.get_treatment(nil, 'my_random_feaure', nil, nil, false, true)).to eq(
-          treatment: Treatment::CONTROL,
-          label: Label::DEFINITION_NOT_FOUND,
+          treatment: SplitIoClient::Engine::Models::Treatment::CONTROL,
+          label: SplitIoClient::Engine::Models::Label::DEFINITION_NOT_FOUND,
           change_number: nil
         )
       end
 
       it 'returns CONTROL on null feature' do
-        expect(subject.get_treatment('my_random_user_id', nil)).to eq Treatment::CONTROL
+        expect(subject.get_treatment('my_random_user_id', nil)).to eq SplitIoClient::Engine::Models::Treatment::CONTROL
       end
 
       it 'returns CONTROL and label on null feature' do
         expect(subject.get_treatment('my_random_user_id', nil, nil, nil, false, true)).to eq(
-          treatment: Treatment::CONTROL,
-          label: Label::DEFINITION_NOT_FOUND,
+          treatment: SplitIoClient::Engine::Models::Treatment::CONTROL,
+          label: SplitIoClient::Engine::Models::Label::DEFINITION_NOT_FOUND,
           change_number: nil
         )
       end
@@ -85,11 +107,10 @@ describe SplitIoClient do
       context 'producer mode' do
         subject do
           SplitIoClient::SplitFactory.new('',
-            logger: Logger.new('/dev/null'),
-            cache_adapter: cache_adapter,
-            redis_namespace: 'test',
-            mode: :producer
-          ).client
+                                          logger: Logger.new('/dev/null'),
+                                          cache_adapter: cache_adapter,
+                                          redis_namespace: 'test',
+                                          mode: :producer).client
         end
 
         it 'stores splits' do
@@ -100,11 +121,10 @@ describe SplitIoClient do
       context 'consumer mode' do
         subject do
           SplitIoClient::SplitFactory.new('',
-            logger: Logger.new('/dev/null'),
-            cache_adapter: cache_adapter,
-            redis_namespace: 'test',
-            mode: :consumer
-          ).client
+                                          logger: Logger.new('/dev/null'),
+                                          cache_adapter: cache_adapter,
+                                          redis_namespace: 'test',
+                                          mode: :consumer).client
         end
 
         it 'stores splits' do
@@ -143,32 +163,31 @@ describe SplitIoClient do
       end
 
       it 'validates the feature is on for all ids multiple keys' do
-        expect(subject.get_treatments('fake_user_id_1', ['new_feature', 'foo'])).to eq(
-          new_feature: 'on', foo: Treatment::CONTROL
+        expect(subject.get_treatments('fake_user_id_1', %w[new_feature foo])).to eq(
+          new_feature: 'on', foo: SplitIoClient::Engine::Models::Treatment::CONTROL
         )
       end
 
       it "[#{cache_adapter}] validates the feature is on for all ids multiple keys for integer key" do
-        expect(subject.get_treatments(222, ['new_feature', 'foo'])).to eq(
-          new_feature: 'on', foo: Treatment::CONTROL
+        expect(subject.get_treatments(222, %w[new_feature foo])).to eq(
+          new_feature: 'on', foo: SplitIoClient::Engine::Models::Treatment::CONTROL
         )
         impressions = subject.instance_variable_get(:@impressions_repository).get_batch
-        expect(impressions.collect { |i| i[:feature] }).to match_array %i(foo new_feature)
+        expect(impressions.collect { |i| i[:feature] }).to match_array %i[foo new_feature]
       end
 
       it 'validates the feature is on for all ids multiple keys for integer key' do
-        expect(subject.get_treatments(222, ['new_feature', 'foo'])).to eq(
-          new_feature: 'on', foo: Treatment::CONTROL
+        expect(subject.get_treatments(222, %w[new_feature foo])).to eq(
+          new_feature: 'on', foo: SplitIoClient::Engine::Models::Treatment::CONTROL
         )
-        expect(subject.get_treatments({ matching_key: 222, bucketing_key: 'foo' }, ['new_feature', 'foo'])).to eq(
-          new_feature: 'on', foo: Treatment::CONTROL
+        expect(subject.get_treatments({ matching_key: 222, bucketing_key: 'foo' }, %w[new_feature foo])).to eq(
+          new_feature: 'on', foo: SplitIoClient::Engine::Models::Treatment::CONTROL
         )
         impressions = subject.instance_variable_get(:@impressions_repository).get_batch
         expect(ImpressionsFormatter
           .new(subject.instance_variable_get(:@impressions_repository))
           .call(impressions)
-          .select { |im| im[:testName] == :new_feature }[0][:keyImpressions].size
-        ).to eq(2)
+          .select { |im| im[:testName] == :new_feature }[0][:keyImpressions].size).to eq(2)
       end
 
       it 'validates the feature by bucketing_key' do
@@ -183,7 +202,7 @@ describe SplitIoClient do
       it 'validates the feature by bucketing_key for nil matching_key' do
         key = { bucketing_key: 'fake_user_id_1' }
 
-        expect(subject.get_treatment(key, 'new_feature')).to eq "control"
+        expect(subject.get_treatment(key, 'new_feature')).to eq 'control'
       end
 
       it 'validates the feature by bucketing_key' do
@@ -196,11 +215,11 @@ describe SplitIoClient do
       end
 
       it 'validates the feature returns default treatment for non matching ids' do
-        expect(subject.get_treatment('fake_user_id_3', 'new_feature')).to eq "def_test"
+        expect(subject.get_treatment('fake_user_id_3', 'new_feature')).to eq 'def_test'
       end
 
       it 'returns default treatment for active splits with a non matching id' do
-        expect(subject.get_treatment('fake_user_id_3', 'new_feature')).to eq "def_test"
+        expect(subject.get_treatment('fake_user_id_3', 'new_feature')).to eq 'def_test'
       end
     end
 
@@ -216,20 +235,20 @@ describe SplitIoClient do
       end
 
       it 'validates the feature is on for all ids' do
-        expect(subject.get_treatments('fake_user_id_1', ['new_feature', 'new_feature2', 'new_feature3', 'new_feature4'])).to eq(
+        expect(subject.get_treatments('fake_user_id_1', %w[new_feature new_feature2 new_feature3 new_feature4])).to eq(
           new_feature: 'on',
           new_feature2: 'on',
           new_feature3: 'on',
-          new_feature4: Treatment::CONTROL
+          new_feature4: SplitIoClient::Engine::Models::Treatment::CONTROL
         )
       end
 
       it 'validates the feature by bucketing_key' do
         key = { bucketing_key: 'bucketing_key', matching_key: 'fake_user_id_1' }
 
-        expect(subject.get_treatments(key, ['new_feature', 'new_feature2'])).to eq(
+        expect(subject.get_treatments(key, %w[new_feature new_feature2])).to eq(
           new_feature: 'on',
-          new_feature2: 'on',
+          new_feature2: 'on'
         )
         impressions = subject.instance_variable_get(:@adapter).impressions_repository.get_batch
 
@@ -239,15 +258,16 @@ describe SplitIoClient do
       it 'validates the feature by bucketing_key for nil matching_key' do
         key = { bucketing_key: 'fake_user_id_1' }
 
-        expect(subject.get_treatments(key, ['new_feature'])).to eq(new_feature: Treatment::CONTROL)
+        expect(subject.get_treatments(key, ['new_feature']))
+          .to eq(new_feature: SplitIoClient::Engine::Models::Treatment::CONTROL)
       end
 
       it 'validates the feature returns default treatment for non matching ids' do
-        expect(subject.get_treatments('fake_user_id_3', ['new_feature'])).to eq(new_feature: "def_test")
+        expect(subject.get_treatments('fake_user_id_3', ['new_feature'])).to eq(new_feature: 'def_test')
       end
 
       it 'returns default treatment for active splits with a non matching id' do
-        expect(subject.get_treatments('fake_user_id_3', ['new_feature'])).to eq(new_feature: "def_test")
+        expect(subject.get_treatments('fake_user_id_3', ['new_feature'])).to eq(new_feature: 'def_test')
       end
     end
 
@@ -291,9 +311,9 @@ describe SplitIoClient do
       end
 
       it 'returns default treatment for killed splits' do
-        expect(subject.get_treatment('fake_user_id_1', 'test_killed')).to eq "def_test"
-        expect(subject.get_treatment('fake_user_id_2', 'test_killed')).to eq "def_test"
-        expect(subject.get_treatment('fake_user_id_3', 'test_killed')).to eq "def_test"
+        expect(subject.get_treatment('fake_user_id_1', 'test_killed')).to eq 'def_test'
+        expect(subject.get_treatment('fake_user_id_2', 'test_killed')).to eq 'def_test'
+        expect(subject.get_treatment('fake_user_id_3', 'test_killed')).to eq 'def_test'
       end
     end
 
@@ -309,35 +329,39 @@ describe SplitIoClient do
       end
 
       it 'returns control for deleted splits' do
-        expect(subject.get_treatment('fake_user_id_3', 'new_feature')).to eq "control"
+        expect(subject.get_treatment('fake_user_id_3', 'new_feature')).to eq 'control'
       end
     end
 
-    describe "splitter key assign with 100 treatments and 100K keys" do
-      xit "assigns keys to each of 100 treatments following a certain distribution" do
+    describe 'splitter key assign with 100 treatments and 100K keys' do
+      xit 'assigns keys to each of 100 treatments following a certain distribution' do
         partitions = []
-        for i in 1..100
-          partitions << SplitIoClient::Partition.new({treatment: i.to_s, size: 1})
+        i = 0
+        until i == 100
+          partitions << SplitIoClient::Partition.new(treatment: i.to_s, size: 1)
+          i += 1
         end
 
         treatments = Array.new(100, 0)
-        j = 100000
+        j = 100_000
         k = 0.01
-
-        for i in 0..(j-1)
+        i = 0
+        until i == (j - 1)
           key = SecureRandom.hex(20)
           treatment = SplitIoClient::Splitter.new.get_treatment(key, 123, partitions)
           treatments[treatment.to_i - 1] += 1
+          i += 1
         end
 
-        mean = j*k
+        mean = j * k
         stddev = Math.sqrt(mean * (1 - k))
         min = (mean - 4 * stddev).to_i
         max = (mean + 4 * stddev).to_i
         range = min..max
-
-        (0..(treatments.length - 1)).each do |i|
+        i = 0
+        until i == (treatments.length - 1)
           expect(range.cover?(treatments[i])).to be true
+          i += 1
         end
       end
     end
@@ -356,17 +380,17 @@ describe SplitIoClient do
       end
 
       it 'returns correct impressions for get_treatments' do
-        subject.get_treatments('21', ["sample_feature", "beta_feature"])
-        subject.get_treatments('22', ["sample_feature", "beta_feature"])
-        subject.get_treatments('23', ["sample_feature", "beta_feature"])
-        subject.get_treatments('24', ["sample_feature", "beta_feature"])
-        subject.get_treatments('25', ["sample_feature", "beta_feature"])
-        subject.get_treatments('26', ["sample_feature", "beta_feature"])
+        subject.get_treatments('21', %w[sample_feature beta_feature])
+        subject.get_treatments('22', %w[sample_feature beta_feature])
+        subject.get_treatments('23', %w[sample_feature beta_feature])
+        subject.get_treatments('24', %w[sample_feature beta_feature])
+        subject.get_treatments('25', %w[sample_feature beta_feature])
+        subject.get_treatments('26', %w[sample_feature beta_feature])
         # Need this because we're storing impressions in the Set
         # Without sleep we may have identical impressions (including time)
         # In that case only one impression with key "26" would be stored
         sleep 0.01
-        subject.get_treatments('26', ["sample_feature", "beta_feature"])
+        subject.get_treatments('26', %w[sample_feature beta_feature])
 
         expect(impressions.size).to eq(14)
 
@@ -377,27 +401,24 @@ describe SplitIoClient do
       context 'when impressions are disabled' do
         subject do
           SplitIoClient::SplitFactory.new('',
-            logger: Logger.new('/dev/null'),
-            cache_adapter: cache_adapter,
-            redis_namespace: 'test',
-            impressions_queue_size: -1
-          ).client
+                                          logger: Logger.new('/dev/null'),
+                                          cache_adapter: cache_adapter,
+                                          redis_namespace: 'test',
+                                          impressions_queue_size: -1).client
         end
         let(:impressions) { subject.instance_variable_get(:@impressions_repository).get_batch }
 
         it 'works when impressions are disabled for get_treatments' do
-          expect(subject.get_treatments('21', ["sample_feature", "beta_feature"])).to eq(
-            {
-              sample_feature: 'off',
-              beta_feature: 'off'
-            }
+          expect(subject.get_treatments('21', %w[sample_feature beta_feature])).to eq(
+            sample_feature: 'off',
+            beta_feature: 'off'
           )
 
           expect(impressions).to eq([])
         end
 
         it 'works when impressions are disabled for get_treatment' do
-          expect(subject.get_treatment('21', "sample_feature")).to eq('off')
+          expect(subject.get_treatment('21', 'sample_feature')).to eq('off')
 
           expect(impressions).to eq([])
         end
@@ -431,7 +452,8 @@ describe SplitIoClient do
           subject.get_treatment('test', 'Traffic_Allocation_UI2')
           impressions_repository = subject.instance_variable_get(:@impressions_repository)
 
-          expect(impressions_repository.get_batch[0][:impressions]['label']).to eq(Label::NOT_IN_SPLIT)
+          expect(impressions_repository.get_batch[0][:impressions]['label'])
+            .to eq(SplitIoClient::Engine::Models::Label::NOT_IN_SPLIT)
         end
       end
     end
@@ -489,7 +511,7 @@ describe SplitIoClient do
           key: 'key',
           trafficTypeName: 'traffic_type',
           eventTypeId: 'event_type',
-          value: 'value',
+          value: 'value'
         )
 
         expect(subject.instance_variable_get(:@events_repository).clear).to eq([])

@@ -1,12 +1,26 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe SplitIoClient::EqualToMatcher do
-  subject { SplitIoClient::SplitFactory.new('', { logger: Logger.new('/dev/null') }).client }
+  subject { SplitIoClient::SplitFactory.new('', logger: Logger.new('/dev/null')).client }
 
-  let(:date_splits_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/splits/equal_to_matcher/date_splits.json'))) }
-  let(:negative_splits_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/splits/equal_to_matcher/negative_splits.json'))) }
-  let(:splits_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/splits/equal_to_matcher/splits.json'))) }
-  let(:zero_splits_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/splits/equal_to_matcher/zero_splits.json'))) }
+  let(:date_splits_json) do
+    File.read(File.expand_path(File.join(File.dirname(__FILE__),
+                                         '../../test_data/splits/equal_to_matcher/date_splits.json')))
+  end
+  let(:negative_splits_json) do
+    File.read(File.expand_path(File.join(File.dirname(__FILE__),
+                                         '../../test_data/splits/equal_to_matcher/negative_splits.json')))
+  end
+  let(:splits_json) do
+    File.read(File.expand_path(File.join(File.dirname(__FILE__),
+                                         '../../test_data/splits/equal_to_matcher/splits.json')))
+  end
+  let(:zero_splits_json) do
+    File.read(File.expand_path(File.join(File.dirname(__FILE__),
+                                         '../../test_data/splits/equal_to_matcher/zero_splits.json')))
+  end
 
   let(:user) { 'fake_user_id_1' }
   let(:feature) { 'test_feature' }
@@ -72,10 +86,10 @@ describe SplitIoClient::EqualToMatcher do
   end
 
   context 'equal to datetime' do
-    let(:matching_attributes_1) { { created: (Time.parse('2016/04/01T00:00Z')).to_i } }
-    let(:matching_attributes_2) { { created: (Time.parse('2016/04/01T23:59Z')).to_i } }
-    let(:non_matching_high_value_attributes) { { created: (Time.parse('2016/04/02T00:01Z')).to_i } }
-    let(:non_matching_low_value_attributes) { { created: (Time.parse('2016/03/31T23:59Z')).to_i } }
+    let(:matching_attributes_1) { { created: Time.parse('2016/04/01T00:00Z').to_i } }
+    let(:matching_attributes_2) { { created: Time.parse('2016/04/01T23:59Z').to_i } }
+    let(:non_matching_high_value_attributes) { { created: Time.parse('2016/04/02T00:01Z').to_i } }
+    let(:non_matching_low_value_attributes) { { created: Time.parse('2016/03/31T23:59Z').to_i } }
 
     before do
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')

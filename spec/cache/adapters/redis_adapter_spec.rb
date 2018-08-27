@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe SplitIoClient::Cache::Adapters::RedisAdapter do
@@ -24,7 +26,7 @@ describe SplitIoClient::Cache::Adapters::RedisAdapter do
 
     it 'deletes fields from map' do
       adapter.add_to_map('foo', 'baz', 'baz')
-      adapter.delete_from_map('foo', ['bar', 'baz'])
+      adapter.delete_from_map('foo', %w[bar baz])
 
       expect(adapter.find_in_map('foo', 'bar')).to eq(nil)
       expect(adapter.find_in_map('foo', 'baz')).to eq(nil)
@@ -102,13 +104,13 @@ describe SplitIoClient::Cache::Adapters::RedisAdapter do
     end
 
     it 'adds value to set' do
-      expect(adapter.get_set('foo')).to eq(%w(bar))
+      expect(adapter.get_set('foo')).to eq(%w[bar])
     end
 
     it 'adds values to set' do
-      adapter.add_to_set('bar', %w(foo bar))
+      adapter.add_to_set('bar', %w[foo bar])
 
-      expect(adapter.get_set('bar')).to match_array(%w(foo bar))
+      expect(adapter.get_set('bar')).to match_array(%w[foo bar])
     end
 
     it 'gets all keys from set' do
@@ -116,9 +118,9 @@ describe SplitIoClient::Cache::Adapters::RedisAdapter do
     end
 
     it 'returns union sets' do
-      adapter.add_to_set('bar', %w(foo bar))
+      adapter.add_to_set('bar', %w[foo bar])
 
-      expect(adapter.union_sets(['foo', 'bar'])).to match_array(%w(foo bar))
+      expect(adapter.union_sets(%w[foo bar])).to match_array(%w[foo bar])
     end
 
     it 'checks whether key exists' do
@@ -134,7 +136,7 @@ describe SplitIoClient::Cache::Adapters::RedisAdapter do
     it 'deletes keys' do
       adapter.add_to_set('bar', 'baz')
 
-      adapter.delete(['foo', 'bar'])
+      adapter.delete(%w[foo bar])
 
       expect(adapter.get_set('foo')).to eq([])
       expect(adapter.get_set('bar')).to eq([])

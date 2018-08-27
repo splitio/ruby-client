@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe SplitIoClient do
@@ -12,15 +14,23 @@ describe SplitIoClient do
 
   let(:split_file) { ['local_feature local_treatment', 'local_feature2 local_treatment2'] }
   let(:split_file2) { ['local_feature local_treatment2', 'local_feature2 local_treatment2'] }
-  let(:split_file3) { ['local_feature local_treatment2', 'local_feature2 local_treatment2', 'local_feature3 local_treatment2'] }
+  let(:split_file3) do
+    ['local_feature local_treatment2', 'local_feature2 local_treatment2', 'local_feature3 local_treatment2']
+  end
 
-  let(:split_names) { ['local_feature', 'local_feature2'] }
-  let(:split_names2) { ['local_feature', 'local_feature2', 'local_feature3'] }
+  let(:split_names) { %w[local_feature local_feature2] }
+  let(:split_names2) { %w[local_feature local_feature2 local_feature3] }
 
-  let(:split_view) { {:feature => 'local_feature' , :treatment => 'local_treatment'} }
+  let(:split_view) { { feature: 'local_feature', treatment: 'local_treatment' } }
 
-  let(:split_views) { [{:feature => 'local_feature', :treatment => 'local_treatment'}, {:feature => 'local_feature2', :treatment => 'local_treatment2'}] }
-  let(:split_views2) { [{:feature => 'local_feature', :treatment => 'local_treatment2'}, {:feature => 'local_feature2', :treatment => 'local_treatment2'}] }
+  let(:split_views) do
+    [{ feature: 'local_feature', treatment: 'local_treatment' },
+     { feature: 'local_feature2', treatment: 'local_treatment2' }]
+  end
+  let(:split_views2) do
+    [{ feature: 'local_feature', treatment: 'local_treatment2' },
+     { feature: 'local_feature2', treatment: 'local_treatment2' }]
+  end
 
   it 'validates the calling manager.splits returns the offline data' do
     expect(subject.splits).to eq(split_views)

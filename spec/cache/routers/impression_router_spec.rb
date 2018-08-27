@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe SplitIoClient::ImpressionRouter do
@@ -5,12 +7,12 @@ describe SplitIoClient::ImpressionRouter do
   let(:config) { SplitIoClient::SplitConfig.new(impression_listener: listener) }
   let(:impressions) do
     {
-      split_names: %w(ruby ruby_1),
+      split_names: %w[ruby ruby_1],
       matching_key: 'dan',
       bucketing_key: nil,
       treatments_labels_change_numbers: {
-        ruby:   { treatment: 'default', label: 'explicitly included', change_number: 1489788351672 },
-        ruby_1: { treatment: 'off', label: 'in segment all', change_number: 1488927857775 }
+        ruby:   { treatment: 'default', label: 'explicitly included', change_number: 1_489_788_351_672 },
+        ruby_1: { treatment: 'off', label: 'in segment all', change_number: 1_488_927_857_775 }
       },
       attributes: {}
     }

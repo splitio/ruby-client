@@ -1,15 +1,23 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe SplitIoClient::Cache::Stores::SegmentStore do
   let(:metrics_repository) { SplitIoClient::Cache::Repositories::MetricsRepository.new(config.metrics_adapter, config) }
   let(:metrics) { SplitIoClient::Metrics.new(100, config, metrics_repository) }
-  let(:segments_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/segments/segments.json'))) }
-  let(:segments_json2) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/segments/segments2.json'))) }
-  let(:splits_with_segments_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/splits/splits3.json'))) }
+  let(:segments_json) do
+    File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/segments/segments.json')))
+  end
+  let(:segments_json2) do
+    File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/segments/segments2.json')))
+  end
+  let(:splits_with_segments_json) do
+    File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/splits/splits3.json')))
+  end
   let(:segment_data) do
     [
-      { name: "employees", added: ["max", "dan"], removed: [], since: -1, till: 1473863075059},
-      { name: "employees", added: [], :removed=>[], since: 1473863075059, till: 1473863075059}
+      { name: 'employees', added: %w[max dan], removed: [], since: -1, till: 1_473_863_075_059 },
+      { name: 'employees', added: [], removed: [], since: 1_473_863_075_059, till: 1_473_863_075_059 }
     ]
   end
 
@@ -25,7 +33,9 @@ describe SplitIoClient::Cache::Stores::SegmentStore do
   end
 
   context 'memory adapter' do
-    let(:adapter) { SplitIoClient::Cache::Adapters::MemoryAdapter.new(SplitIoClient::Cache::Adapters::MemoryAdapters::MapAdapter.new) }
+    let(:adapter) do
+      SplitIoClient::Cache::Adapters::MemoryAdapter.new(SplitIoClient::Cache::Adapters::MemoryAdapters::MapAdapter.new)
+    end
     let(:config) { SplitIoClient::SplitConfig.new(cache_adapter: :memory) }
     let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(adapter, config) }
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(adapter, config) }
@@ -41,10 +51,10 @@ describe SplitIoClient::Cache::Stores::SegmentStore do
 
     it 'updates added/removed' do
       segments = segment_store.send(:segments_api).send(:fetch_segments, 'employees', '', -1)
-      expect(segments.first[:added]).to eq(%w(max dan))
+      expect(segments.first[:added]).to eq(%w[max dan])
       expect(segments.first[:removed]).to eq([])
 
-      segments = segment_store.send(:segments_api).send(:fetch_segments, 'employees', '', 1473863075059)
+      segments = segment_store.send(:segments_api).send(:fetch_segments, 'employees', '', 1_473_863_075_059)
       expect(segments.first[:added]).to eq([])
       expect(segments.first[:removed]).to eq([])
     end
@@ -67,10 +77,10 @@ describe SplitIoClient::Cache::Stores::SegmentStore do
 
     it 'updates added/removed' do
       segments = segment_store.send(:segments_api).send(:fetch_segments, 'employees', '', -1)
-      expect(segments.first[:added]).to eq(%w(max dan))
+      expect(segments.first[:added]).to eq(%w[max dan])
       expect(segments.first[:removed]).to eq([])
 
-      segments = segment_store.send(:segments_api).send(:fetch_segments, 'employees', '', 1473863075059)
+      segments = segment_store.send(:segments_api).send(:fetch_segments, 'employees', '', 1_473_863_075_059)
       expect(segments.first[:added]).to eq([])
       expect(segments.first[:removed]).to eq([])
     end

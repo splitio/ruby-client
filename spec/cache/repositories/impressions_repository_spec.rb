@@ -1,7 +1,7 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 require 'set'
-
-include SplitIoClient::Cache::Adapters
 
 describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
   RSpec.shared_examples 'impressions specs' do |cache_adapter|
@@ -18,13 +18,25 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
     end
 
     it 'adds impressions' do
-      repository.add('foo1', 'key_name' => 'matching_key', 'treatment' => 'on', 'time' => 1478113516002)
-      repository.add('foo2', 'key_name' => 'matching_key2', 'treatment' => 'off', 'time' => 1478113518285)
+      repository.add('foo1', 'key_name' => 'matching_key', 'treatment' => 'on', 'time' => 1_478_113_516_002)
+      repository.add('foo2', 'key_name' => 'matching_key2', 'treatment' => 'off', 'time' => 1_478_113_518_285)
 
       expect(repository.get_batch).to match_array(
         [
-          { feature: :foo1, impressions: { 'key_name' => 'matching_key', 'treatment' => 'on', 'time' => 1478113516002 }, ip: ip },
-          { feature: :foo2, impressions: { 'key_name' => 'matching_key2', 'treatment' => 'off', 'time' => 1478113518285 }, ip: ip },
+          {
+            feature: :foo1,
+            impressions: { 'key_name' => 'matching_key',
+                           'treatment' => 'on',
+                           'time' => 1_478_113_516_002 },
+            ip: ip
+          },
+          {
+            feature: :foo2,
+            impressions: { 'key_name' => 'matching_key2',
+                           'treatment' => 'off',
+                           'time' => 1_478_113_518_285 },
+            ip: ip
+          }
         ]
       )
 
@@ -41,20 +53,24 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
     end
   end
 
-  include_examples 'impressions specs', MemoryAdapter.new(MemoryAdapters::QueueAdapter.new(3))
-  include_examples 'impressions specs', RedisAdapter.new(SplitIoClient::SplitConfig.new.redis_url)
+  include_examples 'impressions specs', SplitIoClient::Cache::Adapters::MemoryAdapter.new(
+    SplitIoClient::Cache::Adapters::MemoryAdapters::QueueAdapter.new(3)
+  )
+  include_examples 'impressions specs', SplitIoClient::Cache::Adapters::RedisAdapter.new(
+    SplitIoClient::SplitConfig.new.redis_url
+  )
 
   context 'queue size less than the actual queue' do
     before do
       Redis.new.flushall
 
-      repository.add('foo1', 'key_name' => 'matching_key', 'treatment' => 'on', 'time' => 1478113516002)
-      repository.add('foo2', 'key_name' => 'matching_key2', 'treatment' => 'off', 'time' => 1478113518285)
-      repository.add('foo2', 'key_name' => 'matching_key3', 'treatment' => 'on', 'time' => 1478113518500)
+      repository.add('foo1', 'key_name' => 'matching_key', 'treatment' => 'on', 'time' => 1_478_113_516_002)
+      repository.add('foo2', 'key_name' => 'matching_key2', 'treatment' => 'off', 'time' => 1_478_113_518_285)
+      repository.add('foo2', 'key_name' => 'matching_key3', 'treatment' => 'on', 'time' => 1_478_113_518_500)
     end
 
     let(:config) { SplitIoClient::SplitConfig.new(impressions_queue_size: 1) }
-    let(:adapter) { RedisAdapter.new(SplitIoClient::SplitConfig.new.redis_url) }
+    let(:adapter) { SplitIoClient::Cache::Adapters::RedisAdapter.new(SplitIoClient::SplitConfig.new.redis_url) }
     let(:repository) { described_class.new(adapter, config) }
 
     it 'returns impressions' do
@@ -67,21 +83,23 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
     before do
       Redis.new.flushall
 
-      repository.add('foo1', 'key_name' => 'matching_key', 'treatment' => 'on', 'time' => 1478113516002)
+      repository.add('foo1', 'key_name' => 'matching_key', 'treatment' => 'on', 'time' => 1_478_113_516_002)
     end
 
     let(:config) { SplitIoClient::SplitConfig.new(impressions_queue_size: 1) }
-    let(:adapter) { RedisAdapter.new(SplitIoClient::SplitConfig.new.redis_url) }
+    let(:adapter) { SplitIoClient::Cache::Adapters::RedisAdapter.new(SplitIoClient::SplitConfig.new.redis_url) }
     let(:repository) { described_class.new(adapter, config) }
 
     it 'returns empty array when adapter#random_set_elements raises an exception' do
-      allow_any_instance_of(RedisAdapter).to receive(:random_set_elements).and_throw(RuntimeError)
+      allow_any_instance_of(SplitIoClient::Cache::Adapters::RedisAdapter)
+        .to receive(:random_set_elements).and_throw(RuntimeError)
 
       expect(repository.get_batch).to eq([])
     end
 
     it 'returns empty array when adapter#find_sets_by_prefix raises an exception' do
-      allow_any_instance_of(RedisAdapter).to receive(:find_sets_by_prefix).and_throw(RuntimeError)
+      allow_any_instance_of(SplitIoClient::Cache::Adapters::RedisAdapter)
+        .to receive(:find_sets_by_prefix).and_throw(RuntimeError)
 
       expect(repository.get_batch).to eq([])
     end

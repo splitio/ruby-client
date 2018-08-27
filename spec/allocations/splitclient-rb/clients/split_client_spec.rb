@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe SplitIoClient::SplitClient do
@@ -10,7 +12,10 @@ describe SplitIoClient::SplitClient do
   let(:impressions_repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(queue_adapter, config) }
   let(:metrics_repository) { SplitIoClient::Cache::Repositories::MetricsRepository.new(map_adapter, config) }
 
-  let(:client) { SplitIoClient::SplitClient.new('', config, splits_repository, segments_repository, impressions_repository, metrics_repository, nil) }
+  let(:client) do
+    SplitIoClient::SplitClient.new('', config, splits_repository, segments_repository,
+                                   impressions_repository, metrics_repository, nil)
+  end
 
   context 'control' do
     it 'allocates minimum objects' do

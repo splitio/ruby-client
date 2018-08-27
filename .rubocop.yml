@@ -1,0 +1,15 @@
+Metrics/MethodLength:
+  Max: 15
+
+Metrics/LineLength:
+  Max: 121
+
+Metrics/BlockLength:
+ Exclude:
+   - spec/**/*
+   - splitclient-rb.gemspec
+   - exe/splitio
+
+AllCops:
+  Exclude:
+  - lib/**/* #TODO Apply rubocop to the library

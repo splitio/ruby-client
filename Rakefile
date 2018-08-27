@@ -1,11 +1,15 @@
+# frozen_string_literal: true
+
 require 'bundler/gem_tasks'
 require 'rspec/core/rake_task'
+require 'rubocop/rake_task'
 
 Dir['tasks/**/*.rake'].each { |rake| load rake }
 
 RSpec::Core::RakeTask.new(:spec)
+RuboCop::RakeTask.new(:rubocop)
 
-task :spec => :compile
+task spec: :compile
 case RUBY_PLATFORM
 when 'java'
   require 'rake/javaextensiontask'
@@ -21,4 +25,4 @@ else
   end
 end
 
-task :default => :spec
+task default: %i[spec rubocop]
