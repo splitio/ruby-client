@@ -1,11 +1,22 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe SplitIoClient::BetweenMatcher do
-  subject { SplitIoClient::SplitFactory.new('', {logger: Logger.new('/dev/null')}).client }
+  subject { SplitIoClient::SplitFactory.new('', logger: Logger.new('/dev/null')).client }
 
-  let(:datetime_matcher_splits) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/splits/between_matcher/datetime_matcher_splits.json'))) }
-  let(:negative_number_matcher_splits) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/splits/between_matcher/negative_number_matcher_splits.json'))) }
-  let(:number_matcher_splits) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/splits/between_matcher/number_matcher_splits.json'))) }
+  let(:datetime_matcher_splits) do
+    File.read(File.expand_path(File.join(File.dirname(__FILE__),
+                                         '../../test_data/splits/between_matcher/datetime_matcher_splits.json')))
+  end
+  let(:negative_number_matcher_splits) do
+    File.read(File.expand_path(File.join(File.dirname(__FILE__),
+                                         '../../test_data/splits/between_matcher/negative_number_matcher_splits.json')))
+  end
+  let(:number_matcher_splits) do
+    File.read(File.expand_path(File.join(File.dirname(__FILE__),
+                                         '../../test_data/splits/between_matcher/number_matcher_splits.json')))
+  end
 
   let(:user) { 'fake_user_id_1' }
   let(:feature) { 'test_feature' }
@@ -64,11 +75,11 @@ describe SplitIoClient::BetweenMatcher do
   end
 
   context 'between dates' do
-    let(:matching_attributes) { {created: 1454414400 } }
-    let(:matching_inclusive_low_attributes) { {created: 1451687340 } } # "2016/01/01T22:29Z"
-    let(:matching_inclusive_high_attributes) { {created: 1459722540 } } # "2016/04/03T22:29Z"
-    let(:non_matching_low_value_attributes) { {created: 1420151340 } } # "2015/01/01T22:29Z"
-    let(:non_matching_high_value_attributes) { {created: 1459775460 } } # "2016/04/04T13:11Z"
+    let(:matching_attributes) { { created: 1_454_414_400 } }
+    let(:matching_inclusive_low_attributes) { { created: 1_451_687_340 } } # "2016/01/01T22:29Z"
+    let(:matching_inclusive_high_attributes) { { created: 1_459_722_540 } } # "2016/04/03T22:29Z"
+    let(:non_matching_low_value_attributes) { { created: 1_420_151_340 } } # "2015/01/01T22:29Z"
+    let(:non_matching_high_value_attributes) { { created: 1_459_775_460 } } # "2016/04/04T13:11Z"
 
     before do
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')

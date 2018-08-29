@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe SplitIoClient::Cache::Adapters::MemoryAdapters::MapAdapter do
@@ -29,7 +31,7 @@ describe SplitIoClient::Cache::Adapters::MemoryAdapters::MapAdapter do
 
     it 'deletes fields from map' do
       adapter.add_to_map('foo', 'baz', 'baz')
-      adapter.delete_from_map('foo', ['bar', 'baz'])
+      adapter.delete_from_map('foo', %w[bar baz])
 
       expect(adapter.find_in_map('foo', 'bar')).to eq(nil)
       expect(adapter.find_in_map('foo', 'baz')).to eq(nil)
@@ -69,7 +71,7 @@ describe SplitIoClient::Cache::Adapters::MemoryAdapters::MapAdapter do
       adapter.set_string('foo3', 'bar')
       adapter.set_string('bar', 'bar')
 
-      expect(adapter.find_strings_by_prefix('foo')).to match_array(%w(foo foo2 foo3))
+      expect(adapter.find_strings_by_prefix('foo')).to match_array(%w[foo foo2 foo3])
     end
 
     it 'returns multiple strings' do
@@ -112,7 +114,7 @@ describe SplitIoClient::Cache::Adapters::MemoryAdapters::MapAdapter do
     end
 
     it 'adds values to set' do
-      adapter.add_to_set('bar', %w(foo bar))
+      adapter.add_to_set('bar', %w[foo bar])
 
       expect(adapter.instance_variable_get(:@map)['bar']['foo']).to eq(1)
       expect(adapter.instance_variable_get(:@map)['bar']['bar']).to eq(1)
@@ -123,9 +125,9 @@ describe SplitIoClient::Cache::Adapters::MemoryAdapters::MapAdapter do
     end
 
     it 'returns union sets' do
-      adapter.add_to_set('bar', %w(foo bar))
+      adapter.add_to_set('bar', %w[foo bar])
 
-      expect(adapter.union_sets(['foo', 'bar'])).to match_array(%w(foo bar))
+      expect(adapter.union_sets(%w[foo bar])).to match_array(%w[foo bar])
     end
 
     it 'checks whether key exists' do
@@ -141,7 +143,7 @@ describe SplitIoClient::Cache::Adapters::MemoryAdapters::MapAdapter do
     it 'deletes keys' do
       adapter.add_to_set('bar', 'baz')
 
-      adapter.delete(['foo', 'bar'])
+      adapter.delete(%w[foo bar])
 
       expect(adapter.instance_variable_get(:@map)['foo']).to eq(nil)
       expect(adapter.instance_variable_get(:@map)['bar']).to eq(nil)

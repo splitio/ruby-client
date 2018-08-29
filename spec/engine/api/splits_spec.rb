@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe SplitIoClient::Api::Splits do
@@ -15,6 +17,6 @@ describe SplitIoClient::Api::Splits do
   it 'returns splits with segment names' do
     parsed_splits = splits_api.send(:splits_with_segment_names, splits)
 
-    expect(parsed_splits[:segment_names]).to eq(Set.new(%w(demo employees)))
+    expect(parsed_splits[:segment_names]).to eq(Set.new(%w[demo employees]))
   end
 end

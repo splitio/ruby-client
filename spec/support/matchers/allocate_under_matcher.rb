@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rspec/expectations'
 
 begin
@@ -27,12 +29,12 @@ RSpec::Matchers.define :allocate_max do |expected|
     trace.allocations(alias_paths: true).group_by(:sourcefile, :sourceline, :class).to_text
   end
 
-  failure_message do |actual|
-    "expected max of #{ expected } objects to be allocated; " \
-    "got #{ @trace.new_allocations.size }:\n\n" << output_trace_info(@trace)
+  failure_message do |_actual|
+    "expected max of #{expected} objects to be allocated; " \
+    "got #{@trace.new_allocations.size}:\n\n" << output_trace_info(@trace)
   end
 
   description do
-    "allocates max of #{ expected } objects"
+    "allocates max of #{expected} objects"
   end
 end

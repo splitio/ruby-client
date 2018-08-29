@@ -1,12 +1,12 @@
-require 'spec_helper'
+# frozen_string_literal: true
 
-include SplitIoClient::Cache::Adapters
+require 'spec_helper'
 
 describe SplitIoClient::Cache::Repositories::Impressions::MemoryRepository do
   let(:config) { SplitIoClient::SplitConfig.new(impressions_queue_size: 5) }
-  let(:adapter) { MemoryAdapter.new(MemoryAdapters::QueueAdapter.new(3)) }
+  let(:adapter) { SplitIoClient::Cache::Adapters::MemoryAdapter.new(MemoryAdapters::QueueAdapter.new(3)) }
   let(:repository) { described_class.new(adapter, config) }
-  let(:key) { 'foo'.freeze }
+  let(:key) { 'foo' }
   let(:data) { { foo: 'bar' }.freeze }
 
   xit 'adds impression' do
