@@ -5,16 +5,15 @@ module SplitIoClient
         class MemoryRepository < EventsRepository
           EVENTS_SLICE = 100
 
-          def initialize(adapter, config)
+          def initialize(adapter)
             @adapter = adapter
-            @config = config
           end
 
           def add(key, traffic_type, event_type, time, value)
             @adapter.add_to_queue(m: metadata, e: event(key, traffic_type, event_type, time, value))
           rescue ThreadError # queue is full
-            if @config.debug_enabled
-              @config.logger.warn("Dropping events. Current size is #{@config.events_queue_size}. " \
+            if SplitIoClient.configuration.debug_enabled
+              SplitIoClient.configuration.logger.warn("Dropping events. Current size is #{SplitIoClient.configuration.events_queue_size}. " \
                                   "Consider increasing events_queue_size")
             end
             @adapter.clear

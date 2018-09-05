@@ -4,9 +4,8 @@ module SplitIoClient
       class SplitStore
         attr_reader :splits_repository
 
-        def initialize(splits_repository, config, api_key, metrics, sdk_blocker = nil)
+        def initialize(splits_repository, api_key, metrics, sdk_blocker = nil)
           @splits_repository = splits_repository
-          @config = config
           @api_key = api_key
           @metrics = metrics
           @sdk_blocker = sdk_blocker
@@ -29,12 +28,12 @@ module SplitIoClient
         private
 
         def splits_thread
-          @config.threads[:split_store] = @sdk_blocker.splits_thread = Thread.new do
-            @config.logger.info('Starting splits fetcher service')
+          SplitIoClient.configuration.threads[:split_store] = @sdk_blocker.splits_thread = Thread.new do
+            SplitIoClient.configuration.logger.info('Starting splits fetcher service')
             loop do
               store_splits
 
-              sleep(random_interval(@config.features_refresh_rate))
+              sleep(random_interval(SplitIoClient.configuration.features_refresh_rate))
             end
           end
         end
@@ -49,15 +48,15 @@ module SplitIoClient
           @splits_repository.set_segment_names(data[:segment_names])
           @splits_repository.set_change_number(data[:till])
 
-          @config.logger.debug("segments seen(#{data[:segment_names].length}): #{data[:segment_names].to_a}") if @config.debug_enabled
+          SplitIoClient.configuration.logger.debug("segments seen(#{data[:segment_names].length}): #{data[:segment_names].to_a}") if SplitIoClient.configuration.debug_enabled
 
-          if @config.block_until_ready > 0 && !@sdk_blocker.ready?
+          if SplitIoClient.configuration.block_until_ready > 0 && !@sdk_blocker.ready?
             @sdk_blocker.splits_ready!
-            @config.logger.info('splits are ready')
+            SplitIoClient.configuration.logger.info('splits are ready')
           end
 
         rescue StandardError => error
-          @config.log_found_exception(__method__.to_s, error)
+          SplitIoClient.configuration.log_found_exception(__method__.to_s, error)
         end
 
         def random_interval(interval)
@@ -67,12 +66,12 @@ module SplitIoClient
         end
 
         def splits_since(since)
-          SplitIoClient::Api::Splits.new(@api_key, @config, @metrics).since(since)
+          SplitIoClient::Api::Splits.new(@api_key, @metrics).since(since)
         end
 
         def add_split_unless_archived(split)
           if Engine::Models::Split.archived?(split)
-            @config.logger.debug("Seeing archived split #{split[:name]}") if @config.debug_enabled
+            SplitIoClient.configuration.logger.debug("Seeing archived split #{split[:name]}") if SplitIoClient.configuration.debug_enabled
 
             remove_archived_split(split)
           else
@@ -81,13 +80,13 @@ module SplitIoClient
         end
 
         def remove_archived_split(split)
-          @config.logger.debug("removing split from store(#{split})") if @config.debug_enabled
+          SplitIoClient.configuration.logger.debug("removing split from store(#{split})") if SplitIoClient.configuration.debug_enabled
 
           @splits_repository.remove_split(split[:name])
         end
 
         def store_split(split)
-          @config.logger.debug("storing split (#{split[:name]})") if @config.debug_enabled
+          SplitIoClient.configuration.logger.debug("storing split (#{split[:name]})") if SplitIoClient.configuration.debug_enabled
 
           @splits_repository.add_split(split)
         end

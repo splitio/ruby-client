@@ -6,8 +6,7 @@ module SplitIoClient
     class Segments < Client
       METRICS_PREFIX = 'segmentChangeFetcher'
 
-      def initialize(api_key, config, metrics, segments_repository)
-        @config = config
+      def initialize(api_key, metrics, segments_repository)
         @metrics = metrics
         @api_key = api_key
         @segments_repository = segments_repository
@@ -39,7 +38,7 @@ module SplitIoClient
       private
 
       def fetch_segment_changes(name, since)
-        response = get_api("#{@config.base_uri}/segmentChanges/#{name}", @config, @api_key, since: since)
+        response = get_api("#{SplitIoClient.configuration.base_uri}/segmentChanges/#{name}", @api_key, since: since)
 
         if response.success?
           segment = JSON.parse(response.body, symbolize_names: true)

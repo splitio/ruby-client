@@ -6,10 +6,8 @@ module SplitIoClient
 
         attr_reader :adapter
 
-        def initialize(adapter, config)
+        def initialize(adapter)
           @adapter = adapter
-          @config = config
-
           @adapter.set_bool(namespace_key('.ready'), false)
         end
 

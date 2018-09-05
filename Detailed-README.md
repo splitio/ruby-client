@@ -468,7 +468,7 @@ The gem uses `rspec` for unit testing. You can find the files for the unit tests
 To run all the specs in the `spec` folder, use the provided rake task (_make sure Redis is running in localhost_):
 
 ```bash
-  SPLITCLIENT_ENV=test bundle exec rspec spec
+  bundle exec rspec
 ```
 
 `Simplecov` is used for coverage reporting. Upon executing the rake task it will store the reports in the `/coverage` folder.

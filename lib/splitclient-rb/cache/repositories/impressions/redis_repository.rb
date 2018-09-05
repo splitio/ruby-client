@@ -4,9 +4,8 @@ module SplitIoClient
       module Impressions
         class RedisRepository < Repository
 
-          def initialize(adapter, config)
+          def initialize(adapter)
             @adapter = adapter
-            @config = config
           end
 
           # Store impression data in Redis
@@ -24,24 +23,24 @@ module SplitIoClient
                     'keyName' => key,
                     'bucketingKey' => bucketing_key,
                     'treatment' => treatment[:treatment],
-                    'label' => @config.labels_enabled ? treatment[:label] : nil,
+                    'label' => SplitIoClient.configuration.labels_enabled ? treatment[:label] : nil,
                     'changeNumber' => treatment[:change_number],
                     'time' => time)
               end
             end
           end
 
-          # Get random impressions from redis in batches of size @config.impressions_bulk_size,
+          # Get random impressions from redis in batches of size SplitIoClient.configuration.impressions_bulk_size,
           # delete fetched impressions afterwards
           def get_batch
             impressions = impression_keys.each_with_object([]) do |key, memo|
               ip = key.split('/')[-2] # 'prefix/sdk_lang/ip/impressions.name' -> ip
               if ip.nil?
-                @config.logger.warn("Impressions IP parse error for key: #{key}")
+                SplitIoClient.configuration.logger.warn("Impressions IP parse error for key: #{key}")
                 next
               end
               split_name = key.split('.').last
-              members = @adapter.random_set_elements(key, @config.impressions_bulk_size)
+              members = @adapter.random_set_elements(key, SplitIoClient.configuration.impressions_bulk_size)
               members.each do |impression|
                 parsed_impression = JSON.parse(impression)
 
@@ -53,11 +52,11 @@ module SplitIoClient
               end
 
               @adapter.delete_from_set(key, members)
-            end
 
+            end
             impressions
           rescue StandardError => e
-            @config.logger.error("Exception while clearing impressions cache: #{e}")
+            SplitIoClient.configuration.logger.error("Exception while clearing impressions cache: #{e}")
 
             []
           end
@@ -66,9 +65,9 @@ module SplitIoClient
 
           # Get all sets by prefix
           def impression_keys
-            @adapter.find_sets_by_prefix("#{@config.redis_namespace}/*/impressions.*")
+            @adapter.find_sets_by_prefix("#{SplitIoClient.configuration.redis_namespace}/*/impressions.*")
           rescue StandardError => e
-            @config.logger.error("Exception while fetching impression_keys: #{e}")
+            SplitIoClient.configuration.logger.error("Exception while fetching impression_keys: #{e}")
 
             []
           end

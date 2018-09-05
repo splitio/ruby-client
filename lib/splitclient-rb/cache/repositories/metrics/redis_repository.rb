@@ -3,8 +3,7 @@ module SplitIoClient
     module Repositories
       module Metrics
         class RedisRepository < Repository
-          def initialize(adapter = nil, config)
-            @config = config
+          def initialize(adapter = nil)
             @adapter = adapter
           end
 

@@ -3,7 +3,10 @@
 require 'spec_helper'
 
 describe SplitIoClient::BetweenMatcher do
-  subject { SplitIoClient::SplitFactory.new('', logger: Logger.new('/dev/null')).client }
+  subject do
+    SplitIoClient.configuration = nil
+    SplitIoClient::SplitFactory.new('').client
+  end
 
   let(:datetime_matcher_splits) do
     File.read(File.expand_path(File.join(File.dirname(__FILE__),

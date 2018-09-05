@@ -8,10 +8,8 @@ module SplitIoClient
 
         attr_reader :adapter
 
-        def initialize(adapter, config)
+        def initialize(adapter)
           @adapter = adapter
-          @config = config
-
           @adapter.set_string(namespace_key('.splits.till'), '-1')
           @adapter.initialize_map(namespace_key('.segments.registered'))
         end

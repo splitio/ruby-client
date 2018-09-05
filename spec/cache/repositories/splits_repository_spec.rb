@@ -6,12 +6,12 @@ require 'set'
 describe SplitIoClient::Cache::Repositories::SplitsRepository do
   RSpec.shared_examples 'SplitsRepository specs' do |cache_adapter|
     let(:adapter) { cache_adapter }
-    let(:config) { SplitIoClient::SplitConfig.new(cache_adapter: cache_adapter) }
-    let(:repository) { described_class.new(adapter, config) }
+    let(:repository) { described_class.new(adapter) }
 
     before :all do
       redis = Redis.new
       redis.flushall
+      SplitIoClient.configure(cache_adapter: cache_adapter)
     end
 
     after :all do

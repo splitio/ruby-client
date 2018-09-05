@@ -6,16 +6,15 @@ module SplitIoClient
     class Splits < Client
       METRICS_PREFIX = 'splitChangeFetcher'
 
-      def initialize(api_key, config, metrics)
+      def initialize(api_key, metrics)
         @api_key = api_key
-        @config = config
         @metrics = metrics
       end
 
       def since(since)
         start = Time.now
 
-        response = get_api("#{@config.base_uri}/splitChanges", @config, @api_key, since: since)
+        response = get_api("#{SplitIoClient.configuration.base_uri}/splitChanges", @api_key, since: since)
 
         if response.success?
           result = splits_with_segment_names(response.body)

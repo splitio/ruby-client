@@ -1,22 +1,20 @@
 module SplitIoClient
   module Api
     class Events < Client
-      def initialize(api_key, config, events)
-        @config = config
+      def initialize(api_key, events)
         @api_key = api_key
         @events = events
       end
 
       def post
         if @events.empty?
-          @config.logger.debug('No events to report') if @config.debug_enabled
+          SplitIoClient.configuration.logger.debug('No events to report') if SplitIoClient.configuration.debug_enabled
           return
         end
 
-        @events.each_slice(@config.events_queue_size) do |event_slice|
+        @events.each_slice(SplitIoClient.configuration.events_queue_size) do |event_slice|
           result = post_api(
-            "#{@config.events_uri}/events/bulk",
-            @config,
+            "#{SplitIoClient.configuration.events_uri}/events/bulk",
             @api_key,
             event_slice.map { |event| formatted_event(event[:e]) },
             'SplitSDKMachineIP' => event_slice[0][:m][:i],
@@ -25,9 +23,9 @@ module SplitIoClient
           )
 
           if (200..299).include? result.status
-            @config.logger.debug("Events reported: #{event_slice.size}") if @config.debug_enabled
+            SplitIoClient.configuration.logger.debug("Events reported: #{event_slice.size}") if SplitIoClient.configuration.debug_enabled
           else
-            @config.logger.error("Unexpected status code while posting events: #{result.status}")
+            SplitIoClient.configuration.logger.error("Unexpected status code while posting events: #{result.status}")
           end
         end
       end
