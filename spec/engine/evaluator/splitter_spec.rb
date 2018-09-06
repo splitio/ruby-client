@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe SplitIoClient::Splitter do
@@ -29,7 +31,8 @@ describe SplitIoClient::Splitter do
   )
   include_examples(
     'murmur3 sample data',
-    File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/hash/murmur3-sample-data-non-alpha-numeric-v2.csv'))
+    File.expand_path(File.join(File.dirname(__FILE__),
+                               '../../test_data/hash/murmur3-sample-data-non-alpha-numeric-v2.csv'))
   )
 
   include_examples(

@@ -1,10 +1,12 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe SplitIoClient::Cache::Adapters::MemoryAdapters::MapAdapter do
   let(:mri_allocations) { 2 }
   let(:adapter) { described_class.new }
-  let(:key) { 'foo'.freeze }
-  let(:key2) { 'bar'.freeze }
+  let(:key) { 'foo' }
+  let(:key2) { 'bar' }
 
   before(:each) do
     adapter

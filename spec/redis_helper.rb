@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'redis'
 
 module RSpec
@@ -12,13 +14,13 @@ module RSpec
       end
     end
 
-    CONFIG = { url: ENV["REDIS_URL"] || "redis://127.0.0.1:6379/0" }
+    CONFIG = { url: ENV['REDIS_URL'] || 'redis://127.0.0.1:6379/0' }.freeze
 
-    def redis(&block)
+    def redis
       @redis ||= ::Redis.connect(CONFIG)
     end
 
-    def with_clean_redis(&block)
+    def with_clean_redis
       redis.flushall # clean before run
       begin
         yield
@@ -26,6 +28,5 @@ module RSpec
         redis.flushall # clean up after run
       end
     end
-
   end
 end

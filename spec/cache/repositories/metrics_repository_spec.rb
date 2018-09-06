@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe SplitIoClient::Cache::Repositories::MetricsRepository do
@@ -14,9 +16,11 @@ describe SplitIoClient::Cache::Repositories::MetricsRepository do
     it 'does not return zero latencies' do
       repository.add_latency('foo', 0, binary_search)
 
-      expect(repository.latencies.keys).to eq(%w(foo))
+      expect(repository.latencies.keys).to eq(%w[foo])
     end
   end
 
-  include_examples 'metrics specs', SplitIoClient::Cache::Adapters::RedisAdapter.new(SplitIoClient::SplitConfig.new.redis_url)
+  include_examples 'metrics specs', SplitIoClient::Cache::Adapters::RedisAdapter.new(
+    SplitIoClient::SplitConfig.new.redis_url
+  )
 end

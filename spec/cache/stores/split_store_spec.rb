@@ -1,10 +1,16 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe SplitIoClient::Cache::Stores::SplitStore do
   let(:metrics_repository) { SplitIoClient::Cache::Repositories::MetricsRepository.new(config.metrics_adapter, config) }
   let(:metrics) { SplitIoClient::Metrics.new(100, config, metrics_repository) }
-  let(:active_splits_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/splits/splits.json'))) }
-  let(:archived_splits_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/splits/splits2.json'))) }
+  let(:active_splits_json) do
+    File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/splits/splits.json')))
+  end
+  let(:archived_splits_json) do
+    File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/splits/splits2.json')))
+  end
 
   before do
     stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')

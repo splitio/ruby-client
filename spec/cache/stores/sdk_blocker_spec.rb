@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe SplitIoClient::Cache::Stores::SDKBlocker do
@@ -50,6 +52,10 @@ describe SplitIoClient::Cache::Stores::SDKBlocker do
     end
   end
 
-  include_examples 'sdk_blocker specs', SplitIoClient::Cache::Adapters::MemoryAdapter.new(SplitIoClient::Cache::Adapters::MemoryAdapters::QueueAdapter.new(3))
-  include_examples 'sdk_blocker specs', SplitIoClient::Cache::Adapters::RedisAdapter.new(SplitIoClient::SplitConfig.new.redis_url)
+  include_examples 'sdk_blocker specs', SplitIoClient::Cache::Adapters::MemoryAdapter.new(
+    SplitIoClient::Cache::Adapters::MemoryAdapters::QueueAdapter.new(3)
+  )
+  include_examples 'sdk_blocker specs', SplitIoClient::Cache::Adapters::RedisAdapter.new(
+    SplitIoClient::SplitConfig.new.redis_url
+  )
 end

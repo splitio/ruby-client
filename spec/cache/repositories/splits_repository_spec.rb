@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 require 'set'
 
@@ -24,7 +26,7 @@ describe SplitIoClient::Cache::Repositories::SplitsRepository do
     end
 
     it 'returns splits names' do
-      expect(Set.new(repository.split_names)).to eq(Set.new(%w(foo bar baz)))
+      expect(Set.new(repository.split_names)).to eq(Set.new(%w[foo bar baz]))
     end
 
     it 'returns splits data' do
@@ -37,7 +39,7 @@ describe SplitIoClient::Cache::Repositories::SplitsRepository do
 
     context 'slice is 10' do
       it 'returns data for multiple splits' do
-        expect(repository.get_splits(['foo', 'bar', 'baz'], 10)).to eq(
+        expect(repository.get_splits(%w[foo bar baz], 10)).to eq(
           foo: { name: 'foo' },
           bar: { name: 'bar' },
           baz: { name: 'baz' }
@@ -47,7 +49,7 @@ describe SplitIoClient::Cache::Repositories::SplitsRepository do
 
     context 'slice is 2' do
       it 'returns data for multiple splits' do
-        expect(repository.get_splits(['foo', 'bar', 'baz'], 2)).to eq(
+        expect(repository.get_splits(%w[foo bar baz], 2)).to eq(
           foo: { name: 'foo' },
           bar: { name: 'bar' },
           baz: { name: 'baz' }
@@ -56,6 +58,10 @@ describe SplitIoClient::Cache::Repositories::SplitsRepository do
     end
   end
 
-  include_examples 'SplitsRepository specs', SplitIoClient::Cache::Adapters::MemoryAdapter.new(SplitIoClient::Cache::Adapters::MemoryAdapters::MapAdapter.new)
-  include_examples 'SplitsRepository specs', SplitIoClient::Cache::Adapters::RedisAdapter.new('redis://127.0.0.1:6379/0')
+  include_examples 'SplitsRepository specs', SplitIoClient::Cache::Adapters::MemoryAdapter.new(
+    SplitIoClient::Cache::Adapters::MemoryAdapters::MapAdapter.new
+  )
+  include_examples 'SplitsRepository specs', SplitIoClient::Cache::Adapters::RedisAdapter.new(
+    'redis://127.0.0.1:6379/0'
+  )
 end

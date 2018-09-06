@@ -1,9 +1,14 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe SplitIoClient::WhitelistMatcher do
-  subject { SplitIoClient::SplitFactory.new('', { logger: Logger.new('/dev/null') }).client }
+  subject { SplitIoClient::SplitFactory.new('', logger: Logger.new('/dev/null')).client }
 
-  let(:splits_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/splits/whitelist_matcher_splits.json'))) }
+  let(:splits_json) do
+    File.read(File.expand_path(File.join(File.dirname(__FILE__),
+                                         '../../test_data/splits/whitelist_matcher_splits.json')))
+  end
 
   let(:user) { 'fake_user_id_1' }
   let(:feature) { 'test_feature' }
