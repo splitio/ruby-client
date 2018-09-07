@@ -1,6 +1,11 @@
+# frozen_string_literal: true
+
 module SplitIoClient
   module Api
+    # Retrieves segment changes from the Split Backend
     class Segments < Client
+      METRICS_PREFIX = 'segmentChangeFetcher'
+
       def initialize(api_key, config, metrics, segments_repository)
         @config = config
         @metrics = metrics
@@ -10,52 +15,53 @@ module SplitIoClient
 
       def store_segments_by_names(names)
         start = Time.now
-        prefix = 'segmentChangeFetcher'
 
         return if names.nil? || names.empty?
 
         names.each do |name|
           since = @segments_repository.get_change_number(name)
-          while true
-            fetch_segments(name, prefix, since).each { |segment| @segments_repository.add_to_segment(segment) }
-            @config.logger.debug("Segment #{name} fetched before: #{since}, till: #{@segments_repository.get_change_number(name)}") if @config.debug_enabled
+          loop do
+            segment = fetch_segment_changes(name, since)
+            @segments_repository.add_to_segment(segment)
 
-            break if (since.to_i >= @segments_repository.get_change_number(name).to_i)
+            SplitLogger.log_if_debug("Segment #{name} fetched before: #{since}, \
+              till: #{@segments_repository.get_change_number(name)}")
+
+            break if since.to_i >= @segments_repository.get_change_number(name).to_i
             since = @segments_repository.get_change_number(name)
           end
         end
 
         latency = (Time.now - start) * 1000.0
-        @metrics.time(prefix + '.time', latency)
+        @metrics.time(METRICS_PREFIX + '.time', latency)
       end
 
       private
 
-      def fetch_segments(name, prefix, since)
-        segments = []
-        segment = get_api("#{@config.base_uri}/segmentChanges/#{name}", @config, @api_key, since: since)
+      def fetch_segment_changes(name, since)
+        response = get_api("#{@config.base_uri}/segmentChanges/#{name}", @config, @api_key, since: since)
 
-        if segment == false
-          @config.logger.error("Failed to make a http request")
-        elsif segment.status / 100 == 2
-          segment_content = JSON.parse(segment.body, symbolize_names: true)
-          @segments_repository.set_change_number(name, segment_content[:till])
-          @metrics.count(prefix + '.status.' + segment.status.to_s, 1)
+        if response.success?
+          segment = JSON.parse(response.body, symbolize_names: true)
+          @segments_repository.set_change_number(name, segment[:till])
+          @metrics.count(METRICS_PREFIX + '.status.' + response.status.to_s, 1)
 
-          if @config.debug_enabled
-            @config.logger.debug("\'#{segment_content[:name]}\' segment retrieved.")
-            @config.logger.debug("\'#{segment_content[:name]}\' #{segment_content[:added].size} added keys") if segment_content[:added].size > 0
-            @config.logger.debug("\'#{segment_content[:name]}\' #{segment_content[:removed].size} removed keys") if segment_content[:removed].size > 0
+          SplitLogger.log_if_debug("\'#{segment[:name]}\' segment retrieved.")
+          unless segment[:added].empty?
+            SplitLogger.log_if_debug("\'#{segment[:name]}\' #{segment[:added].size} added keys")
           end
-          @config.logger.debug("#{segment_content}") if @config.transport_debug_enabled
+          unless segment[:removed].empty?
+            SplitLogger.log_if_debug("\'#{segment[:name]}\' #{segment[:removed].size} removed keys")
+          end
+          SplitLogger.log_if_transport(segment.to_s)
 
-          segments << segment_content
+          segment
         else
-          @config.logger.error("Unexpected result from API Call for Segment #{name} status #{segment.status.to_s} since #{since.to_s}")
-          @metrics.count(prefix + '.status.' + segment.status.to_s, 1)
+          SplitLogger.log_error("Unexpected status code while fetching segments: #{response.status}." \
+          "Since #{since} - Check your API key and base URI")
+          @metrics.count(METRICS_PREFIX + '.status.' + response.status.to_s, 1)
+          raise 'Split SDK failed to connect to backend to fetch segments'
         end
-
-        segments
       end
     end
   end
