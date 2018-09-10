@@ -1,3 +1,7 @@
+5.1.0
+
+Prevent unhandled exceptions from raising when API get calls fail on Segments and Treatments.
+
 5.0.3
 
 Creates a new configuration parameter (impressions_bulk_size) to manage the max number of impressions sent to the Split backend on each post.
@@ -11,13 +15,13 @@ Prevents the impression thread from being started if a listener is not in place
 
 5.0.1
 
-Adding stop! method to the factory. 
+Adding stop! method to the factory.
 With this method the user will be able to stop the threads that queries the Split Service. This will be used in the before_fork configuration in Puma and Unicorn to stop the threads in the master process.
 
 5.0.0
 
 This is a breaking change in how users buckets are allocated.
-Ruby SDK was wrongly picking up the right buckets and defauled to 
+Ruby SDK was wrongly picking up the right buckets and defauled to
 use a "legacy hashing" instead of our moder murmur3 algo which is
 what other SDKs use. Please reach out to support@split.io for help
 on how to upgrade to this release.

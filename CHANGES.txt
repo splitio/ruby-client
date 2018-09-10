@@ -1,3 +1,7 @@
+5.1.0 (September 10th, 2018)
+- Change `get_api` to return only a Faraday response.
+- Add `SplitLogger` to clean up logging code and reduce the complexity in several methods.
+
 5.0.3 (August 13th, 2018)
 - Add `impressions_bulk_size` option to set the max number of impressions to be sent to the Split backend on each post.
 
@@ -8,7 +12,7 @@
 - Adds stop! method to the factory for gracefully stopping the SDK.
 
 5.0.0 (May 18th, 2018)
-- Fix bug where the sdk picked the wrong hashing algo. This is a breaking change. 
+- Fix bug where the sdk picked the wrong hashing algo. This is a breaking change.
 
 4.5.2 (May 16th, 2018)
 - do not return control when a split has custom attr and I don't pass attributes to get_treatment

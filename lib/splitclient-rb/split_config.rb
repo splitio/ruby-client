@@ -76,7 +76,7 @@ module SplitIoClient
       @events_adapter = SplitConfig.init_cache_adapter(
         opts[:cache_adapter] || SplitConfig.default_cache_adapter, :queue_adapter, @redis_url, @events_queue_size
       )
-
+      SplitIoClient::SplitLogger.split_config(self)
       startup_log
     end
 
