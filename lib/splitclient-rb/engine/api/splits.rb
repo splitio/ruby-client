@@ -1,6 +1,11 @@
+# frozen_string_literal: true
+
 module SplitIoClient
   module Api
+    # Retrieves split definitions from the Split Backend
     class Splits < Client
+      METRICS_PREFIX = 'splitChangeFetcher'
+
       def initialize(api_key, config, metrics)
         @api_key = api_key
         @config = config
@@ -9,28 +14,28 @@ module SplitIoClient
 
       def since(since)
         start = Time.now
-        prefix = 'splitChangeFetcher'
-        splits = get_api("#{@config.base_uri}/splitChanges", @config, @api_key, since: since)
 
-        if splits == false
-          @config.logger.error("Failed to make a http request")
-        elsif splits.status / 100 == 2
-          result = splits_with_segment_names(splits.body)
+        response = get_api("#{@config.base_uri}/splitChanges", @config, @api_key, since: since)
 
-          @metrics.count(prefix + '.status.' + splits.status.to_s, 1)
+        if response.success?
+          result = splits_with_segment_names(response.body)
 
-          @config.logger.debug("#{result[:splits].length} splits retrieved. since=#{since}") if @config.debug_enabled and result[:splits].length > 0
-          @config.logger.debug("#{result}") if @config.transport_debug_enabled
+          @metrics.count(METRICS_PREFIX + '.status.' + response.status.to_s, 1)
+          unless result[:splits].empty?
+            SplitLogger.log_if_debug("#{result[:splits].length} splits retrieved. since=#{since}")
+          end
+          SplitLogger.log_if_transport(result.to_s)
+
+          latency = (Time.now - start) * 1000.0
+          @metrics.time(METRICS_PREFIX + '.time', latency)
+
+          result
         else
-          @metrics.count(prefix + '.status.' + splits.status.to_s, 1)
-
-          @config.logger.error('Unexpected result from Splits API call')
+            @metrics.count(METRICS_PREFIX + '.status.' + response.status.to_s, 1)
+              SplitLogger.log_error("Unexpected status code while fetching splits: #{response.status}. " \
+              'Check your API key and base URI')
+            raise 'Split SDK failed to connect to backend to fetch split definitions'
         end
-
-        latency = (Time.now - start) * 1000.0
-        @metrics.time(prefix + '.time', latency)
-
-        result
       end
 
       private

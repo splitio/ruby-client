@@ -16,8 +16,7 @@ module SplitIoClient
         end
       rescue StandardError => e
         config.logger.warn("#{e}\nURL:#{url}\nparams:#{params}")
-
-        false
+        raise 'Split SDK failed to connect to backend to retrieve information'
       end
 
       def post_api(url, config, api_key, data, headers = {}, params = {})
