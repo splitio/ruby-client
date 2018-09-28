@@ -17,7 +17,6 @@ module SplitIoClient
     # Creates a new split api adapter instance that consumes split api endpoints
     #
     # @param api_key [String] the API key for your split account
-    # @param config [SplitConfig] SplitConfig instance
     # @param splits_repository [SplitsRepository] SplitsRepository instance to store splits in
     # @param segments_repository [SegmentsRepository] SegmentsRepository instance to store segments in
     # @param impressions_repository [ImpressionsRepository] ImpressionsRepository instance to store impressions in
@@ -25,18 +24,17 @@ module SplitIoClient
     # @param sdk_blocker [SDKBlocker] SDKBlocker instance which blocks splits_repository/segments_repository
     #
     # @return [SplitIoClient] split.io client instance
-    def initialize(api_key, config, splits_repository, segments_repository, impressions_repository, metrics_repository, events_repository, sdk_blocker)
+    def initialize(api_key, splits_repository, segments_repository, impressions_repository, metrics_repository, events_repository, sdk_blocker)
       @api_key = api_key
-      @config = config
       @splits_repository = splits_repository
       @segments_repository = segments_repository
       @impressions_repository = impressions_repository
       @metrics_repository = metrics_repository
       @events_repository = events_repository
-      @metrics = Metrics.new(100, @config, @metrics_repository)
+      @metrics = Metrics.new(100, @metrics_repository)
       @sdk_blocker = sdk_blocker
 
-      start_based_on_mode(@config.mode)
+      start_based_on_mode(SplitIoClient.configuration.mode)
     end
 
     def start_based_on_mode(mode)
@@ -62,27 +60,27 @@ module SplitIoClient
 
     # Starts thread which loops constantly and stores splits in the splits_repository of choice
     def split_store
-      SplitStore.new(@splits_repository, @config, @api_key, @metrics, @sdk_blocker).call
+      SplitStore.new(@splits_repository, @api_key, @metrics, @sdk_blocker).call
     end
 
     # Starts thread which loops constantly and stores segments in the segments_repository of choice
     def segment_store
-      SegmentStore.new(@segments_repository, @config, @api_key, @metrics, @sdk_blocker).call
+      SegmentStore.new(@segments_repository, @api_key, @metrics, @sdk_blocker).call
     end
 
     # Starts thread which loops constantly and sends impressions to the Split API
     def impressions_sender
-      ImpressionsSender.new(@impressions_repository, @config, @api_key).call
+      ImpressionsSender.new(@impressions_repository, @api_key).call
     end
 
     # Starts thread which loops constantly and sends metrics to the Split API
     def metrics_sender
-      MetricsSender.new(@metrics_repository, @config, @api_key).call
+      MetricsSender.new(@metrics_repository, @api_key).call
     end
 
     # Starts thread which loops constantly and sends events to the Split API
     def events_sender
-      EventsSender.new(@events_repository, @config, @api_key).call
+      EventsSender.new(@events_repository, @api_key).call
     end
   end
 end

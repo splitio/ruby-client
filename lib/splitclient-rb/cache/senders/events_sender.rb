@@ -2,9 +2,8 @@ module SplitIoClient
   module Cache
     module Senders
       class EventsSender
-        def initialize(events_repository, config, api_key)
+        def initialize(events_repository, api_key)
           @events_repository = events_repository
-          @config = config
           @api_key = api_key
         end
 
@@ -25,21 +24,21 @@ module SplitIoClient
         private
 
         def events_thread
-          @config.threads[:events_sender] = Thread.new do
-            @config.logger.info('Starting events service')
+          SplitIoClient.configuration.threads[:events_sender] = Thread.new do
+            SplitIoClient.configuration.logger.info('Starting events service')
 
             loop do
               post_events
 
-              sleep(SplitIoClient::Utilities.randomize_interval(@config.events_push_rate))
+              sleep(SplitIoClient::Utilities.randomize_interval(SplitIoClient.configuration.events_push_rate))
             end
           end
         end
 
         def post_events
-          SplitIoClient::Api::Events.new(@api_key, @config, @events_repository.clear).post
+          SplitIoClient::Api::Events.new(@api_key, @events_repository.clear).post
         rescue StandardError => error
-          @config.log_found_exception(__method__.to_s, error)
+          SplitIoClient.configuration.log_found_exception(__method__.to_s, error)
         end
       end
     end

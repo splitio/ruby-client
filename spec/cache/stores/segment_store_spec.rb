@@ -3,8 +3,10 @@
 require 'spec_helper'
 
 describe SplitIoClient::Cache::Stores::SegmentStore do
-  let(:metrics_repository) { SplitIoClient::Cache::Repositories::MetricsRepository.new(config.metrics_adapter, config) }
-  let(:metrics) { SplitIoClient::Metrics.new(100, config, metrics_repository) }
+  let(:metrics_repository) do
+    SplitIoClient::Cache::Repositories::MetricsRepository.new(SplitIoClient.configuration.metrics_adapter)
+  end
+  let(:metrics) { SplitIoClient::Metrics.new(100, metrics_repository) }
   let(:segments_json) do
     File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/segments/segments.json')))
   end
@@ -33,14 +35,17 @@ describe SplitIoClient::Cache::Stores::SegmentStore do
   end
 
   context 'memory adapter' do
+    before do
+      cache_adapter = SplitIoClient::SplitConfig.init_cache_adapter(:memory, :map_adapter)
+      SplitIoClient.configuration.cache_adapter = cache_adapter
+    end
     let(:adapter) do
       SplitIoClient::Cache::Adapters::MemoryAdapter.new(SplitIoClient::Cache::Adapters::MemoryAdapters::MapAdapter.new)
     end
-    let(:config) { SplitIoClient::SplitConfig.new(cache_adapter: :memory) }
-    let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(adapter, config) }
-    let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(adapter, config) }
-    let(:segment_store) { described_class.new(segments_repository, config, '', metrics) }
-    let(:split_store) { SplitIoClient::Cache::Stores::SplitStore.new(splits_repository, config, '', metrics) }
+    let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(adapter) }
+    let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(adapter) }
+    let(:segment_store) { described_class.new(segments_repository, '', metrics) }
+    let(:split_store) { SplitIoClient::Cache::Stores::SplitStore.new(splits_repository, '', metrics) }
 
     it 'stores segments' do
       split_store.send(:store_splits)
@@ -61,12 +66,16 @@ describe SplitIoClient::Cache::Stores::SegmentStore do
   end
 
   context 'redis adapter' do
+    before do
+      Redis.new.flushall
+      cache_adapter = SplitIoClient::SplitConfig.init_cache_adapter(:redis, :map_adapter)
+      SplitIoClient.configuration.cache_adapter = cache_adapter
+    end
     let(:adapter) { SplitIoClient::Cache::Adapters::RedisAdapter.new(SplitIoClient::SplitConfig.new.redis_url) }
-    let(:config) { SplitIoClient::SplitConfig.new(cache_adapter: :redis) }
-    let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(adapter, config) }
-    let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(adapter, config) }
-    let(:segment_store) { described_class.new(segments_repository, config, '', metrics) }
-    let(:split_store) { SplitIoClient::Cache::Stores::SplitStore.new(splits_repository, config, '', metrics) }
+    let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(adapter) }
+    let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(adapter) }
+    let(:segment_store) { described_class.new(segments_repository, '', metrics) }
+    let(:split_store) { SplitIoClient::Cache::Stores::SplitStore.new(splits_repository, '', metrics) }
 
     it 'stores segments' do
       split_store.send(:store_splits)

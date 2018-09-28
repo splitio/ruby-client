@@ -5,16 +5,16 @@ require 'set'
 
 describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
   RSpec.shared_examples 'impressions specs' do |cache_adapter|
-    let(:config) { SplitIoClient::SplitConfig.new(impressions_queue_size: 5, impressions_bulk_size: 1) }
     let(:adapter) { cache_adapter }
-    let(:repository) { described_class.new(adapter, config) }
+    let(:repository) { described_class.new(adapter) }
     let(:split_adapter) do
-      SplitIoClient::SplitAdapter.new(nil, SplitIoClient::SplitConfig.new(mode: :nil), nil, nil, nil, nil, nil)
+      SplitIoClient::SplitAdapter.new(nil, nil, nil, nil, nil, nil)
     end
     let(:ip) { SplitIoClient::SplitConfig.machine_ip }
 
     before :each do
       Redis.new.flushall
+      SplitIoClient.configure(impressions_queue_size: 5, impressions_bulk_size: 1)
     end
 
     it 'adds impressions' do
@@ -63,15 +63,15 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
   context 'queue size less than the actual queue' do
     before do
       Redis.new.flushall
-
       repository.add('foo1', 'key_name' => 'matching_key', 'treatment' => 'on', 'time' => 1_478_113_516_002)
       repository.add('foo2', 'key_name' => 'matching_key2', 'treatment' => 'off', 'time' => 1_478_113_518_285)
       repository.add('foo2', 'key_name' => 'matching_key3', 'treatment' => 'on', 'time' => 1_478_113_518_500)
+      SplitIoClient.configuration.impressions_queue_size = 1
+      SplitIoClient.configuration.impressions_bulk_size = 1
     end
 
-    let(:config) { SplitIoClient::SplitConfig.new(impressions_queue_size: 1) }
-    let(:adapter) { SplitIoClient::Cache::Adapters::RedisAdapter.new(SplitIoClient::SplitConfig.new.redis_url) }
-    let(:repository) { described_class.new(adapter, config) }
+    let(:adapter) { SplitIoClient::Cache::Adapters::RedisAdapter.new(SplitIoClient.configuration.redis_url) }
+    let(:repository) { described_class.new(adapter) }
 
     it 'returns impressions' do
       expect(repository.get_batch.size).to eq(2)
@@ -82,13 +82,13 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
   context 'redis exception raised on #get_batch' do
     before do
       Redis.new.flushall
-
       repository.add('foo1', 'key_name' => 'matching_key', 'treatment' => 'on', 'time' => 1_478_113_516_002)
+      SplitIoClient.configuration.impressions_queue_size = 1
+      SplitIoClient.configuration.impressions_bulk_size = 1
     end
 
-    let(:config) { SplitIoClient::SplitConfig.new(impressions_queue_size: 1) }
-    let(:adapter) { SplitIoClient::Cache::Adapters::RedisAdapter.new(SplitIoClient::SplitConfig.new.redis_url) }
-    let(:repository) { described_class.new(adapter, config) }
+    let(:adapter) { SplitIoClient::Cache::Adapters::RedisAdapter.new(SplitIoClient.configuration.redis_url) }
+    let(:repository) { described_class.new(adapter) }
 
     it 'returns empty array when adapter#random_set_elements raises an exception' do
       allow_any_instance_of(SplitIoClient::Cache::Adapters::RedisAdapter)

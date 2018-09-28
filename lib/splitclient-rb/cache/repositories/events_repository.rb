@@ -6,13 +6,12 @@ module SplitIoClient
         extend Forwardable
         def_delegators :@adapter, :add, :clear
 
-        def initialize(adapter, config)
-          @config = config
+        def initialize(adapter)
           @adapter = case adapter.class.to_s
           when 'SplitIoClient::Cache::Adapters::MemoryAdapter'
-            Repositories::Events::MemoryRepository.new(adapter, config)
+            Repositories::Events::MemoryRepository.new(adapter)
           when 'SplitIoClient::Cache::Adapters::RedisAdapter'
-            Repositories::Events::RedisRepository.new(adapter, config)
+            Repositories::Events::RedisRepository.new(adapter)
           end
         end
 
@@ -20,9 +19,9 @@ module SplitIoClient
 
         def metadata
           {
-            s: "#{@config.language}-#{@config.version}",
-            i: @config.machine_ip,
-            n: @config.machine_name
+            s: "#{SplitIoClient.configuration.language}-#{SplitIoClient.configuration.version}",
+            i: SplitIoClient.configuration.machine_ip,
+            n: SplitIoClient.configuration.machine_name
           }
         end
 

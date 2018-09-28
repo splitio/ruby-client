@@ -42,12 +42,12 @@ module SplitIoClient
     # @return [Treatment]  treatment constant value
     def get_treatment(id, feature, attributes = nil)
       unless id
-        @config.logger.warn('id was null for feature: ' + feature)
+        SplitIoClient.configuration.logger.warn('id was null for feature: ' + feature)
         return SplitIoClient::Engine::Models::Treatment::CONTROL
       end
 
       unless feature
-        @config.logger.warn('feature was null for id: ' + id)
+        SplitIoClient.configuration.logger.warn('feature was null for id: ' + id)
         return SplitIoClient::Engine::Models::Treatment::CONTROL
       end
 

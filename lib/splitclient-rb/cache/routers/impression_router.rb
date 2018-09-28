@@ -2,9 +2,8 @@ module SplitIoClient
   class ImpressionRouter
     attr_reader :router_thread
 
-    def initialize(config)
-      @config = config
-      @listener = config.impression_listener
+    def initialize
+      @listener = SplitIoClient.configuration.impression_listener
 
       return unless @listener
 
@@ -45,12 +44,12 @@ module SplitIoClient
     end
 
     def router_thread
-      @config.threads[:impression_router] = Thread.new do
+      SplitIoClient.configuration.threads[:impression_router] = Thread.new do
         loop do
           begin
             @listener.log(@queue.pop)
           rescue StandardError => error
-            @config.log_found_exception(__method__.to_s, error)
+            SplitIoClient.configuration.log_found_exception(__method__.to_s, error)
           end
         end
       end

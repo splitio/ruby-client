@@ -2,9 +2,8 @@ module SplitIoClient
   module Cache
     module Senders
       class MetricsSender
-        def initialize(metrics_repository, config, api_key)
+        def initialize(metrics_repository, api_key)
           @metrics_repository = metrics_repository
-          @config = config
           @api_key = api_key
         end
 
@@ -23,13 +22,13 @@ module SplitIoClient
         private
 
         def metrics_thread
-          @config.threads[:metrics_sender] = Thread.new do
-            @config.logger.info('Starting metrics service')
+          SplitIoClient.configuration.threads[:metrics_sender] = Thread.new do
+            SplitIoClient.configuration.logger.info('Starting metrics service')
 
             loop do
               post_metrics
 
-              sleep(SplitIoClient::Utilities.randomize_interval(@config.metrics_refresh_rate))
+              sleep(SplitIoClient::Utilities.randomize_interval(SplitIoClient.configuration.metrics_refresh_rate))
             end
           end
         end
@@ -37,11 +36,11 @@ module SplitIoClient
         def post_metrics
           metrics_client.post
         rescue StandardError => error
-          @config.log_found_exception(__method__.to_s, error)
+          SplitIoClient.configuration.log_found_exception(__method__.to_s, error)
         end
 
         def metrics_client
-          SplitIoClient::Api::Metrics.new(@api_key, @config, @metrics_repository)
+          SplitIoClient::Api::Metrics.new(@api_key, @metrics_repository)
         end
       end
     end

@@ -4,16 +4,15 @@ require 'spec_helper'
 
 describe SplitIoClient::Cache::Senders::ImpressionsSender do
   RSpec.shared_examples 'impressions sender specs' do |cache_adapter|
-    let(:config) { SplitIoClient::SplitConfig.new(impressions_queue_size: 5) }
     let(:adapter) { cache_adapter }
-    let(:repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(adapter, config) }
-    let(:sender) { described_class.new(repository, config, nil) }
+    let(:repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(adapter) }
+    let(:sender) { described_class.new(repository, nil) }
     let(:formatted_impressions) { sender.send(:formatted_impressions, repository.get_batch) }
-    let(:ip) { SplitIoClient::SplitConfig.machine_ip }
+    let(:ip) { SplitIoClient.configuration.machine_ip }
 
     before :each do
       Redis.new.flushall
-
+      SplitIoClient.configuration.impressions_queue_size = 5
       repository.add('foo1',
                      'keyName' => 'matching_key',
                      'bucketingKey' => 'foo1',

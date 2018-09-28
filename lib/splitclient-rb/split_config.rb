@@ -2,6 +2,15 @@ require 'logger'
 require 'socket'
 
 module SplitIoClient
+
+  class << self
+      attr_accessor :configuration
+  end
+
+  def self.configure(opts={})
+    self.configuration ||= SplitConfig.new(opts)
+  end
+
   #
   # This class manages configuration options for the split client library.
   # If not custom configuration is required the default configuration values will be used
@@ -32,7 +41,7 @@ module SplitIoClient
       @redis_url = opts[:redis_url] || SplitConfig.default_redis_url
       @redis_namespace = opts[:redis_namespace] ? "#{opts[:redis_namespace]}.#{SplitConfig.default_redis_namespace}" : SplitConfig.default_redis_namespace
       @cache_adapter = SplitConfig.init_cache_adapter(
-        opts[:cache_adapter] || SplitConfig.default_cache_adapter, :map_adapter, @redis_url, false
+        opts[:cache_adapter] || SplitConfig.default_cache_adapter, :map_adapter
       )
       @connection_timeout = opts[:connection_timeout] || SplitConfig.default_connection_timeout
       @read_timeout = opts[:read_timeout] || SplitConfig.default_read_timeout
@@ -43,7 +52,7 @@ module SplitIoClient
       @impressions_refresh_rate = opts[:impressions_refresh_rate] || SplitConfig.default_impressions_refresh_rate
       @impressions_queue_size = opts[:impressions_queue_size] || SplitConfig.default_impressions_queue_size
       @impressions_adapter = SplitConfig.init_cache_adapter(
-        opts[:cache_adapter] || SplitConfig.default_cache_adapter, :queue_adapter, @redis_url, @impressions_queue_size
+        opts[:cache_adapter] || SplitConfig.default_cache_adapter, :queue_adapter, @impressions_queue_size
       )
       #Safeguard for users of older SDK versions.
       @disable_impressions = @impressions_queue_size == -1
@@ -51,7 +60,7 @@ module SplitIoClient
       @impressions_bulk_size = opts[:impressions_bulk_size] || @impressions_queue_size > 0 ? @impressions_queue_size : 0
 
       @metrics_adapter = SplitConfig.init_cache_adapter(
-        opts[:cache_adapter] || SplitConfig.default_cache_adapter, :map_adapter, @redis_url, false
+        opts[:cache_adapter] || SplitConfig.default_cache_adapter, :map_adapter
       )
 
       @logger = opts[:logger] || SplitConfig.default_logger
@@ -74,9 +83,9 @@ module SplitIoClient
       @events_push_rate = opts[:events_push_rate] || SplitConfig.default_events_push_rate
       @events_queue_size = opts[:events_queue_size] || SplitConfig.default_events_queue_size
       @events_adapter = SplitConfig.init_cache_adapter(
-        opts[:cache_adapter] || SplitConfig.default_cache_adapter, :queue_adapter, @redis_url, @events_queue_size
+        opts[:cache_adapter] || SplitConfig.default_cache_adapter, :queue_adapter, @events_queue_size
       )
-      SplitIoClient::SplitLogger.split_config(self)
+
       startup_log
     end
 
@@ -84,110 +93,110 @@ module SplitIoClient
     # The base URL for split API end points
     #
     # @return [String] The configured base URL for the split API end points
-    attr_reader :base_uri
+    attr_accessor :base_uri
 
     #
     # The base URL for split events API end points
     #
     # @return [String] The configured URL for the events API end points
-    attr_reader :events_uri
+    attr_accessor :events_uri
 
     #
     # The mode SDK will run
     #
     # @return [Symbol] One of the available SDK modes: standalone, consumer, producer
-    attr_reader :mode
+    attr_accessor :mode
 
     # The read timeout for network connections in seconds.
     #
     # @return [Int] The timeout in seconds.
-    attr_reader :read_timeout
+    attr_accessor :read_timeout
 
     #
     # The cache adapter to store splits/segments in
     #
     # @return [Object] Cache adapter instance
-    attr_reader :cache_adapter
+    attr_accessor :cache_adapter
 
     #
     # The cache adapter to store impressions in
     #
     # @return [Object] Impressions adapter instance
-    attr_reader :impressions_adapter
+    attr_accessor :impressions_adapter
 
     #
     # The cache adapter to store metrics in
     #
     # @return [Symbol] Metrics adapter
-    attr_reader :metrics_adapter
+    attr_accessor :metrics_adapter
 
     #
     # The cache adapter to store events in
     #
     # @return [Object] Metrics adapter
-    attr_reader :events_adapter
+    attr_accessor :events_adapter
 
     #
     # The connection timeout for network connections in seconds.
     #
     # @return [Int] The connect timeout in seconds.
-    attr_reader :connection_timeout
+    attr_accessor :connection_timeout
 
     #
     # The configured logger. The client library uses the log to
     # print warning and error messages.
     #
     # @return [Logger] The configured logger
-    attr_reader :logger
+    attr_accessor :logger
 
     #
     # The boolean that represents the state of the debug log level
     #
     # @return [Boolean] The value for the debug flag
-    attr_reader :debug_enabled
+    attr_accessor :debug_enabled
 
     #
     # Enable to log the content retrieved from endpoints
     #
     # @return [Boolean] The value for the debug flag
-    attr_reader :transport_debug_enabled
+    attr_accessor :transport_debug_enabled
 
     #
     # Enable logging labels and sending potentially sensitive information
     #
     # @return [Boolean] The value for the labels enabled flag
-    attr_reader :labels_enabled
+    attr_accessor :labels_enabled
 
     #
     # The number of seconds to wait for SDK readiness
     # or false to disable waiting
     # @return [Integer]/[FalseClass]
-    attr_reader :block_until_ready
+    attr_accessor :block_until_ready
 
-    attr_reader :machine_ip
-    attr_reader :machine_name
+    attr_accessor :machine_ip
+    attr_accessor :machine_name
 
-    attr_reader :language
-    attr_reader :version
+    attr_accessor :language
+    attr_accessor :version
 
-    attr_reader :features_refresh_rate
-    attr_reader :segments_refresh_rate
-    attr_reader :metrics_refresh_rate
-    attr_reader :impressions_refresh_rate
+    attr_accessor :features_refresh_rate
+    attr_accessor :segments_refresh_rate
+    attr_accessor :metrics_refresh_rate
+    attr_accessor :impressions_refresh_rate
 
-    attr_reader :impression_listener
-    attr_reader :impression_listener_refresh_rate
+    attr_accessor :impression_listener
+    attr_accessor :impression_listener_refresh_rate
 
     #
     # How big the impressions queue is before dropping impressions. -1 to disable it.
     #
     # @return [Integer]
-    attr_reader :impressions_queue_size
-    attr_reader :impressions_bulk_size
-    attr_reader :disable_impressions
+    attr_accessor :impressions_queue_size
+    attr_accessor :impressions_bulk_size
+    attr_accessor :disable_impressions
 
-    attr_reader :redis_url
-    attr_reader :redis_namespace
+    attr_accessor :redis_url
+    attr_accessor :redis_namespace
 
     attr_accessor :threads
 
@@ -195,13 +204,13 @@ module SplitIoClient
     # The schedule time for events flush after the first one
     #
     # @return [Integer]
-    attr_reader :events_push_rate
+    attr_accessor :events_push_rate
 
     #
     # The max size of the events queue
     #
     # @return [Integer]
-    attr_reader :events_queue_size
+    attr_accessor :events_queue_size
 
     #
     # The default split client configuration
@@ -223,7 +232,7 @@ module SplitIoClient
       'https://events.split.io/api/'
     end
 
-    def self.init_cache_adapter(adapter, data_structure, redis_url = nil, queue_size = nil)
+    def self.init_cache_adapter(adapter, data_structure, queue_size = nil)
       case adapter
       when :memory
         SplitIoClient::Cache::Adapters::MemoryAdapter.new(map_memory_adapter(data_structure, queue_size))
@@ -234,7 +243,7 @@ module SplitIoClient
           fail StandardError, 'To use Redis as a cache adapter you must include it in your Gemfile'
         end
 
-        SplitIoClient::Cache::Adapters::RedisAdapter.new(redis_url)
+        SplitIoClient::Cache::Adapters::RedisAdapter.new(@redis_url)
       end
     end
 
