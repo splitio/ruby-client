@@ -61,6 +61,12 @@ describe SplitIoClient, type: :client do
           .to_return(status: 200, body: all_keys_matcher_json)
       end
 
+      it 'saves just one metric to Redis' do
+        expect(subject.instance_variable_get(:@adapter).metrics).to receive(:time)
+          .with('sdk.get_treatment', anything).once.and_call_original
+        subject.get_treatment('fake_user_id_1', 'test_feature')
+      end
+
       it 'returns CONTROL for random id' do
         expect(subject.get_treatment('my_random_user_id', 'my_random_feaure'))
           .to eq SplitIoClient::Engine::Models::Treatment::CONTROL
@@ -96,6 +102,19 @@ describe SplitIoClient, type: :client do
           label: SplitIoClient::Engine::Models::Label::DEFINITION_NOT_FOUND,
           change_number: nil
         )
+      end
+    end
+
+    context '#get_treatments' do
+      before do
+        stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+          .to_return(status: 200, body: all_keys_matcher_json)
+      end
+
+      it 'saves just one metric to Redis' do
+        expect(subject.instance_variable_get(:@adapter).metrics).to receive(:time)
+          .with('sdk.get_treatments', anything).once.and_call_original
+        subject.get_treatments(222, %w[new_feature foo test_feature])
       end
     end
 

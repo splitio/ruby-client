@@ -54,7 +54,6 @@ describe SplitIoClient::Cache::Repositories::SplitsRepository do
           foo: { name: 'foo' },
           bar: { name: 'bar' }
         )
-
       end
     end
   end
