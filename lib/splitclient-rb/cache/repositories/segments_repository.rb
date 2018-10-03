@@ -8,7 +8,7 @@ module SplitIoClient
 
         def initialize(adapter)
           @adapter = adapter
-          @adapter.set_bool(namespace_key('.ready'), false)
+          @adapter.set_bool(namespace_key('.ready'), false) unless SplitIoClient.configuration.mode == :consumer
         end
 
         # Receives segment data, adds and removes segements from the store

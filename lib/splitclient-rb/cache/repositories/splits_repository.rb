@@ -4,14 +4,14 @@ module SplitIoClient
   module Cache
     module Repositories
       class SplitsRepository < Repository
-        SPLITS_SLICE = 10
-
         attr_reader :adapter
 
         def initialize(adapter)
           @adapter = adapter
-          @adapter.set_string(namespace_key('.splits.till'), '-1')
-          @adapter.initialize_map(namespace_key('.segments.registered'))
+          unless SplitIoClient.configuration.mode == :consumer
+            @adapter.set_string(namespace_key('.splits.till'), '-1')
+            @adapter.initialize_map(namespace_key('.segments.registered'))
+          end
         end
 
         def add_split(split)
@@ -24,16 +24,14 @@ module SplitIoClient
           @adapter.delete(namespace_key(".split.#{name}"))
         end
 
-        def get_splits(names, slice = SPLITS_SLICE)
+        def get_splits(names)
           splits = {}
-
-          names.each_slice(slice) do |splits_slice|
-            splits.merge!(
-              @adapter
-                .multiple_strings(splits_slice.map { |name| namespace_key(".split.#{name}") })
-                .map { |name, data| [name.gsub(namespace_key('.split.'), ''), data] }.to_h
-            )
-          end
+          split_names = names.reject(&:empty?).uniq.map { |name| namespace_key(".split.#{name}") }
+          splits.merge!(
+            @adapter
+              .multiple_strings(split_names)
+              .map { |name, data| [name.gsub(namespace_key('.split.'), ''), data] }.to_h
+          )
 
           splits.map do |name, data|
             parsed_data = data ? JSON.parse(data, symbolize_names: true) : nil

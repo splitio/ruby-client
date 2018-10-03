@@ -19,11 +19,14 @@ module SplitIoClient
     def get_treatments(key, split_names, attributes = {})
       bucketing_key, matching_key = keys_from_key(key)
       evaluator = Engine::Parser::Evaluator.new(@segments_repository, @splits_repository, true)
-
+      start = Time.now
       treatments_labels_change_numbers =
         @splits_repository.get_splits(split_names).each_with_object({}) do |(name, data), memo|
           memo.merge!(name => get_treatment(key, name, attributes, data, false, true, evaluator))
         end
+      latency = (Time.now - start) * 1000.0
+      # Measure
+      @adapter.metrics.time('sdk.get_treatments', latency)
 
       unless SplitIoClient.configuration.disable_impressions
         time = (Time.now.to_f * 1000.0).to_i
@@ -104,7 +107,7 @@ module SplitIoClient
         split && store_impression(split_name, matching_key, bucketing_key, treatment_data, store_impressions, attributes)
 
         # Measure
-        @adapter.metrics.time('sdk.get_treatment', latency)
+        @adapter.metrics.time('sdk.get_treatment', latency) unless multiple
       rescue StandardError => error
         SplitIoClient.configuration.log_found_exception(__method__.to_s, error)
 
