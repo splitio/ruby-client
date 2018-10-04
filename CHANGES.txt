@@ -1,3 +1,10 @@
+5.1.0 (October 4th, 2018)
+- Change get_treatments so that it sends a single latency metric
+- Removed unused call to Redis#scan when adding latencies
+- Removed Redis calls on initialization when SDK is set to consumer mode
+- Change split_config approach so that every property has an accessor
+- Removed @config parameter on most initializers
+
 5.1.0 (September 10th, 2018)
 - Change `get_api` to return only a Faraday response.
 - Add `SplitLogger` to clean up logging code and reduce the complexity in several methods.
