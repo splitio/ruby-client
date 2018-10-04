@@ -78,12 +78,12 @@ opt_parser = OptionParser.new do |opts|
 end
 
 begin
-   opt_parser.parse!(ARGV)
- rescue OptionParser::InvalidOption => e
-   puts e
-   puts opt_parser
-   exit(1)
- end
+  opt_parser.parse!(ARGV)
+rescue OptionParser::InvalidOption => e
+  puts e
+  puts opt_parser
+  exit(1)
+end
 
 config = config_path != '' ? YAML.load_file(config_path) : {}
 config

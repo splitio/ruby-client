@@ -3,8 +3,7 @@ module SplitIoClient
     module Repositories
       module Metrics
         class RedisRepository < Repository
-          def initialize(adapter = nil, config)
-            @config = config
+          def initialize(adapter = nil)
             @adapter = adapter
           end
 
@@ -17,7 +16,6 @@ module SplitIoClient
 
           def add_latency(operation, time_in_ms, binary_search)
             prefixed_name = impressions_metrics_key("latency.#{operation}")
-            latencies = @adapter.find_strings_by_prefix(prefixed_name)
 
             if operation == 'sdk.get_treatment'
               @adapter.inc("#{prefixed_name}.#{binary_search.add_latency_millis(time_in_ms, true)}")

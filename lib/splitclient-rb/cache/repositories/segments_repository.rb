@@ -6,11 +6,9 @@ module SplitIoClient
 
         attr_reader :adapter
 
-        def initialize(adapter, config)
+        def initialize(adapter)
           @adapter = adapter
-          @config = config
-
-          @adapter.set_bool(namespace_key('.ready'), false)
+          @adapter.set_bool(namespace_key('.ready'), false) unless SplitIoClient.configuration.mode == :consumer
         end
 
         # Receives segment data, adds and removes segements from the store

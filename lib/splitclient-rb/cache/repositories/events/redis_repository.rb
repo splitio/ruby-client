@@ -5,9 +5,8 @@ module SplitIoClient
         class RedisRepository < EventsRepository
           EVENTS_SLICE = 100
 
-          def initialize(adapter, config)
+          def initialize(adapter)
             @adapter = adapter
-            @config = config
           end
 
           def add(key, traffic_type, event_type, time, value)

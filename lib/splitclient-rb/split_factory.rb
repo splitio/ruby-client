@@ -7,31 +7,30 @@ module SplitIoClient
 
     def initialize(api_key, config_hash = {})
       @api_key = api_key
-      @config = SplitConfig.new(config_hash)
+      SplitIoClient.configure(config_hash)
+      @cache_adapter = SplitIoClient.configuration.cache_adapter
 
-      @cache_adapter = @config.cache_adapter
+      @splits_repository = SplitsRepository.new(@cache_adapter)
+      @segments_repository = SegmentsRepository.new(@cache_adapter)
+      @impressions_repository = ImpressionsRepository.new(SplitIoClient.configuration.impressions_adapter)
+      @metrics_repository = MetricsRepository.new(SplitIoClient.configuration.metrics_adapter)
+      @events_repository = EventsRepository.new(SplitIoClient.configuration.events_adapter)
 
-      @splits_repository = SplitsRepository.new(@cache_adapter, @config)
-      @segments_repository = SegmentsRepository.new(@cache_adapter, @config)
-      @impressions_repository = ImpressionsRepository.new(@config.impressions_adapter, @config)
-      @metrics_repository = MetricsRepository.new(@config.metrics_adapter, @config)
-      @events_repository = EventsRepository.new(@config.events_adapter, @config)
-
-      @sdk_blocker = SDKBlocker.new(@config, @splits_repository, @segments_repository)
+      @sdk_blocker = SDKBlocker.new(@splits_repository, @segments_repository)
       @adapter = start!
 
-      @client = SplitClient.new(@api_key, @config, @adapter, @splits_repository, @segments_repository, @impressions_repository, @metrics_repository, @events_repository)
-      @manager = SplitManager.new(@api_key, @config, @adapter, @splits_repository)
+      @client = SplitClient.new(@api_key, @adapter, @splits_repository, @segments_repository, @impressions_repository, @metrics_repository, @events_repository)
+      @manager = SplitManager.new(@api_key, @adapter, @splits_repository)
 
-      @sdk_blocker.block if @config.block_until_ready > 0
+      @sdk_blocker.block if SplitIoClient.configuration.block_until_ready > 0
     end
 
     def start!
-      SplitAdapter.new(@api_key, @config, @splits_repository, @segments_repository, @impressions_repository, @metrics_repository, @events_repository, @sdk_blocker)
+      SplitAdapter.new(@api_key, @splits_repository, @segments_repository, @impressions_repository, @metrics_repository, @events_repository, @sdk_blocker)
     end
 
     def stop!
-      @config.threads.each { |_, t| t.exit }
+      SplitIoClient.configuration.threads.each { |_, t| t.exit }
     end
 
     alias resume! start!

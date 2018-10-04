@@ -3,7 +3,10 @@
 require 'spec_helper'
 
 describe SplitIoClient::GreaterThanOrEqualToMatcher do
-  subject { SplitIoClient::SplitFactory.new('', logger: Logger.new('/dev/null')).client }
+  subject do
+    SplitIoClient.configuration = nil
+    SplitIoClient::SplitFactory.new('', logger: Logger.new('/dev/null')).client
+  end
 
   let(:date_splits_json) do
     File.read(File.expand_path(File.join(File.dirname(__FILE__),

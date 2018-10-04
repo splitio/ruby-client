@@ -1,8 +1,7 @@
 module SplitIoClient
   module Api
     class Metrics < Client
-      def initialize(api_key, config, metrics_repository)
-        @config = config
+      def initialize(api_key, metrics_repository)
         @api_key = api_key
         @metrics_repository = metrics_repository
       end
@@ -16,12 +15,12 @@ module SplitIoClient
 
       def post_latencies
         if @metrics_repository.latencies.empty?
-          @config.logger.debug('No latencies to report.') if @config.debug_enabled
+          SplitIoClient.configuration.logger.debug('No latencies to report.') if SplitIoClient.configuration.debug_enabled
         else
           @metrics_repository.latencies.each do |name, latencies|
             metrics_time = { name: name, latencies: latencies }
 
-            result = post_api("#{@config.events_uri}/metrics/time", @config, @api_key, metrics_time)
+            result = post_api("#{SplitIoClient.configuration.events_uri}/metrics/time", @api_key, metrics_time)
 
             log_status(result, metrics_time.size)
           end
@@ -32,12 +31,12 @@ module SplitIoClient
 
       def post_counts
         if @metrics_repository.counts.empty?
-          @config.logger.debug('No counts to report.') if @config.debug_enabled
+          SplitIoClient.configuration.logger.debug('No counts to report.') if SplitIoClient.configuration.debug_enabled
         else
           @metrics_repository.counts.each do |name, count|
             metrics_count = { name: name, delta: count }
 
-            result = post_api("#{@config.events_uri}/metrics/counter", @config, @api_key, metrics_count)
+            result = post_api("#{SplitIoClient.configuration.events_uri}/metrics/counter", @api_key, metrics_count)
 
             log_status(result, metrics_count.size)
           end
@@ -49,11 +48,11 @@ module SplitIoClient
 
       def log_status(result, info_to_log)
         if result == false
-          @config.logger.error("Failed to make a http request")
+          SplitIoClient.configuration.logger.error("Failed to make a http request")
         elsif (200..299).include? result.status
-          @config.logger.debug("Metric time reported: #{info_to_log}") if @config.debug_enabled
+          SplitIoClient.configuration.logger.debug("Metric time reported: #{info_to_log}") if SplitIoClient.configuration.debug_enabled
         else
-          @config.logger.error("Unexpected status code while posting time metrics: #{result.status}")
+          SplitIoClient.configuration.logger.error("Unexpected status code while posting time metrics: #{result.status}")
         end
       end
     end

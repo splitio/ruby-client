@@ -6,13 +6,12 @@ module SplitIoClient
         extend Forwardable
         def_delegators :@adapter, :add, :add_bulk, :get_batch, :empty?
 
-        def initialize(adapter, config)
-          @config = config
+        def initialize(adapter)
           @adapter = case adapter.class.to_s
           when 'SplitIoClient::Cache::Adapters::MemoryAdapter'
-            Repositories::Impressions::MemoryRepository.new(adapter, config)
+            Repositories::Impressions::MemoryRepository.new(adapter)
           when 'SplitIoClient::Cache::Adapters::RedisAdapter'
-            Repositories::Impressions::RedisRepository.new(adapter, config)
+            Repositories::Impressions::RedisRepository.new(adapter)
           end
         end
       end

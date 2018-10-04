@@ -4,9 +4,8 @@ require 'spec_helper'
 
 describe SplitIoClient::Cache::Repositories::MetricsRepository do
   RSpec.shared_examples 'metrics specs' do |cache_adapter|
-    let(:config) { SplitIoClient::SplitConfig.new }
     let(:adapter) { cache_adapter }
-    let(:repository) { described_class.new(adapter, config) }
+    let(:repository) { described_class.new(adapter) }
     let(:binary_search) { SplitIoClient::BinarySearchLatencyTracker.new }
 
     before :each do
@@ -21,6 +20,6 @@ describe SplitIoClient::Cache::Repositories::MetricsRepository do
   end
 
   include_examples 'metrics specs', SplitIoClient::Cache::Adapters::RedisAdapter.new(
-    SplitIoClient::SplitConfig.new.redis_url
+    SplitIoClient::SplitConfig.default_redis_url
   )
 end

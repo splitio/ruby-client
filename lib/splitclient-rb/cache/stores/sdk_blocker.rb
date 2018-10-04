@@ -8,8 +8,7 @@ module SplitIoClient
         attr_reader :splits_repository
         attr_writer :splits_thread, :segments_thread
 
-        def initialize(config, splits_repository, segments_repository)
-          @config = config
+        def initialize(splits_repository, segments_repository)
           @splits_repository = splits_repository
           @segments_repository = segments_repository
 
@@ -27,14 +26,14 @@ module SplitIoClient
 
         def block
           begin
-            Timeout::timeout(@config.block_until_ready) do
+            Timeout::timeout(SplitIoClient.configuration.block_until_ready) do
               sleep 0.1 until ready?
             end
           rescue Timeout::Error
             fail SDKBlockerTimeoutExpiredException, 'SDK start up timeout expired'
           end
 
-          @config.logger.info('SplitIO SDK is ready')
+          SplitIoClient.configuration.logger.info('SplitIO SDK is ready')
           @splits_thread.run
           @segments_thread.run
         end

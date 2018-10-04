@@ -6,6 +6,7 @@ require 'securerandom'
 describe SplitIoClient, type: :client do
   RSpec.shared_examples 'engine specs' do |cache_adapter|
     subject do
+      SplitIoClient.configuration = nil
       SplitIoClient::SplitFactory.new('',
                                       logger: Logger.new('/dev/null'),
                                       cache_adapter: cache_adapter,
@@ -60,6 +61,12 @@ describe SplitIoClient, type: :client do
           .to_return(status: 200, body: all_keys_matcher_json)
       end
 
+      it 'saves just one metric to Redis' do
+        expect(subject.instance_variable_get(:@adapter).metrics).to receive(:time)
+          .with('sdk.get_treatment', anything).once.and_call_original
+        subject.get_treatment('fake_user_id_1', 'test_feature')
+      end
+
       it 'returns CONTROL for random id' do
         expect(subject.get_treatment('my_random_user_id', 'my_random_feaure'))
           .to eq SplitIoClient::Engine::Models::Treatment::CONTROL
@@ -98,6 +105,19 @@ describe SplitIoClient, type: :client do
       end
     end
 
+    context '#get_treatments' do
+      before do
+        stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+          .to_return(status: 200, body: all_keys_matcher_json)
+      end
+
+      it 'saves just one metric to Redis' do
+        expect(subject.instance_variable_get(:@adapter).metrics).to receive(:time)
+          .with('sdk.get_treatments', anything).once.and_call_original
+        subject.get_treatments(222, %w[new_feature foo test_feature])
+      end
+    end
+
     context 'all keys matcher' do
       before do
         stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
@@ -106,6 +126,7 @@ describe SplitIoClient, type: :client do
 
       context 'producer mode' do
         subject do
+          SplitIoClient.configuration = nil
           SplitIoClient::SplitFactory.new('',
                                           logger: Logger.new('/dev/null'),
                                           cache_adapter: cache_adapter,
@@ -120,6 +141,7 @@ describe SplitIoClient, type: :client do
 
       context 'consumer mode' do
         subject do
+          SplitIoClient.configuration = nil
           SplitIoClient::SplitFactory.new('',
                                           logger: Logger.new('/dev/null'),
                                           cache_adapter: cache_adapter,
@@ -370,7 +392,7 @@ describe SplitIoClient, type: :client do
       let(:impressions) { subject.instance_variable_get(:@impressions_repository).get_batch }
       let(:formatted_impressions) do
         SplitIoClient::Cache::Senders::ImpressionsSender
-          .new(nil, {}, nil)
+          .new(nil, nil)
           .send(:formatted_impressions, impressions)
       end
 
@@ -400,6 +422,7 @@ describe SplitIoClient, type: :client do
 
       context 'when impressions are disabled' do
         subject do
+          SplitIoClient.configuration = nil
           SplitIoClient::SplitFactory.new('',
                                           logger: Logger.new('/dev/null'),
                                           cache_adapter: cache_adapter,
@@ -467,7 +490,7 @@ describe SplitIoClient, type: :client do
       it 'returns control' do
         expect(subject.get_treatment('fake_user_id_1', 'test_feature')).to eq 'on'
 
-        subject.instance_variable_get(:@config).threads[:impressions_sender] = Thread.new {}
+        SplitIoClient.configuration.threads[:impressions_sender] = Thread.new {}
         subject.destroy
 
         expect(subject.get_treatment('fake_user_id_1', 'test_feature')).to eq 'control'
@@ -494,17 +517,15 @@ describe SplitIoClient, type: :client do
           .to_return(status: 200, body: all_keys_matcher_json)
       end
 
-      let(:split_config) { SplitIoClient::SplitConfig.new }
-
       it 'fetches and deletes events' do
         subject.track('key', 'traffic_type', 'event_type', 'value')
 
         event = subject.instance_variable_get(:@events_repository).clear.first
 
         expect(event[:m]).to eq(
-          s: "#{split_config.language}-#{split_config.version}",
-          i: split_config.machine_ip,
-          n: split_config.machine_name
+          s: "#{SplitIoClient.configuration.language}-#{SplitIoClient.configuration.version}",
+          i: SplitIoClient.configuration.machine_ip,
+          n: SplitIoClient.configuration.machine_name
         )
 
         expect(event[:e].reject { |e| e == :timestamp }).to eq(

@@ -6,9 +6,8 @@ module SplitIoClient
     # @param api_key [String] the API key for your split account
     #
     # @return [SplitIoManager] split.io client instance
-    def initialize(api_key, config = {}, adapter = nil, splits_repository = nil)
+    def initialize(api_key, adapter = nil, splits_repository = nil)
       @localhost_mode_features = []
-      @config = config
       @splits_repository = splits_repository
       @adapter = adapter
     end

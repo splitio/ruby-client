@@ -6,12 +6,12 @@ require 'set'
 describe SplitIoClient::Cache::Repositories::SplitsRepository do
   RSpec.shared_examples 'SplitsRepository specs' do |cache_adapter|
     let(:adapter) { cache_adapter }
-    let(:config) { SplitIoClient::SplitConfig.new(cache_adapter: cache_adapter) }
-    let(:repository) { described_class.new(adapter, config) }
+    let(:repository) { described_class.new(adapter) }
 
     before :all do
       redis = Redis.new
       redis.flushall
+      SplitIoClient.configure(cache_adapter: cache_adapter)
     end
 
     after :all do
@@ -37,22 +37,22 @@ describe SplitIoClient::Cache::Repositories::SplitsRepository do
       )
     end
 
-    context 'slice is 10' do
-      it 'returns data for multiple splits' do
-        expect(repository.get_splits(%w[foo bar baz], 10)).to eq(
+    context 'empty split names' do
+      it 'returns data for non empty split names' do
+        expect(repository.adapter).to receive(:multiple_strings).once.and_call_original
+        expect(repository.get_splits(['foo', '', 'bar'])).to eq(
           foo: { name: 'foo' },
-          bar: { name: 'bar' },
-          baz: { name: 'baz' }
+          bar: { name: 'bar' }
         )
       end
     end
 
-    context 'slice is 2' do
-      it 'returns data for multiple splits' do
-        expect(repository.get_splits(%w[foo bar baz], 2)).to eq(
+    context 'repeated split names' do
+      it 'returns data for non repeated split names' do
+        expect(repository.adapter).to receive(:multiple_strings).once.and_call_original
+        expect(repository.get_splits(%w[foo foo bar])).to eq(
           foo: { name: 'foo' },
-          bar: { name: 'bar' },
-          baz: { name: 'baz' }
+          bar: { name: 'bar' }
         )
       end
     end

@@ -6,9 +6,7 @@ module SplitIoClient
     # @param api_key [String] the API key for your split account
     #
     # @return [SplitIoClient] split.io client instance
-    def initialize(api_key, config = {}, adapter = nil, splits_repository, segments_repository, impressions_repository, metrics_repository, events_repository)
-      @config = config
-
+    def initialize(api_key, adapter = nil, splits_repository, segments_repository, impressions_repository, metrics_repository, events_repository)
       @splits_repository = splits_repository
       @segments_repository = segments_repository
       @impressions_repository = impressions_repository
@@ -21,13 +19,16 @@ module SplitIoClient
     def get_treatments(key, split_names, attributes = {})
       bucketing_key, matching_key = keys_from_key(key)
       evaluator = Engine::Parser::Evaluator.new(@segments_repository, @splits_repository, true)
-
+      start = Time.now
       treatments_labels_change_numbers =
         @splits_repository.get_splits(split_names).each_with_object({}) do |(name, data), memo|
           memo.merge!(name => get_treatment(key, name, attributes, data, false, true, evaluator))
         end
+      latency = (Time.now - start) * 1000.0
+      # Measure
+      @adapter.metrics.time('sdk.get_treatments', latency)
 
-      unless @config.disable_impressions
+      unless SplitIoClient.configuration.disable_impressions
         time = (Time.now.to_f * 1000.0).to_i
         @impressions_repository.add_bulk(
           matching_key, bucketing_key, treatments_labels_change_numbers, time
@@ -63,12 +64,12 @@ module SplitIoClient
       evaluator ||= Engine::Parser::Evaluator.new(@segments_repository, @splits_repository)
 
       if matching_key.nil?
-        @config.logger.warn('matching_key was null for split_name: ' + split_name.to_s)
+        SplitIoClient.configuration.logger.warn('matching_key was null for split_name: ' + split_name.to_s)
         return parsed_treatment(multiple, treatment_data)
       end
 
       if split_name.nil?
-        @config.logger.warn('split_name was null for key: ' + key)
+        SplitIoClient.configuration.logger.warn('split_name was null for key: ' + key)
         return parsed_treatment(multiple, treatment_data)
       end
 
@@ -78,7 +79,7 @@ module SplitIoClient
         split = multiple ? split_data : @splits_repository.get_split(split_name)
 
         if split.nil?
-          @config.logger.debug("split_name: #{split_name} does not exist. Returning CONTROL")
+          SplitIoClient.configuration.logger.debug("split_name: #{split_name} does not exist. Returning CONTROL")
           return parsed_treatment(multiple, treatment_data)
         else
           treatment_data =
@@ -87,7 +88,7 @@ module SplitIoClient
           )
         end
       rescue StandardError => error
-        @config.log_found_exception(__method__.to_s, error)
+        SplitIoClient.configuration.log_found_exception(__method__.to_s, error)
 
         store_impression(
           split_name, matching_key, bucketing_key,
@@ -106,9 +107,9 @@ module SplitIoClient
         split && store_impression(split_name, matching_key, bucketing_key, treatment_data, store_impressions, attributes)
 
         # Measure
-        @adapter.metrics.time('sdk.get_treatment', latency)
+        @adapter.metrics.time('sdk.get_treatment', latency) unless multiple
       rescue StandardError => error
-        @config.log_found_exception(__method__.to_s, error)
+        SplitIoClient.configuration.log_found_exception(__method__.to_s, error)
 
         store_impression(
           split_name, matching_key, bucketing_key,
@@ -126,10 +127,10 @@ module SplitIoClient
     end
 
     def destroy
-      @config.logger.info('Split client shutdown started...') if @config.debug_enabled
+      SplitIoClient.configuration.logger.info('Split client shutdown started...') if SplitIoClient.configuration.debug_enabled
 
-      @config.threads[:impressions_sender].raise(SplitIoClient::ImpressionShutdownException)
-      @config.threads.reject { |k, _| k == :impressions_sender }.each do |name, thread|
+      SplitIoClient.configuration.threads[:impressions_sender].raise(SplitIoClient::ImpressionShutdownException)
+      SplitIoClient.configuration.threads.reject { |k, _| k == :impressions_sender }.each do |name, thread|
         Thread.kill(thread)
       end
 
@@ -138,19 +139,19 @@ module SplitIoClient
       @segments_repository.clear
       @events_repository.clear
 
-      @config.logger.info('Split client shutdown complete') if @config.debug_enabled
+      SplitIoClient.configuration.logger.info('Split client shutdown complete') if SplitIoClient.configuration.debug_enabled
     end
 
     def store_impression(split_name, matching_key, bucketing_key, treatment, store_impressions, attributes)
       time = (Time.now.to_f * 1000.0).to_i
 
-      return if @config.disable_impressions || !store_impressions
+      return if SplitIoClient.configuration.disable_impressions || !store_impressions
 
       @impressions_repository.add(split_name,
         'keyName' => matching_key,
         'bucketingKey' => bucketing_key,
         'treatment' => treatment[:treatment],
-        'label' => @config.labels_enabled ? treatment[:label] : nil,
+        'label' => SplitIoClient.configuration.labels_enabled ? treatment[:label] : nil,
         'time' => time,
         'changeNumber' => treatment[:change_number]
       )
@@ -158,7 +159,7 @@ module SplitIoClient
       route_impression(split_name, matching_key, bucketing_key, time, treatment, attributes)
 
     rescue StandardError => error
-      @config.log_found_exception(__method__.to_s, error)
+      SplitIoClient.configuration.log_found_exception(__method__.to_s, error)
     end
 
     def route_impression(split_name, matching_key, bucketing_key, time, treatment, attributes)
@@ -184,7 +185,7 @@ module SplitIoClient
     end
 
     def impression_router
-      @impression_router ||= SplitIoClient::ImpressionRouter.new(@config)
+      @impression_router ||= SplitIoClient::ImpressionRouter.new
     end
 
     def track(key, traffic_type, event_type, value = nil)

@@ -2,15 +2,14 @@ module SplitIoClient
   module Cache
     module Senders
       class ImpressionsSender
-        def initialize(impressions_repository, config, api_key)
+        def initialize(impressions_repository, api_key)
           @impressions_repository = impressions_repository
-          @config = config
           @api_key = api_key
         end
 
         def call
-          if @config.disable_impressions
-            @config.logger.info('Disabling impressions service by config')
+          if SplitIoClient.configuration.disable_impressions
+            SplitIoClient.configuration.logger.info('Disabling impressions service by config')
             return
           end
 
@@ -30,14 +29,14 @@ module SplitIoClient
         private
 
         def impressions_thread
-          @config.threads[:impressions_sender] = Thread.new do
+          SplitIoClient.configuration.threads[:impressions_sender] = Thread.new do
             begin
-              @config.logger.info('Starting impressions service')
+              SplitIoClient.configuration.logger.info('Starting impressions service')
 
               loop do
                 post_impressions
 
-                sleep(SplitIoClient::Utilities.randomize_interval(@config.impressions_refresh_rate))
+                sleep(SplitIoClient::Utilities.randomize_interval(SplitIoClient.configuration.impressions_refresh_rate))
               end
             rescue SplitIoClient::ImpressionShutdownException
               post_impressions
@@ -50,7 +49,7 @@ module SplitIoClient
         def post_impressions
           impressions_client.post
         rescue StandardError => error
-          @config.log_found_exception(__method__.to_s, error)
+          SplitIoClient.configuration.log_found_exception(__method__.to_s, error)
         end
 
         def formatted_impressions(raw_impressions = nil)
@@ -58,7 +57,7 @@ module SplitIoClient
         end
 
         def impressions_client
-          SplitIoClient::Api::Impressions.new(@api_key, @config, formatted_impressions)
+          SplitIoClient::Api::Impressions.new(@api_key, formatted_impressions)
         end
       end
     end
