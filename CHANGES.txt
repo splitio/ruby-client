@@ -1,4 +1,4 @@
-5.1.0 (October 4th, 2018)
+5.1.1 (October 4th, 2018)
 - Change get_treatments so that it sends a single latency metric
 - Removed unused call to Redis#scan when adding latencies
 - Removed Redis calls on initialization when SDK is set to consumer mode
