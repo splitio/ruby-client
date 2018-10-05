@@ -1,3 +1,6 @@
+5.1.3
+- Add cache wrapper to splits and segments.
+
 5.1.2 (October 26th, 2018)
 - Add input validation for client API methods
 

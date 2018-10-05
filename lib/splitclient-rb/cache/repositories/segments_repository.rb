@@ -7,7 +7,12 @@ module SplitIoClient
         attr_reader :adapter
 
         def initialize(adapter)
-          @adapter = adapter
+          @adapter = case adapter.class.to_s
+          when 'SplitIoClient::Cache::Adapters::RedisAdapter'
+            SplitIoClient::Cache::Adapters::CacheAdapter.new(adapter)
+          else
+            adapter
+          end
           @adapter.set_bool(namespace_key('.ready'), false) unless SplitIoClient.configuration.mode == :consumer
         end
 
