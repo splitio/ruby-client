@@ -36,26 +36,6 @@ describe SplitIoClient::Cache::Repositories::SplitsRepository do
         'baz' => { name: 'baz' }
       )
     end
-
-    context 'empty split names' do
-      it 'returns data for non empty split names' do
-        expect(repository.adapter).to receive(:multiple_strings).once.and_call_original
-        expect(repository.get_splits(['foo', '', 'bar'])).to eq(
-          foo: { name: 'foo' },
-          bar: { name: 'bar' }
-        )
-      end
-    end
-
-    context 'repeated split names' do
-      it 'returns data for non repeated split names' do
-        expect(repository.adapter).to receive(:multiple_strings).once.and_call_original
-        expect(repository.get_splits(%w[foo foo bar])).to eq(
-          foo: { name: 'foo' },
-          bar: { name: 'bar' }
-        )
-      end
-    end
   end
 
   include_examples 'SplitsRepository specs', SplitIoClient::Cache::Adapters::MemoryAdapter.new(

@@ -4,5 +4,4 @@ class SplitIoClient::Engine::Models::Label
   EXCEPTION = 'exception'.freeze
   KILLED = 'killed'.freeze
   NOT_IN_SPLIT = 'not in split'.freeze
-  DEFINITION_NOT_FOUND = 'definition not found'.freeze
 end

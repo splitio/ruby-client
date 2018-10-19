@@ -3,7 +3,7 @@
 require 'spec_helper'
 
 describe SplitIoClient do
-  let(:factory) { SplitIoClient::SplitFactory.new('') }
+  let(:factory) { SplitIoClient::SplitFactory.new('', Logger.new('/dev/null')) }
   subject { factory.manager }
   let(:splits) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../test_data/splits/splits.json'))) }
   let(:segments) do
@@ -21,12 +21,31 @@ describe SplitIoClient do
       .to_return(status: 200, body: segments)
   end
 
-  it 'returns split_names' do
-    expect(subject.split_names).to match_array(%w[test_1_ruby sample_feature])
+  context '#split' do
+    let(:factory) do
+      SplitIoClient.configuration = nil
+      SplitIoClient::SplitFactory.new('', logger: Logger.new(log))
+    end
+
+    let(:log) { StringIO.new }
+
+    it 'returns nil when split is nil' do
+      expect(subject.split('foo')).to eq(nil)
+    end
+
+    it 'returns on nil split_name' do
+      expect(subject.split(nil)).to eq(nil)
+      expect(log.string).to include 'split: split_name cannot be nil'
+    end
+
+    it 'returns on invalid split_name' do
+      expect(subject.split(123)).to eq(nil)
+      expect(log.string).to include 'split: split_name must be a String or a Symbol'
+    end
   end
 
-  it 'returns nil when split is nil' do
-    expect(subject.split('foo')).to eq(nil)
+  it 'returns split_names' do
+    expect(subject.split_names).to match_array(%w[test_1_ruby sample_feature])
   end
 
   describe 'treatments' do

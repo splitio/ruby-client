@@ -44,5 +44,8 @@ lib/murmurhash/murmurhash.so
 ext/murmurhash/murmurhash.bundle
 ext/murmurhash/murmurhash.so
 
-#Ignore dump.rdb
+# Ignore dump.rdb
 dump.rdb
+
+# Ignore Mac OS generated files
+.DS_Store
