@@ -7,26 +7,17 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
     let(:adapter) { cache_adapter }
     let(:repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(adapter) }
     let(:sender) { described_class.new(repository, nil) }
-    let(:formatted_impressions) { sender.send(:formatted_impressions, repository.get_batch) }
+    let(:formatted_impressions) { sender.send(:formatted_impressions, repository.batch) }
     let(:ip) { SplitIoClient.configuration.machine_ip }
+    let(:treatment1) { { treatment: 'on', label: 'custom_label1', change_number: 123_456 } }
+    let(:treatment2) { { treatment: 'off', label: 'custom_label2', change_number: 123_499 } }
+    let(:treatment3) { { treatment: 'off', label: nil, change_number: nil } }
 
     before :each do
       Redis.new.flushall
       SplitIoClient.configuration.impressions_queue_size = 5
-      repository.add('foo1',
-                     'keyName' => 'matching_key',
-                     'bucketingKey' => 'foo1',
-                     'treatment' => 'on',
-                     'label' => 'custom_label1',
-                     'changeNumber' => 123_456,
-                     'time' => 1_478_113_516_002)
-      repository.add('foo2',
-                     'keyName' => 'matching_key2',
-                     'bucketingKey' => 'foo2',
-                     'treatment' => 'off',
-                     'label' => 'custom_label2',
-                     'changeNumber' => 123_499,
-                     'time' => 1_478_113_518_285)
+      repository.add('matching_key', 'foo1', 'foo1', treatment1, 1_478_113_516_002)
+      repository.add('matching_key2', 'foo2', 'foo2', treatment2, 1_478_113_518_285)
     end
 
     it 'formats impressions to be sent' do
@@ -53,7 +44,7 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
     end
 
     it 'formats multiple impressions for one key' do
-      repository.add('foo2', 'keyName' => 'matching_key3', 'treatment' => 'off', 'time' => 1_478_113_518_900)
+      repository.add('matching_key3', nil, 'foo2', treatment3, 1_478_113_518_900)
 
       expect(formatted_impressions.find { |i| i[:testName] == :foo1 }[:keyImpressions]).to match_array(
         [
@@ -91,18 +82,8 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
     end
 
     it 'filters out impressions with the same key/treatment' do
-      repository.add('foo1',
-                     'keyName' => 'matching_key',
-                     'bucketingKey' => 'foo1',
-                     'treatment' => 'on',
-                     'time' => 1_478_113_516_902,
-                     'changeNumber' => 123_456)
-      repository.add('foo2',
-                     'keyName' => 'matching_key2',
-                     'bucketingKey' => 'foo2',
-                     'treatment' => 'off',
-                     'time' => 1_478_113_518_985,
-                     'changeNumber' => 123_499)
+      repository.add('matching_key', 'foo1', 'foo1', treatment1, 1_478_113_516_902)
+      repository.add('matching_key2', 'foo2', 'foo2', treatment2, 1_478_113_518_285)
 
       expect(formatted_impressions.find { |i| i[:testName] == :foo1 }[:keyImpressions].size).to eq(1)
       expect(formatted_impressions.find { |i| i[:testName] == :foo2 }[:keyImpressions].size).to eq(1)
@@ -110,19 +91,8 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
 
     it 'filters out impressions with the same key/treatment legacy' do
       Redis.new.flushall
-
-      repository.add('foo1',
-                     'key_name' => 'matching_key',
-                     'bucketing_key' => 'foo1',
-                     'treatment' => 'on',
-                     'time' => 1_478_113_516_902,
-                     'change_number' => 123_456)
-      repository.add('foo2',
-                     'key_name' => 'matching_key2',
-                     'bucketing_key' => 'foo2',
-                     'treatment' => 'off',
-                     'time' => 1_478_113_518_985,
-                     'change_number' => 123_499)
+      repository.add('matching_key', 'foo1', 'foo1', treatment1, 1_478_113_516_902)
+      repository.add('matching_key2', 'foo2', 'foo2', treatment2, 1_478_113_518_285)
 
       expect(formatted_impressions.find { |i| i[:testName] == :foo1 }[:keyImpressions].size).to eq(1)
       expect(formatted_impressions.find { |i| i[:testName] == :foo2 }[:keyImpressions].size).to eq(1)
