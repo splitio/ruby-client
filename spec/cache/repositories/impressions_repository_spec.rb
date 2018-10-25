@@ -10,98 +10,142 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
     let(:split_adapter) do
       SplitIoClient::SplitAdapter.new(nil, nil, nil, nil, nil, nil)
     end
-    let(:ip) { SplitIoClient::SplitConfig.machine_ip }
+    let(:ip) { SplitIoClient.configuration.machine_ip }
+    let(:machine_name) { SplitIoClient.configuration.machine_name }
+    let(:version) do
+      "#{SplitIoClient.configuration.language}-#{SplitIoClient.configuration.version}"
+    end
+    let(:treatment1) { { treatment: 'on', label: 'sample_rule', change_number: 1_533_177_602_748 } }
+    let(:treatment2) { { treatment: 'off', label: 'sample_rule', change_number: 1_533_177_602_749 } }
+    let(:result) do
+      [
+        {
+          m: { s: version, i: ip, n: machine_name },
+          i: {
+            k: 'matching_key1',
+            b: nil,
+            f: :foo,
+            t: 'on',
+            r: 'sample_rule',
+            c: 1_533_177_602_748,
+            m: 1_478_113_516_002
+          }
+        },
+        {
+          m: { s: version, i: ip, n: machine_name },
+          i: {
+            k: 'matching_key1',
+            b: nil,
+            f: :bar,
+            t: 'off',
+            r: 'sample_rule',
+            c: 1_533_177_602_749,
+            m: 1_478_113_516_002
+          }
+        }
+      ]
+    end
 
     before :each do
       Redis.new.flushall
-      SplitIoClient.configure(impressions_queue_size: 5, impressions_bulk_size: 1)
+      SplitIoClient.configuration.labels_enabled = true
+      SplitIoClient.configuration.impressions_bulk_size = 2
     end
 
     it 'adds impressions' do
-      repository.add('foo1', 'key_name' => 'matching_key', 'treatment' => 'on', 'time' => 1_478_113_516_002)
-      repository.add('foo2', 'key_name' => 'matching_key2', 'treatment' => 'off', 'time' => 1_478_113_518_285)
+      repository.add('matching_key1', nil, 'foo', treatment1, 1_478_113_516_002)
+      repository.add('matching_key1', nil, 'bar', treatment2, 1_478_113_516_002)
+      expect(repository.batch).to match_array(result)
 
-      expect(repository.get_batch).to match_array(
-        [
-          {
-            feature: :foo1,
-            impressions: { 'key_name' => 'matching_key',
-                           'treatment' => 'on',
-                           'time' => 1_478_113_516_002 },
-            ip: ip
-          },
-          {
-            feature: :foo2,
-            impressions: { 'key_name' => 'matching_key2',
-                           'treatment' => 'off',
-                           'time' => 1_478_113_518_285 },
-            ip: ip
-          }
-        ]
-      )
-
-      expect(repository.get_batch).to eq([])
+      expect(repository.batch).to eq([])
     end
 
     it 'adds impressions in bulk' do
-      results = {
-        'foo' => { treatment: 'yes', label: 'sample label' },
-        'bar' => { treatment: 'no', label: 'sample label2' }
+      treatments = {
+        'foo' => treatment1,
+        'bar' => treatment2
       }
 
-      repository.add_bulk('foo', 'sample_bucketing_key', results, Time.now)
+      repository.add_bulk('matching_key1', nil, treatments, 1_478_113_516_002)
+      expect(repository.batch).to match_array(result)
+
+      expect(repository.batch).to eq([])
+    end
+
+    it 'omits label unless labels_enabled' do
+      SplitIoClient.configuration.labels_enabled = false
+
+      repository.add('matching_key1', nil, 'foo', treatment1, 1_478_113_516_002)
+      expect(repository.batch.first[:i][:r]).to be_nil
+    end
+
+    it 'bulk size less than the actual queue' do
+      repository.add('matching_key1', nil, 'foo', treatment1, 1_478_113_516_002)
+      repository.add('matching_key1', nil, 'bar', treatment2, 1_478_113_516_002)
+
+      SplitIoClient.configuration.impressions_bulk_size = 1
+
+      expect(repository.batch.size).to eq(1)
+      expect(repository.batch.size).to eq(1)
     end
   end
 
   include_examples 'impressions specs', SplitIoClient::Cache::Adapters::MemoryAdapter.new(
-    SplitIoClient::Cache::Adapters::MemoryAdapters::QueueAdapter.new(3)
+    SplitIoClient::Cache::Adapters::MemoryAdapters::QueueAdapter.new(
+      SplitIoClient::SplitConfig.new.impressions_queue_size
+    )
   )
   include_examples 'impressions specs', SplitIoClient::Cache::Adapters::RedisAdapter.new(
     SplitIoClient::SplitConfig.new.redis_url
   )
 
-  context 'queue size less than the actual queue' do
+  context 'redis adapter' do
     before do
       Redis.new.flushall
-      repository.add('foo1', 'key_name' => 'matching_key', 'treatment' => 'on', 'time' => 1_478_113_516_002)
-      repository.add('foo2', 'key_name' => 'matching_key2', 'treatment' => 'off', 'time' => 1_478_113_518_285)
-      repository.add('foo2', 'key_name' => 'matching_key3', 'treatment' => 'on', 'time' => 1_478_113_518_500)
-      SplitIoClient.configuration.impressions_queue_size = 1
-      SplitIoClient.configuration.impressions_bulk_size = 1
     end
 
     let(:adapter) { SplitIoClient::Cache::Adapters::RedisAdapter.new(SplitIoClient.configuration.redis_url) }
     let(:repository) { described_class.new(adapter) }
+    let(:treatment) { { treatment: 'on', label: 'sample_rule', change_number: 1_533_177_602_748 } }
 
-    it 'returns impressions' do
-      expect(repository.get_batch.size).to eq(2)
-      expect(repository.get_batch.size).to eq(1)
+    it 'expiration set when impressions size match number of elements added' do
+      expect(adapter).to receive(:expire).once.with(anything, 3600)
+
+      repository.add('matching_key', nil, 'foo1', treatment, 1_478_113_516_002)
+      repository.add('matching_key', nil, 'foo1', treatment, 1_478_113_516_002)
+    end
+
+    it 'returns empty array when adapter#get_from_queue raises an exception' do
+      allow_any_instance_of(SplitIoClient::Cache::Adapters::RedisAdapter)
+        .to receive(:get_from_queue).and_throw(RuntimeError)
+
+      repository.add('matching_key', nil, 'foo1', treatment, 1_478_113_516_002)
+      expect(repository.batch).to eq([])
     end
   end
 
-  context 'redis exception raised on #get_batch' do
+  context 'number of impressions is greater than queue size' do
     before do
-      Redis.new.flushall
-      repository.add('foo1', 'key_name' => 'matching_key', 'treatment' => 'on', 'time' => 1_478_113_516_002)
-      SplitIoClient.configuration.impressions_queue_size = 1
-      SplitIoClient.configuration.impressions_bulk_size = 1
+      SplitIoClient.configuration = nil
+      SplitIoClient.configure(logger: Logger.new('/dev/null'), impressions_queue_size: 1, impressions_bulk_size: 2)
     end
 
-    let(:adapter) { SplitIoClient::Cache::Adapters::RedisAdapter.new(SplitIoClient.configuration.redis_url) }
+    let(:adapter) do
+      SplitIoClient::Cache::Adapters::MemoryAdapter.new(
+        SplitIoClient::Cache::Adapters::MemoryAdapters::QueueAdapter.new(
+          SplitIoClient::SplitConfig.new.impressions_queue_size
+        )
+      )
+    end
     let(:repository) { described_class.new(adapter) }
 
-    it 'returns empty array when adapter#random_set_elements raises an exception' do
-      allow_any_instance_of(SplitIoClient::Cache::Adapters::RedisAdapter)
-        .to receive(:random_set_elements).and_throw(RuntimeError)
+    it 'memory adapter drops impressions' do
+      treatment = { treatment: 'on', label: 'sample_rule', change_number: 1_533_177_602_748 }
 
-      expect(repository.get_batch).to eq([])
-    end
+      repository.add('matching_key1', nil, 'foo1', treatment, 1_478_113_516_002)
+      repository.add('matching_key2', nil, 'foo1', treatment, 1_478_113_516_002)
 
-    it 'returns empty array when adapter#find_sets_by_prefix raises an exception' do
-      allow_any_instance_of(SplitIoClient::Cache::Adapters::RedisAdapter)
-        .to receive(:find_sets_by_prefix).and_throw(RuntimeError)
-
-      expect(repository.get_batch).to eq([])
+      expect(repository.batch.size).to eq(1)
     end
   end
 end

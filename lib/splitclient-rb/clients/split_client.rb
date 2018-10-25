@@ -136,13 +136,12 @@ module SplitIoClient
 
       return if SplitIoClient.configuration.disable_impressions || !store_impressions
 
-      @impressions_repository.add(split_name,
-        'keyName' => matching_key,
-        'bucketingKey' => bucketing_key,
-        'treatment' => treatment[:treatment],
-        'label' => SplitIoClient.configuration.labels_enabled ? treatment[:label] : nil,
-        'time' => time,
-        'changeNumber' => treatment[:change_number]
+      @impressions_repository.add(
+        matching_key,
+        bucketing_key,
+        split_name,
+        treatment,
+        time
       )
 
       route_impression(split_name, matching_key, bucketing_key, time, treatment, attributes)
