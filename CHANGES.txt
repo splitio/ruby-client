@@ -1,4 +1,4 @@
-5.1.2 (DATE TBD)
+5.1.2 (October 26th, 2018)
 - Add input validation for client API methods
 
 5.1.1 (October 4th, 2018)
