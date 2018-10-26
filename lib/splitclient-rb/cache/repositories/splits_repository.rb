@@ -26,7 +26,7 @@ module SplitIoClient
 
         def get_splits(names)
           splits = {}
-          split_names = names.reject(&:empty?).uniq.map { |name| namespace_key(".split.#{name}") }
+          split_names = names.map { |name| namespace_key(".split.#{name}") }
           splits.merge!(
             @adapter
               .multiple_strings(split_names)

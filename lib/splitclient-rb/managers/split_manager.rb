@@ -43,7 +43,7 @@ module SplitIoClient
     #
     # @returns a split view
     def split(split_name)
-      return unless @splits_repository
+      return unless @splits_repository && SplitIoClient::Validators.valid_split_parameters(split_name)
 
       split = @splits_repository.get_split(split_name)
 
@@ -62,7 +62,6 @@ module SplitIoClient
       rescue StandardError
         treatments = []
       end
-
 
         {
           name: name,
