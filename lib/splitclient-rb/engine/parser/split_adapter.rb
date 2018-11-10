@@ -24,7 +24,15 @@ module SplitIoClient
     # @param sdk_blocker [SDKBlocker] SDKBlocker instance which blocks splits_repository/segments_repository
     #
     # @return [SplitIoClient] split.io client instance
-    def initialize(api_key, splits_repository, segments_repository, impressions_repository, metrics_repository, events_repository, sdk_blocker)
+    def initialize(
+      api_key,
+      splits_repository,
+      segments_repository,
+      impressions_repository,
+      metrics_repository,
+      events_repository,
+      sdk_blocker
+    )
       @api_key = api_key
       @splits_repository = splits_repository
       @segments_repository = segments_repository
@@ -34,28 +42,15 @@ module SplitIoClient
       @metrics = Metrics.new(100, @metrics_repository)
       @sdk_blocker = sdk_blocker
 
-      start_based_on_mode(SplitIoClient.configuration.mode)
+      start_standalone_components unless SplitIoClient.configuration.mode != :standalone
     end
 
-    def start_based_on_mode(mode)
-      case mode
-      when :standalone
-        split_store
-        segment_store
-        metrics_sender
-        impressions_sender
-        events_sender
-      when :consumer
-        # Do nothing in background
-      when :producer
-        split_store
-        segment_store
-        impressions_sender
-        metrics_sender
-        events_sender
-
-        sleep unless ENV['SPLITCLIENT_ENV'] == 'test'
-      end
+    def start_standalone_components
+      split_store
+      segment_store
+      metrics_sender
+      impressions_sender
+      events_sender
     end
 
     # Starts thread which loops constantly and stores splits in the splits_repository of choice
