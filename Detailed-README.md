@@ -301,6 +301,14 @@ _To use Redis, include `redis-rb` in your app's Gemfile._
 
 *default value* = (your current hostname)
 
+**cache_ttl** : Time to live in seconds for the memory cache values when using Redis.
+
+*default value* = `5`
+
+**max_cache_size** : Maximum number of items held in the memory cache values when using Redis. When cache is full an LRU strategy for pruning shall be used.
+
+*default value* = `500`
+
 **redis_url** : Redis URL or hash with configuration for the SDK to connect to. See [Redis#initialize](https://www.rubydoc.info/github/redis/redis-rb/Redis%3Ainitialize) for detailed information.
 
 *default value* = `'redis://127.0.0.1:6379/0'`
