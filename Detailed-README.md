@@ -72,6 +72,17 @@ else
 end
 ```
 
+**Note**: You can ensure the SDK resources are loaded before querying for treatments by using `block_until_ready`. See [Advanced Configuration](#advanced-configuration).
+``` ruby
+options = {
+  block_until_ready: 10
+}
+
+# Then init the factory passing the options hash
+factory  = SplitIoClient::SplitFactoryBuilder.build('YOUR_API_KEY', options)
+split_client = factory.client
+```
+
 For features that use targeting rules based on user attributes, you can call the `get_treatment` method the following way:
 
 ```ruby
@@ -239,13 +250,17 @@ The following values can be customized:
 
 *default value* = `60`
 
-**impressions_queue_size** : The size of the impressions queue in case of `cache_adapter == :memory`.
+**impressions_queue_size** : The size of the impressions queue in case of `cache_adapter == :memory`. When the queue is full, existing impressions will be dropped.
 
 *default value* = 5000
 
 **impressions_bulk_size** : Maximum number of impressions to be sent to Split servers on each post.
 
 *default value* = defaults to `impressions_queue_size`
+
+**events_queue_size** : The size of the events queue in case of `cache_adapter == :memory`. When the queue is full, existing events will be dropped.
+
+*default value* = 500
 
 **debug_enabled** : Enables extra logging (verbose mode).
 
