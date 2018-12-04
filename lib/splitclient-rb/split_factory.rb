@@ -61,7 +61,7 @@ module SplitIoClient
           "Valid modes are 'standalone with memory adapter' and 'consumer with redis adapter'")
       end
 
-      return valid_startup_mode
+      valid_startup_mode
     end
 
     alias resume! start!

@@ -42,7 +42,7 @@ module SplitIoClient
       @metrics = Metrics.new(100, @metrics_repository)
       @sdk_blocker = sdk_blocker
 
-      start_standalone_components unless SplitIoClient.configuration.mode != :standalone
+      start_standalone_components if SplitIoClient.configuration.mode == :standalone
     end
 
     def start_standalone_components
