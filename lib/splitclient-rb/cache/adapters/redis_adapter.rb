@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'json'
 
 module SplitIoClient
@@ -85,8 +87,8 @@ module SplitIoClient
         end
 
         # Set
-        alias_method :initialize_set, :initialize_map
-        alias_method :find_sets_by_prefix, :find_strings_by_prefix
+        alias initialize_set initialize_map
+        alias find_sets_by_prefix find_strings_by_prefix
 
         def add_to_set(key, val)
           @redis.sadd(key, val)
@@ -126,7 +128,7 @@ module SplitIoClient
         def get_from_queue(key, count)
           items = @redis.lrange(key, 0, count - 1)
           fetched_count = items.size
-          items_to_remove = (fetched_count == count) ? count : fetched_count
+          items_to_remove = fetched_count == count ? count : fetched_count
 
           @redis.ltrim(key, items_to_remove, -1)
 
@@ -148,9 +150,9 @@ module SplitIoClient
           @redis.incrby(key, inc)
         end
 
-        def pipelined(&block)
+        def pipelined
           @redis.pipelined do
-            block.call
+            yield
           end
         end
 
@@ -158,6 +160,10 @@ module SplitIoClient
           keys = @redis.keys("#{prefix}*")
 
           keys.map { |key| @redis.del(key) }
+        end
+
+        def expire(key, seconds)
+          @redis.expire(key, seconds)
         end
       end
     end
