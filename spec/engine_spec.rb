@@ -49,6 +49,9 @@ describe SplitIoClient, type: :client do
     let(:traffic_allocation_json) do
       File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/splits_traffic_allocation.json'))
     end
+    let(:traffic_allocation_one_percent_json) do
+      File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/splits_traffic_allocation_one_percent.json'))
+    end
 
     before :each do
       Redis.new.flushall if @mode.equal?(:consumer)
@@ -495,6 +498,17 @@ describe SplitIoClient, type: :client do
           expect(impressions_repository.batch[0][:i][:r])
             .to eq(SplitIoClient::Engine::Models::Label::NOT_IN_SPLIT)
         end
+      end
+    end
+
+    context 'traffic allocation one percent' do
+      before do
+        load_splits(traffic_allocation_one_percent_json)
+      end
+
+      it 'returns expected treatment' do
+        allow_any_instance_of(SplitIoClient::Splitter).to receive(:bucket).and_return(1)
+        expect(subject.get_treatment('test', 'Traffic_Allocation_One_Percent')).to eq('on')
       end
     end
 
