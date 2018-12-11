@@ -20,9 +20,9 @@ module SplitIoClient
           @metrics_repository.latencies.each do |name, latencies|
             metrics_time = { name: name, latencies: latencies }
 
-            result = post_api("#{SplitIoClient.configuration.events_uri}/metrics/time", @api_key, metrics_time)
+            response = post_api("#{SplitIoClient.configuration.events_uri}/metrics/time", @api_key, metrics_time)
 
-            log_status(result, metrics_time.size)
+            log_status(response, metrics_time.size)
           end
         end
 
@@ -36,9 +36,9 @@ module SplitIoClient
           @metrics_repository.counts.each do |name, count|
             metrics_count = { name: name, delta: count }
 
-            result = post_api("#{SplitIoClient.configuration.events_uri}/metrics/counter", @api_key, metrics_count)
+            response = post_api("#{SplitIoClient.configuration.events_uri}/metrics/counter", @api_key, metrics_count)
 
-            log_status(result, metrics_count.size)
+            log_status(response, metrics_count.size)
           end
         end
         @metrics_repository.clear_counts
@@ -46,13 +46,13 @@ module SplitIoClient
 
       private
 
-      def log_status(result, info_to_log)
-        if result == false
-          SplitIoClient.configuration.logger.error("Failed to make a http request")
-        elsif (200..299).include? result.status
-          SplitIoClient.configuration.logger.debug("Metric time reported: #{info_to_log}") if SplitIoClient.configuration.debug_enabled
+      def log_status(response, info_to_log)
+        if response.success?
+          SplitLogger.log_if_debug("Metric time reported: #{info_to_log}")
         else
-          SplitIoClient.configuration.logger.error("Unexpected status code while posting time metrics: #{result.status}")
+          SplitLogger.log_error("Unexpected status code while posting time metrics: #{response.status}" \
+          " - Check your API key and base URI")
+          raise 'Split SDK failed to connect to backend to post metrics'
         end
       end
     end
