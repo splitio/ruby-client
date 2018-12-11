@@ -51,7 +51,7 @@ module SplitIoClient
               if split[:trafficAllocation] < 100
                 bucket = splitter.bucket(splitter.count_hash(key, split[:trafficAllocationSeed].to_i, legacy_algo))
 
-                if bucket >= split[:trafficAllocation]
+                if bucket > split[:trafficAllocation]
                   return treatment_hash(Models::Label::NOT_IN_SPLIT, split[:defaultTreatment], split[:changeNumber])
                 end
               end

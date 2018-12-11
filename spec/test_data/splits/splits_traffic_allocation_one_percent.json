@@ -1,0 +1,41 @@
+{
+  "splits": [
+    {
+      "name": "Traffic_Allocation_One_Percent",
+      "algo": 1,
+      "trafficAllocation": 1,
+      "trafficAllocationSeed": -1,
+      "killed": false,
+      "status": "ACTIVE",
+      "defaultTreatment": "default",
+      "seed": -1222652054,
+      "orgId": null,
+      "environment": null,
+      "trafficTypeId": null,
+      "trafficTypeName": null,
+      "conditions": [
+        {
+          "conditionType": "ROLLOUT",
+          "matcherGroup": {
+            "combiner": "AND",
+            "matchers": [
+              {
+              "matcherType": "ALL_KEYS",
+              "negate": false,
+              "userDefinedSegmentMatcherData": null,
+              "whitelistMatcherData": null
+              }
+            ]
+          },
+          "partitions": [
+            {
+            "treatment": "on",
+            "size": 100
+            }
+          ],
+          "label": "in segment all"
+        }
+      ]
+    }
+  ]
+}
