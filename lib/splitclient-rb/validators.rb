@@ -1,9 +1,14 @@
+# frozen_string_literal: true
+
 module SplitIoClient
   module Validators
     extend self
 
     def valid_get_treatment_parameters(key, split_name, matching_key, bucketing_key)
-      valid_key?(key) && valid_split_name?(split_name) && valid_matching_key?(matching_key) && valid_bucketing_key?(bucketing_key)
+      valid_key?(key) &&
+        valid_split_name?(split_name) &&
+        valid_matching_key?(matching_key) &&
+        valid_bucketing_key?(key, bucketing_key)
     end
 
     def valid_get_treatments_parameters(split_names)
@@ -11,7 +16,10 @@ module SplitIoClient
     end
 
     def valid_track_parameters(key, traffic_type_name, event_type, value)
-      valid_track_key?(key) && valid_traffic_type_name?(traffic_type_name) && valid_event_type?(event_type) && valid_value?(value)
+      valid_track_key?(key) &&
+        valid_traffic_type_name?(traffic_type_name) &&
+        valid_event_type?(event_type) &&
+        valid_value?(value)
     end
 
     def valid_split_parameters(split_name)
@@ -44,7 +52,7 @@ module SplitIoClient
       SplitIoClient.configuration.logger.warn("#{method}: #{key} is not of type String, converting to String")
     end
 
-    def valid_split_name?(split_name, method=:get_treatment)
+    def valid_split_name?(split_name, method = :get_treatment)
       if split_name.nil?
         log_nil(:split_name, method)
         return false
@@ -55,7 +63,7 @@ module SplitIoClient
         return false
       end
 
-      return true
+      true
     end
 
     def valid_key?(key)
@@ -64,7 +72,7 @@ module SplitIoClient
         return false
       end
 
-      return true
+      true
     end
 
     def valid_matching_key?(matching_key)
@@ -78,16 +86,16 @@ module SplitIoClient
         return false
       end
 
-      if matching_key.is_a? Numeric
-        log_convert_numeric(:matching_key, :get_treatment)
-      end
+      log_convert_numeric(:matching_key, :get_treatment) if matching_key.is_a? Numeric
 
-      return true
+      true
     end
 
-    def valid_bucketing_key?(bucketing_key)
+    def valid_bucketing_key?(key, bucketing_key)
       if bucketing_key.nil?
-        SplitIoClient.configuration.logger.warn('get_treatment: key object should have bucketing_key set')
+        if key.is_a? Hash
+          SplitIoClient.configuration.logger.warn('get_treatment: key object should have bucketing_key set')
+        end
         return true
       end
 
@@ -96,11 +104,9 @@ module SplitIoClient
         return false
       end
 
-      if bucketing_key.is_a? Numeric
-        log_convert_numeric(:bucketing_key, :get_treatment)
-      end
+      log_convert_numeric(:bucketing_key, :get_treatment) if bucketing_key.is_a? Numeric
 
-      return true
+      true
     end
 
     def valid_split_names?(split_names)
@@ -114,7 +120,7 @@ module SplitIoClient
         return false
       end
 
-      return true
+      true
     end
 
     def valid_track_key?(key)
@@ -128,11 +134,9 @@ module SplitIoClient
         return false
       end
 
-      if key.is_a? Numeric
-        log_convert_numeric(:key, :track)
-      end
+      log_convert_numeric(:key, :track) if key.is_a? Numeric
 
-      return true
+      true
     end
 
     def valid_event_type?(event_type)
@@ -151,7 +155,7 @@ module SplitIoClient
         return false
       end
 
-      return true
+      true
     end
 
     def valid_traffic_type_name?(traffic_type_name)
@@ -170,7 +174,7 @@ module SplitIoClient
         return false
       end
 
-      return true
+      true
     end
 
     def valid_value?(value)
@@ -179,7 +183,7 @@ module SplitIoClient
         return false
       end
 
-      return true
+      true
     end
   end
 end

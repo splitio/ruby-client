@@ -109,7 +109,7 @@ module SplitIoClient
     #
     # The mode SDK will run
     #
-    # @return [Symbol] One of the available SDK modes: standalone, consumer, producer
+    # @return [Symbol] One of the available SDK modes: standalone, consumer
     attr_accessor :mode
 
     # The read timeout for network connections in seconds.

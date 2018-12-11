@@ -13,12 +13,14 @@ module SplitIoClient
         end
 
         impressions_by_ip.each do |ip, impressions|
-          result = post_api("#{SplitIoClient.configuration.events_uri}/testImpressions/bulk", @api_key, impressions, 'SplitSDKMachineIP' => ip)
+          response = post_api("#{SplitIoClient.configuration.events_uri}/testImpressions/bulk", @api_key, impressions, 'SplitSDKMachineIP' => ip)
 
-          if (200..299).include? result.status
-            SplitIoClient.configuration.logger.debug("Impressions reported: #{total_impressions(@impressions)}") if SplitIoClient.configuration.debug_enabled
+          if response.success?
+            SplitLogger.log_if_debug("Impressions reported: #{total_impressions(@impressions)}")
           else
-            SplitIoClient.configuration.logger.error("Unexpected status code while posting impressions: #{result.status}")
+            SplitLogger.log_error("Unexpected status code while posting impressions: #{response.status}." \
+            " - Check your API key and base URI")
+            raise 'Split SDK failed to connect to backend to post impressions'
           end
         end
       end
