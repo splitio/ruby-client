@@ -49,7 +49,7 @@ module SplitIoClient
         end
 
         def post_impressions
-          impressions_client.post
+          impressions_api.post(formatted_impressions)
         rescue StandardError => error
           SplitIoClient.configuration.log_found_exception(__method__.to_s, error)
         end
@@ -58,8 +58,8 @@ module SplitIoClient
           ImpressionsFormatter.new(@impressions_repository).call(raw_impressions)
         end
 
-        def impressions_client
-          SplitIoClient::Api::Impressions.new(@api_key, formatted_impressions)
+        def impressions_api
+          @impressions_api ||= SplitIoClient::Api::Impressions.new(@api_key)
         end
       end
     end
