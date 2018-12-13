@@ -100,7 +100,7 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
 
     it 'returns the total number of impressions' do
       impressions = formatted_impressions
-      expect(sender.send(:impressions_client).total_impressions(impressions)).to eq(2)
+      expect(sender.send(:impressions_api).total_impressions(impressions)).to eq(2)
     end
   end
 
