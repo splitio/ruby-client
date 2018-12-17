@@ -66,7 +66,7 @@ module SplitIoClient
         end
 
         def splits_since(since)
-          SplitIoClient::Api::Splits.new(@api_key, @metrics).since(since)
+          splits_api.since(since)
         end
 
         def add_split_unless_archived(split)
@@ -89,6 +89,12 @@ module SplitIoClient
           SplitIoClient.configuration.logger.debug("storing split (#{split[:name]})") if SplitIoClient.configuration.debug_enabled
 
           @splits_repository.add_split(split)
+        end
+
+        private
+
+        def splits_api
+          @splits_api ||= SplitIoClient::Api::Splits.new(@api_key, @metrics)
         end
       end
     end

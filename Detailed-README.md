@@ -72,6 +72,17 @@ else
 end
 ```
 
+**Note**: You can ensure the SDK resources are loaded before querying for treatments by using `block_until_ready`. See [Advanced Configuration](#advanced-configuration).
+``` ruby
+options = {
+  block_until_ready: 10
+}
+
+# Then init the factory passing the options hash
+factory  = SplitIoClient::SplitFactoryBuilder.build('YOUR_API_KEY', options)
+split_client = factory.client
+```
+
 For features that use targeting rules based on user attributes, you can call the `get_treatment` method the following way:
 
 ```ruby
@@ -239,13 +250,17 @@ The following values can be customized:
 
 *default value* = `60`
 
-**impressions_queue_size** : The size of the impressions queue in case of `cache_adapter == :memory`.
+**impressions_queue_size** : The size of the impressions queue in case of `cache_adapter == :memory`. When the queue is full, existing impressions will be dropped.
 
 *default value* = 5000
 
 **impressions_bulk_size** : Maximum number of impressions to be sent to Split servers on each post.
 
 *default value* = defaults to `impressions_queue_size`
+
+**events_queue_size** : The size of the events queue in case of `cache_adapter == :memory`. When the queue is full, existing events will be dropped.
+
+*default value* = 500
 
 **debug_enabled** : Enables extra logging (verbose mode).
 
@@ -301,6 +316,14 @@ _To use Redis, include `redis-rb` in your app's Gemfile._
 
 *default value* = (your current hostname)
 
+**cache_ttl** : Time to live in seconds for the memory cache values when using Redis.
+
+*default value* = `5`
+
+**max_cache_size** : Maximum number of items held in the memory cache values when using Redis. When cache is full an LRU strategy for pruning shall be used.
+
+*default value* = `500`
+
 **redis_url** : Redis URL or hash with configuration for the SDK to connect to. See [Redis#initialize](https://www.rubydoc.info/github/redis/redis-rb/Redis%3Ainitialize) for detailed information.
 
 *default value* = `'redis://127.0.0.1:6379/0'`
@@ -321,15 +344,9 @@ options = {
 
 ```ruby
 options = {
-  connection_timeout: 10,
-  read_timeout: 5,
-  features_refresh_rate: 120,
-  segments_refresh_rate: 120,
-  metrics_refresh_rate: 360,
-  impressions_refresh_rate: 360,
-  logger: Logger.new('logfile.log'),
+  # other options
   cache_adapter: :redis,
-  mode: :standalone,
+  mode: :consumer,
   redis_url: 'redis://127.0.0.1:6379/0'
 }
 begin
@@ -380,10 +397,10 @@ In the example above, the listener simply takes an impression and logs it to the
 
 The SDK is capable of running in two different modes to fit in different infrastructure configurations:
 
-- `:standalone` - (default) : The SDK will retrieve information (e.g. split definitions) periodically from the Split servers, and store it in the chosen cache (memory / Redis). It'll also store the application execution information (e.g. impressions) in the cache and send it periodically to the Split servers. As it name implies, in this mode, the SDK neither relies nor synchronizes with any other component.
-- `:consumer` - If using a load balancer or more than one SDK in your application, guaranteeing that all changes in split definitions are picked up by all SDK instances at the same time is highly recommended in order to ensure consistent results across your infrastructure (i.e. getting the same treatment for a specific split and user pair). To achieve this, use the [Split Synchronizer](https://docs.split.io/docs/split-synchronizer)) and setup your SDKs to work in the `consumer` mode. Setting the components this way, all communication with the Split server is orchestrated by the Synchronizer, while the SDKs pick up definitions and store the execution information from / into a shared Redis data store.
+- `:standalone` - (default) : The SDK will retrieve information (e.g. split definitions) periodically from the Split servers, and store it in the memory cache. It'll also store the application execution information (e.g. impressions) in the cache and send it periodically to the Split servers. As it name implies, in this mode, the SDK neither relies nor synchronizes with any other component. _This mode is only available when using the `memory` cache adapter._
+- `:consumer` - If using a load balancer or more than one SDK in your application, guaranteeing that all changes in split definitions are picked up by all SDK instances at the same time is highly recommended in order to ensure consistent results across your infrastructure (i.e. getting the same treatment for a specific split and user pair). To achieve this, use the [Split Synchronizer](https://docs.split.io/docs/split-synchronizer)) and setup your SDKs to work in the `consumer` mode. Setting the components this way, all communication with the Split server is orchestrated by the Synchronizer, while the SDKs pick up definitions and store the execution information from / into a shared Redis data store. _This mode is only available when using the `redis` cache adapter._
 
-_You can choose between these 2 modes setting the `mode` option in the config._
+_You can choose between these 2 modes setting the `mode` option in the config. An invalid combination of `cache_adaper` and `mode` will result in an Invalid Mode exception being raised._
 
 ## SDK Server Compatibility
 

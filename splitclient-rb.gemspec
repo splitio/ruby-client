@@ -17,8 +17,6 @@ Gem::Specification.new do |spec|
 
   spec.files         = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(spec|features|ext)/}) }
 
-  spec.bindir        = 'exe'
-  spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
   if defined?(JRUBY_VERSION)
@@ -46,12 +44,14 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rspec'
   spec.add_development_dependency 'rubocop', '0.59.0'
   spec.add_development_dependency 'simplecov'
+  spec.add_development_dependency 'timecop'
   spec.add_development_dependency 'webmock'
 
   spec.add_runtime_dependency 'concurrent-ruby', '~> 1.0'
   spec.add_runtime_dependency 'faraday', '>= 0.8'
   spec.add_runtime_dependency 'json', '>= 1.8'
-  spec.add_runtime_dependency 'net-http-persistent', '~> 2.9'
+  spec.add_runtime_dependency 'lru_redux'
+  spec.add_runtime_dependency 'net-http-persistent', '>= 2.9'
   spec.add_runtime_dependency 'redis', '>= 3.2'
   spec.add_runtime_dependency 'thread_safe', '>= 0.3'
 end

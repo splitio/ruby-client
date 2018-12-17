@@ -1,3 +1,11 @@
+6.0.0 (December 17th, 2018)
+- Change `sender` and `store` classes to reuse Faraday connections, preventing issues with net-http-persistent 3.0
+- Remove producer mode and make `memory + standalone` and `Redis + consumer` the only valid SDK modes. This is a breaking change
+- Fix `evaluator` bucket calculation when traffic allocation is set to 1%
+- Change format used to store impressions in repositories to reduce the number of Redis operations
+- Add cache wrapper to `segments_repository` and `splits_repository` to reduce the number of Redis operations
+- Add `cache_ttl` and `max_cache_size` options to setup the memory cache wrapper when using redis
+
 5.1.2 (October 26th, 2018)
 - Add input validation for client API methods
 

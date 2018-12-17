@@ -38,8 +38,7 @@ module SplitIoClient
         end
       rescue StandardError => e
         SplitIoClient.configuration.logger.warn("#{e}\nURL:#{url}\ndata:#{data}\nparams:#{params}")
-
-        false
+        raise 'Split SDK failed to connect to backend to retrieve information'
       end
 
       private

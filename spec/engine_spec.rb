@@ -10,7 +10,8 @@ describe SplitIoClient, type: :client do
       SplitIoClient::SplitFactory.new('',
                                       logger: Logger.new(log),
                                       cache_adapter: cache_adapter,
-                                      redis_namespace: 'test').client
+                                      redis_namespace: 'test',
+                                      mode: @mode).client
     end
 
     let(:log) { StringIO.new }
@@ -48,19 +49,23 @@ describe SplitIoClient, type: :client do
     let(:traffic_allocation_json) do
       File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/splits_traffic_allocation.json'))
     end
+    let(:traffic_allocation_one_percent_json) do
+      File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/splits_traffic_allocation_one_percent.json'))
+    end
 
     before :each do
-      Redis.new.flushall
+      Redis.new.flushall if @mode.equal?(:consumer)
     end
 
     after :each do
-      Redis.new.flushall
+      Redis.new.flushall if @mode.equal?(:consumer)
     end
+
+    before { @mode = cache_adapter.equal?(:memory) ? :standalone : :consumer }
 
     context '#get_treatment' do
       before do
-        stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
-          .to_return(status: 200, body: all_keys_matcher_json)
+        load_splits(all_keys_matcher_json)
       end
 
       it 'saves just one metric to Redis' do
@@ -145,8 +150,7 @@ describe SplitIoClient, type: :client do
 
     context '#get_treatments' do
       before do
-        stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
-          .to_return(status: 200, body: all_keys_matcher_json)
+        load_splits(all_keys_matcher_json)
       end
 
       it 'saves just one metric to Redis' do
@@ -182,38 +186,7 @@ describe SplitIoClient, type: :client do
 
     context 'all keys matcher' do
       before do
-        stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
-          .to_return(status: 200, body: all_keys_matcher_json)
-      end
-
-      context 'producer mode' do
-        subject do
-          SplitIoClient.configuration = nil
-          SplitIoClient::SplitFactory.new('',
-                                          logger: Logger.new('/dev/null'),
-                                          cache_adapter: cache_adapter,
-                                          redis_namespace: 'test',
-                                          mode: :producer).client
-        end
-
-        it 'stores splits' do
-          expect(subject.instance_variable_get(:@adapter).splits_repository.splits.size).to eq(1)
-        end
-      end
-
-      context 'consumer mode' do
-        subject do
-          SplitIoClient.configuration = nil
-          SplitIoClient::SplitFactory.new('',
-                                          logger: Logger.new('/dev/null'),
-                                          cache_adapter: cache_adapter,
-                                          redis_namespace: 'test',
-                                          mode: :consumer).client
-        end
-
-        it 'stores splits' do
-          expect(subject.instance_variable_get(:@adapter).splits_repository.splits.size).to eq(0)
-        end
+        load_splits(all_keys_matcher_json)
       end
 
       it 'validates the feature is on for all ids' do
@@ -229,13 +202,9 @@ describe SplitIoClient, type: :client do
 
     context 'in segment matcher' do
       before do
-        stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
-          .to_return(status: 200, body: segment_matcher_json)
-      end
+        load_segments(segments_json)
 
-      before do
-        stub_request(:get, 'https://sdk.split.io/api/segmentChanges/demo?since=-1')
-          .to_return(status: 200, body: segments_json)
+        load_splits(segment_matcher_json)
       end
 
       it 'validates the feature is on for all ids' do
@@ -256,8 +225,8 @@ describe SplitIoClient, type: :client do
         expect(subject.get_treatments(222, %w[new_feature foo])).to eq(
           new_feature: 'on', foo: SplitIoClient::Engine::Models::Treatment::CONTROL
         )
-        impressions = subject.instance_variable_get(:@impressions_repository).get_batch
-        expect(impressions.collect { |i| i[:feature] }).to match_array %i[foo new_feature]
+        impressions = subject.instance_variable_get(:@impressions_repository).batch
+        expect(impressions.map { |i| i[:i][:f] }).to match_array %i[foo new_feature]
       end
 
       it 'validates the feature is on for all ids multiple keys for integer key' do
@@ -267,7 +236,7 @@ describe SplitIoClient, type: :client do
         expect(subject.get_treatments({ matching_key: 222, bucketing_key: 'foo' }, %w[new_feature foo])).to eq(
           new_feature: 'on', foo: SplitIoClient::Engine::Models::Treatment::CONTROL
         )
-        impressions = subject.instance_variable_get(:@impressions_repository).get_batch
+        impressions = subject.instance_variable_get(:@impressions_repository).batch
         expect(ImpressionsFormatter
           .new(subject.instance_variable_get(:@impressions_repository))
           .call(impressions)
@@ -278,9 +247,9 @@ describe SplitIoClient, type: :client do
         key = { bucketing_key: 'bucketing_key', matching_key: 'fake_user_id_1' }
 
         expect(subject.get_treatment(key, 'new_feature')).to eq 'on'
-        impressions = subject.instance_variable_get(:@impressions_repository).get_batch
+        impressions = subject.instance_variable_get(:@impressions_repository).batch
 
-        expect(impressions.first[:impressions]['keyName']).to eq('fake_user_id_1')
+        expect(impressions.first[:i][:k]).to eq('fake_user_id_1')
       end
 
       it 'validates the feature by bucketing_key for nil matching_key' do
@@ -293,9 +262,9 @@ describe SplitIoClient, type: :client do
         key = { bucketing_key: 'bucketing_key', matching_key: 222 }
 
         expect(subject.get_treatment(key, 'new_feature')).to eq 'on'
-        impressions = subject.instance_variable_get(:@impressions_repository).get_batch
+        impressions = subject.instance_variable_get(:@impressions_repository).batch
 
-        expect(impressions.first[:impressions]['keyName']).to eq('222')
+        expect(impressions.first[:i][:k]).to eq('222')
       end
 
       it 'validates the feature returns default treatment for non matching ids' do
@@ -309,13 +278,9 @@ describe SplitIoClient, type: :client do
 
     context 'get_treatments in segment matcher' do
       before do
-        stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
-          .to_return(status: 200, body: segment_matcher2_json)
-      end
+        load_segments(segments_json)
 
-      before do
-        stub_request(:get, 'https://sdk.split.io/api/segmentChanges/demo?since=-1')
-          .to_return(status: 200, body: segments_json)
+        load_splits(segment_matcher2_json)
       end
 
       it 'validates the feature is on for all ids' do
@@ -334,9 +299,9 @@ describe SplitIoClient, type: :client do
           new_feature: 'on',
           new_feature2: 'on'
         )
-        impressions = subject.instance_variable_get(:@adapter).impressions_repository.get_batch
+        impressions = subject.instance_variable_get(:@adapter).impressions_repository.batch
 
-        expect(impressions.first[:impressions]['keyName']).to eq('fake_user_id_1')
+        expect(impressions.first[:i][:k]).to eq('fake_user_id_1')
       end
 
       it 'validates the feature by bucketing_key for nil matching_key' do
@@ -357,8 +322,7 @@ describe SplitIoClient, type: :client do
 
     context 'whitelist matcher' do
       before do
-        stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
-          .to_return(status: 200, body: whitelist_matcher_json)
+        load_splits(whitelist_matcher_json)
       end
 
       it 'validates the feature is on for all ids' do
@@ -372,8 +336,7 @@ describe SplitIoClient, type: :client do
 
     context 'dependency matcher' do
       before do
-        stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
-          .to_return(status: 200, body: dependency_matcher_json)
+        load_splits(dependency_matcher_json)
       end
 
       it 'returns on treatment' do
@@ -382,7 +345,7 @@ describe SplitIoClient, type: :client do
 
       it 'produces only 1 impression' do
         expect(subject.get_treatment('fake_user_id_1', 'test_dependency')).to eq 'on'
-        impressions = subject.instance_variable_get(:@impressions_repository).get_batch
+        impressions = subject.instance_variable_get(:@impressions_repository).batch
 
         expect(impressions.size).to eq(1)
       end
@@ -390,8 +353,7 @@ describe SplitIoClient, type: :client do
 
     context 'killed feature' do
       before do
-        stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
-          .to_return(status: 200, body: killed_json)
+        load_splits(killed_json)
       end
 
       it 'returns default treatment for killed splits' do
@@ -403,13 +365,9 @@ describe SplitIoClient, type: :client do
 
     context 'deleted segment' do
       before do
-        stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
-          .to_return(status: 200, body: segment_deleted_matcher_json)
-      end
+        load_segments(segments_json)
 
-      before do
-        stub_request(:get, 'https://sdk.split.io/api/segmentChanges/demo?since=-1')
-          .to_return(status: 200, body: segments_json)
+        load_splits(segment_deleted_matcher_json)
       end
 
       it 'returns control for deleted splits' do
@@ -451,7 +409,7 @@ describe SplitIoClient, type: :client do
     end
 
     describe 'impressions' do
-      let(:impressions) { subject.instance_variable_get(:@impressions_repository).get_batch }
+      let(:impressions) { subject.instance_variable_get(:@impressions_repository).batch }
       let(:formatted_impressions) do
         SplitIoClient::Cache::Senders::ImpressionsSender
           .new(nil, nil)
@@ -459,8 +417,7 @@ describe SplitIoClient, type: :client do
       end
 
       before do
-        stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
-          .to_return(status: 200, body: impressions_test_json)
+        load_splits(impressions_test_json)
       end
 
       it 'returns correct impressions for get_treatments' do
@@ -485,13 +442,16 @@ describe SplitIoClient, type: :client do
       context 'when impressions are disabled' do
         subject do
           SplitIoClient.configuration = nil
+          mode = cache_adapter.equal?(:memory) ? :standalone : :consumer
+
           SplitIoClient::SplitFactory.new('',
                                           logger: Logger.new('/dev/null'),
                                           cache_adapter: cache_adapter,
                                           redis_namespace: 'test',
-                                          impressions_queue_size: -1).client
+                                          impressions_queue_size: -1,
+                                          mode: mode).client
         end
-        let(:impressions) { subject.instance_variable_get(:@impressions_repository).get_batch }
+        let(:impressions) { subject.instance_variable_get(:@impressions_repository).batch }
 
         it 'works when impressions are disabled for get_treatments' do
           expect(subject.get_treatments('21', %w[sample_feature beta_feature])).to eq(
@@ -511,8 +471,7 @@ describe SplitIoClient, type: :client do
 
       context 'traffic allocations' do
         before do
-          stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
-            .to_return(status: 200, body: traffic_allocation_json)
+          load_splits(traffic_allocation_json)
         end
 
         it 'returns expected treatment' do
@@ -536,17 +495,26 @@ describe SplitIoClient, type: :client do
         it 'returns "not in split" label' do
           subject.get_treatment('test', 'Traffic_Allocation_UI2')
           impressions_repository = subject.instance_variable_get(:@impressions_repository)
-
-          expect(impressions_repository.get_batch[0][:impressions]['label'])
+          expect(impressions_repository.batch[0][:i][:r])
             .to eq(SplitIoClient::Engine::Models::Label::NOT_IN_SPLIT)
         end
       end
     end
 
+    context 'traffic allocation one percent' do
+      before do
+        load_splits(traffic_allocation_one_percent_json)
+      end
+
+      it 'returns expected treatment' do
+        allow_any_instance_of(SplitIoClient::Splitter).to receive(:bucket).and_return(1)
+        expect(subject.get_treatment('test', 'Traffic_Allocation_One_Percent')).to eq('on')
+      end
+    end
+
     describe 'client destroy' do
       before do
-        stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
-          .to_return(status: 200, body: all_keys_matcher_json)
+        load_splits(all_keys_matcher_json)
       end
 
       it 'returns control' do
@@ -690,6 +658,54 @@ describe SplitIoClient, type: :client do
       end
     end
   end
+
+  context 'SDK modes' do
+    let(:all_keys_matcher_json) do
+      File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/engine/all_keys_matcher.json'))
+    end
+
+    before do
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+        .to_return(status: 200, body: all_keys_matcher_json)
+    end
+
+    context 'standalone mode' do
+      subject do
+        SplitIoClient.configuration = nil
+        SplitIoClient::SplitFactory.new('',
+                                        logger: Logger.new('/dev/null'),
+                                        cache_adapter: :memory,
+                                        mode: :standalone).client
+      end
+
+      it 'stores splits' do
+        expect(subject.instance_variable_get(:@adapter).splits_repository.splits.size).to eq(1)
+      end
+    end
+
+    context 'consumer mode' do
+      before :each do
+        Redis.new.flushall
+      end
+
+      after :each do
+        Redis.new.flushall
+      end
+
+      subject do
+        SplitIoClient.configuration = nil
+        SplitIoClient::SplitFactory.new('',
+                                        logger: Logger.new('/dev/null'),
+                                        cache_adapter: :redis,
+                                        redis_namespace: 'test',
+                                        mode: :consumer).client
+      end
+
+      it 'does not store splits' do
+        expect(subject.instance_variable_get(:@adapter).splits_repository.splits.size).to eq(0)
+      end
+    end
+  end
 end
 
 describe SplitIoClient do
@@ -698,4 +714,40 @@ end
 
 describe SplitIoClient do
   include_examples 'engine specs', :redis
+end
+
+private
+
+def load_splits(splits_json)
+  if @mode.equal?(:standalone)
+    stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+      .to_return(status: 200, body: splits_json)
+  else
+    add_splits_to_repository(splits_json)
+  end
+end
+
+def load_segments(segments_json)
+  if @mode.equal?(:standalone)
+    stub_request(:get, 'https://sdk.split.io/api/segmentChanges/demo?since=-1')
+      .to_return(status: 200, body: segments_json)
+  else
+    add_segments_to_repository(segments_json)
+  end
+end
+
+def add_splits_to_repository(splits_json)
+  splits = JSON.parse(splits_json, symbolize_names: true)[:splits]
+
+  splits_repository = subject.instance_variable_get(:@splits_repository)
+
+  splits.each do |split|
+    splits_repository.add_split(split)
+  end
+end
+
+def add_segments_to_repository(segments_json)
+  segments_repository = subject.instance_variable_get(:@segments_repository)
+
+  segments_repository.add_to_segment(JSON.parse(segments_json, symbolize_names: true))
 end

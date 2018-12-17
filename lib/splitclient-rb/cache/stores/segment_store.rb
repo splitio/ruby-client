@@ -73,7 +73,7 @@ module SplitIoClient
         end
 
         def segments_api
-          SplitIoClient::Api::Segments.new(@api_key, @metrics, @segments_repository)
+          @segments_api ||= SplitIoClient::Api::Segments.new(@api_key, @metrics, @segments_repository)
         end
       end
     end

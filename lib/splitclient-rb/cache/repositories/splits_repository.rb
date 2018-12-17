@@ -7,7 +7,12 @@ module SplitIoClient
         attr_reader :adapter
 
         def initialize(adapter)
-          @adapter = adapter
+          @adapter = case adapter.class.to_s
+          when 'SplitIoClient::Cache::Adapters::RedisAdapter'
+            SplitIoClient::Cache::Adapters::CacheAdapter.new(adapter)
+          else
+            adapter
+          end
           unless SplitIoClient.configuration.mode == :consumer
             @adapter.set_string(namespace_key('.splits.till'), '-1')
             @adapter.initialize_map(namespace_key('.segments.registered'))

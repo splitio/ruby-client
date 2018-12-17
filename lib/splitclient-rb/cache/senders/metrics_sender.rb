@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module SplitIoClient
   module Cache
     module Senders
@@ -34,13 +36,13 @@ module SplitIoClient
         end
 
         def post_metrics
-          metrics_client.post
+          metrics_api.post
         rescue StandardError => error
           SplitIoClient.configuration.log_found_exception(__method__.to_s, error)
         end
 
-        def metrics_client
-          SplitIoClient::Api::Metrics.new(@api_key, @metrics_repository)
+        def metrics_api
+          @metrics_api ||= SplitIoClient::Api::Metrics.new(@api_key, @metrics_repository)
         end
       end
     end

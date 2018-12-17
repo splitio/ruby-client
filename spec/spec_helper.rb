@@ -4,6 +4,7 @@ require 'splitclient-rb'
 require 'concurrent'
 require 'simplecov'
 require 'redis_helper'
+require 'timecop'
 require 'pry'
 SimpleCov.start
 

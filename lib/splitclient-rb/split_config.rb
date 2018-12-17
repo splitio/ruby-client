@@ -33,6 +33,8 @@ module SplitIoClient
     # @option opts [Int] :impressions_queue_size Size of the impressions queue in the memory repository. Once reached, newer impressions will be dropped
     # @option opts [Int] :impressions_bulk_size Max number of impressions to be sent to the backend on each post
     # @option opts [#log] :impression_listener this object will capture all impressions and process them through `#log`
+    # @option opts [Int] :cache_ttl Time to live in seconds for the memory cache values when using Redis.
+    # @option opts [Int] :max_cache_size Max number of items to be held in the memory cache before prunning when using Redis.
     # @return [type] SplitConfig with configuration options
     def initialize(opts = {})
       @base_uri = (opts[:base_uri] || SplitConfig.default_base_uri).chomp('/')
@@ -70,6 +72,9 @@ module SplitIoClient
       @machine_name = opts[:machine_name] || SplitConfig.machine_hostname
       @machine_ip = opts[:machine_ip] || SplitConfig.machine_ip
 
+      @cache_ttl = opts[:cache_ttl] || SplitConfig.cache_ttl
+      @max_cache_size = opts[:max_cache_size] || SplitConfig.max_cache_size
+
       @language = opts[:language] || 'ruby'
       @version = opts[:version] || SplitIoClient::VERSION
 
@@ -104,7 +109,7 @@ module SplitIoClient
     #
     # The mode SDK will run
     #
-    # @return [Symbol] One of the available SDK modes: standalone, consumer, producer
+    # @return [Symbol] One of the available SDK modes: standalone, consumer
     attr_accessor :mode
 
     # The read timeout for network connections in seconds.
@@ -175,6 +180,9 @@ module SplitIoClient
 
     attr_accessor :machine_ip
     attr_accessor :machine_name
+
+    attr_accessor :cache_ttl
+    attr_accessor :max_cache_size
 
     attr_accessor :language
     attr_accessor :version
@@ -355,6 +363,21 @@ module SplitIoClient
     # @return [boolean]
     def self.transport_debug
       false
+    end
+
+    #
+    # The default cache time to live
+    #
+    # @return [boolean]
+    def self.cache_ttl
+      5
+    end
+
+    # The default max cache size
+    #
+    # @return [boolean]
+    def self.max_cache_size
+      500
     end
 
     #

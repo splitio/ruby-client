@@ -1,3 +1,8 @@
+6.0.0
+Remove producer mode, make memory adapter mandatory in standalone mode, and Redis adapter mandatory in consumer mode. This is a breaking change.
+Reduce the total number of Redis operations of the SDK by changing the impressions storage format and adding a memory cache for splits and segments.
+SDK is now compatible with net-http-persistent 3.0.
+
 5.1.2
 
 Add input validation for client API methods: get_treatment, get_treatments, track, manager
