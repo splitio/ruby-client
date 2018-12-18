@@ -11,9 +11,14 @@ module SplitIoClient
     def match?(args)
       @local_set = local_set(args[:attributes], @attribute)
 
-      return false if @local_set.empty?
+      if @local_set.empty?
+        SplitLogger.log_if_debug("[PartOfSetMatcher] Local Set is empty.");
+        return false
+      end
 
-      @local_set.subset? @remote_set
+      matches = @local_set.subset? @remote_set
+      SplitLogger.log_if_debug("[PartOfSetMatcher] LocalSet #{@local_set} is a subset of #{@remote_set} -> #{matches}");
+      matches
     end
 
     def string_type?

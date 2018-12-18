@@ -16,7 +16,9 @@ module SplitIoClient
     #
     # @return [boolean] evaluation of the negation matcher
     def match?(args)
-      !@matcher.match?(args)
+      matches = !@matcher.match?(args)
+      SplitLogger.log_if_debug("[NegationMatcherMatcher] Matcher #{@matcher} Arguments #{args} -> #{matches}");
+      matches
     end
 
     def respond_to?(method)

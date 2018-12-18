@@ -13,10 +13,16 @@ module SplitIoClient
       value = args[:value] || args[:attributes].fetch(@attribute) do |a|
         args[:attributes][a.to_s] || args[:attributes][a.to_sym]
       end
+      SplitLogger.log_if_debug("[EndsWithMatcher] Value from parameters: #{value}.");
 
-      return false if @suffix_list.empty?
+      if @suffix_list.empty?
+        SplitLogger.log_if_debug("[EndsWithMatcher] Sufix List empty.");
+        return false
+      end
 
-      @suffix_list.any? { |suffix| value.to_s.end_with? suffix }
+      matches = @suffix_list.any? { |suffix| value.to_s.end_with? suffix }
+      SplitLogger.log_if_debug("[EndsWithMatcher] #{value} ends with any #{@suffix_list}");
+      matches
     end
 
     def string_type?

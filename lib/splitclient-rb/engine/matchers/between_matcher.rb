@@ -12,14 +12,19 @@ module SplitIoClient
     end
 
     def match?(args)
+      SplitLogger.log_if_debug("[BetweenMatcher] evaluating value and attributes.");
       return false if !args.key?(:attributes) && !args.key?(:value)
       return false if args.key?(:value) && args[:value].nil?
       return false if args.key?(:attributes) && args[:attributes].nil?
 
       value = formatted_value(args[:value] || args[:attributes][@attribute.to_sym])
+      SplitLogger.log_if_debug("[BetweenMatcher] Value from parameters: #{value}.");
       return false unless value.is_a?(Integer)
 
-      (@start_value..@end_value).include? value
+      matches = (@start_value..@end_value).include? value
+      SplitLogger.log_if_debug("[BetweenMatcher] is #{value} between #{@start_value} and #{@end_value} -> #{matches} .");
+
+      matches
     end
 
     def equals?(obj)

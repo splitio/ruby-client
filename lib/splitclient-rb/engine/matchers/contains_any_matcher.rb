@@ -9,7 +9,9 @@ module SplitIoClient
     end
 
     def match?(args)
-      local_set(args[:attributes], @attribute).intersect? @remote_set
+      matches = local_set(args[:attributes], @attribute).intersect? @remote_set
+      SplitLogger.log_if_debug("[ContainsAnyMatcher] Remote Set #{@remote_set} contains any #{@attribute} or #{args[:attributes]}-> #{matches}");
+      return matches
     end
 
     def string_type?

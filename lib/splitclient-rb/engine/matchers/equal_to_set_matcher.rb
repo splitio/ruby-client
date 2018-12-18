@@ -9,7 +9,10 @@ module SplitIoClient
     end
 
     def match?(args)
-      local_set(args[:attributes], @attribute) == @remote_set
+      set = local_set(args[:attributes], @attribute)
+      matches = set == @remote_set
+      SplitLogger.log_if_debug("[EqualsToSetMatcher] #{set} equals to #{@remote_set} -> #{matches}");
+      matches
     end
 
     def string_type?

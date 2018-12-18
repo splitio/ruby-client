@@ -20,12 +20,18 @@ module SplitIoClient
     #
     # @return [boolean]
     def match?(args)
-      return false if @matchers.empty?
+      if @matchers.empty?
+        SplitLogger.log_if_debug("[CombiningMatcher] Matchers Empty");
+        return false
+      end
 
       case @combiner
       when Combiners::AND
-        return eval_and(args)
+        matches = eval_and(args)
+        SplitLogger.log_if_debug("[CombiningMatcher] Combiner AND result -> #{matches}");
+        return matches
       else
+        SplitLogger.log_if_debug("[CombiningMatcher] Invalid Combiner Type - Combiner -> #{@combiner}")
         @logger.error('Invalid combiner type')
       end
 

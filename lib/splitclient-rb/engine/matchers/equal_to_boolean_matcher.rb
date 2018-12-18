@@ -17,7 +17,9 @@ module SplitIoClient
       value = false if value.to_s.downcase == 'false'
       value = true if value.to_s.downcase == 'true'
 
-      value == @boolean
+      matches = value == @boolean
+      SplitLogger.log_if_debug("[EqualToBooleanMatcher] #{value} equals to #{@boolean} -> #{matches}");
+      matches
     end
 
     def string_type?

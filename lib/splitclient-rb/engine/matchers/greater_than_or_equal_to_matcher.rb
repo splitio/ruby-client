@@ -11,13 +11,16 @@ module SplitIoClient
     end
 
     def match?(args)
+      SplitLogger.log_if_debug("[GreaterThanOrEqualToMatcher] evaluating value and attributes.");
       return false if !args.key?(:attributes) && !args.key?(:value)
       return false if args.key?(:value) && args[:value].nil?
       return false if args.key?(:attributes) && args[:attributes].nil?
 
       value = formatted_value(args[:value] || args[:attributes][@attribute.to_sym])
 
-      value.is_a?(Integer) ? (value >= @value) : false
+      matches = value.is_a?(Integer) ? (value >= @value) : false
+      SplitLogger.log_if_debug("[GreaterThanOrEqualToMatcher] #{value} greater than or equal to #{@value} -> #{matches}");
+      matches
     end
 
     def equals?(obj)
