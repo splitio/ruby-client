@@ -22,15 +22,20 @@ module SplitIoClient
     end
 
     def match?(args)
-      return @whitelist.include?(args[:value] || args[:matching_key]) unless @matcher_type == 'ATTR_WHITELIST'
+      unless @matcher_type == 'ATTR_WHITELIST'
+        matches = @whitelist.include?(args[:value] || args[:matching_key])
+        SplitLogger.log_if_debug("[WhitelistMatcher] #{@whitelist} include #{args[:value] || args[:matching_key]} -> #{matches}");
+        return matches
+      end
 
+      SplitLogger.log_if_debug("[WhitelistMatcher] evaluating value and attributes.");
       return false if !args.key?(:attributes) && !args.key?(:value)
       return false if args.key?(:value) && args[:value].nil?
       return false if args.key?(:attributes) && args[:attributes].nil?
 
-      return @whitelist.include?(args[:value] || args[:attributes][@attribute.to_sym])
-
-      false
+      matches = @whitelist.include?(args[:value] || args[:attributes][@attribute.to_sym])
+      SplitLogger.log_if_debug("[WhitelistMatcher] #{@whitelist} include #{args[:value] || args[:attributes][@attribute.to_sym]} -> #{matches}");
+      return matches
     end
 
     #

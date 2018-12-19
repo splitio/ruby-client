@@ -7,7 +7,7 @@ module SplitIoClient
 
       def post(events)
         if events.empty?
-          SplitIoClient.configuration.logger.debug('No events to report') if SplitIoClient.configuration.debug_enabled
+          SplitLogger.log_if_debug('No events to report');
           return
         end
 

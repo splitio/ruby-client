@@ -15,7 +15,7 @@ module SplitIoClient
 
       def post_latencies
         if @metrics_repository.latencies.empty?
-          SplitIoClient.configuration.logger.debug('No latencies to report.') if SplitIoClient.configuration.debug_enabled
+          SplitLogger.log_if_debug('No latencies to report.');
         else
           @metrics_repository.latencies.each do |name, latencies|
             metrics_time = { name: name, latencies: latencies }
@@ -31,7 +31,7 @@ module SplitIoClient
 
       def post_counts
         if @metrics_repository.counts.empty?
-          SplitIoClient.configuration.logger.debug('No counts to report.') if SplitIoClient.configuration.debug_enabled
+          SplitLogger.log_if_debug('No counts to report.');
         else
           @metrics_repository.counts.each do |name, count|
             metrics_count = { name: name, delta: count }

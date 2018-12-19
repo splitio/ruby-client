@@ -17,7 +17,7 @@ module SplitIoClient
       end
 
       matches = @local_set.subset? @remote_set
-      SplitLogger.log_if_debug("[PartOfSetMatcher] LocalSet #{@local_set} is a subset of #{@remote_set} -> #{matches}");
+      SplitLogger.log_if_debug("[PartOfSetMatcher] Local Set #{@local_set} is a subset of #{@remote_set} -> #{matches}");
       matches
     end
 

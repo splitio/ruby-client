@@ -17,7 +17,9 @@ module SplitIoClient
     #
     # @return [boolean] evaluation of the key against the segment
     def match?(args)
-      @segments_repository.in_segment?(@segment_name, args[:value] || args[:matching_key])
+      matches = @segments_repository.in_segment?(@segment_name, args[:value] || args[:matching_key])
+      SplitLogger.log_if_debug("[InSegmentMatcher] #{@segment_name} is in segment -> #{matches}");
+      matches
     end
 
     #

@@ -7,7 +7,7 @@ module SplitIoClient
 
       def post(impressions)
         if impressions.empty?
-          SplitIoClient.configuration.logger.debug('No impressions to report') if SplitIoClient.configuration.debug_enabled
+          SplitLogger.log_if_debug('No impressions to report');
           return
         end
 
