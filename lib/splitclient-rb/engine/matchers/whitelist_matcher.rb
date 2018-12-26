@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module SplitIoClient
   #
   # class to implement the user defined matcher
@@ -9,33 +11,35 @@ module SplitIoClient
 
     def initialize(whitelist_data)
       @whitelist = case whitelist_data
-      when Array
-        whitelist_data
-      when Hash
-        @matcher_type = 'ATTR_WHITELIST'
-        @attribute = whitelist_data[:attribute]
+                   when Array
+                     whitelist_data
+                   when Hash
+                     @matcher_type = 'ATTR_WHITELIST'
+                     @attribute = whitelist_data[:attribute]
 
-        whitelist_data[:value]
-      else
-        []
-      end
+                     whitelist_data[:value]
+                   else
+                     []
+                   end
     end
 
     def match?(args)
       unless @matcher_type == 'ATTR_WHITELIST'
         matches = @whitelist.include?(args[:value] || args[:matching_key])
-        SplitLogger.log_if_debug("[WhitelistMatcher] #{@whitelist} include #{args[:value] || args[:matching_key]} -> #{matches}");
+        SplitLogger.log_if_debug("[WhitelistMatcher] #{@whitelist} include \
+          #{args[:value] || args[:matching_key]} -> #{matches}")
         return matches
       end
 
-      SplitLogger.log_if_debug("[WhitelistMatcher] evaluating value and attributes.");
+      SplitLogger.log_if_debug('[WhitelistMatcher] evaluating value and attributes.')
       return false if !args.key?(:attributes) && !args.key?(:value)
       return false if args.key?(:value) && args[:value].nil?
       return false if args.key?(:attributes) && args[:attributes].nil?
 
       matches = @whitelist.include?(args[:value] || args[:attributes][@attribute.to_sym])
-      SplitLogger.log_if_debug("[WhitelistMatcher] #{@whitelist} include #{args[:value] || args[:attributes][@attribute.to_sym]} -> #{matches}");
-      return matches
+      SplitLogger.log_if_debug("[WhitelistMatcher] #{@whitelist} include \
+        #{args[:value] || args[:attributes][@attribute.to_sym]} -> #{matches}")
+      matches
     end
 
     #
@@ -49,7 +53,7 @@ module SplitIoClient
         false
       elsif !obj.instance_of?(WhitelistMatcher)
         false
-      elsif self.equal?(obj)
+      elsif equal?(obj)
         true
       else
         false

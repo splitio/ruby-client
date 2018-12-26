@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 module SplitIoClient
   class GreaterThanOrEqualToMatcher
-    MATCHER_TYPE = 'GREATER_THAN_OR_EQUAL_TO'.freeze
+    MATCHER_TYPE = 'GREATER_THAN_OR_EQUAL_TO'
 
     attr_reader :attribute
 
@@ -11,7 +13,7 @@ module SplitIoClient
     end
 
     def match?(args)
-      SplitLogger.log_if_debug("[GreaterThanOrEqualToMatcher] evaluating value and attributes.");
+      SplitLogger.log_if_debug('[GreaterThanOrEqualToMatcher] evaluating value and attributes.')
       return false if !args.key?(:attributes) && !args.key?(:value)
       return false if args.key?(:value) && args[:value].nil?
       return false if args.key?(:attributes) && args[:attributes].nil?
@@ -19,7 +21,7 @@ module SplitIoClient
       value = formatted_value(args[:value] || args[:attributes][@attribute.to_sym])
 
       matches = value.is_a?(Integer) ? (value >= @value) : false
-      SplitLogger.log_if_debug("[GreaterThanOrEqualToMatcher] #{value} greater than or equal to #{@value} -> #{matches}");
+      SplitLogger.log_if_debug("[GreaterThanOrEqualToMatcher] #{value} greater than or equal to #{@value} -> #{matches}")
       matches
     end
 
@@ -28,7 +30,7 @@ module SplitIoClient
         false
       elsif !obj.instance_of?(GreaterThanOrEqualToMatcher)
         false
-      elsif self.equal?(obj)
+      elsif equal?(obj)
         true
       else
         false
@@ -44,10 +46,10 @@ module SplitIoClient
     def formatted_value(value, sdk_data = false)
       case @data_type
       when 'NUMBER'
-        return value
+        value
       when 'DATETIME'
-        value = value / 1000 if sdk_data # sdk returns already miliseconds, turning to seconds to do a correct zero_our
-        return SplitIoClient::Utilities.to_milis_zero_out_from_seconds(value)
+        value /= 1000 if sdk_data # sdk returns already miliseconds, turning to seconds to do a correct zero_our
+        SplitIoClient::Utilities.to_milis_zero_out_from_seconds(value)
       else
         @logger.error('Invalid data type')
       end

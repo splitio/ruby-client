@@ -1,16 +1,18 @@
+# frozen_string_literal: true
+
 module SplitIoClient
   #
   # class to implement the all keys matcher
   #
   class AllKeysMatcher
-    MATCHER_TYPE = 'ALL_KEYS'.freeze
+    MATCHER_TYPE = 'ALL_KEYS'
 
     #
     # evaluates if the key matches the matcher
     #
     # @return [boolean] true for all instances
     def match?(_args)
-      SplitLogger.log_if_debug("[AllKeysMatcher] is always -> true");
+      SplitLogger.log_if_debug('[AllKeysMatcher] is always -> true')
       true
     end
 

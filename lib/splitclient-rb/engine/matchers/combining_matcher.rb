@@ -1,9 +1,11 @@
+# frozen_string_literal: true
+
 module SplitIoClient
   #
   # class to implement the combining matcher
   #
   class CombiningMatcher
-    MATCHER_TYPE = 'COMBINING_MATCHER'.freeze
+    MATCHER_TYPE = 'COMBINING_MATCHER'
 
     def initialize(combiner = '', matchers = [])
       @combiner = combiner
@@ -21,14 +23,14 @@ module SplitIoClient
     # @return [boolean]
     def match?(args)
       if @matchers.empty?
-        SplitLogger.log_if_debug("[CombiningMatcher] Matchers Empty");
+        SplitLogger.log_if_debug('[CombiningMatcher] Matchers Empty')
         return false
       end
 
       case @combiner
       when Combiners::AND
         matches = eval_and(args)
-        SplitLogger.log_if_debug("[CombiningMatcher] Combiner AND result -> #{matches}");
+        SplitLogger.log_if_debug("[CombiningMatcher] Combiner AND result -> #{matches}")
         return matches
       else
         SplitLogger.log_if_debug("[CombiningMatcher] Invalid Combiner Type - Combiner -> #{@combiner}")
@@ -49,7 +51,9 @@ module SplitIoClient
     # @return [boolean] match value for combiner delegates
     def eval_and(args)
       # Convert all keys to symbols
-      args[:attributes] = args[:attributes].inject({}){ |memo, (k,v)| memo[k.to_sym] = v; memo } if args && args[:attributes]
+      if args && args[:attributes]
+        args[:attributes] = args[:attributes].each_with_object({}) { |(k, v), memo| memo[k.to_sym] = v }
+      end
       @matchers.all? do |matcher|
         if match_with_key?(matcher)
           matcher.match?(value: args[:matching_key])
@@ -74,7 +78,7 @@ module SplitIoClient
         false
       elsif !obj.instance_of?(CombiningMatcher)
         false
-      elsif self.equal?(obj)
+      elsif equal?(obj)
         true
       else
         false

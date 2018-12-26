@@ -1,9 +1,11 @@
+# frozen_string_literal: true
+
 module SplitIoClient
   #
   # class to implement the user defined matcher
   #
   class UserDefinedSegmentMatcher
-    MATCHER_TYPE = 'IN_SEGMENT'.freeze
+    MATCHER_TYPE = 'IN_SEGMENT'
 
     def initialize(segments_repository, segment_name)
       @segments_repository = segments_repository
@@ -18,7 +20,7 @@ module SplitIoClient
     # @return [boolean] evaluation of the key against the segment
     def match?(args)
       matches = @segments_repository.in_segment?(@segment_name, args[:value] || args[:matching_key])
-      SplitLogger.log_if_debug("[InSegmentMatcher] #{@segment_name} is in segment -> #{matches}");
+      SplitLogger.log_if_debug("[InSegmentMatcher] #{@segment_name} is in segment -> #{matches}")
       matches
     end
 
@@ -33,7 +35,7 @@ module SplitIoClient
         false
       elsif !obj.instance_of?(UserDefinedSegmentMatcher)
         false
-      elsif self.equal?(obj)
+      elsif equal?(obj)
         true
       else
         false

@@ -1,9 +1,11 @@
+# frozen_string_literal: true
+
 module SplitIoClient
   #
   # class to implement the negation of a matcher
   #
   class NegationMatcher
-    MATCHER_TYPE = 'NEGATION_MATCHER'.freeze
+    MATCHER_TYPE = 'NEGATION_MATCHER'
 
     def initialize(matcher = nil)
       @matcher = matcher
@@ -17,7 +19,7 @@ module SplitIoClient
     # @return [boolean] evaluation of the negation matcher
     def match?(args)
       matches = !@matcher.match?(args)
-      SplitLogger.log_if_debug("[NegationMatcherMatcher] Matcher #{@matcher} Arguments #{args} -> #{matches}");
+      SplitLogger.log_if_debug("[NegationMatcherMatcher] Matcher #{@matcher} Arguments #{args} -> #{matches}")
       matches
     end
 
@@ -44,7 +46,7 @@ module SplitIoClient
         false
       elsif !obj.instance_of?(NegationMatcher)
         false
-      elsif self.equal?(obj)
+      elsif equal?(obj)
         true
       else
         false

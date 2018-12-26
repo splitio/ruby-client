@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 module SplitIoClient
   class EqualToBooleanMatcher
-    MATCHER_TYPE = 'EQUAL_TO_BOOLEAN'.freeze
+    MATCHER_TYPE = 'EQUAL_TO_BOOLEAN'
 
     attr_reader :attribute
 
@@ -14,11 +16,11 @@ module SplitIoClient
         args[:attributes][a.to_s] || args[:attributes][a.to_sym]
       end
 
-      value = false if value.to_s.downcase == 'false'
-      value = true if value.to_s.downcase == 'true'
+      value = false if value.to_s.casecmp('false').zero?
+      value = true if value.to_s.casecmp('true').zero?
 
       matches = value == @boolean
-      SplitLogger.log_if_debug("[EqualToBooleanMatcher] #{value} equals to #{@boolean} -> #{matches}");
+      SplitLogger.log_if_debug("[EqualToBooleanMatcher] #{value} equals to #{@boolean} -> #{matches}")
       matches
     end
 
