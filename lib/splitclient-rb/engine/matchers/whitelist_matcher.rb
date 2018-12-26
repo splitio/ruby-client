@@ -32,9 +32,8 @@ module SplitIoClient
       end
 
       SplitLogger.log_if_debug('[WhitelistMatcher] evaluating value and attributes.')
-      return false if !args.key?(:attributes) && !args.key?(:value)
-      return false if args.key?(:value) && args[:value].nil?
-      return false if args.key?(:attributes) && args[:attributes].nil?
+
+      return false unless SplitIoClient::Validators.valid_matcher_arguments(args)
 
       matches = @whitelist.include?(args[:value] || args[:attributes][@attribute.to_sym])
       SplitLogger.log_if_debug("[WhitelistMatcher] #{@whitelist} include \
@@ -47,7 +46,7 @@ module SplitIoClient
     #
     # @param obj [object] object to be evaluated
     #
-    # @returns [boolean] true if obj equals the matcher
+    # @return [boolean] true if obj equals the matcher
     def equals?(obj)
       if obj.nil?
         false
@@ -67,7 +66,7 @@ module SplitIoClient
     #
     # function to print string value for this matcher
     #
-    # @reutrn [string] string value of this matcher
+    # @return [string] string value of this matcher
     def to_s
       "in segment #{@whitelist}"
     end

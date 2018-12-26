@@ -41,7 +41,7 @@ module SplitIoClient
     #
     # function to print string value for this matcher
     #
-    # @reutrn [string] string value of this matcher
+    # @return [string] string value of this matcher
     def to_s
       'in segment all'
     end

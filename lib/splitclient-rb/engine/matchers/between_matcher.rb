@@ -15,9 +15,8 @@ module SplitIoClient
 
     def match?(args)
       SplitLogger.log_if_debug('[BetweenMatcher] evaluating value and attributes.')
-      return false if !args.key?(:attributes) && !args.key?(:value)
-      return false if args.key?(:value) && args[:value].nil?
-      return false if args.key?(:attributes) && args[:attributes].nil?
+
+      return false unless SplitIoClient::Validators.valid_matcher_arguments(args)
 
       value = formatted_value(args[:value] || args[:attributes][@attribute.to_sym])
       SplitLogger.log_if_debug("[BetweenMatcher] Value from parameters: #{value}.")

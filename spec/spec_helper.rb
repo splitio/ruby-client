@@ -1,12 +1,11 @@
 # frozen_string_literal: true
 
+require 'simplecov'
 require 'splitclient-rb'
 require 'concurrent'
-require 'simplecov'
 require 'redis_helper'
 require 'timecop'
 require 'pry'
-SimpleCov.start
 
 require 'webmock/rspec'
 WebMock.disable_net_connect!

@@ -29,7 +29,7 @@ module SplitIoClient
     #
     # @param obj [object] object to be evaluated
     #
-    # @returns [boolean] true if obj equals the matcher
+    # @return [boolean] true if obj equals the matcher
     def equals?(obj)
       if obj.nil?
         false

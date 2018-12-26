@@ -26,6 +26,14 @@ module SplitIoClient
       valid_split_name?(split_name, :split)
     end
 
+
+    def valid_matcher_arguments(args)
+      return false if !args.key?(:attributes) && !args.key?(:value)
+      return false if args.key?(:value) && args[:value].nil?
+      return false if args.key?(:attributes) && args[:attributes].nil?
+      true
+    end
+
     private
 
     def string?(value)

@@ -14,9 +14,8 @@ module SplitIoClient
 
     def match?(args)
       SplitLogger.log_if_debug('[GreaterThanOrEqualToMatcher] evaluating value and attributes.')
-      return false if !args.key?(:attributes) && !args.key?(:value)
-      return false if args.key?(:value) && args[:value].nil?
-      return false if args.key?(:attributes) && args[:attributes].nil?
+
+      return false unless SplitIoClient::Validators.valid_matcher_arguments(args)
 
       value = formatted_value(args[:value] || args[:attributes][@attribute.to_sym])
 
@@ -48,7 +47,7 @@ module SplitIoClient
       when 'NUMBER'
         value
       when 'DATETIME'
-        value /= 1000 if sdk_data # sdk returns already miliseconds, turning to seconds to do a correct zero_our
+        value /= 1000 if sdk_data # sdk returns already miliseconds, turning to seconds to do a correct zero_hour
         SplitIoClient::Utilities.to_milis_zero_out_from_seconds(value)
       else
         @logger.error('Invalid data type')
