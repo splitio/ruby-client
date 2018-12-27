@@ -24,21 +24,13 @@ module SplitIoClient
     end
 
     def match?(args)
-      unless @matcher_type == 'ATTR_WHITELIST'
-        matches = @whitelist.include?(args[:value] || args[:matching_key])
-        SplitLogger.log_if_debug("[WhitelistMatcher] #{@whitelist} include \
-          #{args[:value] || args[:matching_key]} -> #{matches}")
-        return matches
-      end
+      return matches_user_whitelist(args) unless @matcher_type == 'ATTR_WHITELIST'
 
       SplitLogger.log_if_debug('[WhitelistMatcher] evaluating value and attributes.')
 
       return false unless SplitIoClient::Validators.valid_matcher_arguments(args)
 
-      matches = @whitelist.include?(args[:value] || args[:attributes][@attribute.to_sym])
-      SplitLogger.log_if_debug("[WhitelistMatcher] #{@whitelist} include \
-        #{args[:value] || args[:attributes][@attribute.to_sym]} -> #{matches}")
-      matches
+      matches_attr_whitelist(args)
     end
 
     #
@@ -69,6 +61,22 @@ module SplitIoClient
     # @return [string] string value of this matcher
     def to_s
       "in segment #{@whitelist}"
+    end
+
+    private
+
+    def matches_user_whitelist(args)
+      matches = @whitelist.include?(args[:value] || args[:matching_key])
+      SplitLogger.log_if_debug("[WhitelistMatcher] #{@whitelist} include \
+        #{args[:value] || args[:matching_key]} -> #{matches}")
+      matches
+    end
+
+    def matches_attr_whitelist(args)
+      matches = @whitelist.include?(args[:value] || args[:attributes][@attribute.to_sym])
+      SplitLogger.log_if_debug("[WhitelistMatcher] #{@whitelist} include \
+        #{args[:value] || args[:attributes][@attribute.to_sym]} -> #{matches}")
+      matches
     end
   end
 end

@@ -16,9 +16,8 @@ module SplitIoClient
 
       return false unless SplitIoClient::Validators.valid_matcher_arguments(args)
 
-      value = args[:value] || args[:attributes].fetch(@attribute) do |a|
-        args[:attributes][a.to_s] || args[:attributes][a.to_sym]
-      end
+      value = get_value(args)
+
       SplitLogger.log_if_debug("[ContainsMatcher] Value from parameters: #{value}.")
       return false if @substr_list.empty?
 
@@ -29,6 +28,14 @@ module SplitIoClient
 
     def string_type?
       true
+    end
+
+    private
+
+    def get_value(args)
+      args[:value] || args[:attributes].fetch(@attribute) do |a|
+        args[:attributes][a.to_s] || args[:attributes][a.to_sym]
+      end
     end
   end
 end
