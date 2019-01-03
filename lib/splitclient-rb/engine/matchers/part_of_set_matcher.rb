@@ -22,9 +22,5 @@ module SplitIoClient
       SplitLogger.log_if_debug("[PartOfSetMatcher] Local Set #{@local_set} is a subset of #{@remote_set} -> #{matches}")
       matches
     end
-
-    def string_type?
-      false
-    end
   end
 end

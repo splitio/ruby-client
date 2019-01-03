@@ -4,7 +4,7 @@ module SplitIoClient
   #
   # class to implement the combining matcher
   #
-  class CombiningMatcher
+  class CombiningMatcher < Matcher
     MATCHER_TYPE = 'COMBINING_MATCHER'
 
     def initialize(combiner = '', matchers = [])
@@ -65,24 +65,6 @@ module SplitIoClient
 
     def match_with_key?(matcher)
       matcher.respond_to?(:attribute) && matcher.attribute.nil? && matcher.string_type?
-    end
-
-    #
-    # evaluates if the given object equals the matcher
-    #
-    # @param obj [object] object to be evaluated
-    #
-    # @return [boolean] true if obj equals the matcher
-    def equals?(obj)
-      if obj.nil?
-        false
-      elsif !obj.instance_of?(CombiningMatcher)
-        false
-      elsif equal?(obj)
-        true
-      else
-        false
-      end
     end
 
     #

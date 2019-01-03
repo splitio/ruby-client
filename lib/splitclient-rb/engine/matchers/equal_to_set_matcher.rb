@@ -16,9 +16,5 @@ module SplitIoClient
       SplitLogger.log_if_debug("[EqualsToSetMatcher] #{set} equals to #{@remote_set} -> #{matches}")
       matches
     end
-
-    def string_type?
-      false
-    end
   end
 end

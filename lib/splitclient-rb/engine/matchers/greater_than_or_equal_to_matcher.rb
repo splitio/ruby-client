@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module SplitIoClient
-  class GreaterThanOrEqualToMatcher
+  class GreaterThanOrEqualToMatcher < Matcher
     MATCHER_TYPE = 'GREATER_THAN_OR_EQUAL_TO'
 
     attr_reader :attribute
@@ -22,22 +22,6 @@ module SplitIoClient
       matches = value.is_a?(Integer) ? (value >= @value) : false
       SplitLogger.log_if_debug("[GreaterThanOrEqualToMatcher] #{value} greater than or equal to #{@value} -> #{matches}")
       matches
-    end
-
-    def equals?(obj)
-      if obj.nil?
-        false
-      elsif !obj.instance_of?(GreaterThanOrEqualToMatcher)
-        false
-      elsif equal?(obj)
-        true
-      else
-        false
-      end
-    end
-
-    def string_type?
-      false
     end
 
     private

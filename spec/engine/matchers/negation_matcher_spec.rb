@@ -65,6 +65,4 @@ describe SplitIoClient::NegationMatcher do
       expect(described_class.new(SplitIoClient::AllKeysMatcher.new).to_s).to eq 'not in segment all'
     end
   end
-
-  include_examples 'matchers equals spec', described_class.new(SplitIoClient::AllKeysMatcher.new)
 end

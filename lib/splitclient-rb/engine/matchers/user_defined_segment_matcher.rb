@@ -4,7 +4,7 @@ module SplitIoClient
   #
   # class to implement the user defined matcher
   #
-  class UserDefinedSegmentMatcher
+  class UserDefinedSegmentMatcher < Matcher
     MATCHER_TYPE = 'IN_SEGMENT'
 
     def initialize(segments_repository, segment_name)
@@ -22,28 +22,6 @@ module SplitIoClient
       matches = @segments_repository.in_segment?(@segment_name, args[:value] || args[:matching_key])
       SplitLogger.log_if_debug("[InSegmentMatcher] #{@segment_name} is in segment -> #{matches}")
       matches
-    end
-
-    #
-    # evaluates if the given object equals the matcher
-    #
-    # @param obj [object] object to be evaluated
-    #
-    # @return [boolean] true if obj equals the matcher
-    def equals?(obj)
-      if obj.nil?
-        false
-      elsif !obj.instance_of?(UserDefinedSegmentMatcher)
-        false
-      elsif equal?(obj)
-        true
-      else
-        false
-      end
-    end
-
-    def string_type?
-      false
     end
   end
 end

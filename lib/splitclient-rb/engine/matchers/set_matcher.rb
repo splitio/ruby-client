@@ -4,6 +4,11 @@ require 'set'
 
 module SplitIoClient
   class SetMatcher
+
+    def string_type?
+      false
+    end
+    
     protected
 
     def initialize(attribute, remote_array)

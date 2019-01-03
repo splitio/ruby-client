@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module SplitIoClient
-  class EqualToMatcher
+  class EqualToMatcher < Matcher
     MATCHER_TYPE = 'EQUAL_TO'
 
     attr_reader :attribute
@@ -22,22 +22,6 @@ module SplitIoClient
       matches = value.is_a?(Integer) ? (value == @value) : false
       SplitLogger.log_if_debug("[EqualsToMatcher] #{value} equals to #{@value} -> #{matches}")
       matches
-    end
-
-    def equals?(obj)
-      if obj.nil?
-        false
-      elsif !obj.instance_of?(EqualToMatcher)
-        false
-      elsif equal?(obj)
-        true
-      else
-        false
-      end
-    end
-
-    def string_type?
-      false
     end
 
     private

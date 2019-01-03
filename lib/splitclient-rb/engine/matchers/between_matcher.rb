@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module SplitIoClient
-  class BetweenMatcher
+  class BetweenMatcher < Matcher
     MATCHER_TYPE = 'BETWEEN'
 
     attr_reader :attribute
@@ -25,23 +25,7 @@ module SplitIoClient
       matches = (@start_value..@end_value).cover? value
       SplitLogger.log_if_debug("[BetweenMatcher] is #{value} between #{@start_value} and #{@end_value} -> #{matches} .")
       matches
-    end
-
-    def equals?(obj)
-      if obj.nil?
-        false
-      elsif !obj.instance_of?(BetweenMatcher)
-        false
-      elsif equal?(obj)
-        true
-      else
-        false
-      end
-    end
-
-    def string_type?
-      false
-    end
+    end    
 
     private
 

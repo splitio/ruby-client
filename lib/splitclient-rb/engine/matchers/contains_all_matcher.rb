@@ -20,9 +20,5 @@ module SplitIoClient
       SplitLogger.log_if_debug("[ContainsAllMatcher] Remote Set #{@remote_set} contains #{@attribute} -> #{matches}")
       matches
     end
-
-    def string_type?
-      false
-    end
   end
 end

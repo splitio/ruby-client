@@ -4,7 +4,7 @@ module SplitIoClient
   #
   # class to implement the negation of a matcher
   #
-  class NegationMatcher
+  class NegationMatcher < Matcher
     MATCHER_TYPE = 'NEGATION_MATCHER'
 
     def initialize(matcher = nil)
@@ -33,24 +33,6 @@ module SplitIoClient
 
     def string_type?
       @matcher.string_type?
-    end
-
-    #
-    # evaluates if the given object equals the matcher
-    #
-    # @param obj [object] object to be evaluated
-    #
-    # @return [boolean] true if obj equals the matcher
-    def equals?(obj)
-      if obj.nil?
-        false
-      elsif !obj.instance_of?(NegationMatcher)
-        false
-      elsif equal?(obj)
-        true
-      else
-        false
-      end
     end
 
     #

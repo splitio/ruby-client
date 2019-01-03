@@ -34,6 +34,4 @@ describe SplitIoClient::CombiningMatcher do
              )).to eq('V-YZKS')
     end
   end
-
-  include_examples 'matchers equals spec', described_class.new(nil, nil)
 end

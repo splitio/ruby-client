@@ -106,6 +106,4 @@ describe SplitIoClient::LessThanOrEqualToMatcher do
         .to eq 'V1'
     end
   end
-
-  include_examples 'matchers equals spec', described_class.new(attribute: 'foo', data_type: 'NUMBER', value: 0)
 end

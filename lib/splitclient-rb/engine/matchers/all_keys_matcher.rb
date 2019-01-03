@@ -4,7 +4,7 @@ module SplitIoClient
   #
   # class to implement the all keys matcher
   #
-  class AllKeysMatcher
+  class AllKeysMatcher < Matcher
     MATCHER_TYPE = 'ALL_KEYS'
 
     #
@@ -23,19 +23,11 @@ module SplitIoClient
     #
     # @return [boolean] true if obj equals the matcher
     def equals?(obj)
-      if obj.nil?
-        false
-      elsif equal?(obj)
+      if obj.instance_of?(AllKeysMatcher)
         true
-      elsif !obj.instance_of?(AllKeysMatcher)
-        false
       else
-        true
+        super(obj)
       end
-    end
-
-    def string_type?
-      false
     end
 
     #

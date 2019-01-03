@@ -109,7 +109,4 @@ describe SplitIoClient::BetweenMatcher do
                                  start_value: 0, end_value: 10).string_type?).to be false
     end
   end
-
-  include_examples 'matchers equals spec', described_class.new(attribute: 'foo', data_type: 'NUMBER',
-                                                               start_value: 0, end_value: 10)
 end

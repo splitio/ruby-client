@@ -15,5 +15,19 @@ describe SplitIoClient::AllKeysMatcher do
     end
   end
 
-  include_examples 'matchers equals spec', described_class.new
+  context '#equals?' do
+    let(:matcher)  { described_class.new }
+    it 'is equal' do
+      expect(matcher.equals?(matcher)).to be true
+    end
+    it 'is not equal because the object is nil' do
+      expect(matcher.equals?(nil)).to be false
+    end
+    it 'is not equal because other type' do
+      expect(matcher.equals?('string')).to be false
+    end
+    it 'is equal because is other instance but always return true' do
+      expect(matcher.equals?(described_class.new)).to be true
+    end
+  end
 end
