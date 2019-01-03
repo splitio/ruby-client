@@ -102,4 +102,14 @@ describe SplitIoClient::BetweenMatcher do
       expect(subject.get_treatment(user, feature, nil_attributes)).to eq 'default'
     end
   end
+
+  context '#string_type' do
+    it 'is not string type matcher' do
+      expect(described_class.new(attribute: 'foo', data_type: 'NUMBER',
+                                 start_value: 0, end_value: 10).string_type?).to be false
+    end
+  end
+
+  include_examples 'matchers equals spec', described_class.new(attribute: 'foo', data_type: 'NUMBER',
+                                                               start_value: 0, end_value: 10)
 end

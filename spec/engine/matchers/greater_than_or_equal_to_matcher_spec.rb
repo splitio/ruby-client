@@ -94,4 +94,6 @@ describe SplitIoClient::GreaterThanOrEqualToMatcher do
       expect(subject.get_treatment(user, feature, nil_attributes)).to eq 'default'
     end
   end
+
+  include_examples 'matchers equals spec', described_class.new(attribute: 'foo', data_type: 'NUMBER', value: 0)
 end
