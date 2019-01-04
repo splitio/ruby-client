@@ -12,7 +12,7 @@ module SplitIoClient
         end
 
         events.each_slice(SplitIoClient.configuration.events_queue_size) do |events_slice|
-          result = post_api(
+          response = post_api(
             "#{SplitIoClient.configuration.events_uri}/events/bulk",
             @api_key,
             events_slice.map { |event| formatted_event(event[:e]) },
