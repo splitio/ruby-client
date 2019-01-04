@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'net/http/persistent'
 
 module SplitIoClient
@@ -12,7 +14,7 @@ module SplitIoClient
           req.options[:timeout] = SplitIoClient.configuration.read_timeout
           req.options[:open_timeout] = SplitIoClient.configuration.connection_timeout
 
-          SplitLogger.log_if_debug("GET #{url} proxy: #{api_client.proxy}");
+          SplitLogger.log_if_debug("GET #{url} proxy: #{api_client.proxy}")
         end
       rescue StandardError => e
         SplitIoClient.configuration.logger.warn("#{e}\nURL:#{url}\nparams:#{params}")
@@ -22,16 +24,16 @@ module SplitIoClient
       def post_api(url, api_key, data, headers = {}, params = {})
         api_client.post(url) do |req|
           req.headers = common_headers(api_key)
-            .merge('Content-Type' => 'application/json')
-            .merge(headers)
+                        .merge('Content-Type' => 'application/json')
+                        .merge(headers)
 
           req.body = data.to_json
 
           req.options[:timeout] = SplitIoClient.configuration.read_timeout
           req.options[:open_timeout] = SplitIoClient.configuration.connection_timeout
 
-          SplitLogger.log_if_transport("POST #{url} #{req.body}");
-          SplitLogger.log_if_debug("POST #{url}");
+          SplitLogger.log_if_transport("POST #{url} #{req.body}")
+          SplitLogger.log_if_debug("POST #{url}")
         end
       rescue StandardError => e
         SplitIoClient.configuration.logger.warn("#{e}\nURL:#{url}\ndata:#{data}\nparams:#{params}")

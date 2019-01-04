@@ -16,7 +16,7 @@ describe SplitIoClient::AllKeysMatcher do
   end
 
   context '#equals?' do
-    let(:matcher)  { described_class.new }
+    let(:matcher) { described_class.new }
     it 'is equal' do
       expect(matcher.equals?(matcher)).to be true
     end

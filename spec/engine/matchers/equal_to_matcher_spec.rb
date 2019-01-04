@@ -111,5 +111,4 @@ describe SplitIoClient::EqualToMatcher do
       expect(subject.get_treatment(user, feature, nil_attributes)).to eq 'default'
     end
   end
-
 end

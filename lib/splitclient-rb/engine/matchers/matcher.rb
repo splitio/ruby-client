@@ -26,6 +26,5 @@ module SplitIoClient
     def string_type?
       false
     end
-
   end
 end

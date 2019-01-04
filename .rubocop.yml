@@ -18,4 +18,14 @@ Naming/FileName:
 
 AllCops:
   Exclude:
-    - lib/**/* #TODO Apply rubocop to the library
+    - lib/*
+    - lib/murmurhash/**/*
+    - lib/splitclient-rb/*
+    - lib/splitclient-rb/cache/**/*
+    - lib/splitclient-rb/clients/**/*
+    - lib/splitclient-rb/managers/**/*
+    - lib/splitclient-rb/engine/api/**/*
+    - lib/splitclient-rb/engine/evaluator/**/*
+    - lib/splitclient-rb/engine/metrics/**/*
+    - lib/splitclient-rb/engine/models/**/*
+    - lib/splitclient-rb/engine/parser/**/*

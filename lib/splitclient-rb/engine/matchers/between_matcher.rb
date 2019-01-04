@@ -25,7 +25,7 @@ module SplitIoClient
       matches = (@start_value..@end_value).cover? value
       SplitLogger.log_if_debug("[BetweenMatcher] is #{value} between #{@start_value} and #{@end_value} -> #{matches} .")
       matches
-    end    
+    end
 
     private
 
