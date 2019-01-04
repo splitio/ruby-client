@@ -4,7 +4,7 @@ module SplitIoClient
   #
   # class to implement the user defined matcher
   #
-  class WhitelistMatcher < NoMethodError
+  class WhitelistMatcher < Matcher
     MATCHER_TYPE = 'WHITELIST_MATCHER'
 
     attr_reader :attribute
@@ -31,24 +31,6 @@ module SplitIoClient
       return false unless SplitIoClient::Validators.valid_matcher_arguments(args)
 
       matches_attr_whitelist(args)
-    end
-
-    #
-    # evaluates if the given object equals the matcher
-    #
-    # @param obj [object] object to be evaluated
-    #
-    # @return [boolean] true if obj equals the matcher
-    def equals?(obj)
-      if obj.nil?
-        false
-      elsif !obj.instance_of?(WhitelistMatcher)
-        false
-      elsif equal?(obj)
-        true
-      else
-        false
-      end
     end
 
     def string_type?
