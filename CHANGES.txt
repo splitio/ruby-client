@@ -1,4 +1,4 @@
-6.0.1 (Jan 7th, 2019)
+6.0.1 (Jan 4th, 2019)
 - Fix an issue in events and impressions API calls log messages caused by a wrong variable name introduced in 6.0.0
 
 6.0.0 (December 17th, 2018)
