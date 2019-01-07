@@ -1,3 +1,6 @@
+6.0.1 (Jan 7th, 2019)
+- Fix an issue in events and impressions API calls log messages caused by a wrong variable name introduced in 6.0.0
+
 6.0.0 (December 17th, 2018)
 - Change `sender` and `store` classes to reuse Faraday connections, preventing issues with net-http-persistent 3.0
 - Remove producer mode and make `memory + standalone` and `Redis + consumer` the only valid SDK modes. This is a breaking change
