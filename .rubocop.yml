@@ -17,6 +17,7 @@ Naming/FileName:
     - splitclient-rb.gemspec
 
 AllCops:
+  TargetRubyVersion: 2.3.6
   Exclude:
     - lib/*
     - lib/murmurhash/**/*
