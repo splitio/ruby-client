@@ -18,7 +18,7 @@ RSpec.configure do |config|
   config.include RSpec::RedisHelper, redis: true
   config.before(:all) do
     SplitIoClient.configuration = nil
-    SplitIoClient.configure(logger: Logger.new('/dev/null'))
+    SplitIoClient.configure
   end
 end
 

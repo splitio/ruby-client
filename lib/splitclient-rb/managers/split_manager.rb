@@ -17,7 +17,7 @@ module SplitIoClient
     #
     # @returns [object] array of splits
     def splits
-      return if @splits_repository.nil?
+      return [] if !SplitIoClient.configuration.valid_mode || @splits_repository.nil?
 
       @splits_repository.splits.each_with_object([]) do |(name, split), memo|
         split_view = build_split_view(name, split)
@@ -33,7 +33,7 @@ module SplitIoClient
     #
     # @returns [object] array of split names (String)
     def split_names
-      return if @splits_repository.nil?
+      return [] if !SplitIoClient.configuration.valid_mode || @splits_repository.nil?
 
       @splits_repository.split_names
     end
@@ -43,7 +43,14 @@ module SplitIoClient
     #
     # @returns a split view
     def split(split_name)
-      return unless @splits_repository && SplitIoClient::Validators.valid_split_parameters(split_name)
+      return unless SplitIoClient.configuration.valid_mode && @splits_repository && SplitIoClient::Validators.valid_split_parameters(split_name)
+
+      sanitized_split_name= split_name.to_s.strip
+
+      if split_name.to_s != sanitized_split_name
+        SplitIoClient.configuration.logger.warn("split: split_name #{split_name} has extra whitespace, trimming")
+        split_name = sanitized_split_name
+      end
 
       split = @splits_repository.get_split(split_name)
 

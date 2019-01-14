@@ -5,7 +5,7 @@ require 'spec_helper'
 describe SplitIoClient::LessThanOrEqualToMatcher do
   subject do
     SplitIoClient.configuration = nil
-    SplitIoClient::SplitFactory.new('', logger: Logger.new('/dev/null')).client
+    SplitIoClient::SplitFactory.new('test_api_key', logger: Logger.new('/dev/null')).client
   end
 
   let(:date_splits_json) do
