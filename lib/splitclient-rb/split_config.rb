@@ -43,7 +43,7 @@ module SplitIoClient
       @redis_url = opts[:redis_url] || SplitConfig.default_redis_url
       @redis_namespace = opts[:redis_namespace] ? "#{opts[:redis_namespace]}.#{SplitConfig.default_redis_namespace}" : SplitConfig.default_redis_namespace
       @cache_adapter = SplitConfig.init_cache_adapter(
-        opts[:cache_adapter] || SplitConfig.default_cache_adapter, :map_adapter
+        opts[:cache_adapter] || SplitConfig.default_cache_adapter, :map_adapter, redis_url: @redis_url
       )
       @connection_timeout = opts[:connection_timeout] || SplitConfig.default_connection_timeout
       @read_timeout = opts[:read_timeout] || SplitConfig.default_read_timeout
@@ -54,7 +54,7 @@ module SplitIoClient
       @impressions_refresh_rate = opts[:impressions_refresh_rate] || SplitConfig.default_impressions_refresh_rate
       @impressions_queue_size = opts[:impressions_queue_size] || SplitConfig.default_impressions_queue_size
       @impressions_adapter = SplitConfig.init_cache_adapter(
-        opts[:cache_adapter] || SplitConfig.default_cache_adapter, :queue_adapter, @impressions_queue_size
+        opts[:cache_adapter] || SplitConfig.default_cache_adapter, :queue_adapter, queue_size: @impressions_queue_size, redis_url: @redis_url
       )
       #Safeguard for users of older SDK versions.
       @disable_impressions = @impressions_queue_size == -1
@@ -62,7 +62,7 @@ module SplitIoClient
       @impressions_bulk_size = opts[:impressions_bulk_size] || @impressions_queue_size > 0 ? @impressions_queue_size : 0
 
       @metrics_adapter = SplitConfig.init_cache_adapter(
-        opts[:cache_adapter] || SplitConfig.default_cache_adapter, :map_adapter
+        opts[:cache_adapter] || SplitConfig.default_cache_adapter, :map_adapter, redis_url: @redis_url
       )
 
       @logger = opts[:logger] || SplitConfig.default_logger
@@ -88,7 +88,7 @@ module SplitIoClient
       @events_push_rate = opts[:events_push_rate] || SplitConfig.default_events_push_rate
       @events_queue_size = opts[:events_queue_size] || SplitConfig.default_events_queue_size
       @events_adapter = SplitConfig.init_cache_adapter(
-        opts[:cache_adapter] || SplitConfig.default_cache_adapter, :queue_adapter, @events_queue_size
+        opts[:cache_adapter] || SplitConfig.default_cache_adapter, :queue_adapter, queue_size: @events_queue_size, redis_url: @redis_url
       )
 
       startup_log
@@ -240,7 +240,7 @@ module SplitIoClient
       'https://events.split.io/api/'
     end
 
-    def self.init_cache_adapter(adapter, data_structure, queue_size = nil)
+    def self.init_cache_adapter(adapter, data_structure, redis_url: nil, queue_size: nil)
       case adapter
       when :memory
         SplitIoClient::Cache::Adapters::MemoryAdapter.new(map_memory_adapter(data_structure, queue_size))
@@ -251,7 +251,7 @@ module SplitIoClient
           fail StandardError, 'To use Redis as a cache adapter you must include it in your Gemfile'
         end
 
-        SplitIoClient::Cache::Adapters::RedisAdapter.new(@redis_url)
+        SplitIoClient::Cache::Adapters::RedisAdapter.new(redis_url)
       end
     end
 
