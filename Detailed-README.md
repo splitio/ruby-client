@@ -24,6 +24,24 @@ Or use any specific branch by adding the following to your `Gemfile` instead:
 gem 'splitclient-rb', git: 'https://github.com/splitio/ruby-client.git', branch: 'branch_name'
 ```
 
+### Known faraday / net-http-persistent compatibility issue
+
+There is a known issue when using faraday < 0.13 and net-http-persistent 3.0, which will prevent the SDK to work as expected. [Read more](https://github.com/lostisland/faraday/pull/619).
+
+If you are seeing this error:  `RuntimeError: Split SDK failed to connect to backend to retrieve information`, try checking your gems by running `gem list` (or `bundle show`, or looking at your `Gemfile.lock`) and look for faraday and net-http-persistent versions
+
+If you're using faraday < 0.13 and net-persistent 3.0, try upgrading faraday to 0.13 or higher. If using bundler, add the following line to your `Gemfile`
+
+```ruby
+gem 'faraday', '>= 0.13'
+```
+
+If for some reason you need to stick with Faraday < 0.13 use net-http-persistent < 3.0. Again, if using bundler, add this line to your `Gemfile`
+
+```ruby
+gem 'net-http-persistent', '~> 2.9'
+```
+
 ## Usage
 
 ### Quick Setup
