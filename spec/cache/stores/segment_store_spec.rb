@@ -68,7 +68,7 @@ describe SplitIoClient::Cache::Stores::SegmentStore do
   context 'redis adapter' do
     before do
       Redis.new.flushall
-      cache_adapter = SplitIoClient::SplitConfig.init_cache_adapter(:redis, :map_adapter, redis_url: config.redis_url)
+      cache_adapter = SplitIoClient::SplitConfig.init_cache_adapter(:redis, :map_adapter, nil, config.redis_url)
       SplitIoClient.configuration.cache_adapter = cache_adapter
     end
     let(:config) { SplitIoClient::SplitConfig.new }
