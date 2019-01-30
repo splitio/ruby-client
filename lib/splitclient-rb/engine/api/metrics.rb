@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module SplitIoClient
   module Api
     class Metrics < Client
@@ -15,7 +17,7 @@ module SplitIoClient
 
       def post_latencies
         if @metrics_repository.latencies.empty?
-          SplitIoClient.configuration.logger.debug('No latencies to report.') if SplitIoClient.configuration.debug_enabled
+          SplitLogger.log_if_debug('No latencies to report.')
         else
           @metrics_repository.latencies.each do |name, latencies|
             metrics_time = { name: name, latencies: latencies }
@@ -31,7 +33,7 @@ module SplitIoClient
 
       def post_counts
         if @metrics_repository.counts.empty?
-          SplitIoClient.configuration.logger.debug('No counts to report.') if SplitIoClient.configuration.debug_enabled
+          SplitLogger.log_if_debug('No counts to report.')
         else
           @metrics_repository.counts.each do |name, count|
             metrics_count = { name: name, delta: count }
@@ -44,14 +46,12 @@ module SplitIoClient
         @metrics_repository.clear_counts
       end
 
-      private
-
       def log_status(response, info_to_log)
         if response.success?
           SplitLogger.log_if_debug("Metric time reported: #{info_to_log}")
         else
           SplitLogger.log_error("Unexpected status code while posting time metrics: #{response.status}" \
-          " - Check your API key and base URI")
+          ' - Check your API key and base URI')
           raise 'Split SDK failed to connect to backend to post metrics'
         end
       end

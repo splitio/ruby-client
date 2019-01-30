@@ -27,6 +27,7 @@ module SplitIoClient
               till: #{@segments_repository.get_change_number(name)}")
 
             break if since.to_i >= @segments_repository.get_change_number(name).to_i
+
             since = @segments_repository.get_change_number(name)
           end
         end

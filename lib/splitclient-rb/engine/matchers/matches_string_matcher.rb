@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 module SplitIoClient
   class MatchesStringMatcher
-    MATCHER_TYPE = 'MATCHES_STRING'.freeze
+    MATCHER_TYPE = 'MATCHES_STRING'
 
     attr_reader :attribute
 
@@ -14,7 +16,9 @@ module SplitIoClient
         args[:attributes][a.to_s] || args[:attributes][a.to_sym]
       end
 
-      (value =~ @regexp_string) != nil
+      matches = !(value =~ @regexp_string).nil?
+      SplitLogger.log_if_debug("[MatchesStringMatcher] #{value} matches #{@regexp_string} -> #{matches}")
+      matches
     end
 
     def string_type?

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module SplitIoClient
   module Api
     class Events < Client
@@ -7,7 +9,7 @@ module SplitIoClient
 
       def post(events)
         if events.empty?
-          SplitIoClient.configuration.logger.debug('No events to report') if SplitIoClient.configuration.debug_enabled
+          SplitLogger.log_if_debug('No events to report')
           return
         end
 
@@ -25,7 +27,7 @@ module SplitIoClient
             SplitLogger.log_if_debug("Events reported: #{events_slice.size}")
           else
             SplitLogger.log_error("Unexpected status code while posting events: #{response.status}." \
-            " - Check your API key and base URI")
+            ' - Check your API key and base URI')
             raise 'Split SDK failed to connect to backend to post events'
           end
         end

@@ -30,10 +30,10 @@ module SplitIoClient
 
           result
         else
-            @metrics.count(METRICS_PREFIX + '.status.' + response.status.to_s, 1)
-              SplitLogger.log_error("Unexpected status code while fetching splits: #{response.status}. " \
-              'Check your API key and base URI')
-            raise 'Split SDK failed to connect to backend to fetch split definitions'
+          @metrics.count(METRICS_PREFIX + '.status.' + response.status.to_s, 1)
+          SplitLogger.log_error("Unexpected status code while fetching splits: #{response.status}. " \
+          'Check your API key and base URI')
+          raise 'Split SDK failed to connect to backend to fetch split definitions'
         end
       end
 
