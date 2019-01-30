@@ -5,7 +5,7 @@ require 'spec_helper'
 describe SplitIoClient do
   subject do
     SplitIoClient.configuration = nil
-    SplitIoClient::SplitFactory.new('', logger: Logger.new('/dev/null')).client
+    SplitIoClient::SplitFactory.new('test_api_key', logger: Logger.new('/dev/null')).client
   end
 
   let(:splits_json) { File.read(File.expand_path(File.join(File.dirname(__FILE__), 'test_data/splits/splits.json'))) }

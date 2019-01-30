@@ -60,4 +60,16 @@ describe SplitIoClient do
       expect(configs.impressions_queue_size).to eq 5000
     end
   end
+
+  describe 'logging on startup issues' do
+    let(:custom_options) { { logger: Logger.new(log) } }
+
+    let(:log) { StringIO.new }
+
+    it 'logs warning when block until ready not set' do
+      SplitIoClient::SplitConfig.new(custom_options)
+      # TODO: prevent this warn from being logged in other tests
+      expect(log.string).to include 'no ready parameter has been set - incorrect control treatments could be logged'
+    end
+  end
 end

@@ -69,6 +69,9 @@ module SplitIoClient
       @debug_enabled = opts[:debug_enabled] || SplitConfig.default_debug
       @transport_debug_enabled = opts[:transport_debug_enabled] || SplitConfig.default_debug
       @block_until_ready = opts[:ready] || opts[:block_until_ready] || 0
+
+      @logger.warn 'no ready parameter has been set - incorrect control treatments could be logged' if block_until_ready == 0
+
       @machine_name = opts[:machine_name] || SplitConfig.machine_hostname
       @machine_ip = opts[:machine_ip] || SplitConfig.machine_ip
 
@@ -83,6 +86,8 @@ module SplitIoClient
       @impression_listener = opts[:impression_listener]
       @impression_listener_refresh_rate = opts[:impression_listener_refresh_rate] || SplitConfig.default_impression_listener_refresh_rate
 
+      @max_key_size = SplitConfig.max_key_size
+
       @threads = {}
 
       @events_push_rate = opts[:events_push_rate] || SplitConfig.default_events_push_rate
@@ -90,6 +95,7 @@ module SplitIoClient
       @events_adapter = SplitConfig.init_cache_adapter(
         opts[:cache_adapter] || SplitConfig.default_cache_adapter, :queue_adapter, @events_queue_size, @redis_url
       )
+      @valid_mode = true
 
       startup_log
     end
@@ -184,6 +190,8 @@ module SplitIoClient
     attr_accessor :cache_ttl
     attr_accessor :max_cache_size
 
+    attr_accessor :max_key_size
+
     attr_accessor :language
     attr_accessor :version
 
@@ -207,6 +215,8 @@ module SplitIoClient
     attr_accessor :redis_namespace
 
     attr_accessor :threads
+
+    attr_accessor :valid_mode
 
     #
     # The schedule time for events flush after the first one
@@ -330,8 +340,16 @@ module SplitIoClient
     #
     # @return [object]
     def self.default_logger
-      (defined?(Rails) && Rails.logger) ? Rails.logger : Logger.new($stdout)
+      if defined?(Rails) && Rails.logger
+        Rails.logger
+      elsif ENV['SPLITCLIENT_ENV'] == 'test'
+        Logger.new('/dev/null')  
+      else
+       Logger.new($stdout)
+       end
     end
+
+
 
     #
     # The default debug value
@@ -368,16 +386,23 @@ module SplitIoClient
     #
     # The default cache time to live
     #
-    # @return [boolean]
+    # @return [int]
     def self.cache_ttl
       5
     end
 
     # The default max cache size
     #
-    # @return [boolean]
+    # @return [int]
     def self.max_cache_size
       500
+    end
+
+    # The default max key size
+    #
+    # @return [int]
+    def self.max_key_size
+      250
     end
 
     #

@@ -55,4 +55,85 @@ describe SplitIoClient::SplitFactory do
       expect(log.string).to include 'Invalid SDK mode selected.'
     end
   end
+
+  context 'when api_key is null' do
+    let(:cache_adapter) { :memory }
+    let(:mode) { :standalone }
+
+    it 'log an error stating Api Key is invalid' do
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+        .to_return(status: 200, body: [])
+
+      factory = described_class.new(nil, options)
+
+      expect(log.string).to include 'Factory Instantiation: you passed a nil' \
+        ' api_key, api_key must be a non-empty String'
+      expect(SplitIoClient.configuration.valid_mode).to be false
+      expect(factory.client.get_treatment('test_user', 'test_feature'))
+        .to eq SplitIoClient::Engine::Models::Treatment::CONTROL
+    end
+  end
+
+  context 'when api_key is empty' do
+    let(:cache_adapter) { :memory }
+    let(:mode) { :standalone }
+
+    it 'log an error stating Api Key is invalid' do
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+        .to_return(status: 200, body: [])
+
+      factory = described_class.new('', options)
+
+      expect(log.string).to include 'Factory Instantiation: you passed and empty api_key,' \
+        ' api_key must be a non-empty String'
+      expect(SplitIoClient.configuration.valid_mode).to be false
+      expect(factory.client.track('key', 'traffic_type', 'event_type', 123))
+        .to be false
+    end
+  end
+
+  context 'when api_key is browser' do
+    let(:cache_adapter) { :memory }
+    let(:mode) { :standalone }
+    let(:splits_with_segments_json) do
+      File.read(File.expand_path(File.join(File.dirname(__FILE__), '../test_data/splits/splits3.json')))
+    end
+
+    it 'log an error stating Api Key is invalid' do
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+        .to_return(status: 200, body: splits_with_segments_json)
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1473863097220')
+        .to_return(status: 200, body: [])
+      stub_request(:get, 'https://sdk.split.io/api/segmentChanges/employees?since=-1')
+        .to_return(status: 403, body: [])
+
+      factory = described_class.new('browser_key', options)
+      factory.start!
+
+      expect(log.string).to include 'Factory Instantiation: You passed a browser type api_key,' \
+        ' please grab an api key from the Split console that is of type sdk'
+      expect(SplitIoClient.configuration.valid_mode).to be false
+      expect(factory.manager.split('test_split'))
+        .to be nil
+    end
+  end
+
+  context 'when client is detroyed' do
+    let(:cache_adapter) { :memory }
+    let(:mode) { :standalone }
+
+    it 'log an error client is detroyed' do
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+        .to_return(status: 200, body: [])
+
+      factory = described_class.new('browser_key', options)
+      SplitIoClient.configuration.threads[:impressions_sender] = Thread.new {}
+      factory.client.destroy
+      factory.client.get_treatment('key', 'split')
+      expect(log.string).to include 'Client has already been destroyed - no calls possible'
+      expect(SplitIoClient.configuration.valid_mode).to be false
+      expect(factory.manager.split('test_split'))
+        .to be nil
+    end
+  end
 end

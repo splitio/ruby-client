@@ -7,7 +7,7 @@ describe SplitIoClient, type: :client do
   RSpec.shared_examples 'engine specs' do |cache_adapter|
     subject do
       SplitIoClient.configuration = nil
-      SplitIoClient::SplitFactory.new('',
+      SplitIoClient::SplitFactory.new('test_api_key',
                                       logger: Logger.new(log),
                                       cache_adapter: cache_adapter,
                                       redis_namespace: 'test',
@@ -15,6 +15,8 @@ describe SplitIoClient, type: :client do
     end
 
     let(:log) { StringIO.new }
+
+    let(:very_long_key) { 'foo' * SplitIoClient.configuration.max_key_size }
 
     let(:segments_json) do
       File.read(File.join(SplitIoClient.root, 'spec/test_data/segments/engine_segments.json'))
@@ -75,12 +77,12 @@ describe SplitIoClient, type: :client do
       end
 
       it 'returns CONTROL for random id' do
-        expect(subject.get_treatment('my_random_user_id', 'my_random_feature'))
+        expect(subject.get_treatment('random_user_id', 'my_random_feature'))
           .to eq SplitIoClient::Engine::Models::Treatment::CONTROL
       end
 
       it 'returns CONTROL and label for random key' do
-        expect(subject.get_treatment('my_random_user_id', 'my_random_feature', nil, nil, false, true)).to eq(
+        expect(subject.get_treatment('random_user_id', 'test_feature', nil, nil, false, true)).to eq(
           treatment: SplitIoClient::Engine::Models::Treatment::CONTROL,
           label: SplitIoClient::Engine::Models::Label::EXCEPTION,
           change_number: nil
@@ -88,63 +90,141 @@ describe SplitIoClient, type: :client do
       end
 
       it 'returns CONTROL on nil key' do
-        expect(subject.get_treatment(nil, 'my_random_feature')).to eq SplitIoClient::Engine::Models::Treatment::CONTROL
-        expect(log.string).to include 'get_treatment: key cannot be nil'
+        expect(subject.get_treatment(nil, 'test_feature')).to eq SplitIoClient::Engine::Models::Treatment::CONTROL
+        expect(log.string).to include 'get_treatment: you passed a nil key, key must be a non-empty String or a Symbol'
       end
 
-      it 'evaluates correctly on empty key' do
-        expect(subject.get_treatment('', 'test_feature')).to eq 'on'
+      it 'returns CONTROL on empty key' do
+        expect(subject.get_treatment('', 'test_feature')).to eq SplitIoClient::Engine::Models::Treatment::CONTROL
+        expect(log.string).to include 'get_treatment: you passed an empty matching_key, ' \
+         'matching_key must be a non-empty String or a Symbol'
       end
 
       it 'returns CONTROL on nil matching_key' do
-        expect(subject.get_treatment({ bucketing_key: nil, matching_key: nil }, 'my_random_feature')).to eq(
-          SplitIoClient::Engine::Models::Treatment::CONTROL
-        )
-        expect(log.string).to include 'get_treatment: matching_key cannot be nil'
+        expect(subject.get_treatment({ bucketing_key: nil, matching_key: nil }, 'test_feature'))
+          .to eq SplitIoClient::Engine::Models::Treatment::CONTROL
+        expect(log.string)
+          .to include 'get_treatment: you passed a nil matching_key, matching_key must be a non-empty String or a Symbol'
       end
 
-      it 'evaluates correctly on empty matching_key' do
-        expect(subject.get_treatment({ bucketing_key: nil, matching_key: '' }, 'test_feature')).to eq 'on'
+      it 'returns control on empty matching_key' do
+        expect(subject.get_treatment({ bucketing_key: nil, matching_key: '' }, 'test_feature'))
+          .to eq SplitIoClient::Engine::Models::Treatment::CONTROL
+        expect(log.string).to include 'get_treatment: you passed an empty matching_key, ' \
+          'matching_key must be a non-empty String or a Symbol'
       end
 
-      it 'logs a warning on nil bucketing_key' do
-        subject.get_treatment({ bucketing_key: nil, matching_key: 'my_random_user_id' }, 'my_random_feature')
-        expect(log.string).to include 'get_treatment: key object should have bucketing_key set'
+      it 'returns control on longer than specified max characters matching_key' do
+        expect(subject.get_treatment({ bucketing_key: nil, matching_key: very_long_key }, 'test_feature'))
+          .to eq SplitIoClient::Engine::Models::Treatment::CONTROL
+        expect(log.string).to include 'get_treatment: matching_key is too long - ' \
+          "must be #{SplitIoClient.configuration.max_key_size} characters or less"
       end
 
-      it 'evaluates correctly on empty bucketing_key' do
-        expect(subject.get_treatment({ bucketing_key: '', matching_key: 'my_random_user_id' }, 'test_feature'))
+      it 'logs warning when Numeric matching_key' do
+        value = 123
+        expect(subject.get_treatment({ bucketing_key: 'random_user_id', matching_key: value }, 'test_feature'))
           .to eq 'on'
+        expect(log.string).to include "get_treatment: matching_key \"#{value}\" is not of type String, converting"
+      end
+
+      it 'returns control on nil bucketing_key' do
+        expect(subject.get_treatment({ bucketing_key: nil, matching_key: 'random_user_id' }, 'test_feature'))
+          .to eq SplitIoClient::Engine::Models::Treatment::CONTROL
+        expect(log.string).to include 'get_treatment: you passed a nil bucketing_key, ' \
+          'bucketing_key must be a non-empty String or a Symbol'
+      end
+
+      it 'returns control on empty bucketing_key' do
+        expect(subject.get_treatment({ bucketing_key: '', matching_key: 'random_user_id' }, 'test_feature'))
+          .to eq SplitIoClient::Engine::Models::Treatment::CONTROL
+        expect(log.string).to include 'get_treatment: you passed an empty bucketing_key, ' \
+          'bucketing_key must be a non-empty String or a Symbol'
+      end
+
+      it 'returns control on longer than specified max characters bucketing_key' do
+        expect(subject.get_treatment({ bucketing_key: very_long_key, matching_key: 'random_user_id' }, 'test_feature'))
+          .to eq SplitIoClient::Engine::Models::Treatment::CONTROL
+        expect(log.string).to include 'get_treatment: bucketing_key is too long - ' \
+          "must be #{SplitIoClient.configuration.max_key_size} characters or less"
+      end
+
+      it 'logs warning when Numeric bucketing_key' do
+        value = 123
+        expect(subject.get_treatment({ bucketing_key: value, matching_key: 'random_user_id' }, 'test_feature'))
+          .to eq 'on'
+        expect(log.string).to include "get_treatment: bucketing_key \"#{value}\" is not of type String, converting"
       end
 
       it 'returns CONTROL and label on nil key' do
-        expect(subject.get_treatment(nil, 'my_random_feature', nil, nil, false, true)).to eq(
+        expect(subject.get_treatment(nil, 'test_feature', nil, nil, false, true)).to eq(
           treatment: SplitIoClient::Engine::Models::Treatment::CONTROL,
           label: SplitIoClient::Engine::Models::Label::EXCEPTION,
           change_number: nil
         )
+      end
+
+      it 'returns control on empty key' do
+        expect(subject.get_treatment('', 'test_feature'))
+          .to eq SplitIoClient::Engine::Models::Treatment::CONTROL
+        expect(log.string).to include 'get_treatment: you passed an empty matching_key, ' \
+        'matching_key must be a non-empty String or a Symbol'
+      end
+
+      it 'returns control on NaN key' do
+        expect(subject.get_treatment(Float::NAN, 'test_feature'))
+          .to eq SplitIoClient::Engine::Models::Treatment::CONTROL
+        expect(log.string).to include 'get_treatment: you passed an invalid matching_key type, ' \
+        'matching_key must be a non-empty String or a Symbol'
+      end
+
+      it 'returns control on longer than specified max characters key' do
+        expect(subject.get_treatment(very_long_key, 'test_feature'))
+          .to eq SplitIoClient::Engine::Models::Treatment::CONTROL
+        expect(log.string).to include 'get_treatment: matching_key is too long - ' \
+          "must be #{SplitIoClient.configuration.max_key_size} characters or less"
+      end
+
+      it 'logs warning when Numeric key' do
+        value = 123
+        expect(subject.get_treatment(value, 'test_feature')).to eq 'on'
+        expect(log.string).to include "get_treatment: matching_key \"#{value}\" is not of type String, converting"
       end
 
       it 'returns CONTROL on nil split_name' do
-        expect(subject.get_treatment('my_random_user_id', nil)).to eq SplitIoClient::Engine::Models::Treatment::CONTROL
-        expect(log.string).to include 'get_treatment: split_name cannot be nil'
+        expect(subject.get_treatment('random_user_id', nil)).to eq SplitIoClient::Engine::Models::Treatment::CONTROL
+        expect(log.string).to include 'get_treatment: you passed a nil split_name, ' \
+          'split_name must be a non-empty String or a Symbol'
       end
 
       it 'returns CONTROL on empty split_name' do
-        expect(subject.get_treatment('my_random_user_id', '')).to eq SplitIoClient::Engine::Models::Treatment::CONTROL
+        expect(subject.get_treatment('random_user_id', '')).to eq SplitIoClient::Engine::Models::Treatment::CONTROL
       end
 
       it 'returns CONTROL on number split_name' do
-        expect(subject.get_treatment('my_random_user_id', 123)).to eq SplitIoClient::Engine::Models::Treatment::CONTROL
-        expect(log.string).to include 'get_treatment: split_name must be a String or a Symbol'
+        expect(subject.get_treatment('random_user_id', 123)).to eq SplitIoClient::Engine::Models::Treatment::CONTROL
+        expect(log.string).to include 'get_treatment: you passed an invalid split_name type, ' \
+          'split_name must be a non-empty String or a Symbol'
       end
 
       it 'returns CONTROL and label on nil split_name' do
-        expect(subject.get_treatment('my_random_user_id', nil, nil, nil, false, true)).to eq(
+        expect(subject.get_treatment('random_user_id', nil, nil, nil, false, true)).to eq(
           treatment: SplitIoClient::Engine::Models::Treatment::CONTROL,
           label: SplitIoClient::Engine::Models::Label::EXCEPTION,
           change_number: nil
         )
+      end
+
+      it 'trims split_name and logs warning when extra whitespaces' do
+        split_name = ' test_feature  '
+        expect(subject.get_treatment('fake_user_id_1', split_name)).to eq 'on'
+        expect(log.string).to include "get_treatment: split_name #{split_name} has extra whitespace, trimming"
+      end
+
+      it 'returns CONTROL when non Hash attributes' do
+        expect(subject.get_treatment('random_user_id', 'test_feature', ["I'm an Array"]))
+          .to eq SplitIoClient::Engine::Models::Treatment::CONTROL
+        expect(log.string).to include 'get_treatment: attributes must be of type Hash'
       end
     end
 
@@ -160,27 +240,34 @@ describe SplitIoClient, type: :client do
       end
 
       it 'returns empty hash on nil split_names' do
-        expect(subject.get_treatments('my_random_user_id', nil)).to be_nil
-        expect(log.string).to include 'get_treatments: split_names cannot be nil'
+        expect(subject.get_treatments('random_user_id', nil)).to be_nil
+        expect(log.string).to include 'get_treatments: split_names must be a non-empty Array'
       end
 
       it 'returns empty hash when no Array split_names' do
-        expect(subject.get_treatments('my_random_user_id', Object.new)).to be_nil
-        expect(log.string).to include 'get_treatments: split_names must be an Array'
+        expect(subject.get_treatments('random_user_id', Object.new)).to be_nil
+        expect(log.string).to include 'get_treatments: split_names must be a non-empty Array'
       end
 
       it 'returns empty hash on empty array split_names' do
-        expect(subject.get_treatments('my_random_user_id', [])).to eq({})
-        expect(log.string).to include 'get_treatments: split_names is an empty array or has null values'
+        expect(subject.get_treatments('random_user_id', [])).to eq({})
+        expect(log.string).to include 'get_treatments: split_names must be a non-empty Array'
       end
 
       it 'sanitizes split_names removing repeating and nil split_names' do
-        expect(subject.get_treatments('my_random_user_id', ['test_feature', nil, nil, 'test_feature']).size).to eq 1
+        expect(subject.get_treatments('random_user_id', ['test_feature', nil, nil, 'test_feature']).size).to eq 1
       end
 
       it 'warns when non string split_names' do
-        expect(subject.get_treatments('my_random_user_id', [Object.new, Object.new]).size).to eq 0
-        expect(log.string).to include 'get_treatments: split_name has to be a non empty string'
+        expect(subject.get_treatments('random_user_id', [Object.new, Object.new])).to eq({})
+        expect(log.string).to include 'get_treatments: you passed an invalid split_name, ' \
+          'split_name must be a non-empty String or a Symbol'
+      end
+
+      it 'warns when empty split_names' do
+        expect(subject.get_treatments('random_user_id', [''])).to eq({})
+        expect(log.string).to include 'get_treatments: you passed an empty split_name, ' \
+          'split_name must be a non-empty String or a Symbol'
       end
     end
 
@@ -444,7 +531,7 @@ describe SplitIoClient, type: :client do
           SplitIoClient.configuration = nil
           mode = cache_adapter.equal?(:memory) ? :standalone : :consumer
 
-          SplitIoClient::SplitFactory.new('',
+          SplitIoClient::SplitFactory.new('test_api_key',
                                           logger: Logger.new('/dev/null'),
                                           cache_adapter: cache_adapter,
                                           redis_namespace: 'test',
@@ -578,72 +665,97 @@ describe SplitIoClient, type: :client do
       it 'event is not added when nil key' do
         expect(subject.instance_variable_get(:@events_repository)).not_to receive(:add)
         expect(subject.track(nil, 'traffic_type', 'event_type', 123)).to be false
-        expect(log.string).to include 'track: key cannot be nil'
+        expect(log.string).to include 'track: you passed a nil key, key must be a non-empty String or a Symbol'
       end
 
-      it 'event is added when empty key' do
-        expect(subject.instance_variable_get(:@events_repository)).to receive(:add)
-        expect(subject.track('', 'traffic_type', 'event_type', 123)).to be true
+      it 'event is not added when empty key' do
+        expect(subject.instance_variable_get(:@events_repository)).not_to receive(:add)
+        expect(subject.track('', 'traffic_type', 'event_type', 123)).to be false
+        expect(log.string).to include 'track: you passed an empty key, key must be a non-empty String or a Symbol'
       end
 
       it 'event is not added when nil key' do
         expect(subject.instance_variable_get(:@events_repository)).not_to receive(:add)
         expect(subject.track(nil, 'traffic_type', 'event_type', 123)).to be false
-        expect(log.string).to include 'track: key cannot be nil'
+        expect(log.string).to include 'track: you passed a nil key, key must be a non-empty String or a Symbol'
       end
 
       it 'event is not added when no Integer, String or Symbol key' do
         expect(subject.instance_variable_get(:@events_repository)).not_to receive(:add)
         expect(subject.track(Object.new, 'traffic_type', 'event_type', 123)).to be false
-        expect(log.string).to include 'track: key must be a String'
+        expect(log.string).to include 'track: you passed an invalid key type, key must be a non-empty String or a Symbol'
+      end
+
+      it 'event is not added when longer than specified max characters key' do
+        expect(subject.instance_variable_get(:@events_repository)).not_to receive(:add)
+        expect(subject.track(very_long_key, 'traffic_type', 'event_type', 123)).to be false
+        expect(log.string).to include 'track: key is too long - ' \
+          "must be #{SplitIoClient.configuration.max_key_size} characters or less"
       end
 
       it 'event is added and a Warn is logged when Integer key' do
         expect(subject.instance_variable_get(:@events_repository)).to receive(:add)
-        expect(subject.track(1, 'traffic_type', 'event_type', 123)).to be true
-        expect(log.string).to include 'track: key is not of type String, converting to String'
+
+        value = 123
+        expect(subject.track(value, 'traffic_type', 'event_type', 123)).to be true
+        expect(log.string).to include "track: key \"#{value}\" is not of type String, converting"
       end
 
       it 'event is not added when nil traffic_type_name' do
         expect(subject.instance_variable_get(:@events_repository)).not_to receive(:add)
         expect(subject.track(1, nil, 'event_type', 123)).to be false
-        expect(log.string).to include 'track: traffic_type_name cannot be nil'
+        expect(log.string).to include 'track: you passed a nil traffic_type_name, ' \
+          'traffic_type_name must be a non-empty String or a Symbol'
       end
 
       it 'event is not added when empty string traffic_type_name' do
         expect(subject.instance_variable_get(:@events_repository)).not_to receive(:add)
         expect(subject.track(1, '', 'event_type', 123)).to be false
-        expect(log.string).to include 'track: traffic_type_name must not be an empty String'
+        expect(log.string).to include 'track: you passed an empty traffic_type_name, ' \
+          'traffic_type_name must be a non-empty String or a Symbol'
+      end
+
+      it 'event is added and a Warn is logged when capitalized traffic_type_name' do
+        expect(subject.instance_variable_get(:@events_repository)).to receive(:add).with(
+          anything, 'traffic_type', anything, anything, anything
+        )
+        expect(subject.track('key', 'TRAFFIC_TYPE', 'event_type', 123)).to be true
+        expect(log.string).to include 'track: traffic_type_name should be all lowercase - ' \
+          'converting string to lowercase'
       end
 
       it 'event is not added when nil event_type' do
         expect(subject.instance_variable_get(:@events_repository)).not_to receive(:add)
         expect(subject.track('key', 'traffic_type', nil, 123)).to be false
-        expect(log.string).to include 'track: event_type cannot be nil'
+        expect(log.string).to include 'track: you passed a nil event_type, ' \
+          'event_type must be a non-empty String or a Symbol'
       end
 
       it 'event is not added when no String or Symbol event_type' do
         expect(subject.instance_variable_get(:@events_repository)).not_to receive(:add)
         expect(subject.track('key', 'traffic_type', Object.new, 123)).to be false
-        expect(log.string).to include 'track: event_type must be a String or a Symbol'
+        expect(log.string).to include 'track: you passed an invalid event_type type, ' \
+          'event_type must be a non-empty String or a Symbol'
       end
 
       it 'event is not added when empty event_type' do
         expect(subject.instance_variable_get(:@events_repository)).not_to receive(:add)
         expect(subject.track('key', 'traffic_type', '', 123)).to be false
-        expect(log.string).to include 'track: event_type must adhere to [a-zA-Z0-9][-_\.a-zA-Z0-9]{0,62}'
+        expect(log.string).to include 'track: you passed an empty event_type, ' \
+          'event_type must be a non-empty String or a Symbol'
       end
 
       it 'event is not added when event_type does not conform with specified format' do
         expect(subject.instance_variable_get(:@events_repository)).not_to receive(:add)
-        expect(subject.track('key', 'traffic_type', '@@', 123)).to be false
-        expect(log.string).to include 'track: event_type must adhere to [a-zA-Z0-9][-_\.a-zA-Z0-9]{0,62}'
+        expect(subject.track('key', 'traffic_type', 'foo@bar', 123)).to be false
+        expect(log.string).to include 'event_type must adhere to the regular expression ' \
+          '^[a-zA-Z0-9][-_.:a-zA-Z0-9]{0,79}$. '
       end
 
       it 'event is not added when no Integer value' do
         expect(subject.instance_variable_get(:@events_repository)).not_to receive(:add)
         expect(subject.track('key', 'traffic_type', 'event_type', 'non-integer')).to be false
-        expect(log.string).to include 'track: value must be a number'
+        expect(log.string).to include 'track: value must be Numeric'
       end
 
       it 'event is added when nil value' do
@@ -672,7 +784,7 @@ describe SplitIoClient, type: :client do
     context 'standalone mode' do
       subject do
         SplitIoClient.configuration = nil
-        SplitIoClient::SplitFactory.new('',
+        SplitIoClient::SplitFactory.new('test_api_key',
                                         logger: Logger.new('/dev/null'),
                                         cache_adapter: :memory,
                                         mode: :standalone).client
@@ -694,7 +806,7 @@ describe SplitIoClient, type: :client do
 
       subject do
         SplitIoClient.configuration = nil
-        SplitIoClient::SplitFactory.new('',
+        SplitIoClient::SplitFactory.new('test_api_key',
                                         logger: Logger.new('/dev/null'),
                                         cache_adapter: :redis,
                                         redis_namespace: 'test',
