@@ -46,6 +46,8 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'simplecov'
   spec.add_development_dependency 'timecop'
   spec.add_development_dependency 'webmock'
+  spec.add_development_dependency 'appraisal'
+  spec.add_development_dependency 'byebug'
 
   spec.add_runtime_dependency 'concurrent-ruby', '~> 1.0'
   spec.add_runtime_dependency 'faraday', '>= 0.8'
