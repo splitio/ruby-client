@@ -24,10 +24,7 @@ describe SplitIoClient::Api::Client do
       expect { described_class.new.post_api(url, api_key, data) }.not_to raise_error
     end
 
-    incompatible_faraday                = Faraday::VERSION.split('.')[0..1].reduce(0) { |sum, ver| sum += ver.to_i } < 13
-    changed_net_http_persistent_version = Net::HTTP::Persistent::VERSION.split('.').first.to_i >= 3
-
-    if incompatible_faraday && changed_net_http_persistent_version
+    if described_class.new.send(:needs_patched_net_http_persistent_adapter?)
       it 'uses PatchedNetHttpPersistent middleware' do
         url     = 'https://example.org?hello=world'
         api_key = 'abc-def-ghi'

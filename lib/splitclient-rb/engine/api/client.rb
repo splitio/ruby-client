@@ -62,7 +62,8 @@ module SplitIoClient
       end
 
       def incompatible_faraday_version?
-        Faraday::VERSION.split('.')[0..1].reduce(0) { |sum, ver| sum += ver.to_i } < 13
+        version = Faraday::VERSION.split('.')[0..1]
+        version[0].to_i == 0 && version[1].to_i < 13
       end
 
       def new_net_http_persistent?
