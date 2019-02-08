@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 module SplitIoClient
-  class EqualToMatcher
-    MATCHER_TYPE = 'EQUAL_TO'.freeze
+  class EqualToMatcher < Matcher
+    MATCHER_TYPE = 'EQUAL_TO'
 
     attr_reader :attribute
 
@@ -11,29 +13,15 @@ module SplitIoClient
     end
 
     def match?(args)
-      return false if !args.key?(:attributes) && !args.key?(:value)
-      return false if args.key?(:value) && args[:value].nil?
-      return false if args.key?(:attributes) && args[:attributes].nil?
+      SplitLogger.log_if_debug('[EqualsToMatcher] evaluating value and attributes.')
+
+      return false unless SplitIoClient::Validators.valid_matcher_arguments(args)
 
       value = formatted_value(args[:value] || args[:attributes][@attribute.to_sym])
 
-      value.is_a?(Integer) ? (value == @value) : false
-    end
-
-    def equals?(obj)
-      if obj.nil?
-        false
-      elsif !obj.instance_of?(EqualToMatcher)
-        false
-      elsif self.equal?(obj)
-        true
-      else
-        false
-      end
-    end
-
-    def string_type?
-      false
+      matches = value.is_a?(Integer) ? (value == @value) : false
+      SplitLogger.log_if_debug("[EqualsToMatcher] #{value} equals to #{@value} -> #{matches}")
+      matches
     end
 
     private
@@ -43,7 +31,7 @@ module SplitIoClient
       when 'NUMBER'
         value
       when 'DATETIME'
-        value = value / 1000 if sdk_data
+        value /= 1000 if sdk_data
 
         SplitIoClient::Utilities.to_milis_zero_out_from_hour value
       else

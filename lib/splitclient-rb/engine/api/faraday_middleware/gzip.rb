@@ -1,12 +1,14 @@
+# frozen_string_literal: true
+
 require 'faraday'
 
 module SplitIoClient
   module FaradayMiddleware
     class Gzip < Faraday::Middleware
-      ACCEPT_ENCODING = 'Accept-Encoding'.freeze
-      CONTENT_ENCODING = 'Content-Encoding'.freeze
-      CONTENT_LENGTH = 'Content-Length'.freeze
-      SUPPORTED_ENCODINGS = 'gzip,deflate'.freeze
+      ACCEPT_ENCODING = 'Accept-Encoding'
+      CONTENT_ENCODING = 'Content-Encoding'
+      CONTENT_LENGTH = 'Content-Length'
+      SUPPORTED_ENCODINGS = 'gzip,deflate'
       RUBY_ENCODING = '1.9'.respond_to?(:force_encoding)
 
       def call(env)
@@ -30,10 +32,10 @@ module SplitIoClient
       def uncompress_gzip(body)
         io = StringIO.new(body)
         gzip_reader = if RUBY_ENCODING
-          Zlib::GzipReader.new(io, :encoding => 'ASCII-8BIT')
-        else
-          Zlib::GzipReader.new(io)
-        end
+                        Zlib::GzipReader.new(io, encoding: 'ASCII-8BIT')
+                      else
+                        Zlib::GzipReader.new(io)
+                      end
         gzip_reader.read
       end
 

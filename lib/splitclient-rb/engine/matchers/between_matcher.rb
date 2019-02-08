@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 module SplitIoClient
-  class BetweenMatcher
-    MATCHER_TYPE = 'BETWEEN'.freeze
+  class BetweenMatcher < Matcher
+    MATCHER_TYPE = 'BETWEEN'
 
     attr_reader :attribute
 
@@ -12,30 +14,17 @@ module SplitIoClient
     end
 
     def match?(args)
-      return false if !args.key?(:attributes) && !args.key?(:value)
-      return false if args.key?(:value) && args[:value].nil?
-      return false if args.key?(:attributes) && args[:attributes].nil?
+      SplitLogger.log_if_debug('[BetweenMatcher] evaluating value and attributes.')
+
+      return false unless SplitIoClient::Validators.valid_matcher_arguments(args)
 
       value = formatted_value(args[:value] || args[:attributes][@attribute.to_sym])
+      SplitLogger.log_if_debug("[BetweenMatcher] Value from parameters: #{value}.")
       return false unless value.is_a?(Integer)
 
-      (@start_value..@end_value).include? value
-    end
-
-    def equals?(obj)
-      if obj.nil?
-        false
-      elsif !obj.instance_of?(BetweenMatcher)
-        false
-      elsif self.equal?(obj)
-        true
-      else
-        false
-      end
-    end
-
-    def string_type?
-      false
+      matches = (@start_value..@end_value).cover? value
+      SplitLogger.log_if_debug("[BetweenMatcher] is #{value} between #{@start_value} and #{@end_value} -> #{matches} .")
+      matches
     end
 
     private
@@ -45,7 +34,7 @@ module SplitIoClient
       when 'NUMBER'
         value
       when 'DATETIME'
-        value = value / 1000 if sdk_data
+        value /= 1000 if sdk_data
 
         SplitIoClient::Utilities.to_milis_zero_out_from_seconds(value)
       else

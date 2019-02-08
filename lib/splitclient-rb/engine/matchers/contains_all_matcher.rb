@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 module SplitIoClient
   class ContainsAllMatcher < SetMatcher
-    MATCHER_TYPE = 'CONTAINS_ALL'.freeze
+    MATCHER_TYPE = 'CONTAINS_ALL'
 
     attr_reader :attribute
 
@@ -9,13 +11,14 @@ module SplitIoClient
     end
 
     def match?(args)
-      return false if @remote_set.empty?
+      if @remote_set.empty?
+        SplitLogger.log_if_debug('[ContainsAllMatcher] Remote Set Empty')
+        return false
+      end
 
-      @remote_set.subset? local_set(args[:attributes], @attribute)
-    end
-
-    def string_type?
-      false
+      matches = @remote_set.subset? local_set(args[:attributes], @attribute)
+      SplitLogger.log_if_debug("[ContainsAllMatcher] Remote Set #{@remote_set} contains #{@attribute} -> #{matches}")
+      matches
     end
   end
 end

@@ -3,7 +3,7 @@
 require 'spec_helper'
 
 describe SplitIoClient do
-  let(:factory) { SplitIoClient::SplitFactory.new('', Logger.new('/dev/null')) }
+  let(:factory) { SplitIoClient::SplitFactory.new('test_api_key', Logger.new('/dev/null')) }
   subject { factory.manager }
   let(:splits) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../test_data/splits/splits.json'))) }
   let(:segments) do
@@ -24,7 +24,7 @@ describe SplitIoClient do
   context '#split' do
     let(:factory) do
       SplitIoClient.configuration = nil
-      SplitIoClient::SplitFactory.new('', logger: Logger.new(log))
+      SplitIoClient::SplitFactory.new('test_api_key', logger: Logger.new(log))
     end
 
     let(:log) { StringIO.new }
@@ -35,12 +35,21 @@ describe SplitIoClient do
 
     it 'returns on nil split_name' do
       expect(subject.split(nil)).to eq(nil)
-      expect(log.string).to include 'split: split_name cannot be nil'
+      expect(log.string)
+        .to include 'split: you passed a nil split_name, split_name must be a non-empty String or a Symbol'
     end
 
     it 'returns on invalid split_name' do
       expect(subject.split(123)).to eq(nil)
-      expect(log.string).to include 'split: split_name must be a String or a Symbol'
+      expect(log.string)
+        .to include 'split: you passed an invalid split_name type, split_name must be a non-empty String or a Symbol'
+    end
+
+    it 'returns on invalid split_name' do
+      split_name = '  test_1_ruby '
+      expect(subject.split(split_name)).not_to be_nil
+      expect(log.string)
+        .to include "split: split_name #{split_name} has extra whitespace, trimming"
     end
   end
 
@@ -76,6 +85,10 @@ describe SplitIoClient do
 
     it 'returns empty array for #split_names' do
       expect(subject.split_names).to eq([])
+    end
+
+    it 'returns nil for #split' do
+      expect(subject.split('uber_feature')).to be nil
     end
   end
 end

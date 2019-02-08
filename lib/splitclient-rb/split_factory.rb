@@ -1,5 +1,6 @@
 module SplitIoClient
   class SplitFactory
+    ROOT_PROCESS_ID = Process.pid
     include SplitIoClient::Cache::Repositories
     include SplitIoClient::Cache::Stores
 
@@ -25,7 +26,21 @@ module SplitIoClient
       @client = SplitClient.new(@api_key, @adapter, @splits_repository, @segments_repository, @impressions_repository, @metrics_repository, @events_repository)
       @manager = SplitManager.new(@api_key, @adapter, @splits_repository)
 
+      validate_api_key
+
       @sdk_blocker.block if SplitIoClient.configuration.block_until_ready > 0
+
+
+      at_exit do
+        unless ENV['SPLITCLIENT_ENV'] == 'test'
+          if (Process.pid == ROOT_PROCESS_ID)
+            SplitIoClient.configuration.logger.info('Split SDK shutdown started...')
+            @client.destroy
+            stop!
+            SplitIoClient.configuration.logger.info('Split SDK shutdown complete')
+          end
+        end
+      end
     end
 
     def start!
@@ -65,5 +80,17 @@ module SplitIoClient
     end
 
     alias resume! start!
+
+    private
+
+    def validate_api_key
+      if(@api_key.nil?)
+        SplitIoClient.configuration.logger.error('Factory Instantiation: you passed a nil api_key, api_key must be a non-empty String')
+        SplitIoClient.configuration.valid_mode =  false
+      elsif (@api_key.empty?)
+        SplitIoClient.configuration.logger.error('Factory Instantiation: you passed and empty api_key, api_key must be a non-empty String')
+        SplitIoClient.configuration.valid_mode =  false
+      end
+    end
   end
 end

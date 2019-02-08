@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 module SplitIoClient
   class StartsWithMatcher
-    MATCHER_TYPE = 'STARTS_WITH'.freeze
+    MATCHER_TYPE = 'STARTS_WITH'
 
     attr_reader :attribute
 
@@ -10,17 +12,28 @@ module SplitIoClient
     end
 
     def match?(args)
-      value = args[:value] || args[:attributes].fetch(@attribute) do |a|
-        args[:attributes][a.to_s] || args[:attributes][a.to_sym]
+      if @prefix_list.empty?
+        SplitLogger.log_if_debug('[StartsWithMatcher] Prefix List is empty.')
+        return false
       end
 
-      return false if @prefix_list.empty?
+      value = get_value(args)
 
-      @prefix_list.any? { |prefix| value.to_s.start_with? prefix }
+      matches = @prefix_list.any? { |prefix| value.to_s.start_with? prefix }
+      SplitLogger.log_if_debug("[StartsWithMatcher] #{value} matches any of #{@prefix_list} -> #{matches}")
+      matches
     end
 
     def string_type?
       true
+    end
+
+    private
+
+    def get_value(args)
+      args[:value] || args[:attributes].fetch(@attribute) do |a|
+        args[:attributes][a.to_s] || args[:attributes][a.to_sym]
+      end
     end
   end
 end

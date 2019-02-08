@@ -1,3 +1,9 @@
+6.1.0
+
+Review input validation for client API methods: get_treatment, get_treatments, track, manager. Add input validation to block_until_ready, client startup, and destroy
+Add additional logging to the SDK Client in order to help debug matcher related issues
+Fix for issue causing redis_url parameter to be ignored
+
 6.0.1
 
 Fix an issue in events and impressions API calls log messages introduced in 6.0.0

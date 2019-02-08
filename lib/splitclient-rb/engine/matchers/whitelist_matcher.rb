@@ -1,54 +1,36 @@
+# frozen_string_literal: true
+
 module SplitIoClient
   #
   # class to implement the user defined matcher
   #
-  class WhitelistMatcher < NoMethodError
+  class WhitelistMatcher < Matcher
     MATCHER_TYPE = 'WHITELIST_MATCHER'
 
     attr_reader :attribute
 
     def initialize(whitelist_data)
       @whitelist = case whitelist_data
-      when Array
-        whitelist_data
-      when Hash
-        @matcher_type = 'ATTR_WHITELIST'
-        @attribute = whitelist_data[:attribute]
+                   when Array
+                     whitelist_data
+                   when Hash
+                     @matcher_type = 'ATTR_WHITELIST'
+                     @attribute = whitelist_data[:attribute]
 
-        whitelist_data[:value]
-      else
-        []
-      end
+                     whitelist_data[:value]
+                   else
+                     []
+                   end
     end
 
     def match?(args)
-      return @whitelist.include?(args[:value] || args[:matching_key]) unless @matcher_type == 'ATTR_WHITELIST'
+      return matches_user_whitelist(args) unless @matcher_type == 'ATTR_WHITELIST'
 
-      return false if !args.key?(:attributes) && !args.key?(:value)
-      return false if args.key?(:value) && args[:value].nil?
-      return false if args.key?(:attributes) && args[:attributes].nil?
+      SplitLogger.log_if_debug('[WhitelistMatcher] evaluating value and attributes.')
 
-      return @whitelist.include?(args[:value] || args[:attributes][@attribute.to_sym])
+      return false unless SplitIoClient::Validators.valid_matcher_arguments(args)
 
-      false
-    end
-
-    #
-    # evaluates if the given object equals the matcher
-    #
-    # @param obj [object] object to be evaluated
-    #
-    # @returns [boolean] true if obj equals the matcher
-    def equals?(obj)
-      if obj.nil?
-        false
-      elsif !obj.instance_of?(WhitelistMatcher)
-        false
-      elsif self.equal?(obj)
-        true
-      else
-        false
-      end
+      matches_attr_whitelist(args)
     end
 
     def string_type?
@@ -58,9 +40,25 @@ module SplitIoClient
     #
     # function to print string value for this matcher
     #
-    # @reutrn [string] string value of this matcher
+    # @return [string] string value of this matcher
     def to_s
       "in segment #{@whitelist}"
+    end
+
+    private
+
+    def matches_user_whitelist(args)
+      matches = @whitelist.include?(args[:value] || args[:matching_key])
+      SplitLogger.log_if_debug("[WhitelistMatcher] #{@whitelist} include \
+        #{args[:value] || args[:matching_key]} -> #{matches}")
+      matches
+    end
+
+    def matches_attr_whitelist(args)
+      matches = @whitelist.include?(args[:value] || args[:attributes][@attribute.to_sym])
+      SplitLogger.log_if_debug("[WhitelistMatcher] #{@whitelist} include \
+        #{args[:value] || args[:attributes][@attribute.to_sym]} -> #{matches}")
+      matches
     end
   end
 end

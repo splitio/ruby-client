@@ -27,6 +27,7 @@ module SplitIoClient
               till: #{@segments_repository.get_change_number(name)}")
 
             break if since.to_i >= @segments_repository.get_change_number(name).to_i
+
             since = @segments_repository.get_change_number(name)
           end
         end
@@ -39,7 +40,6 @@ module SplitIoClient
 
       def fetch_segment_changes(name, since)
         response = get_api("#{SplitIoClient.configuration.base_uri}/segmentChanges/#{name}", @api_key, since: since)
-
         if response.success?
           segment = JSON.parse(response.body, symbolize_names: true)
           @segments_repository.set_change_number(name, segment[:till])
@@ -55,6 +55,10 @@ module SplitIoClient
           SplitLogger.log_if_transport(segment.to_s)
 
           segment
+        elsif response.status == 403
+            SplitIoClient.configuration.logger.error('Factory Instantiation: You passed a browser type api_key, ' \
+              'please grab an api key from the Split console that is of type sdk')
+            SplitIoClient.configuration.valid_mode =  false
         else
           SplitLogger.log_error("Unexpected status code while fetching segments: #{response.status}." \
           "Since #{since} - Check your API key and base URI")

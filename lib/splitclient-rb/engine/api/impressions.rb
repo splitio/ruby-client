@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module SplitIoClient
   module Api
     class Impressions < Client
@@ -7,7 +9,7 @@ module SplitIoClient
 
       def post(impressions)
         if impressions.empty?
-          SplitIoClient.configuration.logger.debug('No impressions to report') if SplitIoClient.configuration.debug_enabled
+          SplitLogger.log_if_debug('No impressions to report')
           return
         end
 
@@ -18,7 +20,7 @@ module SplitIoClient
             SplitLogger.log_if_debug("Impressions reported: #{total_impressions(impressions)}")
           else
             SplitLogger.log_error("Unexpected status code while posting impressions: #{response.status}." \
-            " - Check your API key and base URI")
+            ' - Check your API key and base URI')
             raise 'Split SDK failed to connect to backend to post impressions'
           end
         end

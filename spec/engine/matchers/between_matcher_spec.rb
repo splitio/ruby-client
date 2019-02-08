@@ -5,7 +5,7 @@ require 'spec_helper'
 describe SplitIoClient::BetweenMatcher do
   subject do
     SplitIoClient.configuration = nil
-    SplitIoClient::SplitFactory.new('', logger: Logger.new('/dev/null')).client
+    SplitIoClient::SplitFactory.new('test_api_key', logger: Logger.new('/dev/null')).client
   end
 
   let(:datetime_matcher_splits) do
@@ -100,6 +100,13 @@ describe SplitIoClient::BetweenMatcher do
       expect(subject.get_treatment(user, feature, non_matching_high_value_attributes)).to eq 'default'
       expect(subject.get_treatment(user, feature, missing_key_attributes)).to eq 'default'
       expect(subject.get_treatment(user, feature, nil_attributes)).to eq 'default'
+    end
+  end
+
+  context '#string_type' do
+    it 'is not string type matcher' do
+      expect(described_class.new(attribute: 'foo', data_type: 'NUMBER',
+                                 start_value: 0, end_value: 10).string_type?).to be false
     end
   end
 end

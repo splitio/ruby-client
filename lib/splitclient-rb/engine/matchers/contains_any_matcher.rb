@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 module SplitIoClient
   class ContainsAnyMatcher < SetMatcher
-    MATCHER_TYPE = 'CONTAINS_ANY'.freeze
+    MATCHER_TYPE = 'CONTAINS_ANY'
 
     attr_reader :attribute
 
@@ -9,11 +11,10 @@ module SplitIoClient
     end
 
     def match?(args)
-      local_set(args[:attributes], @attribute).intersect? @remote_set
-    end
-
-    def string_type?
-      false
+      matches = local_set(args[:attributes], @attribute).intersect? @remote_set
+      SplitLogger.log_if_debug("[ContainsAnyMatcher] Remote Set #{@remote_set} contains any \
+        #{@attribute} or #{args[:attributes]}-> #{matches}")
+      matches
     end
   end
 end

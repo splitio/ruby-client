@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'net/http/persistent'
 
 module SplitIoClient
@@ -12,7 +14,7 @@ module SplitIoClient
           req.options[:timeout] = SplitIoClient.configuration.read_timeout
           req.options[:open_timeout] = SplitIoClient.configuration.connection_timeout
 
-          SplitIoClient.configuration.logger.debug("GET #{url} proxy: #{api_client.proxy}") if SplitIoClient.configuration.debug_enabled
+          SplitLogger.log_if_debug("GET #{url} proxy: #{api_client.proxy}")
         end
       rescue StandardError => e
         SplitIoClient.configuration.logger.warn("#{e}\nURL:#{url}\nparams:#{params}")
@@ -22,23 +24,20 @@ module SplitIoClient
       def post_api(url, api_key, data, headers = {}, params = {})
         api_client.post(url) do |req|
           req.headers = common_headers(api_key)
-            .merge('Content-Type' => 'application/json')
-            .merge(headers)
+                        .merge('Content-Type' => 'application/json')
+                        .merge(headers)
 
           req.body = data.to_json
 
           req.options[:timeout] = SplitIoClient.configuration.read_timeout
           req.options[:open_timeout] = SplitIoClient.configuration.connection_timeout
 
-          if SplitIoClient.configuration.transport_debug_enabled
-            SplitIoClient.configuration.logger.debug("POST #{url} #{req.body}")
-          elsif SplitIoClient.configuration.debug_enabled
-            SplitIoClient.configuration.logger.debug("POST #{url}")
-          end
+          SplitLogger.log_if_transport("POST #{url} #{req.body}")
+          SplitLogger.log_if_debug("POST #{url}")
         end
       rescue StandardError => e
         SplitIoClient.configuration.logger.warn("#{e}\nURL:#{url}\ndata:#{data}\nparams:#{params}")
-        raise 'Split SDK failed to connect to backend to retrieve information'
+        raise 'Split SDK failed to connect to backend to post information'
       end
 
       private

@@ -20,4 +20,8 @@ describe SplitIoClient::DependencyMatcher do
     expect(described_class.new('foo', %w[on yes true])
           .match?(matching_key: 'foo', bucketing_key: 'bar', evaluator: evaluator)).to eq(false)
   end
+
+  it 'is not string type matcher' do
+    expect(described_class.new('foo', %w[on yes true]).string_type?).to be false
+  end
 end

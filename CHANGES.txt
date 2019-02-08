@@ -1,3 +1,13 @@
+6.1.0 (Feb 8th, 2019)
+- Review input validation for client API methods. Better control and logging over nil, empty, numeric, and NaN parameters
+- Added logging when block_until_ready is not set or api key is not provided
+- Reviewed client API methods to log an error and return nil / empty when called after client was destroyed
+- Update track regex and fix an error causing a partial match to pass as a valid event_type
+- Add logging to #match? in matcher subclasses
+- Fix simplecov configuration issue causing errors in coverage calculation
+- Improve code coverage and decrease rubocop violation count
+- Fix for issue causing redis_url parameter to be ignored and Redis to always default to REDIS_ENV environment variable
+
 6.0.1 (Jan 7th, 2019)
 - Fix an issue in events and impressions API calls log messages caused by a wrong variable name introduced in 6.0.0
 

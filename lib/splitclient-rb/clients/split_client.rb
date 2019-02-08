@@ -13,18 +13,18 @@ module SplitIoClient
       @impressions_repository = impressions_repository
       @metrics_repository = metrics_repository
       @events_repository = events_repository
+      @destroyed = false
 
       @adapter = adapter
     end
 
     def get_treatments(key, split_names, attributes = {})
-
       return nil unless SplitIoClient::Validators.valid_get_treatments_parameters(split_names)
 
       sanitized_split_names = sanitize_split_names(split_names)
 
       if sanitized_split_names.empty?
-        SplitIoClient.configuration.logger.warn('get_treatments: split_names is an empty array or has null values')
+        SplitIoClient.configuration.logger.error('get_treatments: split_names must be a non-empty Array')
         return {}
       end
 
@@ -73,15 +73,23 @@ module SplitIoClient
         key, split_name, attributes = {}, split_data = nil, store_impressions = true,
         multiple = false, evaluator = nil
       )
+
       control_treatment = { label: Engine::Models::Label::EXCEPTION, treatment: SplitIoClient::Engine::Models::Treatment::CONTROL }
       parsed_control_treatment = parsed_treatment(multiple, control_treatment)
 
       bucketing_key, matching_key = keys_from_key(key)
 
-      return parsed_control_treatment unless SplitIoClient::Validators.valid_get_treatment_parameters(key, split_name, matching_key, bucketing_key)
+      return parsed_control_treatment unless valid_client && SplitIoClient::Validators.valid_get_treatment_parameters(key, split_name, matching_key, bucketing_key, attributes)
 
       bucketing_key = bucketing_key ? bucketing_key.to_s : nil
       matching_key = matching_key.to_s
+      sanitized_split_name = split_name.to_s.strip
+
+      if split_name.to_s != sanitized_split_name
+        SplitIoClient.configuration.logger.warn("get_treatment: split_name #{split_name} has extra whitespace, trimming")
+        split_name = sanitized_split_name
+      end
+
       evaluator ||= Engine::Parser::Evaluator.new(@segments_repository, @splits_repository)
 
       begin
@@ -117,18 +125,18 @@ module SplitIoClient
 
     def destroy
       SplitIoClient.configuration.logger.info('Split client shutdown started...') if SplitIoClient.configuration.debug_enabled
-
       SplitIoClient.configuration.threads[:impressions_sender].raise(SplitIoClient::ImpressionShutdownException)
       SplitIoClient.configuration.threads.reject { |k, _| k == :impressions_sender }.each do |name, thread|
         Thread.kill(thread)
       end
-
       @metrics_repository.clear
       @splits_repository.clear
       @segments_repository.clear
       @events_repository.clear
 
       SplitIoClient.configuration.logger.info('Split client shutdown complete') if SplitIoClient.configuration.debug_enabled
+      SplitIoClient.configuration.valid_mode = false
+      @destroyed = true
     end
 
     def store_impression(split_name, matching_key, bucketing_key, treatment, store_impressions, attributes)
@@ -177,9 +185,9 @@ module SplitIoClient
     end
 
     def track(key, traffic_type_name, event_type, value = nil)
-      return false unless SplitIoClient::Validators.valid_track_parameters(key, traffic_type_name, event_type, value)
+      return false unless valid_client && SplitIoClient::Validators.valid_track_parameters(key, traffic_type_name, event_type, value)
       begin
-        @events_repository.add(key.to_s, traffic_type_name, event_type.to_s, (Time.now.to_f * 1000).to_i, value)
+        @events_repository.add(key.to_s, traffic_type_name.downcase, event_type.to_s, (Time.now.to_f * 1000).to_i, value)
         true
       rescue StandardError => error
         SplitIoClient.configuration.log_found_exception(__method__.to_s, error)
@@ -210,13 +218,26 @@ module SplitIoClient
 
     def sanitize_split_names(split_names)
       split_names.compact.uniq.select do |split_name|
-        if split_name.is_a?(String) && !split_name.empty?
+        if (split_name.is_a?(String) || split_name.is_a?(Symbol)) && !split_name.empty?
           true
+        elsif split_name.is_a?(String) && split_name.empty?
+          SplitIoClient.configuration.logger.warn('get_treatments: you passed an empty split_name, split_name must be a non-empty String or a Symbol')
+          false
         else
-          SplitIoClient.configuration.logger.warn('get_treatments: split_name has to be a non empty string')
+          SplitIoClient.configuration.logger.warn('get_treatments: you passed an invalid split_name, split_name must be a non-empty String or a Symbol')
           false
         end
       end
+    end
+
+    private
+
+    def valid_client
+      if @destroyed
+        SplitIoClient.configuration.logger.error('Client has already been destroyed - no calls possible')
+        return false
+      end
+      SplitIoClient.configuration.valid_mode
     end
   end
 end
