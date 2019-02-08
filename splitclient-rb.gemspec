@@ -36,6 +36,7 @@ Gem::Specification.new do |spec|
   end
 
   spec.add_development_dependency 'allocation_stats'
+  spec.add_development_dependency 'appraisal'
   spec.add_development_dependency 'bundler', '~> 1.11'
   spec.add_development_dependency 'pry'
   spec.add_development_dependency 'pry-nav'
@@ -46,7 +47,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'simplecov'
   spec.add_development_dependency 'timecop'
   spec.add_development_dependency 'webmock'
-  spec.add_development_dependency 'appraisal'
 
   spec.add_runtime_dependency 'concurrent-ruby', '~> 1.0'
   spec.add_runtime_dependency 'faraday', '>= 0.8'
