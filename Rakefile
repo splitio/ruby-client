@@ -28,7 +28,7 @@ end
 
 if !ENV['APPRAISAL_INITIALIZED']
   task :default do
-    sh 'appraisal install && rake appraisal spec && rake rubocop'
+    sh 'appraisal install && rake appraisal && rake rubocop'
   end
 else
   task default: %i[spec rubocop]
