@@ -20,7 +20,7 @@ module SplitIoClient
     # @param splits_repository [SplitsRepository] SplitsRepository instance to store splits in
     # @param segments_repository [SegmentsRepository] SegmentsRepository instance to store segments in
     # @param impressions_repository [ImpressionsRepository] ImpressionsRepository instance to store impressions in
-    # @param metrics_repository [MetricsRepository] SplitsRepository instance to store metrics in
+    # @param metrics_repository [MetricsRepository] MetricsRepository instance to store metrics in
     # @param sdk_blocker [SDKBlocker] SDKBlocker instance which blocks splits_repository/segments_repository
     #
     # @return [SplitIoClient] split.io client instance

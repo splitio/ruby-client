@@ -75,7 +75,6 @@ describe SplitIoClient do
 
   describe 'client destroy' do
     before do
-      SplitIoClient.configuration.threads[:impressions_sender] = Thread.new {}
       factory.client.destroy
     end
 

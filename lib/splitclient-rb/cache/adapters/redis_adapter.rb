@@ -125,6 +125,7 @@ module SplitIoClient
           @redis.rpush(key, val)
         end
 
+        # count = 0 will result in lrange(0,-1), fetching all items
         def get_from_queue(key, count)
           items = @redis.lrange(key, 0, count - 1)
           fetched_count = items.size
@@ -157,9 +158,7 @@ module SplitIoClient
         end
 
         def clear(prefix)
-          keys = @redis.keys("#{prefix}*")
-
-          keys.map { |key| @redis.del(key) }
+          # noop
         end
 
         def expire(key, seconds)

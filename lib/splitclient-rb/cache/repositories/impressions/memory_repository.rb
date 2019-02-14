@@ -41,6 +41,10 @@ module SplitIoClient
             @adapter.get_batch(SplitIoClient.configuration.impressions_bulk_size)
           end
 
+          def clear
+            @adapter.clear
+          end
+
           private
 
           def random_sampler

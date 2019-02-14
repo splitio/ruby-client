@@ -68,7 +68,6 @@ describe SplitIoClient do
 
     it 'logs warning when block until ready not set' do
       SplitIoClient::SplitConfig.new(custom_options)
-      # TODO: prevent this warn from being logged in other tests
       expect(log.string).to include 'no ready parameter has been set - incorrect control treatments could be logged'
     end
   end

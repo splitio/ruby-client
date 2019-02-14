@@ -16,11 +16,23 @@ module SplitIoClient
             )
           end
 
-          def clear
-            @adapter.get_from_queue(namespace_key('.events'), EVENTS_SLICE).map do |e|
+          def get_events(number_of_events = 0)
+            @adapter.get_from_queue(namespace_key('.events'), number_of_events).map do |e|
               JSON.parse(e, symbolize_names: true)
             end
+          rescue StandardError => e
+            SplitIoClient.configuration.logger.error("Exception while clearing events cache: #{e}")
+            []
           end
+
+          def batch
+            get_events(EVENTS_SLICE)
+          end
+
+          def clear
+            get_events
+          end
+
         end
       end
     end
