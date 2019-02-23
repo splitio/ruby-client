@@ -1,5 +1,6 @@
-module SplitIoClient
+# frozen_string_literal: true
 
+module SplitIoClient
   #
   #  Tracks latencies pero bucket of time.
   #  Each bucket represent a latency greater than the one before
@@ -33,14 +34,13 @@ module SplitIoClient
   #
 
   class BinarySearchLatencyTracker < NoMethodError
+    BUCKETS = [1000,    1500, 2250, 3375, 5063,
+               7594,    11_391, 17_086, 25_629, 38_443,
+               57_665,   86_498,   129_746, 194_620, 291_929,
+               437_894,  656_841,  985_261, 1_477_892, 2_216_838,
+               3_325_257, 4_987_885, 7_481_828].freeze
 
-    BUCKETS = [ 1000,    1500,    2250,   3375,    5063,
-                7594,    11391,   17086,  25629,   38443,
-                57665,   86498,   129746, 194620,  291929,
-                437894,  656841,  985261, 1477892, 2216838,
-                3325257, 4987885, 7481828 ].freeze
-
-    MAX_LATENCY = 7481828
+    MAX_LATENCY = 7_481_828
 
     attr_accessor :latencies
 
@@ -72,16 +72,8 @@ module SplitIoClient
       @latencies
     end
 
-    # Returns the list of latencies buckets as an array.
-    #
-    #
-    # @return the list of latencies buckets as an array.
-    def get_latencies
-      @latencies
-    end
-
     def get_latency(index)
-      return @latencies[index]
+      @latencies[index]
     end
 
     def clear
@@ -95,7 +87,7 @@ module SplitIoClient
     # @return the bucket content for the latency.
     #
     def get_bucket_for_latency_millis(latency)
-      return @latencies[find_bucket_index(latency * 1000)]
+      @latencies[find_bucket_index(latency * 1000)]
     end
 
     #
@@ -105,24 +97,17 @@ module SplitIoClient
     # @return the bucket content for the latency.
     #
     def get_bucket_for_latency_micros(latency)
-      return @latencies[find_bucket_index(latency)]
+      @latencies[find_bucket_index(latency)]
     end
 
     private
 
     def find_bucket_index(micros)
-      if (micros > MAX_LATENCY) then
-        return BUCKETS.length - 1
-      end
+      return BUCKETS.length - 1 if micros > MAX_LATENCY
 
-      if (micros < 1500) then
-        return 0
-      end
+      return 0 if micros < 1500
 
-      index = BUCKETS.find_index(BUCKETS.bsearch {|x| x >= micros })
-
-      return index
+      BUCKETS.find_index(BUCKETS.bsearch { |x| x >= micros })
     end
-
   end
 end

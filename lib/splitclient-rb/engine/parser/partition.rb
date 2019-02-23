@@ -1,9 +1,10 @@
+# frozen_string_literal: true
+
 module SplitIoClient
   #
   # acts as dto for a partition structure
   #
   class Partition < NoMethodError
-
     #
     # definition of the condition
     #
@@ -28,7 +29,7 @@ module SplitIoClient
 
     #
     # @return [boolean] true if the partition is empty false otherwise
-    def is_empty?
+    def empty?
       @data.empty?
     end
   end

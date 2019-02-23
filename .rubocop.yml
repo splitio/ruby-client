@@ -26,7 +26,7 @@ AllCops:
     - lib/splitclient-rb/clients/**/*
     - lib/splitclient-rb/managers/**/*
     - lib/splitclient-rb/engine/api/**/*
-    - lib/splitclient-rb/engine/evaluator/**/*
-    - lib/splitclient-rb/engine/metrics/**/*
     - lib/splitclient-rb/engine/models/**/*
-    - lib/splitclient-rb/engine/parser/**/*
+    - lib/splitclient-rb/engine/parser/condition.rb
+    - lib/splitclient-rb/engine/parser/evaluator.rb
+    - lib/splitclient-rb/engine/parser/split_adapter.rb
