@@ -280,6 +280,8 @@ The following values can be customized:
 
 **block_until_ready** : The SDK will block your app for the provided amount of seconds until it's ready. A `SplitIoClient::SDKBlockerTimeoutExpiredException` will be thrown If the provided time expires. When `0` is provided, the SDK runs in non-blocking mode.
 
+_When using consumer mode, blocking has no effect._
+
 *default value* = `0`
 
 **labels_enabled** : Allows preventing labels from being sent to the Split servers, as they may contain sensitive information.
@@ -349,11 +351,8 @@ options = {
   mode: :consumer,
   redis_url: 'redis://127.0.0.1:6379/0'
 }
-begin
-  split_client = SplitIoClient::SplitFactoryBuilder.build('YOUR_API_KEY', options).client
-rescue SplitIoClient::SDKBlockerTimeoutExpiredException
-  # Code to treat raised exception
-end
+
+split_client = SplitIoClient::SplitFactoryBuilder.build('YOUR_API_KEY', options).client
 ```
 
 ### Logging

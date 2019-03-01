@@ -36,26 +36,25 @@ module SplitIoClient
               SplitIoClient.configuration.logger.info('Starting impressions service')
 
               loop do
-                post_impressions
+                post_impressions(false)
 
                 sleep(SplitIoClient::Utilities.randomize_interval(SplitIoClient.configuration.impressions_refresh_rate))
               end
-            rescue SplitIoClient::ImpressionShutdownException
+            rescue SplitIoClient::SDKShutdownException
               post_impressions
 
-              @impressions_repository.clear
+              SplitIoClient.configuration.logger.info('Posting impressions due to shutdown')
             end
           end
         end
 
-        def post_impressions
+        def post_impressions(fetch_all_impressions = true)
+          formatted_impressions = ImpressionsFormatter.new(@impressions_repository)
+            .call(fetch_all_impressions)
+
           impressions_api.post(formatted_impressions)
         rescue StandardError => error
           SplitIoClient.configuration.log_found_exception(__method__.to_s, error)
-        end
-
-        def formatted_impressions(raw_impressions = nil)
-          ImpressionsFormatter.new(@impressions_repository).call(raw_impressions)
         end
 
         def impressions_api

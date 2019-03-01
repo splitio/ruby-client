@@ -125,14 +125,16 @@ module SplitIoClient
 
     def destroy
       SplitIoClient.configuration.logger.info('Split client shutdown started...') if SplitIoClient.configuration.debug_enabled
-      SplitIoClient.configuration.threads[:impressions_sender].raise(SplitIoClient::ImpressionShutdownException)
-      SplitIoClient.configuration.threads.reject { |k, _| k == :impressions_sender }.each do |name, thread|
-        Thread.kill(thread)
+
+      SplitIoClient.configuration.threads.select { |name, thread| name.to_s.end_with? 'sender' }.values.each do |thread|
+        thread.raise(SplitIoClient::SDKShutdownException)
+        thread.join
       end
-      @metrics_repository.clear
+
+      SplitIoClient.configuration.threads.values.each { |thread| Thread.kill(thread) }
+
       @splits_repository.clear
       @segments_repository.clear
-      @events_repository.clear
 
       SplitIoClient.configuration.logger.info('Split client shutdown complete') if SplitIoClient.configuration.debug_enabled
       SplitIoClient.configuration.valid_mode = false

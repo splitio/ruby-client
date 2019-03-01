@@ -118,16 +118,15 @@ describe SplitIoClient::SplitFactory do
     end
   end
 
-  context 'when client is detroyed' do
+  context 'when client is destroyed' do
     let(:cache_adapter) { :memory }
     let(:mode) { :standalone }
 
-    it 'log an error client is detroyed' do
+    it 'log an error' do
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
         .to_return(status: 200, body: [])
 
       factory = described_class.new('browser_key', options)
-      SplitIoClient.configuration.threads[:impressions_sender] = Thread.new {}
       factory.client.destroy
       factory.client.get_treatment('key', 'split')
       expect(log.string).to include 'Client has already been destroyed - no calls possible'

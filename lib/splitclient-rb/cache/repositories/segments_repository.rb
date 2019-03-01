@@ -13,7 +13,7 @@ module SplitIoClient
           else
             adapter
           end
-          @adapter.set_bool(namespace_key('.ready'), false) unless SplitIoClient.configuration.mode == :consumer
+          @adapter.set_bool(namespace_key('.ready'), false) unless SplitIoClient.configuration.mode.equal?(:consumer)
         end
 
         # Receives segment data, adds and removes segements from the store

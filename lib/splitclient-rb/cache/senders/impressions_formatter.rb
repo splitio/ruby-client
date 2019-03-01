@@ -8,8 +8,9 @@ module SplitIoClient
           @impressions_repository = impressions_repository
         end
 
-        def call(raw_impressions)
-          impressions = raw_impressions || @impressions_repository.batch
+        def call(fetch_all_impressions, raw_impressions = nil)
+          impressions = raw_impressions || (fetch_all_impressions ? @impressions_repository.clear : @impressions_repository.batch)
+          
           filtered_impressions = filter_impressions(impressions)
 
           return [] if impressions.empty? || filtered_impressions.empty?

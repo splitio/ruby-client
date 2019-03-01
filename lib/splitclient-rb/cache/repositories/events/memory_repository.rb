@@ -19,6 +19,10 @@ module SplitIoClient
             @adapter.clear
           end
 
+          def batch
+            @adapter.get_batch(EVENTS_SLICE)
+          end
+
           def clear
             @adapter.clear
           end

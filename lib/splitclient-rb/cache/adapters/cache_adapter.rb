@@ -19,7 +19,6 @@ module SplitIoClient
 
         def clear(namespace_key)
           @cache.clear
-          @adapter.clear(namespace_key)
         end
 
         def string(key)
