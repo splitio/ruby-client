@@ -35,8 +35,8 @@ module SplitIoClient
             @adapter.expire(key, EXPIRE_SECONDS) if impressions.size == impressions_list_size
           end
 
-          def batch
-            @adapter.get_from_queue(key, SplitIoClient.configuration.impressions_bulk_size).map do |e|
+          def get_impressions(number_of_impressions = 0)
+            @adapter.get_from_queue(key, number_of_impressions).map do |e|
               impression = JSON.parse(e, symbolize_names: true)
               impression[:i][:f] = impression[:i][:f].to_sym
               impression
@@ -44,6 +44,14 @@ module SplitIoClient
           rescue StandardError => e
             SplitIoClient.configuration.logger.error("Exception while clearing impressions cache: #{e}")
             []
+          end
+
+          def batch
+            get_impressions(SplitIoClient.configuration.impressions_bulk_size)
+          end
+
+          def clear
+            get_impressions
           end
 
           def key

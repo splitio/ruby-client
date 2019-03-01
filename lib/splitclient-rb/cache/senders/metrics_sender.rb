@@ -25,12 +25,18 @@ module SplitIoClient
 
         def metrics_thread
           SplitIoClient.configuration.threads[:metrics_sender] = Thread.new do
-            SplitIoClient.configuration.logger.info('Starting metrics service')
+            begin
+              SplitIoClient.configuration.logger.info('Starting metrics service')
+              
+              loop do
+                post_metrics
 
-            loop do
+                sleep(SplitIoClient::Utilities.randomize_interval(SplitIoClient.configuration.metrics_refresh_rate))
+              end
+            rescue SplitIoClient::SDKShutdownException
               post_metrics
 
-              sleep(SplitIoClient::Utilities.randomize_interval(SplitIoClient.configuration.metrics_refresh_rate))
+              SplitIoClient.configuration.logger.info('Posting metrics due to shutdown')
             end
           end
         end

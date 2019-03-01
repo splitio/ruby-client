@@ -7,6 +7,17 @@ module SplitIoClient
     attr_reader :adapter, :client, :manager
 
     def initialize(api_key, config_hash = {})
+      at_exit do
+        unless ENV['SPLITCLIENT_ENV'] == 'test'
+          if (Process.pid == ROOT_PROCESS_ID)
+            SplitIoClient.configuration.logger.info('Split SDK shutdown started...')
+            @client.destroy if @client
+            stop!
+            SplitIoClient.configuration.logger.info('Split SDK shutdown complete')
+          end
+        end
+      end
+
       @api_key = api_key
       SplitIoClient.configure(config_hash)
 
@@ -20,7 +31,10 @@ module SplitIoClient
       @metrics_repository = MetricsRepository.new(SplitIoClient.configuration.metrics_adapter)
       @events_repository = EventsRepository.new(SplitIoClient.configuration.events_adapter)
 
-      @sdk_blocker = SDKBlocker.new(@splits_repository, @segments_repository)
+      if SplitIoClient.configuration.mode == :standalone && SplitIoClient.configuration.block_until_ready > 0
+        @sdk_blocker = SDKBlocker.new(@splits_repository, @segments_repository)
+      end
+
       @adapter = start!
 
       @client = SplitClient.new(@api_key, @adapter, @splits_repository, @segments_repository, @impressions_repository, @metrics_repository, @events_repository)
@@ -28,19 +42,7 @@ module SplitIoClient
 
       validate_api_key
 
-      @sdk_blocker.block if SplitIoClient.configuration.block_until_ready > 0
-
-
-      at_exit do
-        unless ENV['SPLITCLIENT_ENV'] == 'test'
-          if (Process.pid == ROOT_PROCESS_ID)
-            SplitIoClient.configuration.logger.info('Split SDK shutdown started...')
-            @client.destroy
-            stop!
-            SplitIoClient.configuration.logger.info('Split SDK shutdown complete')
-          end
-        end
-      end
+      @sdk_blocker.block if @sdk_blocker
     end
 
     def start!
