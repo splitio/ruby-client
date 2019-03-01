@@ -3,6 +3,7 @@
 require 'bundler/gem_tasks'
 require 'rspec/core/rake_task'
 require 'rubocop/rake_task'
+require 'appraisal'
 
 Dir['tasks/**/*.rake'].each { |rake| load rake }
 
@@ -25,4 +26,10 @@ else
   end
 end
 
-task default: %i[spec rubocop]
+if !ENV['APPRAISAL_INITIALIZED']
+  task :default do
+    sh 'appraisal install && rake appraisal && rake rubocop'
+  end
+else
+  task default: %i[spec rubocop]
+end
