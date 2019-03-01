@@ -6,7 +6,6 @@ module SplitIoClient
     module Stores
       class SDKBlocker
         attr_reader :splits_repository
-        attr_writer :splits_thread, :segments_thread
 
         def initialize(splits_repository, segments_repository)
           @splits_repository = splits_repository
@@ -34,8 +33,8 @@ module SplitIoClient
           end
 
           SplitIoClient.configuration.logger.info('SplitIO SDK is ready')
-          @splits_thread.run
-          @segments_thread.run
+          SplitIoClient.configuration.threads[:split_store].run
+          SplitIoClient.configuration.threads[:segment_store].run
         end
 
         def ready?
