@@ -19,6 +19,7 @@ Naming/FileName:
 AllCops:
   TargetRubyVersion: 2.3.6
   Exclude:
+    - gemfiles/* # excluded as appraisal generates them with errors
     - lib/*
     - lib/murmurhash/**/*
     - lib/splitclient-rb/*
