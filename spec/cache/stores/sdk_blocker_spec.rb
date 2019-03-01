@@ -32,13 +32,13 @@ describe SplitIoClient::Cache::Stores::SDKBlocker do
     end
 
     it 'runs threads when ready' do
-      sdk_blocker.splits_thread = Thread.new { Thread.stop }
-      sdk_blocker.segments_thread = Thread.new { Thread.stop }
+      SplitIoClient.configuration.threads[:split_store] = Thread.new { Thread.stop }
+      SplitIoClient.configuration.threads[:segment_store] = Thread.new { Thread.stop }
 
       sleep 0.1
 
-      expect(sdk_blocker.instance_variable_get(:@splits_thread).status).to eq('sleep')
-      expect(sdk_blocker.instance_variable_get(:@segments_thread).status).to eq('sleep')
+      expect(SplitIoClient.configuration.threads[:split_store].status).to eq('sleep')
+      expect(SplitIoClient.configuration.threads[:segment_store].status).to eq('sleep')
 
       sdk_blocker.splits_ready!
       sdk_blocker.segments_ready!
@@ -47,8 +47,8 @@ describe SplitIoClient::Cache::Stores::SDKBlocker do
 
       sleep 0.1
 
-      expect(sdk_blocker.instance_variable_get(:@splits_thread).status).to eq(false)
-      expect(sdk_blocker.instance_variable_get(:@segments_thread).status).to eq(false)
+      expect(SplitIoClient.configuration.threads[:split_store].status).to eq(false)
+      expect(SplitIoClient.configuration.threads[:segment_store].status).to eq(false)
     end
   end
 

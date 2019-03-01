@@ -28,7 +28,7 @@ module SplitIoClient
         private
 
         def segments_thread
-          SplitIoClient.configuration.threads[:segment_store] = @sdk_blocker.segments_thread = Thread.new do
+          SplitIoClient.configuration.threads[:segment_store] = Thread.new do
             SplitIoClient.configuration.logger.info('Starting segments fetcher service')
             SplitIoClient.configuration.block_until_ready > 0 ? blocked_store : unblocked_store
           end
