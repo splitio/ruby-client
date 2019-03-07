@@ -53,7 +53,7 @@ describe SplitIoClient do
 
       expect(configs.connection_timeout).to eq 5
       expect(configs.read_timeout).to eq 5
-      expect(configs.features_refresh_rate).to eq 30
+      expect(configs.features_refresh_rate).to eq 5
       expect(configs.segments_refresh_rate).to eq 60
       expect(configs.metrics_refresh_rate).to eq 60
       expect(configs.impressions_refresh_rate).to eq 60

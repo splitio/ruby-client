@@ -287,7 +287,7 @@ The following values can be customized:
 
 **features_refresh_rate** : The SDK polls Split servers for changes to feature Splits every X seconds, where X is this property's value.
 
-*default value* = `30`
+*default value* = `5`
 
 **segments_refresh_rate** : The SDK polls Split servers for changes to segments every X seconds, where X is this property's value.
 
