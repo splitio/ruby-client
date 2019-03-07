@@ -1,3 +1,7 @@
+6.2.0
+Ensure SDK flushes information to Split servers on client destroy
+Fix for compatibility issue between Faraday < 0.13 and net-http-persistent 3
+
 6.1.0
 
 Review input validation for client API methods: get_treatment, get_treatments, track, manager. Add input validation to block_until_ready, client startup, and destroy
