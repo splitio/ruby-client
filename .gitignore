@@ -49,3 +49,6 @@ dump.rdb
 
 # Ignore Mac OS generated files
 .DS_Store
+
+# Ignore Appraisal gemfile.lock files
+/gemfiles/*.gemfile.lock

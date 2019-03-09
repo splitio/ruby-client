@@ -70,7 +70,7 @@ module SplitIoClient
       @transport_debug_enabled = opts[:transport_debug_enabled] || SplitConfig.default_debug
       @block_until_ready = opts[:ready] || opts[:block_until_ready] || 0
 
-      @logger.warn 'no ready parameter has been set - incorrect control treatments could be logged' if block_until_ready == 0
+      @logger.warn 'no ready parameter has been set - incorrect control treatments could be logged' if block_until_ready == 0 && !mode.equal?(:consumer) 
 
       @machine_name = opts[:machine_name] || SplitConfig.machine_hostname
       @machine_ip = opts[:machine_ip] || SplitConfig.machine_ip
@@ -304,7 +304,7 @@ module SplitIoClient
     end
 
     def self.default_features_refresh_rate
-      30
+      5
     end
 
     def self.default_segments_refresh_rate

@@ -206,6 +206,57 @@ The split client will return `on`. Note that this will be true for any bucketing
  factory = SplitIoClient::SplitFactoryBuilder.build('localhost', path: '/where/to-look-for/<file_name>', reload_rate: 3)
  ```
 
+### SDK Input Validations
+
+In order to provide consistency among the SDKs for the different programming languages, provide better output to users in case of errors, and prevent unexpected errors to raise exceptions in your application, most of the parameters in the SDK methods are validated against a set of rules. Similarly, some of the configuration parameters must follow these rules, too. Check your application against the list below to prevent issues when using the SDK.
+
+#### get_treatment (split_client)
+
+- `key` (when not using matching_key and bucketing_key): must be a non-empty `String` or a `Symbol`, shorter than 250 characters. If a non-NaN `Numeric` value is used, it'll be converted to its `String` representation.
+
+- `matching_key`, `bucketing_key`: the containing `Hash` must have both keys, and the same rules above apply for each.
+
+- `split_name`: must be a non-empty `String` or a `Symbol`. Whitespaces will be trimmed from both ends of it. The trimmed version of the `split_name` will be used for both evaluation and to store the resulting impression.
+
+- `attributes`: must be of type `Hash`.
+
+#### get_treatments (split_client)
+
+- `key`, `matching_key`, `bucketing_key`: same rules as those for `get_treatment` apply.
+
+- `split_names`: must be an non-empty Array. Split names will be filtered removing those not matching the corresponding rules for `split_name` in `get_treatment`. In addition, duplicates will be removed.
+
+#### track (split_client)
+
+- `key`: must be a non-empty `String` or a `Symbol`, shorter than 250 characters. If a non-NaN `Numeric` value is used, it'll be converted to its `String` representation.
+
+- `traffic_type_name`: must be a non-empty `String` or a `Symbol`. If `traffic_type_name` contains uppercase letters, it will be lowercased.
+
+- `event_type`: must be a non-empty `String` or `Symbol` that conforms with the regular expression `^[a-zA-Z0-9][-_.:a-zA-Z0-9]{0,79}$` (i.e. event name must be alphanumeric, cannot be more than 80 characters long, and can only include a dash, underscore, period, or colon as separators of alphanumeric characters).
+
+- `value`: must be either a non-NaN `Numeric` value, or nil.
+
+#### split (split_manager)
+
+- `split_name`: must be a non-empty `String` or a `Symbol`.
+
+#### Configuration Parameters
+
+- `api_key`: must be a non-empty `String` or a `Symbol` of type `sdk` (`browser` type API keys will break this rule).
+
+- `block_until_ready`: a warning log message will be issued if this value is not set.
+
+
+#### Client Destroyed Rules
+Calls to the SDK methods are still possible after `destroy` is called. All will log an error message stating _client has been destroyed_.
+
+- `get_treatment` will return `control` for all calls (`get_treatments`, will return an Array of `control` values, correspondingly).
+
+- Calls to `track` will return `false`.  
+
+- All calls to `split_manager` methods will return an empty Array, except `split`, which will return `nil`.
+
+
 ## Advanced Configuration
 
 Split client's default configuration should cover most scenarios. However, you can also provide custom configuration settings when initializing the factory using a hash of options. e.g.:
@@ -236,7 +287,7 @@ The following values can be customized:
 
 **features_refresh_rate** : The SDK polls Split servers for changes to feature Splits every X seconds, where X is this property's value.
 
-*default value* = `30`
+*default value* = `5`
 
 **segments_refresh_rate** : The SDK polls Split servers for changes to segments every X seconds, where X is this property's value.
 
@@ -279,6 +330,8 @@ The following values can be customized:
 *default value* = (no impression listener)
 
 **block_until_ready** : The SDK will block your app for the provided amount of seconds until it's ready. A `SplitIoClient::SDKBlockerTimeoutExpiredException` will be thrown If the provided time expires. When `0` is provided, the SDK runs in non-blocking mode.
+
+_When using consumer mode, blocking has no effect._
 
 *default value* = `0`
 
@@ -349,11 +402,8 @@ options = {
   mode: :consumer,
   redis_url: 'redis://127.0.0.1:6379/0'
 }
-begin
-  split_client = SplitIoClient::SplitFactoryBuilder.build('YOUR_API_KEY', options).client
-rescue SplitIoClient::SDKBlockerTimeoutExpiredException
-  # Code to treat raised exception
-end
+
+split_client = SplitIoClient::SplitFactoryBuilder.build('YOUR_API_KEY', options).client
 ```
 
 ### Logging

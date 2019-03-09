@@ -1,3 +1,8 @@
+6.2.0
+Ensure SDK flushes information to Split servers on client destroy
+Fix for compatibility issue between Faraday < 0.13 and net-http-persistent 3
+Change default features refresh rate interval to 5 seconds
+
 6.1.0
 
 Review input validation for client API methods: get_treatment, get_treatments, track, manager. Add input validation to block_until_ready, client startup, and destroy
@@ -10,7 +15,7 @@ Fix an issue in events and impressions API calls log messages introduced in 6.0.
 
 6.0.0
 
-BREAKING CHANGE: Remove producer mode, make memory adapter mandatory in standalone mode, and Redis adapter mandatory in consumer mode. 
+BREAKING CHANGE: Remove producer mode, make memory adapter mandatory in standalone mode, and Redis adapter mandatory in consumer mode.
 BREAKING CHANGE: Reduce the total number of Redis operations of the SDK by changing the impressions storage format and adding a memory cache for splits and segments. It requires to have Split Synchronizer > v2.0.0 running if you are using Redis.
 SDK is now compatible with net-http-persistent 3.0.
 

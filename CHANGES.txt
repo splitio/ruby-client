@@ -1,3 +1,11 @@
+6.2.0 (Mar 7th, 2019)
+- Reworked SplitClient#destroy to ensure events, impressions and metrics are sent to Split backend when called
+- Ensured destroy is called when keyboard interrupts are sent to the application
+- Changed SDK blocker (and block_until_ready) to have no effect in consumer mode
+- Added support for applications tied to Faraday < 0.13 and net-http-persistent 3 using a patched Faraday adapter
+- Added documentation for input validation in detailed readme
+- Changed SplitConfig#default_features_refresh_rate value to 5 seconds
+
 6.1.0 (Feb 8th, 2019)
 - Review input validation for client API methods. Better control and logging over nil, empty, numeric, and NaN parameters
 - Added logging when block_until_ready is not set or api key is not provided

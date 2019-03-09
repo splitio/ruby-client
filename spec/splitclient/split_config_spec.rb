@@ -53,7 +53,7 @@ describe SplitIoClient do
 
       expect(configs.connection_timeout).to eq 5
       expect(configs.read_timeout).to eq 5
-      expect(configs.features_refresh_rate).to eq 30
+      expect(configs.features_refresh_rate).to eq 5
       expect(configs.segments_refresh_rate).to eq 60
       expect(configs.metrics_refresh_rate).to eq 60
       expect(configs.impressions_refresh_rate).to eq 60
@@ -68,7 +68,6 @@ describe SplitIoClient do
 
     it 'logs warning when block until ready not set' do
       SplitIoClient::SplitConfig.new(custom_options)
-      # TODO: prevent this warn from being logged in other tests
       expect(log.string).to include 'no ready parameter has been set - incorrect control treatments could be logged'
     end
   end

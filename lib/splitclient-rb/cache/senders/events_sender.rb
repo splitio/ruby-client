@@ -27,18 +27,25 @@ module SplitIoClient
 
         def events_thread
           SplitIoClient.configuration.threads[:events_sender] = Thread.new do
-            SplitIoClient.configuration.logger.info('Starting events service')
+            begin
+              SplitIoClient.configuration.logger.info('Starting events service')
+              
+              loop do
+                post_events(false)
 
-            loop do
+                sleep(SplitIoClient::Utilities.randomize_interval(SplitIoClient.configuration.events_push_rate))
+              end
+            rescue SplitIoClient::SDKShutdownException
               post_events
 
-              sleep(SplitIoClient::Utilities.randomize_interval(SplitIoClient.configuration.events_push_rate))
+              SplitIoClient.configuration.logger.info('Posting events due to shutdown')
             end
           end
         end
 
-        def post_events
-          events_api.post(@events_repository.clear)
+        def post_events(fetch_all_events = true)
+          events = fetch_all_events ? @events_repository.clear : @events_repository.batch
+          events_api.post(events)
         rescue StandardError => error
           SplitIoClient.configuration.log_found_exception(__method__.to_s, error)
         end

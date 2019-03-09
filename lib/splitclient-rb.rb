@@ -41,6 +41,7 @@ require 'splitclient-rb/split_config'
 require 'splitclient-rb/split_logger'
 
 require 'splitclient-rb/engine/api/faraday_middleware/gzip'
+require 'splitclient-rb/engine/api/faraday_adapter/patched_net_http_persistent'
 require 'splitclient-rb/engine/api/client'
 require 'splitclient-rb/engine/api/impressions'
 require 'splitclient-rb/engine/api/metrics'

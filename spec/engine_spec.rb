@@ -326,7 +326,7 @@ describe SplitIoClient, type: :client do
         impressions = subject.instance_variable_get(:@impressions_repository).batch
         expect(ImpressionsFormatter
           .new(subject.instance_variable_get(:@impressions_repository))
-          .call(impressions)
+          .call(true, impressions)
           .select { |im| im[:testName] == :new_feature }[0][:keyImpressions].size).to eq(2)
       end
 
@@ -498,9 +498,9 @@ describe SplitIoClient, type: :client do
     describe 'impressions' do
       let(:impressions) { subject.instance_variable_get(:@impressions_repository).batch }
       let(:formatted_impressions) do
-        SplitIoClient::Cache::Senders::ImpressionsSender
-          .new(nil, nil)
-          .send(:formatted_impressions, impressions)
+        SplitIoClient::Cache::Senders::ImpressionsFormatter
+          .new(nil)
+          .send(:call, true, impressions)
       end
 
       before do
@@ -606,10 +606,7 @@ describe SplitIoClient, type: :client do
 
       it 'returns control' do
         expect(subject.get_treatment('fake_user_id_1', 'test_feature')).to eq 'on'
-
-        SplitIoClient.configuration.threads[:impressions_sender] = Thread.new {}
         subject.destroy
-
         expect(subject.get_treatment('fake_user_id_1', 'test_feature')).to eq 'control'
       end
     end
