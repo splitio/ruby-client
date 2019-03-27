@@ -2,7 +2,7 @@ module SplitIoClient
   class LocalhostSplitFactory
     attr_reader :client, :manager
 
-    def initialize(splits_file, reload_rate = nil)
+    def initialize(splits_file, reload_rate = nil, logger = nil)
       @splits_file = splits_file
       @reload_rate = reload_rate
 

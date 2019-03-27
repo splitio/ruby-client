@@ -54,6 +54,9 @@ describe SplitIoClient, type: :client do
     let(:traffic_allocation_one_percent_json) do
       File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/splits_traffic_allocation_one_percent.json'))
     end
+    let(:configurations_json) do
+      File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/engine/configurations.json'))
+    end
 
     before :each do
       Redis.new.flushall if @mode.equal?(:consumer)
@@ -228,6 +231,62 @@ describe SplitIoClient, type: :client do
       end
     end
 
+    context '#get_treatment_with_config' do
+      before do
+        load_splits(configurations_json)
+      end
+
+      it 'returns the config' do
+        split_name = 'test_feature'
+        result = subject.get_treatment_with_config('fake_user_id_1', split_name)
+        expect(result[:treatment]).to eq 'on'
+        expect(result[:config]).to eq '{"killed":false}'
+      end
+
+      it 'returns the default treatment config on killed split' do
+        split_name = 'killed_feature'
+        result = subject.get_treatment_with_config('fake_user_id_1', split_name)
+        expect(result[:treatment]).to eq 'off'
+        expect(result[:config]).to eq '{"killed":true}'
+      end
+
+      it 'returns nil when no configs' do
+        split_name = 'no_configs_feature'
+        result = subject.get_treatment_with_config('fake_user_id_1', split_name)
+        expect(result[:treatment]).to eq 'on'
+        expect(result[:config]).to eq nil
+      end
+
+      it 'returns nil when no configs for feature' do
+        split_name = 'no_configs_for_treatment_feature'
+        result = subject.get_treatment_with_config('fake_user_id_1', split_name)
+        expect(result[:treatment]).to eq 'on'
+        expect(result[:config]).to eq nil
+      end
+
+      it 'returns control and logs the correct message on nil key' do
+        split_name = 'no_configs_for_treatment_feature'
+        result = subject.get_treatment_with_config(nil, split_name)
+        expect(result[:treatment]).to eq SplitIoClient::Engine::Models::Treatment::CONTROL
+        expect(result[:config]).to eq nil
+        expect(log.string)
+          .to include 'get_treatment_with_config: you passed a nil key, key must be a non-empty String or a Symbol'
+      end
+
+      it 'returns nil when killed and no configs for default treatment' do
+        split_name = 'no_configs_killed_feature'
+        result = subject.get_treatment_with_config('fake_user_id_1', split_name)
+        expect(result[:treatment]).to eq 'off'
+        expect(result[:config]).to eq nil
+      end
+
+      it 'saves get_treatment_with_config metric' do
+        expect(subject.instance_variable_get(:@adapter).metrics).to receive(:time)
+          .with('sdk.get_treatment_with_config', anything).once.and_call_original
+        subject.get_treatment_with_config('fake_user_id_1', 'test_feature')
+      end
+    end
+
     context '#get_treatments' do
       before do
         load_splits(all_keys_matcher_json)
@@ -255,7 +314,8 @@ describe SplitIoClient, type: :client do
       end
 
       it 'sanitizes split_names removing repeating and nil split_names' do
-        expect(subject.get_treatments('random_user_id', ['test_feature', nil, nil, 'test_feature']).size).to eq 1
+        treatments = subject.get_treatments('random_user_id', ['test_feature', nil, nil, 'test_feature'])
+        expect(treatments.size).to eq 1
       end
 
       it 'warns when non string split_names' do
@@ -268,6 +328,29 @@ describe SplitIoClient, type: :client do
         expect(subject.get_treatments('random_user_id', [''])).to eq({})
         expect(log.string).to include 'get_treatments: you passed an empty split_name, ' \
           'split_name must be a non-empty String or a Symbol'
+      end
+    end
+
+    context '#get_treatments_with_config' do
+      before do
+        load_splits(configurations_json)
+      end
+
+      split_names = %w[test_feature no_configs_feature killed_feature]
+
+      it 'returns the configs' do
+        result = subject.get_treatments_with_config('fake_user_id_1', split_names)
+
+        expect(result.size).to eq 3
+        expect(result[:test_feature]).to eq(treatment: 'on', config: '{"killed":false}')
+        expect(result[:no_configs_feature]).to eq(treatment: 'on', config: nil)
+        expect(result[:killed_feature]).to eq(treatment: 'off', config: '{"killed":true}')
+      end
+
+      it 'saves just one metric' do
+        expect(subject.instance_variable_get(:@adapter).metrics).to receive(:time)
+          .with('sdk.get_treatments_with_config', anything).once.and_call_original
+        subject.get_treatments_with_config('fake_user_id_1', split_names)
       end
     end
 

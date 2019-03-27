@@ -21,15 +21,32 @@ module SplitIoClient
     #
     # @returns a split view
     def split(split_name)
-      @localhost_mode_features.find { |x| x[:feature] == split_name }
+      features = @localhost_mode_features.find_all { |feat| feat[:feature] == split_name }
+
+      return nil if features.nil?
+
+      treatments = features.map { |feat| feat[:treatment] }
+
+      configs = Hash[ features.map { |feat| [ feat[:treatment].to_sym, feat[:config] ] } ]
+
+      {
+        change_number: nil,
+        killed:       false,
+        name:         split_name,
+        traffic_type:  nil,
+        treatments:   treatments,
+        configs: configs
+      }
     end
 
     #
     # method to get the split list from the client
     #
-    # @returns [object] array of splits
+    # @returns Array of split view
     def splits
-      @localhost_mode_features
+      split_names.map do |split_name|
+        split(split_name)
+      end
     end
 
     #
@@ -37,9 +54,7 @@ module SplitIoClient
     #
     # @returns [object] array of split names (String)
     def split_names
-      @localhost_mode_features.each_with_object([]) do |split, memo|
-        memo << split[:feature]
-      end
+      @localhost_mode_features.map{ |feat| feat[:feature]}.uniq
     end
   end
 end

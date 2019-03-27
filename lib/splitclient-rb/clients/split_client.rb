@@ -18,109 +18,35 @@ module SplitIoClient
       @adapter = adapter
     end
 
-    def get_treatments(key, split_names, attributes = {})
-      return nil unless SplitIoClient::Validators.valid_get_treatments_parameters(split_names)
-
-      sanitized_split_names = sanitize_split_names(split_names)
-
-      if sanitized_split_names.empty?
-        SplitIoClient.configuration.logger.error('get_treatments: split_names must be a non-empty Array')
-        return {}
-      end
-
-      bucketing_key, matching_key = keys_from_key(key)
-      bucketing_key = bucketing_key ? bucketing_key.to_s : nil
-      matching_key = matching_key ? matching_key.to_s : nil
-
-      evaluator = Engine::Parser::Evaluator.new(@segments_repository, @splits_repository, true)
-      start = Time.now
-      treatments_labels_change_numbers =
-        @splits_repository.get_splits(sanitized_split_names).each_with_object({}) do |(name, data), memo|
-          memo.merge!(name => get_treatment(key, name, attributes, data, false, true, evaluator))
-        end
-      latency = (Time.now - start) * 1000.0
-      # Measure
-      @adapter.metrics.time('sdk.get_treatments', latency)
-
-      unless SplitIoClient.configuration.disable_impressions
-        time = (Time.now.to_f * 1000.0).to_i
-        @impressions_repository.add_bulk(
-          matching_key, bucketing_key, treatments_labels_change_numbers, time
-        )
-
-        route_impressions(sanitized_split_names, matching_key, bucketing_key, time, treatments_labels_change_numbers, attributes)
-      end
-
-      split_names_keys = treatments_labels_change_numbers.keys
-      treatments = treatments_labels_change_numbers.values.map { |v| v[:treatment] }
-
-      Hash[split_names_keys.zip(treatments)]
-    end
-
-    #
-    # obtains the treatment for a given feature
-    #
-    # @param key [String/Hash] user id or hash with matching_key/bucketing_key
-    # @param split_name [String/Array] name of the feature that is being validated or array of them
-    # @param attributes [Hash] attributes to pass to the treatment class
-    # @param split_data [Hash] split data, when provided this method doesn't fetch splits_repository for the data
-    # @param store_impressions [Boolean] impressions aren't stored if this flag is false
-    # @param multiple [Hash] internal flag to signal if method is called by get_treatments
-    # @param evaluator [Evaluator] Evaluator class instance, used to cache treatments
-    #
-    # @return [String/Hash] Treatment as String or Hash of treatments in case of array of features
     def get_treatment(
         key, split_name, attributes = {}, split_data = nil, store_impressions = true,
         multiple = false, evaluator = nil
       )
-
-      control_treatment = { label: Engine::Models::Label::EXCEPTION, treatment: SplitIoClient::Engine::Models::Treatment::CONTROL }
-      parsed_control_treatment = parsed_treatment(multiple, control_treatment)
-
-      bucketing_key, matching_key = keys_from_key(key)
-
-      return parsed_control_treatment unless valid_client && SplitIoClient::Validators.valid_get_treatment_parameters(key, split_name, matching_key, bucketing_key, attributes)
-
-      bucketing_key = bucketing_key ? bucketing_key.to_s : nil
-      matching_key = matching_key.to_s
-      sanitized_split_name = split_name.to_s.strip
-
-      if split_name.to_s != sanitized_split_name
-        SplitIoClient.configuration.logger.warn("get_treatment: split_name #{split_name} has extra whitespace, trimming")
-        split_name = sanitized_split_name
+      treatment = treatment(key, split_name, attributes, split_data, store_impressions, multiple, evaluator)
+      if multiple
+         treatment.tap { |t| t.delete(:config) }
+      else
+        treatment[:treatment]
       end
+    end
 
-      evaluator ||= Engine::Parser::Evaluator.new(@segments_repository, @splits_repository)
+    def get_treatment_with_config(
+        key, split_name, attributes = {}, split_data = nil, store_impressions = true,
+        multiple = false, evaluator = nil
+      )
+      treatment(key, split_name, attributes, split_data, store_impressions, multiple, evaluator, 'get_treatment_with_config')
+    end
 
-      begin
-        start = Time.now
+    def get_treatments(key, split_names, attributes = {})
+      treatments = treatments(key, split_names, attributes)
+      return treatments if treatments.nil?
+      keys = treatments.keys
+      treats = treatments.map { |_,t| t[:treatment]  }
+      Hash[keys.zip(treats)]
+    end
 
-        split = multiple ? split_data : @splits_repository.get_split(split_name)
-
-        if split.nil?
-          SplitIoClient.configuration.logger.warn("split_name: #{split_name} does not exist. Returning CONTROL")
-          return parsed_control_treatment
-        end
-
-        treatment_data =
-          evaluator.call(
-          { bucketing_key: bucketing_key, matching_key: matching_key }, split, attributes
-        )
-
-        latency = (Time.now - start) * 1000.0
-        store_impression(split_name, matching_key, bucketing_key, treatment_data, store_impressions, attributes)
-
-        # Measure
-        @adapter.metrics.time('sdk.get_treatment', latency) unless multiple
-      rescue StandardError => error
-        SplitIoClient.configuration.log_found_exception(__method__.to_s, error)
-
-        store_impression(split_name, matching_key, bucketing_key, control_treatment, store_impressions, attributes)
-
-        return parsed_control_treatment
-      end
-
-      parsed_treatment(multiple, treatment_data)
+    def get_treatments_with_config(key, split_names, attributes = {})
+      treatments(key, split_names, attributes,'get_treatments_with_config')
     end
 
     def destroy
@@ -198,8 +124,8 @@ module SplitIoClient
     end
 
     def keys_from_key(key)
-      case key.class.to_s
-      when 'Hash'
+      case key
+      when Hash
         key.values_at(:bucketing_key, :matching_key).map { |k| k.nil? ? nil : k }
       else
         [nil, key].map { |k| k.nil? ? nil : k }
@@ -208,25 +134,29 @@ module SplitIoClient
 
     def parsed_treatment(multiple, treatment_data)
       if multiple
+      {
+        treatment: treatment_data[:treatment],
+        label: treatment_data[:label],
+        change_number: treatment_data[:change_number],
+        config: treatment_data[:config]
+      }
+      else
         {
           treatment: treatment_data[:treatment],
-          label: treatment_data[:label],
-          change_number: treatment_data[:change_number]
+          config: treatment_data[:config]
         }
-      else
-        treatment_data[:treatment]
       end
     end
 
-    def sanitize_split_names(split_names)
+    def sanitize_split_names(calling_method, split_names)
       split_names.compact.uniq.select do |split_name|
         if (split_name.is_a?(String) || split_name.is_a?(Symbol)) && !split_name.empty?
           true
         elsif split_name.is_a?(String) && split_name.empty?
-          SplitIoClient.configuration.logger.warn('get_treatments: you passed an empty split_name, split_name must be a non-empty String or a Symbol')
+          SplitIoClient.configuration.logger.warn("#{calling_method}: you passed an empty split_name, split_name must be a non-empty String or a Symbol")
           false
         else
-          SplitIoClient.configuration.logger.warn('get_treatments: you passed an invalid split_name, split_name must be a non-empty String or a Symbol')
+          SplitIoClient.configuration.logger.warn("#{calling_method}: you passed an invalid split_name, split_name must be a non-empty String or a Symbol")
           false
         end
       end
@@ -240,6 +170,114 @@ module SplitIoClient
         return false
       end
       SplitIoClient.configuration.valid_mode
+    end
+
+    def treatments(key, split_names, attributes = {}, calling_method = 'get_treatments')
+      return nil unless SplitIoClient::Validators.valid_get_treatments_parameters(calling_method, split_names)
+
+      sanitized_split_names = sanitize_split_names(calling_method, split_names)
+
+      if sanitized_split_names.empty?
+        SplitIoClient.configuration.logger.error("#{calling_method}: split_names must be a non-empty Array")
+        return {}
+      end
+
+      bucketing_key, matching_key = keys_from_key(key)
+      bucketing_key = bucketing_key ? bucketing_key.to_s : nil
+      matching_key = matching_key ? matching_key.to_s : nil
+
+      evaluator = Engine::Parser::Evaluator.new(@segments_repository, @splits_repository, true)
+      start = Time.now
+      treatments_labels_change_numbers =
+        @splits_repository.get_splits(sanitized_split_names).each_with_object({}) do |(name, data), memo|
+          memo.merge!(name => treatment(key, name, attributes, data, false, true, evaluator))
+        end
+      latency = (Time.now - start) * 1000.0
+      # Measure
+      @adapter.metrics.time('sdk.' + calling_method, latency)
+
+      unless SplitIoClient.configuration.disable_impressions
+        time = (Time.now.to_f * 1000.0).to_i
+        @impressions_repository.add_bulk(
+          matching_key, bucketing_key, treatments_labels_change_numbers, time
+        )
+
+        route_impressions(sanitized_split_names, matching_key, bucketing_key, time, treatments_labels_change_numbers, attributes)
+      end
+
+      split_names_keys = treatments_labels_change_numbers.keys
+      treatments = treatments_labels_change_numbers.values.map do |v|
+        {
+          treatment: v[:treatment],
+          config: v[:config]
+        }
+      end
+      Hash[split_names_keys.zip(treatments)]
+    end
+
+    #
+    # obtains the treatment for a given feature
+    #
+    # @param key [String/Hash] user id or hash with matching_key/bucketing_key
+    # @param split_name [String/Array] name of the feature that is being validated or array of them
+    # @param attributes [Hash] attributes to pass to the treatment class
+    # @param split_data [Hash] split data, when provided this method doesn't fetch splits_repository for the data
+    # @param store_impressions [Boolean] impressions aren't stored if this flag is false
+    # @param multiple [Hash] internal flag to signal if method is called by get_treatments
+    # @param evaluator [Evaluator] Evaluator class instance, used to cache treatments
+    #
+    # @return [String/Hash] Treatment as String or Hash of treatments in case of array of features
+    def treatment(
+        key, split_name, attributes = {}, split_data = nil, store_impressions = true,
+        multiple = false, evaluator = nil, calling_method = 'get_treatment'
+      )
+      control_treatment = { label: Engine::Models::Label::EXCEPTION, treatment: SplitIoClient::Engine::Models::Treatment::CONTROL, config: nil }
+      parsed_control_treatment = parsed_treatment(multiple, control_treatment)
+
+      bucketing_key, matching_key = keys_from_key(key)
+
+      return parsed_control_treatment unless valid_client && SplitIoClient::Validators.valid_get_treatment_parameters(calling_method, key, split_name, matching_key, bucketing_key, attributes)
+
+      bucketing_key = bucketing_key ? bucketing_key.to_s : nil
+      matching_key = matching_key.to_s
+      sanitized_split_name = split_name.to_s.strip
+
+      if split_name.to_s != sanitized_split_name
+        SplitIoClient.configuration.logger.warn("#{calling_method}: split_name #{split_name} has extra whitespace, trimming")
+        split_name = sanitized_split_name
+      end
+
+      evaluator ||= Engine::Parser::Evaluator.new(@segments_repository, @splits_repository)
+
+      begin
+        start = Time.now
+
+        split = multiple ? split_data : @splits_repository.get_split(split_name)
+
+        if split.nil?
+          SplitIoClient.configuration.logger.warn("split_name: #{split_name} does not exist. Returning CONTROL")
+          return parsed_control_treatment
+        end
+
+        treatment_data =
+          evaluator.call(
+          { bucketing_key: bucketing_key, matching_key: matching_key }, split, attributes
+        )
+
+        latency = (Time.now - start) * 1000.0
+        store_impression(split_name, matching_key, bucketing_key, treatment_data, store_impressions, attributes)
+
+        # Measure
+        @adapter.metrics.time('sdk.' + calling_method, latency) unless multiple
+      rescue StandardError => error
+        SplitIoClient.configuration.log_found_exception(__method__.to_s, error)
+
+        store_impression(split_name, matching_key, bucketing_key, control_treatment, store_impressions, attributes)
+
+        return parsed_control_treatment
+      end
+
+      parsed_treatment(multiple, treatment_data)
     end
   end
 end

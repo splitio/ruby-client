@@ -1,0 +1,24 @@
+- multiple_keys_feature:
+    treatment: 'off'
+    keys:
+    config: {'desc': 'this applies only to OFF treatment'}
+
+- multiple_keys_feature:
+    treatment: 'on'
+    keys: ['john_doe', 'jane_doe']
+    config: {'desc': 'this applies only to ON and only for john_doe and jane_doe. The rest will receive OFF'}
+
+- single_key_feature:
+    treatment: 'on'
+    keys: 'john_doe'
+    config: {'desc': 'this applies only to ON and only for john_doe. The rest will receive OFF'}
+
+- single_key_feature:
+    treatment: 'off'
+    keys:
+    config: {'desc': 'this applies only to OFF treatment'}
+
+- no_keys_feature:
+    treatment: 'off'
+    keys:
+    config: {'desc': 'this applies only to OFF treatment'}
