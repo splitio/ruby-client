@@ -57,6 +57,29 @@ describe SplitIoClient do
     expect(subject.split_names).to match_array(%w[test_1_ruby sample_feature])
   end
 
+  describe 'configurations' do
+    let(:splits3) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../test_data/splits/splits3.json'))) }
+
+    before do
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+        .to_return(status: 200, body: splits3)
+    end
+
+    it 'returns configurations' do
+      expect(subject.build_split_view(
+        'test_1_ruby',
+        subject.instance_variable_get(:@splits_repository).get_split('test_1_ruby')
+      )[:configs]).to eq(on: '{"size":15,"test":20}')
+    end
+
+    it 'returns empty hash when no configurations' do
+      expect(subject.build_split_view(
+        'sample_feature',
+        subject.instance_variable_get(:@splits_repository).get_split('sample_feature')
+      )[:configs]).to be_empty
+    end
+  end
+
   describe 'treatments' do
     let(:splits4) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../test_data/splits/splits4.json'))) }
 

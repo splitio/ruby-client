@@ -4,16 +4,16 @@ module SplitIoClient
   module Validators
     extend self
 
-    def valid_get_treatment_parameters(key, split_name, matching_key, bucketing_key, attributes)
-      valid_key?(key) &&
-        valid_split_name?(split_name) &&
-        valid_matching_key?(matching_key) &&
-        valid_bucketing_key?(key, bucketing_key) &&
-        valid_attributes?(attributes)
+    def valid_get_treatment_parameters(method, key, split_name, matching_key, bucketing_key, attributes)
+      valid_key?(method, key) &&
+        valid_split_name?(method, split_name) &&
+        valid_matching_key?(method, matching_key) &&
+        valid_bucketing_key?(method, key, bucketing_key) &&
+        valid_attributes?(method, attributes)
     end
 
-    def valid_get_treatments_parameters(split_names)
-      valid_split_names?(split_names)
+    def valid_get_treatments_parameters(method, split_names)
+      valid_split_names?(method, split_names)
     end
 
     def valid_track_parameters(key, traffic_type_name, event_type, value)
@@ -24,7 +24,7 @@ module SplitIoClient
     end
 
     def valid_split_parameters(split_name)
-      valid_split_name?(split_name, :split)
+      valid_split_name?(:split, split_name)
     end
 
     def valid_matcher_arguments(args)
@@ -68,7 +68,7 @@ module SplitIoClient
       SplitIoClient.configuration.logger.error("#{method}: #{key} is too long - must be #{SplitIoClient.configuration.max_key_size} characters or less")
     end
 
-    def valid_split_name?(split_name, method = :get_treatment)
+    def valid_split_name?(method, split_name)
       if split_name.nil?
         log_nil(:split_name, method)
         return false
@@ -87,62 +87,62 @@ module SplitIoClient
       true
     end
 
-    def valid_key?(key)
+    def valid_key?(method, key)
       if key.nil?
-        log_nil(:key, :get_treatment)
+        log_nil(:key, method)
         return false
       end
 
       true
     end
 
-    def valid_matching_key?(matching_key)
+    def valid_matching_key?(method, matching_key)
       if matching_key.nil?
-        log_nil(:matching_key, :get_treatment)
+        log_nil(:matching_key, method)
         return false
       end
 
       unless number_or_string?(matching_key)
-        log_invalid_type(:matching_key, :get_treatment)
+        log_invalid_type(:matching_key, method)
         return false
       end
 
       if empty_string?(matching_key)
-        log_empty_string(:matching_key, :get_treatment)
+        log_empty_string(:matching_key, method)
         return false
       end
 
-      log_convert_numeric(:matching_key, :get_treatment, matching_key) if matching_key.is_a? Numeric
+      log_convert_numeric(:matching_key, method, matching_key) if matching_key.is_a? Numeric
 
       if matching_key.size > SplitIoClient.configuration.max_key_size
-        log_key_too_long(:matching_key, :get_treatment)
+        log_key_too_long(:matching_key, method)
         return false
       end
 
       true
     end
 
-    def valid_bucketing_key?(key, bucketing_key)
+    def valid_bucketing_key?(method, key, bucketing_key)
       if key.is_a? Hash
         if bucketing_key.nil?
-          log_nil(:bucketing_key, :get_treatment)
+          log_nil(:bucketing_key, method)
           return false
         end
 
         unless number_or_string?(bucketing_key)
-          log_invalid_type(:bucketing_key, :get_treatment)
+          log_invalid_type(:bucketing_key, method)
           return false
         end
 
         if empty_string?(bucketing_key)
-          log_empty_string(:bucketing_key, :get_treatment)
+          log_empty_string(:bucketing_key, method)
           return false
         end
 
-        log_convert_numeric(:bucketing_key, :get_treatment, bucketing_key) if bucketing_key.is_a? Numeric
+        log_convert_numeric(:bucketing_key, method, bucketing_key) if bucketing_key.is_a? Numeric
 
         if bucketing_key.size > SplitIoClient.configuration.max_key_size
-          log_key_too_long(:bucketing_key, :get_treatment)
+          log_key_too_long(:bucketing_key, method)
           return false
         end
       end
@@ -150,18 +150,18 @@ module SplitIoClient
       true
     end
 
-    def valid_split_names?(split_names)
+    def valid_split_names?(method, split_names)
       unless !split_names.nil? && split_names.is_a?(Array)
-        SplitIoClient.configuration.logger.error('get_treatments: split_names must be a non-empty Array')
+        SplitIoClient.configuration.logger.error("#{method}: split_names must be a non-empty Array")
         return false
       end
 
       true
     end
 
-    def valid_attributes?(attributes)
+    def valid_attributes?(method, attributes)
       unless attributes.nil? || attributes.is_a?(Hash)
-        SplitIoClient.configuration.logger.error('get_treatment: attributes must be of type Hash')
+        SplitIoClient.configuration.logger.error("#{method}: attributes must be of type Hash")
         return false
       end
 

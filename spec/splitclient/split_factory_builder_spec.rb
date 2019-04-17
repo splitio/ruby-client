@@ -21,10 +21,34 @@ describe SplitIoClient::SplitFactoryBuilder do
   end
 
   it 'returns correct treatment' do
-    client = described_class.build('localhost', path: local_treatments).client
+    client = described_class.build('localhost', split_file: local_treatments).client
 
     expect(client.get_treatment('*', 'foo')).to eq('on')
     expect(client.get_treatment('*', 'bar')).to eq('off')
     expect(client.get_treatment('*', 'baz')).to eq('control')
+  end
+
+  context 'split_file set in config' do
+    before do
+      allow(File).to receive(:file?).with(split_file_path).and_return(true)
+    end
+
+    let(:split_file_path) { File.join(Dir.pwd, 'split.yml') }
+
+    it 'uses provided file' do
+      expect(described_class.send(:split_file, split_file_path)).to eq(split_file_path)
+    end
+  end
+
+  context 'split_file not set in config' do
+    before do
+      allow(File).to receive(:file?).with(split_file_path).and_return(true)
+    end
+
+    let(:split_file_path) { File.join(Dir.home, '.split') }
+
+    it 'defaults to .split and logs message' do
+      expect(described_class.send(:split_file, nil)).to eq(split_file_path)
+    end
   end
 end

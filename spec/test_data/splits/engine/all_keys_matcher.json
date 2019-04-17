@@ -10,6 +10,9 @@
        "status":"ACTIVE",
        "killed":false,
        "defaultTreatment":"off",
+       "configurations":{
+         "on": "{\"size\":15,\"test\":20}"
+       },
        "conditions":[
           {
              "matcherGroup":{
