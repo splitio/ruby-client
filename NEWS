@@ -1,3 +1,12 @@
+6.3.0 (Apr 22, 2019)
+
+- Added Dynamic Configurations support through two new methods that mimick the regular ones, changing the type of what is returned.
+  - get_treatment_with_config: Same as get_treatment but returning the treatment with it's config.
+  - get_treatments_with_config: Same as get_treatments, but instead of a map of string it returns a map of treatments with config.
+- Added configs to SplitViews returned by the manager module.
+- Updated localhost mode. Now besides supporting the old text files with `.split` extension (to be deprecated soon), we support YAML (.yaml/.yml) files where you can
+  define configurations for your treatments and also whitelisted keys. Read more in our docs!
+  
 6.2.0
 Ensure SDK flushes information to Split servers on client destroy
 Fix for compatibility issue between Faraday < 0.13 and net-http-persistent 3
