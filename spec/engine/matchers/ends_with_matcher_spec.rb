@@ -6,28 +6,28 @@ describe SplitIoClient::EndsWithMatcher do
   let(:value) { 'value' }
 
   it 'matches' do
-    expect(described_class.new('value', %w[e]).match?(attributes: { value: value })).to be(true)
-    expect(described_class.new('value', %w[ue]).match?(attributes: { value: value })).to be(true)
-    expect(described_class.new('value', %w[lue]).match?(attributes: { value: value })).to be(true)
-    expect(described_class.new('value', %w[alue]).match?(attributes: { value: value })).to be(true)
-    expect(described_class.new('value', %w[value]).match?(attributes: { value: value })).to be(true)
+    expect(described_class.new('value', %w[e], @split_logger).match?(attributes: { value: value })).to be(true)
+    expect(described_class.new('value', %w[ue], @split_logger).match?(attributes: { value: value })).to be(true)
+    expect(described_class.new('value', %w[lue], @split_logger).match?(attributes: { value: value })).to be(true)
+    expect(described_class.new('value', %w[alue], @split_logger).match?(attributes: { value: value })).to be(true)
+    expect(described_class.new('value', %w[value], @split_logger).match?(attributes: { value: value })).to be(true)
 
-    expect(described_class.new(nil, %w[e]).match?(value: value)).to be(true)
-    expect(described_class.new(nil, %w[ue]).match?(value: value)).to be(true)
-    expect(described_class.new(nil, %w[lue]).match?(value: value)).to be(true)
-    expect(described_class.new(nil, %w[alue]).match?(value: value)).to be(true)
-    expect(described_class.new(nil, %w[value]).match?(value: value)).to be(true)
+    expect(described_class.new(nil, %w[e], @split_logger).match?(value: value)).to be(true)
+    expect(described_class.new(nil, %w[ue], @split_logger).match?(value: value)).to be(true)
+    expect(described_class.new(nil, %w[lue], @split_logger).match?(value: value)).to be(true)
+    expect(described_class.new(nil, %w[alue], @split_logger).match?(value: value)).to be(true)
+    expect(described_class.new(nil, %w[value], @split_logger).match?(value: value)).to be(true)
   end
 
   it 'does not match' do
-    expect(described_class.new('value', %w[a]).match?(attributes: { value: value })).to be(false)
-    expect(described_class.new('value', %w[o]).match?(attributes: { value: value })).to be(false)
-    expect(described_class.new('value', %w[calue]).match?(attributes: { value: value })).to be(false)
-    expect(described_class.new('value', %w[]).match?(attributes: { value: value })).to be(false)
+    expect(described_class.new('value', %w[a], @split_logger).match?(attributes: { value: value })).to be(false)
+    expect(described_class.new('value', %w[o], @split_logger).match?(attributes: { value: value })).to be(false)
+    expect(described_class.new('value', %w[calue], @split_logger).match?(attributes: { value: value })).to be(false)
+    expect(described_class.new('value', %w[], @split_logger).match?(attributes: { value: value })).to be(false)
 
-    expect(described_class.new('value', %w[a]).match?(value: value)).to be(false)
-    expect(described_class.new('value', %w[o]).match?(value: value)).to be(false)
-    expect(described_class.new('value', %w[calue]).match?(value: value)).to be(false)
-    expect(described_class.new('value', %w[]).match?(value: value)).to be(false)
+    expect(described_class.new('value', %w[a], @split_logger).match?(value: value)).to be(false)
+    expect(described_class.new('value', %w[o], @split_logger).match?(value: value)).to be(false)
+    expect(described_class.new('value', %w[calue], @split_logger).match?(value: value)).to be(false)
+    expect(described_class.new('value', %w[], @split_logger).match?(value: value)).to be(false)
   end
 end

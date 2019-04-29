@@ -3,16 +3,18 @@
 require 'spec_helper'
 
 describe SplitIoClient::Api::Splits do
-  before do
-    SplitIoClient.configuration.logger = Logger.new(log)
-    SplitIoClient.configuration.debug_enabled = true
-    SplitIoClient.configuration.transport_debug_enabled = true
+  let(:config) do
+    SplitIoClient::SplitConfig.new(
+      logger: Logger.new(log),
+      debug_enabled: true,
+      transport_debug_enabled: true
+    )
   end
 
   let(:log) { StringIO.new }
-  let(:splits_api) { described_class.new('', metrics) }
-  let(:metrics_adapter) { SplitIoClient.configuration.metrics_adapter }
-  let(:metrics_repository) { SplitIoClient::Cache::Repositories::MetricsRepository.new(metrics_adapter) }
+  let(:splits_api) { described_class.new('', metrics, config) }
+  let(:metrics_adapter) { config.metrics_adapter }
+  let(:metrics_repository) { SplitIoClient::Cache::Repositories::MetricsRepository.new(config) }
   let(:metrics) { SplitIoClient::Metrics.new(100, metrics_repository) }
   let(:splits) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/splits/splits.json'))) }
 

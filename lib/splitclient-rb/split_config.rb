@@ -2,15 +2,6 @@ require 'logger'
 require 'socket'
 
 module SplitIoClient
-
-  class << self
-      attr_accessor :configuration
-  end
-
-  def self.configure(opts={})
-    self.configuration ||= SplitConfig.new(opts)
-  end
-
   #
   # This class manages configuration options for the split client library.
   # If not custom configuration is required the default configuration values will be used
@@ -68,9 +59,7 @@ module SplitIoClient
       @logger = opts[:logger] || SplitConfig.default_logger
       @debug_enabled = opts[:debug_enabled] || SplitConfig.default_debug
       @transport_debug_enabled = opts[:transport_debug_enabled] || SplitConfig.default_debug
-      @block_until_ready = opts[:ready] || opts[:block_until_ready] || 0
-
-      @logger.warn 'no ready parameter has been set - incorrect control treatments could be logged' if block_until_ready == 0 && !mode.equal?(:consumer) 
+      @block_until_ready = SplitConfig.default_block_until_ready
 
       @machine_name = opts[:machine_name] || SplitConfig.machine_hostname
       @machine_ip = opts[:machine_ip] || SplitConfig.machine_ip
@@ -96,7 +85,8 @@ module SplitIoClient
         opts[:cache_adapter] || SplitConfig.default_cache_adapter, :queue_adapter, @events_queue_size, @redis_url
       )
       @valid_mode = true
-
+      @split_logger = SplitIoClient::SplitLogger.new(self)
+      @split_validator = SplitIoClient::Validators.new(self)
       startup_log
     end
 
@@ -159,6 +149,21 @@ module SplitIoClient
     #
     # @return [Logger] The configured logger
     attr_accessor :logger
+
+    #
+    # The split logger. The client library uses the split logger
+    # to use common functions around the logger
+    #
+    # @return [SplitLogger] The configured logger
+    attr_accessor :split_logger
+
+
+    #
+    # The split validator. The client library uses the split validator
+    # to validate inputs accross the sdk
+    #
+    # @return [SplitValidator] The validator
+    attr_accessor :split_validator
 
     #
     # The boolean that represents the state of the debug log level
@@ -343,7 +348,7 @@ module SplitIoClient
       if defined?(Rails) && Rails.logger
         Rails.logger
       elsif ENV['SPLITCLIENT_ENV'] == 'test'
-        Logger.new('/dev/null')  
+        Logger.new('/dev/null')
       else
        Logger.new($stdout)
        end
@@ -373,6 +378,14 @@ module SplitIoClient
 
     def self.default_redis_namespace
       'SPLITIO'
+    end
+
+    #
+    # The default block until ready value
+    #
+    # @return [int]
+    def self.default_block_until_ready
+      15
     end
 
     #
@@ -427,6 +440,14 @@ module SplitIoClient
 
       @logger.info("Loaded Ruby SDK v#{VERSION} in the #{@mode} mode")
       @logger.info("Loaded cache class: #{@cache_adapter.class}")
+    end
+
+    def standalone?
+      @mode.equal?(:standalone)
+    end
+
+    def consumer?
+      @mode.equal?(:consumer)
     end
 
     #

@@ -4,7 +4,6 @@ require 'spec_helper'
 
 describe SplitIoClient do
   subject do
-    SplitIoClient.configuration = nil
     SplitIoClient::SplitFactory.new('test_api_key', logger: Logger.new('/dev/null')).client
   end
 
@@ -31,6 +30,7 @@ describe SplitIoClient do
   end
 
   it 'validates the feature is "default" for id when segment used does not exist' do
+    allow_any_instance_of(SplitIoClient::Cache::Stores::SDKBlocker).to receive(:ready?).and_return(true)
     expect(subject.get_treatment(user, feature)).to eq 'default'
   end
 end

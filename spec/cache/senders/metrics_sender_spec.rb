@@ -4,9 +4,13 @@ require 'spec_helper'
 
 describe SplitIoClient::Cache::Senders::MetricsSender do
   RSpec.shared_examples 'metrics sender specs' do |cache_adapter|
-    let(:adapter) { cache_adapter }
-    let(:repository) { SplitIoClient::Cache::Repositories::MetricsRepository.new(adapter) }
-    let(:sender) { described_class.new(repository, nil) }
+    let(:config) do
+      config = SplitIoClient::SplitConfig.new
+      config.cache_adapter = cache_adapter
+      config
+    end
+    let(:repository) { SplitIoClient::Cache::Repositories::MetricsRepository.new(config) }
+    let(:sender) { described_class.new(repository, nil, config) }
 
     before :each do
       Redis.new.flushall
@@ -17,7 +21,7 @@ describe SplitIoClient::Cache::Senders::MetricsSender do
 
       sender.send(:metrics_thread)
 
-      sender_thread = SplitIoClient.configuration.threads[:metrics_sender]
+      sender_thread = config.threads[:metrics_sender]
 
       sender_thread.raise(SplitIoClient::SDKShutdownException)
 

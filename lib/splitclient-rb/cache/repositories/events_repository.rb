@@ -6,12 +6,13 @@ module SplitIoClient
         extend Forwardable
         def_delegators :@repository, :add, :clear
 
-        def initialize(adapter, api_key)
-          @repository = case adapter.class.to_s
+        def initialize(config, api_key)
+          super(config)
+          @repository = case @config.events_adapter.class.to_s
           when 'SplitIoClient::Cache::Adapters::MemoryAdapter'
-            Repositories::Events::MemoryRepository.new(adapter)
+            Repositories::Events::MemoryRepository.new(@config)
           when 'SplitIoClient::Cache::Adapters::RedisAdapter'
-            Repositories::Events::RedisRepository.new(adapter)
+            Repositories::Events::RedisRepository.new(@config)
           end
 
           @api_key = api_key
@@ -20,16 +21,16 @@ module SplitIoClient
         def post_events
           events_api.post(self.clear)
         rescue StandardError => error
-          SplitIoClient.configuration.log_found_exception(__method__.to_s, error)
+          @config.log_found_exception(__method__.to_s, error)
         end
 
         protected
 
         def metadata
           {
-            s: "#{SplitIoClient.configuration.language}-#{SplitIoClient.configuration.version}",
-            i: SplitIoClient.configuration.machine_ip,
-            n: SplitIoClient.configuration.machine_name
+            s: "#{@config.language}-#{@config.version}",
+            i: @config.machine_ip,
+            n: @config.machine_name
           }
         end
 
@@ -47,7 +48,7 @@ module SplitIoClient
         private
 
         def events_api
-          @events_api ||= SplitIoClient::Api::Events.new(@api_key)
+          @events_api ||= SplitIoClient::Api::Events.new(@api_key, @config)
         end
       end
     end

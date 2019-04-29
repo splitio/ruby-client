@@ -8,12 +8,13 @@ module SplitIoClient
         extend Forwardable
         def_delegators :@adapter, :add, :add_bulk, :batch, :clear, :empty?
 
-        def initialize(adapter)
-          @adapter = case adapter.class.to_s
+        def initialize(config)
+          super(config)
+          @adapter = case @config.impressions_adapter.class.to_s
                      when 'SplitIoClient::Cache::Adapters::MemoryAdapter'
-                       Repositories::Impressions::MemoryRepository.new(adapter)
+                       Repositories::Impressions::MemoryRepository.new(@config)
                      when 'SplitIoClient::Cache::Adapters::RedisAdapter'
-                       Repositories::Impressions::RedisRepository.new(adapter)
+                       Repositories::Impressions::RedisRepository.new(@config)
                      end
         end
 
@@ -33,14 +34,14 @@ module SplitIoClient
 
         def metadata
           {
-            s: "#{SplitIoClient.configuration.language}-#{SplitIoClient.configuration.version}",
-            i: SplitIoClient.configuration.machine_ip,
-            n: SplitIoClient.configuration.machine_name
+            s: "#{@config.language}-#{@config.version}",
+            i: @config.machine_ip,
+            n: @config.machine_name
           }
         end
 
         def applied_rule(label)
-          SplitIoClient.configuration.labels_enabled ? label : nil
+          @config.labels_enabled ? label : nil
         end
       end
     end

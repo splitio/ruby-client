@@ -6,7 +6,8 @@ module SplitIoClient
     class Segments < Client
       METRICS_PREFIX = 'segmentChangeFetcher'
 
-      def initialize(api_key, metrics, segments_repository)
+      def initialize(api_key, metrics, segments_repository, config)
+        super(config)
         @metrics = metrics
         @api_key = api_key
         @segments_repository = segments_repository
@@ -23,7 +24,7 @@ module SplitIoClient
             segment = fetch_segment_changes(name, since)
             @segments_repository.add_to_segment(segment)
 
-            SplitLogger.log_if_debug("Segment #{name} fetched before: #{since}, \
+            @config.split_logger.log_if_debug("Segment #{name} fetched before: #{since}, \
               till: #{@segments_repository.get_change_number(name)}")
 
             break if since.to_i >= @segments_repository.get_change_number(name).to_i
@@ -39,28 +40,28 @@ module SplitIoClient
       private
 
       def fetch_segment_changes(name, since)
-        response = get_api("#{SplitIoClient.configuration.base_uri}/segmentChanges/#{name}", @api_key, since: since)
+        response = get_api("#{@config.base_uri}/segmentChanges/#{name}", @api_key, since: since)
         if response.success?
           segment = JSON.parse(response.body, symbolize_names: true)
           @segments_repository.set_change_number(name, segment[:till])
           @metrics.count(METRICS_PREFIX + '.status.' + response.status.to_s, 1)
 
-          SplitLogger.log_if_debug("\'#{segment[:name]}\' segment retrieved.")
+          @config.split_logger.log_if_debug("\'#{segment[:name]}\' segment retrieved.")
           unless segment[:added].empty?
-            SplitLogger.log_if_debug("\'#{segment[:name]}\' #{segment[:added].size} added keys")
+            @config.split_logger.log_if_debug("\'#{segment[:name]}\' #{segment[:added].size} added keys")
           end
           unless segment[:removed].empty?
-            SplitLogger.log_if_debug("\'#{segment[:name]}\' #{segment[:removed].size} removed keys")
+            @config.split_logger.log_if_debug("\'#{segment[:name]}\' #{segment[:removed].size} removed keys")
           end
-          SplitLogger.log_if_transport(segment.to_s)
+          @config.split_logger.log_if_transport(segment.to_s)
 
           segment
         elsif response.status == 403
-            SplitIoClient.configuration.logger.error('Factory Instantiation: You passed a browser type api_key, ' \
+            @config.logger.error('Factory Instantiation: You passed a browser type api_key, ' \
               'please grab an api key from the Split console that is of type sdk')
-            SplitIoClient.configuration.valid_mode =  false
+            @config.valid_mode =  false
         else
-          SplitLogger.log_error("Unexpected status code while fetching segments: #{response.status}." \
+          @config.logger.error("Unexpected status code while fetching segments: #{response.status}." \
           "Since #{since} - Check your API key and base URI")
           @metrics.count(METRICS_PREFIX + '.status.' + response.status.to_s, 1)
           raise 'Split SDK failed to connect to backend to fetch segments'

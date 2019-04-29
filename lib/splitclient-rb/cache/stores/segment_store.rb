@@ -4,10 +4,11 @@ module SplitIoClient
       class SegmentStore
         attr_reader :segments_repository
 
-        def initialize(segments_repository, api_key, metrics, sdk_blocker = nil)
+        def initialize(segments_repository, api_key, metrics, config, sdk_blocker = nil)
           @segments_repository = segments_repository
           @api_key = api_key
           @metrics = metrics
+          @config = config
           @sdk_blocker = sdk_blocker
         end
 
@@ -28,42 +29,28 @@ module SplitIoClient
         private
 
         def segments_thread
-          SplitIoClient.configuration.threads[:segment_store] = Thread.new do
-            SplitIoClient.configuration.logger.info('Starting segments fetcher service')
-            SplitIoClient.configuration.block_until_ready > 0 ? blocked_store : unblocked_store
-          end
-        end
+          @config.threads[:segment_store] = Thread.new do
+            @config.logger.info('Starting segments fetcher service')
 
-        def blocked_store
-          loop do
-            next unless @sdk_blocker.splits_repository.ready?
+            loop do
+              next unless @sdk_blocker.splits_repository.ready?
 
-            store_segments
-            SplitIoClient.configuration.logger.debug("Segment names: #{@segments_repository.used_segment_names.to_a}") if SplitIoClient.configuration.debug_enabled
+              store_segments
+              @config.logger.debug("Segment names: #{@segments_repository.used_segment_names.to_a}") if @config.debug_enabled
 
-            unless @sdk_blocker.ready?
-              @sdk_blocker.segments_ready!
-              SplitIoClient.configuration.logger.info('segments are ready')
+              sleep_for = random_interval(@config.segments_refresh_rate)
+              @config.logger.debug("Segments store is sleeping for: #{sleep_for} seconds") if @config.debug_enabled
+              sleep(sleep_for)
             end
-
-            sleep_for = random_interval(SplitIoClient.configuration.segments_refresh_rate)
-            SplitIoClient.configuration.logger.debug("Segments store is sleeping for: #{sleep_for} seconds") if SplitIoClient.configuration.debug_enabled
-            sleep(sleep_for)
-          end
-        end
-
-        def unblocked_store
-          loop do
-            store_segments
-
-            sleep(random_interval(SplitIoClient.configuration.segments_refresh_rate))
           end
         end
 
         def store_segments
           segments_api.store_segments_by_names(@segments_repository.used_segment_names)
+
+          @sdk_blocker.segments_ready!
         rescue StandardError => error
-          SplitIoClient.configuration.log_found_exception(__method__.to_s, error)
+          @config.log_found_exception(__method__.to_s, error)
         end
 
         def random_interval(interval)
@@ -73,7 +60,7 @@ module SplitIoClient
         end
 
         def segments_api
-          @segments_api ||= SplitIoClient::Api::Segments.new(@api_key, @metrics, @segments_repository)
+          @segments_api ||= SplitIoClient::Api::Segments.new(@api_key, @metrics, @segments_repository, @config)
         end
       end
     end

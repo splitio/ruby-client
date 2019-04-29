@@ -3,10 +3,6 @@
 require 'spec_helper'
 
 describe SplitIoClient::SplitFactory do
-  before do
-    SplitIoClient.configuration = nil
-  end
-
   let(:log) { StringIO.new }
   let(:options) do
     {
@@ -68,7 +64,7 @@ describe SplitIoClient::SplitFactory do
 
       expect(log.string).to include 'Factory Instantiation: you passed a nil' \
         ' api_key, api_key must be a non-empty String'
-      expect(SplitIoClient.configuration.valid_mode).to be false
+      expect(factory.instance_variable_get(:@config).valid_mode).to be false
       expect(factory.client.get_treatment('test_user', 'test_feature'))
         .to eq SplitIoClient::Engine::Models::Treatment::CONTROL
     end
@@ -86,7 +82,7 @@ describe SplitIoClient::SplitFactory do
 
       expect(log.string).to include 'Factory Instantiation: you passed and empty api_key,' \
         ' api_key must be a non-empty String'
-      expect(SplitIoClient.configuration.valid_mode).to be false
+      expect(factory.instance_variable_get(:@config).valid_mode).to be false
       expect(factory.client.track('key', 'traffic_type', 'event_type', 123))
         .to be false
     end
@@ -112,7 +108,7 @@ describe SplitIoClient::SplitFactory do
 
       expect(log.string).to include 'Factory Instantiation: You passed a browser type api_key,' \
         ' please grab an api key from the Split console that is of type sdk'
-      expect(SplitIoClient.configuration.valid_mode).to be false
+      expect(factory.instance_variable_get(:@config).valid_mode).to be false
       expect(factory.manager.split('test_split'))
         .to be nil
     end
@@ -130,9 +126,47 @@ describe SplitIoClient::SplitFactory do
       factory.client.destroy
       factory.client.get_treatment('key', 'split')
       expect(log.string).to include 'Client has already been destroyed - no calls possible'
-      expect(SplitIoClient.configuration.valid_mode).to be false
+      expect(factory.instance_variable_get(:@config).valid_mode).to be false
       expect(factory.manager.split('test_split'))
         .to be nil
+    end
+  end
+
+  context 'when multiple factories' do
+    let(:cache_adapter) { :memory }
+    let(:mode) { :standalone }
+
+    before :each do
+      SplitIoClient.split_factory_registry = SplitIoClient::SplitFactoryRegistry.new
+    end
+
+    it 'logs warnings stating number of factories' do
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+        .to_return(status: 200, body: [])
+
+      described_class.new('API_KEY', options)
+      described_class.new('API_KEY', options)
+
+      expect(log.string).to include 'You already have 1 factories with this API Key'
+
+      described_class.new('ANOTHER_API_KEY', options)
+
+      expect(log.string).to include 'You already have an instance of the Split factory.'
+    end
+
+    it 'decreases number of registered factories on client destroy' do
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+        .to_return(status: 200, body: [])
+
+      expect(SplitIoClient.split_factory_registry.number_of_factories_for('API_KEY')).to eq 0
+
+      factory = described_class.new('API_KEY', options)
+
+      expect(SplitIoClient.split_factory_registry.number_of_factories_for('API_KEY')).to eq 1
+
+      factory.client.destroy
+
+      expect(SplitIoClient.split_factory_registry.number_of_factories_for('API_KEY')).to eq 0
     end
   end
 end

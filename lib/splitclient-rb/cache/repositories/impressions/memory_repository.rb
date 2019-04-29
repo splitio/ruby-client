@@ -5,8 +5,9 @@ module SplitIoClient
     module Repositories
       module Impressions
         class MemoryRepository < ImpressionsRepository
-          def initialize(adapter)
-            @adapter = adapter
+          def initialize(config)
+            @config = config
+            @adapter = @config.impressions_adapter
           end
 
           # Store impression data in the selected adapter
@@ -23,8 +24,8 @@ module SplitIoClient
             )
           rescue ThreadError # queue is full
             if random_sampler.rand(1..1000) <= 2 # log only 0.2 % of the time
-              SplitIoClient.configuration.logger.warn("Dropping impressions. Current size is \
-                #{SplitIoClient.configuration.impressions_queue_size}. " \
+              @config.logger.warn("Dropping impressions. Current size is \
+                #{@config.impressions_queue_size}. " \
                 'Consider increasing impressions_queue_size')
             end
           end
@@ -36,9 +37,9 @@ module SplitIoClient
           end
 
           def batch
-            return [] if SplitIoClient.configuration.impressions_bulk_size.zero?
+            return [] if @config.impressions_bulk_size.zero?
 
-            @adapter.get_batch(SplitIoClient.configuration.impressions_bulk_size)
+            @adapter.get_batch(@config.impressions_bulk_size)
           end
 
           def clear

@@ -7,9 +7,9 @@ module SplitIoClient
         extend Forwardable
         def_delegators :@adapter, :initialize_set, :set_bool, :pipelined
 
-        def initialize(adapter)
-          @cache = LruRedux::TTL::ThreadSafeCache.new(SplitIoClient.configuration.max_cache_size, SplitIoClient.configuration.cache_ttl)
-          @adapter = adapter
+        def initialize(config)
+          @cache = LruRedux::TTL::ThreadSafeCache.new(config.max_cache_size, config.cache_ttl)
+          @adapter = config.cache_adapter
         end
 
         def delete(key)

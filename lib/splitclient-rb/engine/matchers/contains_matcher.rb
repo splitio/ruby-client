@@ -6,23 +6,25 @@ module SplitIoClient
 
     attr_reader :attribute
 
-    def initialize(attribute, substr_list)
+    def initialize(attribute, substr_list, logger, validator)
       @attribute = attribute
       @substr_list = substr_list
+      @logger = logger
+      @validator = validator
     end
 
     def match?(args)
-      SplitLogger.log_if_debug('[ContainsMatcher] evaluating value and attributes.')
+      @logger.log_if_debug('[ContainsMatcher] evaluating value and attributes.')
 
-      return false unless SplitIoClient::Validators.valid_matcher_arguments(args)
+      return false unless @validator.valid_matcher_arguments(args)
 
       value = get_value(args)
 
-      SplitLogger.log_if_debug("[ContainsMatcher] Value from parameters: #{value}.")
+      @logger.log_if_debug("[ContainsMatcher] Value from parameters: #{value}.")
       return false if @substr_list.empty?
 
       matches = @substr_list.any? { |substr| value.to_s.include? substr }
-      SplitLogger.log_if_debug("[ContainsMatcher] #{@value} contains any of #{@substr_list} -> #{matches} .")
+      @logger.log_if_debug("[ContainsMatcher] #{@value} contains any of #{@substr_list} -> #{matches} .")
       matches
     end
 
