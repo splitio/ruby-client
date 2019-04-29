@@ -17,7 +17,13 @@ describe SplitIoClient::ImpressionRouter do
     }
   end
 
-  let(:impression_router) { described_class.new }
+  let(:config) do
+    SplitIoClient::SplitConfig.new(
+      impression_listener: listener
+    )
+  end
+
+  let(:impression_router) { described_class.new(config) }
 
   # Pass execution from the main thread to the subject's router_thread
   # to let the router_thread process the impression queue.
@@ -25,36 +31,30 @@ describe SplitIoClient::ImpressionRouter do
   # Assumes ImpressionRouter#initialize starts router_thread and
   # Queue#pop suspends its calling thread when the receiver is empty.
   def wait_for_router_thread
-    Thread.pass until SplitIoClient.configuration.threads[:impression_router].status != 'run'
+    Thread.pass until config.threads[:impression_router].status != 'run'
   end
 
   describe '#add' do
     context 'when the config specifies an impression listener' do
       it 'logs a single impression' do
-        SplitIoClient.configuration.impression_listener = listener
         expect(listener).to receive(:log).with(foo: 'foo')
 
         impression_router.add(foo: 'foo')
 
         wait_for_router_thread
-        expect(SplitIoClient.configuration.threads[:impression_router]).not_to be_nil
+        expect(config.threads[:impression_router]).not_to be_nil
         expect(impression_router.instance_variable_get(:@queue)).not_to be_nil
       end
     end
 
     context 'when the config does not specify an impression listener' do
-      before do
-        SplitIoClient.configuration = nil
-        SplitIoClient.configure
-      end
       let(:listener) { nil }
 
       it 'ignores single impressions' do
-        SplitIoClient.configuration.impression_listener = listener
-        expect(SplitIoClient.configuration).not_to receive(:log_found_exception)
+        expect(config).not_to receive(:log_found_exception)
 
         impression_router.add(foo: 'foo')
-        expect(SplitIoClient.configuration.threads[:impression_router]).to be_nil
+        expect(config.threads[:impression_router]).to be_nil
         expect(impression_router.instance_variable_get(:@queue)).to be_nil
       end
     end
@@ -63,31 +63,25 @@ describe SplitIoClient::ImpressionRouter do
   describe '#add_bulk' do
     context 'when the config specifies an impression listener' do
       it 'logs multiple impressions' do
-        SplitIoClient.configuration.impression_listener = listener
         expect(listener).to receive(:log).twice
 
         impression_router.add_bulk(impressions)
 
         wait_for_router_thread
-        expect(SplitIoClient.configuration.threads[:impression_router]).not_to be_nil
+        expect(config.threads[:impression_router]).not_to be_nil
         expect(impression_router.instance_variable_get(:@queue)).not_to be_nil
       end
     end
 
     context 'when the config does not specify an impression listener' do
-      before do
-        SplitIoClient.configuration = nil
-        SplitIoClient.configure
-      end
       let(:listener) { nil }
 
       it 'ignores multiple impressions' do
-        SplitIoClient.configuration.impression_listener = listener
-        expect(SplitIoClient.configuration).not_to receive(:log_found_exception)
+        expect(config).not_to receive(:log_found_exception)
 
         impression_router.add_bulk(impressions)
 
-        expect(SplitIoClient.configuration.threads[:impression_router]).to be_nil
+        expect(config.threads[:impression_router]).to be_nil
         expect(impression_router.instance_variable_get(:@queue)).to be_nil
       end
     end

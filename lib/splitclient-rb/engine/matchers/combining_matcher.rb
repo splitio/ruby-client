@@ -7,7 +7,8 @@ module SplitIoClient
   class CombiningMatcher < Matcher
     MATCHER_TYPE = 'COMBINING_MATCHER'
 
-    def initialize(combiner = '', matchers = [])
+    def initialize(config, combiner = '', matchers = [])
+      super(config)
       @combiner = combiner
       @matchers = matchers
     end
@@ -23,17 +24,17 @@ module SplitIoClient
     # @return [boolean]
     def match?(args)
       if @matchers.empty?
-        SplitLogger.log_if_debug('[CombiningMatcher] Matchers Empty')
+        @config.log_if_debug('[CombiningMatcher] Matchers Empty')
         return false
       end
 
       case @combiner
       when Combiners::AND
         matches = eval_and(args)
-        SplitLogger.log_if_debug("[CombiningMatcher] Combiner AND result -> #{matches}")
+        @config.log_if_debug("[CombiningMatcher] Combiner AND result -> #{matches}")
         return matches
       else
-        SplitLogger.log_if_debug("[CombiningMatcher] Invalid Combiner Type - Combiner -> #{@combiner}")
+        @config.log_if_debug("[CombiningMatcher] Invalid Combiner Type - Combiner -> #{@combiner}")
         @logger.error('Invalid combiner type')
       end
 

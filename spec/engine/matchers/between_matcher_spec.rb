@@ -4,7 +4,6 @@ require 'spec_helper'
 
 describe SplitIoClient::BetweenMatcher do
   subject do
-    SplitIoClient.configuration = nil
     SplitIoClient::SplitFactory.new('test_api_key', logger: Logger.new('/dev/null')).client
   end
 
@@ -105,8 +104,8 @@ describe SplitIoClient::BetweenMatcher do
 
   context '#string_type' do
     it 'is not string type matcher' do
-      expect(described_class.new(attribute: 'foo', data_type: 'NUMBER',
-                                 start_value: 0, end_value: 10).string_type?).to be false
+      expect(described_class.new({ attribute: 'foo', data_type: 'NUMBER',
+                                   start_value: 0, end_value: 10 }, @default_config).string_type?).to be false
     end
   end
 end

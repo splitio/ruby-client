@@ -3,19 +3,20 @@
 module SplitIoClient
   module Api
     class Events < Client
-      def initialize(api_key)
+      def initialize(api_key, config)
+        super(config)
         @api_key = api_key
       end
 
       def post(events)
         if events.empty?
-          SplitLogger.log_if_debug('No events to report')
+          @config.log_if_debug('No events to report')
           return
         end
 
-        events.each_slice(SplitIoClient.configuration.events_queue_size) do |events_slice|
+        events.each_slice(@config.events_queue_size) do |events_slice|
           response = post_api(
-            "#{SplitIoClient.configuration.events_uri}/events/bulk",
+            "#{@config.events_uri}/events/bulk",
             @api_key,
             events_slice.map { |event| formatted_event(event[:e]) },
             'SplitSDKMachineIP' => events_slice[0][:m][:i],
@@ -24,9 +25,9 @@ module SplitIoClient
           )
 
           if response.success?
-            SplitLogger.log_if_debug("Events reported: #{events_slice.size}")
+            @config.log_if_debug("Events reported: #{events_slice.size}")
           else
-            SplitLogger.log_error("Unexpected status code while posting events: #{response.status}." \
+            @config.log_error("Unexpected status code while posting events: #{response.status}." \
             ' - Check your API key and base URI')
             raise 'Split SDK failed to connect to backend to post events'
           end

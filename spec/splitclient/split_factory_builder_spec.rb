@@ -3,6 +3,12 @@
 require 'spec_helper'
 
 describe SplitIoClient::SplitFactoryBuilder do
+  let(:log) { StringIO.new }
+  let(:options) do
+    {
+      logger: Logger.new(log)
+    }
+  end
   let(:local_treatments) do
     File.expand_path(File.join(File.dirname(__FILE__), '../test_data/local_treatments/.split'))
   end
@@ -13,11 +19,11 @@ describe SplitIoClient::SplitFactoryBuilder do
   end
 
   it 'returns LocalhostSplitFactory' do
-    expect(described_class.build('localhost')).to be_a(SplitIoClient::LocalhostSplitFactory)
+    expect(described_class.build('localhost', options)).to be_a(SplitIoClient::LocalhostSplitFactory)
   end
 
   it 'returns SplitFactory' do
-    expect(described_class.build('api_key')).to be_a(SplitIoClient::SplitFactory)
+    expect(described_class.build('api_key', options)).to be_a(SplitIoClient::SplitFactory)
   end
 
   it 'returns correct treatment' do
@@ -36,7 +42,7 @@ describe SplitIoClient::SplitFactoryBuilder do
     let(:split_file_path) { File.join(Dir.pwd, 'split.yml') }
 
     it 'uses provided file' do
-      expect(described_class.send(:split_file, split_file_path)).to eq(split_file_path)
+      expect(described_class.send(:split_file, split_file_path, Logger.new(log))).to eq(split_file_path)
     end
   end
 
@@ -48,7 +54,7 @@ describe SplitIoClient::SplitFactoryBuilder do
     let(:split_file_path) { File.join(Dir.home, '.split') }
 
     it 'defaults to .split and logs message' do
-      expect(described_class.send(:split_file, nil)).to eq(split_file_path)
+      expect(described_class.send(:split_file, nil, Logger.new(log))).to eq(split_file_path)
     end
   end
 end

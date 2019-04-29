@@ -7,17 +7,21 @@ module SplitIoClient
     class Client
       RUBY_ENCODING = '1.9'.respond_to?(:force_encoding)
 
+      def initialize(config)
+        @config = config
+      end
+
       def get_api(url, api_key, params = {})
         api_client.get(url, params) do |req|
           req.headers = common_headers(api_key).merge('Accept-Encoding' => 'gzip')
 
-          req.options[:timeout] = SplitIoClient.configuration.read_timeout
-          req.options[:open_timeout] = SplitIoClient.configuration.connection_timeout
+          req.options[:timeout] = @config.read_timeout
+          req.options[:open_timeout] = @config.connection_timeout
 
-          SplitLogger.log_if_debug("GET #{url} proxy: #{api_client.proxy}")
+          @config.log_if_debug("GET #{url} proxy: #{api_client.proxy}")
         end
       rescue StandardError => e
-        SplitIoClient.configuration.logger.warn("#{e}\nURL:#{url}\nparams:#{params}")
+        @config.logger.warn("#{e}\nURL:#{url}\nparams:#{params}")
         raise e, 'Split SDK failed to connect to backend to retrieve information', e.backtrace
       end
 
@@ -29,14 +33,14 @@ module SplitIoClient
 
           req.body = data.to_json
 
-          req.options[:timeout] = SplitIoClient.configuration.read_timeout
-          req.options[:open_timeout] = SplitIoClient.configuration.connection_timeout
+          req.options[:timeout] = @config.read_timeout
+          req.options[:open_timeout] = @config.connection_timeout
 
-          SplitLogger.log_if_transport("POST #{url} #{req.body}")
-          SplitLogger.log_if_debug("POST #{url}")
+          @config.log_if_transport("POST #{url} #{req.body}")
+          @config.log_if_debug("POST #{url}")
         end
       rescue StandardError => e
-        SplitIoClient.configuration.logger.warn("#{e}\nURL:#{url}\ndata:#{data}\nparams:#{params}")
+        @config.logger.warn("#{e}\nURL:#{url}\ndata:#{data}\nparams:#{params}")
         raise e, 'Split SDK failed to connect to backend to post information', e.backtrace
       end
 
@@ -73,15 +77,15 @@ module SplitIoClient
       def common_headers(api_key)
         {
           'Authorization' => "Bearer #{api_key}",
-          'SplitSDKVersion' => "#{SplitIoClient.configuration.language}-#{SplitIoClient.configuration.version}",
-          'SplitSDKMachineName' => SplitIoClient.configuration.machine_name,
-          'SplitSDKMachineIP' => SplitIoClient.configuration.machine_ip,
+          'SplitSDKVersion' => "#{@config.language}-#{@config.version}",
+          'SplitSDKMachineName' => @config.machine_name,
+          'SplitSDKMachineIP' => @config.machine_ip,
           'Referer' => referer
         }
       end
 
       def referer
-        result = "#{SplitIoClient.configuration.language}-#{SplitIoClient.configuration.version}"
+        result = "#{@config.language}-#{@config.version}"
 
         result = "#{result}::#{SplitIoClient::SplitConfig.machine_hostname}" unless SplitIoClient::SplitConfig.machine_hostname == 'localhost'
 

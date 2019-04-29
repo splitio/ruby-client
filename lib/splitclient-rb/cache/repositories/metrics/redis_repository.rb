@@ -3,8 +3,9 @@ module SplitIoClient
     module Repositories
       module Metrics
         class RedisRepository < Repository
-          def initialize(adapter = nil)
-            @adapter = adapter
+          def initialize(config)
+            @config = config
+            @adapter = config.metrics_adapter
           end
 
           def add_count(counter, delta)

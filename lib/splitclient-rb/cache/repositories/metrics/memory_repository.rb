@@ -3,10 +3,11 @@ module SplitIoClient
     module Repositories
       module Metrics
         class MemoryRepository
-          def initialize(_ = nil, adapter)
+          def initialize(_ = nil, config)
             @counts = []
             @latencies = []
             @gauges = []
+            @config = config
           end
 
           def add_count(counter, delta)

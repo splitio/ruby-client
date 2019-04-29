@@ -9,13 +9,16 @@ module SplitIoClient
     # @param api_key [String] the API key for your split account
     #
     # @return [SplitIoClient] split.io client instance
-    def initialize(api_key, adapter = nil, splits_repository, segments_repository, impressions_repository, metrics_repository, events_repository)
+    def initialize(api_key, adapter = nil, splits_repository, segments_repository, impressions_repository, metrics_repository, events_repository, sdk_blocker, config)
       @splits_repository = splits_repository
       @segments_repository = segments_repository
       @impressions_repository = impressions_repository
       @metrics_repository = metrics_repository
       @events_repository = events_repository
+      @sdk_blocker = sdk_blocker
       @destroyed = false
+      @config = config
+      @validator = Validators.new(config)
 
       @adapter = adapter
     end
@@ -52,27 +55,27 @@ module SplitIoClient
     end
 
     def destroy
-      SplitIoClient.configuration.logger.info('Split client shutdown started...') if SplitIoClient.configuration.debug_enabled
+      @config.logger.info('Split client shutdown started...') if @config.debug_enabled
 
-      SplitIoClient.configuration.threads.select { |name, thread| name.to_s.end_with? 'sender' }.values.each do |thread|
+      @config.threads.select { |name, thread| name.to_s.end_with? 'sender' }.values.each do |thread|
         thread.raise(SplitIoClient::SDKShutdownException)
         thread.join
       end
 
-      SplitIoClient.configuration.threads.values.each { |thread| Thread.kill(thread) }
+      @config.threads.values.each { |thread| Thread.kill(thread) }
 
       @splits_repository.clear
       @segments_repository.clear
 
-      SplitIoClient.configuration.logger.info('Split client shutdown complete') if SplitIoClient.configuration.debug_enabled
-      SplitIoClient.configuration.valid_mode = false
+      @config.logger.info('Split client shutdown complete') if @config.debug_enabled
+      @config.valid_mode = false
       @destroyed = true
     end
 
     def store_impression(split_name, matching_key, bucketing_key, treatment, store_impressions, attributes)
       time = (Time.now.to_f * 1000.0).to_i
 
-      return if SplitIoClient.configuration.disable_impressions || !store_impressions
+      return if @config.disable_impressions || !store_impressions
 
       @impressions_repository.add(
         matching_key,
@@ -85,7 +88,7 @@ module SplitIoClient
       route_impression(split_name, matching_key, bucketing_key, time, treatment, attributes)
 
     rescue StandardError => error
-      SplitIoClient.configuration.log_found_exception(__method__.to_s, error)
+      @config.log_found_exception(__method__.to_s, error)
     end
 
     def route_impression(split_name, matching_key, bucketing_key, time, treatment, attributes)
@@ -111,11 +114,11 @@ module SplitIoClient
     end
 
     def impression_router
-      @impression_router ||= SplitIoClient::ImpressionRouter.new
+      @impression_router ||= SplitIoClient::ImpressionRouter.new(@config)
     end
 
     def track(key, traffic_type_name, event_type, value = nil, properties = nil)
-      return false unless valid_client && SplitIoClient::Validators.valid_track_parameters(key, traffic_type_name, event_type, value, properties)
+      return false unless valid_client && @validator.valid_track_parameters(key, traffic_type_name, event_type, value, properties)
 
       properties_size = EVENT_AVERAGE_SIZE
 
@@ -123,16 +126,22 @@ module SplitIoClient
         properties, size = validate_properties(properties)
         properties_size += size
         if (properties_size > EVENTS_SIZE_THRESHOLD)
-          SplitIoClient.configuration.logger.error("The maximum size allowed for the properties is #{EVENTS_SIZE_THRESHOLD}. Current is #{properties_size}. Event not queued")
+          @config.logger.error("The maximum size allowed for the properties is #{EVENTS_SIZE_THRESHOLD}. Current is #{properties_size}. Event not queued")
           return false
         end
+      end
+
+      if ready? && !@splits_repository.traffic_type_exists(traffic_type_name)
+        @config.logger.warn("track: Traffic Type #{traffic_type_name} " \
+          "does not have any corresponding Splits in this environment, make sure you're tracking " \
+          'your events to a valid traffic type defined in the Split console')
       end
 
       begin
         @events_repository.add(key.to_s, traffic_type_name.downcase, event_type.to_s, (Time.now.to_f * 1000).to_i, value, properties, properties_size)
         true
       rescue StandardError => error
-        SplitIoClient.configuration.log_found_exception(__method__.to_s, error)
+        @config.log_found_exception(__method__.to_s, error)
         false
       end
     end
@@ -167,13 +176,18 @@ module SplitIoClient
         if (split_name.is_a?(String) || split_name.is_a?(Symbol)) && !split_name.empty?
           true
         elsif split_name.is_a?(String) && split_name.empty?
-          SplitIoClient.configuration.logger.warn("#{calling_method}: you passed an empty split_name, split_name must be a non-empty String or a Symbol")
+          @config.logger.warn("#{calling_method}: you passed an empty split_name, split_name must be a non-empty String or a Symbol")
           false
         else
-          SplitIoClient.configuration.logger.warn("#{calling_method}: you passed an invalid split_name, split_name must be a non-empty String or a Symbol")
+          @config.logger.warn("#{calling_method}: you passed an invalid split_name, split_name must be a non-empty String or a Symbol")
           false
         end
       end
+    end
+
+    def block_until_ready(time = nil)
+      @sdk_blocker.block(time) if @sdk_blocker && !@sdk_blocker.ready?
+      # TODO: would yield approach work better?
     end
 
     private
@@ -191,32 +205,32 @@ module SplitIoClient
             result[key] = value
             size += variable_size(value)
           else
-            SplitIoClient.configuration.logger.warn("Property #{key} is of invalid type. Setting value to nil")
+            @config.logger.warn("Property #{key} is of invalid type. Setting value to nil")
             result[key] = nil
           end
         end
       }
 
-      SplitIoClient.configuration.logger.warn('Event has more than 300 properties. Some of them will be trimmed when processed') if properties_count > 300
+      @config.logger.warn('Event has more than 300 properties. Some of them will be trimmed when processed') if properties_count > 300
 
       return fixed_properties, size
     end
 
     def valid_client
       if @destroyed
-        SplitIoClient.configuration.logger.error('Client has already been destroyed - no calls possible')
+        @config.logger.error('Client has already been destroyed - no calls possible')
         return false
       end
-      SplitIoClient.configuration.valid_mode
+      @config.valid_mode
     end
 
     def treatments(key, split_names, attributes = {}, calling_method = 'get_treatments')
-      return nil unless SplitIoClient::Validators.valid_get_treatments_parameters(calling_method, split_names)
+      return nil unless @validator.valid_get_treatments_parameters(calling_method, split_names)
 
       sanitized_split_names = sanitize_split_names(calling_method, split_names)
 
       if sanitized_split_names.empty?
-        SplitIoClient.configuration.logger.error("#{calling_method}: split_names must be a non-empty Array")
+        @config.logger.error("#{calling_method}: split_names must be a non-empty Array")
         return {}
       end
 
@@ -224,7 +238,7 @@ module SplitIoClient
       bucketing_key = bucketing_key ? bucketing_key.to_s : nil
       matching_key = matching_key ? matching_key.to_s : nil
 
-      evaluator = Engine::Parser::Evaluator.new(@segments_repository, @splits_repository, true)
+      evaluator = Engine::Parser::Evaluator.new(@segments_repository, @splits_repository, @config, true)
       start = Time.now
       treatments_labels_change_numbers =
         @splits_repository.get_splits(sanitized_split_names).each_with_object({}) do |(name, data), memo|
@@ -234,7 +248,7 @@ module SplitIoClient
       # Measure
       @adapter.metrics.time('sdk.' + calling_method, latency)
 
-      unless SplitIoClient.configuration.disable_impressions
+      unless @config.disable_impressions
         time = (Time.now.to_f * 1000.0).to_i
         @impressions_repository.add_bulk(
           matching_key, bucketing_key, treatments_labels_change_numbers, time
@@ -269,38 +283,48 @@ module SplitIoClient
         key, split_name, attributes = {}, split_data = nil, store_impressions = true,
         multiple = false, evaluator = nil, calling_method = 'get_treatment'
       )
-      control_treatment = { label: Engine::Models::Label::EXCEPTION, treatment: SplitIoClient::Engine::Models::Treatment::CONTROL, config: nil }
-      parsed_control_treatment = parsed_treatment(multiple, control_treatment)
+      control_treatment = { treatment: Engine::Models::Treatment::CONTROL }
+
+      parsed_control_exception = parsed_treatment(multiple,
+        control_treatment.merge({ label: Engine::Models::Label::EXCEPTION }))
 
       bucketing_key, matching_key = keys_from_key(key)
 
-      return parsed_control_treatment unless valid_client && SplitIoClient::Validators.valid_get_treatment_parameters(calling_method, key, split_name, matching_key, bucketing_key, attributes)
+      return parsed_control_exception unless valid_client && @validator.valid_get_treatment_parameters(calling_method, key, split_name, matching_key, bucketing_key, attributes)
 
       bucketing_key = bucketing_key ? bucketing_key.to_s : nil
       matching_key = matching_key.to_s
       sanitized_split_name = split_name.to_s.strip
 
       if split_name.to_s != sanitized_split_name
-        SplitIoClient.configuration.logger.warn("#{calling_method}: split_name #{split_name} has extra whitespace, trimming")
+        @config.logger.warn("#{calling_method}: split_name #{split_name} has extra whitespace, trimming")
         split_name = sanitized_split_name
       end
 
-      evaluator ||= Engine::Parser::Evaluator.new(@segments_repository, @splits_repository)
+      evaluator ||= Engine::Parser::Evaluator.new(@segments_repository, @splits_repository, @config)
 
       begin
         start = Time.now
 
         split = multiple ? split_data : @splits_repository.get_split(split_name)
 
-        if split.nil?
-          SplitIoClient.configuration.logger.warn("split_name: #{split_name} does not exist. Returning CONTROL")
-          return parsed_control_treatment
+        if split.nil? && ready?
+          @config.logger.warn("#{calling_method}: you passed #{split_name} that " \
+            'does not exist in this environment, please double check what Splits exist in the web console')
+
+          return parsed_treatment(multiple, control_treatment.merge({ label: Engine::Models::Label::NOT_FOUND }))
         end
 
         treatment_data =
+        if !split.nil? && ready?
           evaluator.call(
-          { bucketing_key: bucketing_key, matching_key: matching_key }, split, attributes
-        )
+            { bucketing_key: bucketing_key, matching_key: matching_key }, split, attributes
+          )
+        else
+          @config.logger.error("#{calling_method}: the SDK is not ready, the operation cannot be executed")
+
+          control_treatment.merge({ label: Engine::Models::Label::NOT_READY })
+        end
 
         latency = (Time.now - start) * 1000.0
         store_impression(split_name, matching_key, bucketing_key, treatment_data, store_impressions, attributes)
@@ -308,11 +332,11 @@ module SplitIoClient
         # Measure
         @adapter.metrics.time('sdk.' + calling_method, latency) unless multiple
       rescue StandardError => error
-        SplitIoClient.configuration.log_found_exception(__method__.to_s, error)
+        @config.log_found_exception(__method__.to_s, error)
 
         store_impression(split_name, matching_key, bucketing_key, control_treatment, store_impressions, attributes)
 
-        return parsed_control_treatment
+        return parsed_control_exception
       end
 
       parsed_treatment(multiple, treatment_data)
@@ -320,6 +344,11 @@ module SplitIoClient
 
     def variable_size(value)
       value.is_a?(String) ? value.length : 0
+    end
+
+    def ready?
+      return @sdk_blocker.ready? if @sdk_blocker
+      true
     end
   end
 end

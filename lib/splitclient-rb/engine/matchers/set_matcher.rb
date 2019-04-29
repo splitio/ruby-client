@@ -10,9 +10,10 @@ module SplitIoClient
 
     protected
 
-    def initialize(attribute, remote_array)
+    def initialize(attribute, remote_array, config)
       @attribute = attribute
       @remote_set = remote_array.to_set
+      @config = config
     end
 
     def local_set(data, attribute)

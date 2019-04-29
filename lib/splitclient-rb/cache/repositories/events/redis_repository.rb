@@ -4,8 +4,9 @@ module SplitIoClient
       module Events
         class RedisRepository < EventsRepository
 
-          def initialize(adapter)
-            @adapter = adapter
+          def initialize(config)
+            @config = config
+            @adapter = @config.events_adapter
           end
 
           def add(key, traffic_type, event_type, time, value, properties, size)
@@ -20,7 +21,7 @@ module SplitIoClient
               JSON.parse(e, symbolize_names: true)
             end
           rescue StandardError => e
-            SplitIoClient.configuration.logger.error("Exception while clearing events cache: #{e}")
+            @config.logger.error("Exception while clearing events cache: #{e}")
             []
           end
         end

@@ -2,15 +2,6 @@ require 'logger'
 require 'socket'
 
 module SplitIoClient
-
-  class << self
-      attr_accessor :configuration
-  end
-
-  def self.configure(opts={})
-    self.configuration ||= SplitConfig.new(opts)
-  end
-
   #
   # This class manages configuration options for the split client library.
   # If not custom configuration is required the default configuration values will be used
@@ -68,9 +59,7 @@ module SplitIoClient
       @logger = opts[:logger] || SplitConfig.default_logger
       @debug_enabled = opts[:debug_enabled] || SplitConfig.default_debug
       @transport_debug_enabled = opts[:transport_debug_enabled] || SplitConfig.default_debug
-      @block_until_ready = opts[:ready] || opts[:block_until_ready] || 0
-
-      @logger.warn 'no ready parameter has been set - incorrect control treatments could be logged' if block_until_ready == 0 && !mode.equal?(:consumer) 
+      @block_until_ready = SplitConfig.default_block_until_ready
 
       @machine_name = opts[:machine_name] || SplitConfig.machine_hostname
       @machine_ip = opts[:machine_ip] || SplitConfig.machine_ip
@@ -343,7 +332,7 @@ module SplitIoClient
       if defined?(Rails) && Rails.logger
         Rails.logger
       elsif ENV['SPLITCLIENT_ENV'] == 'test'
-        Logger.new('/dev/null')  
+        Logger.new('/dev/null')
       else
        Logger.new($stdout)
        end
@@ -373,6 +362,14 @@ module SplitIoClient
 
     def self.default_redis_namespace
       'SPLITIO'
+    end
+
+    #
+    # The default block until ready value
+    #
+    # @return [int]
+    def self.default_block_until_ready
+      15
     end
 
     #
@@ -418,6 +415,18 @@ module SplitIoClient
       @logger.warn(message)
     end
 
+    def log_if_debug(message)
+      @logger.debug(message) if @debug_enabled
+    end
+
+    def log_if_transport(message)
+      @logger.debug(message) if @transport_debug_enabled
+    end
+
+    def log_error(message)
+      @logger.error(message)
+    end
+
     #
     # log which cache class was loaded and SDK mode
     #
@@ -427,6 +436,14 @@ module SplitIoClient
 
       @logger.info("Loaded Ruby SDK v#{VERSION} in the #{@mode} mode")
       @logger.info("Loaded cache class: #{@cache_adapter.class}")
+    end
+
+    def standalone?
+      @mode.equal?(:standalone)
+    end
+
+    def consumer?
+      @mode.equal?(:consumer)
     end
 
     #

@@ -6,7 +6,8 @@ module SplitIoClient
     class Splits < Client
       METRICS_PREFIX = 'splitChangeFetcher'
 
-      def initialize(api_key, metrics)
+      def initialize(api_key, metrics, config)
+        super(config)
         @api_key = api_key
         @metrics = metrics
       end
@@ -14,16 +15,16 @@ module SplitIoClient
       def since(since)
         start = Time.now
 
-        response = get_api("#{SplitIoClient.configuration.base_uri}/splitChanges", @api_key, since: since)
+        response = get_api("#{@config.base_uri}/splitChanges", @api_key, since: since)
 
         if response.success?
           result = splits_with_segment_names(response.body)
 
           @metrics.count(METRICS_PREFIX + '.status.' + response.status.to_s, 1)
           unless result[:splits].empty?
-            SplitLogger.log_if_debug("#{result[:splits].length} splits retrieved. since=#{since}")
+            @config.log_if_debug("#{result[:splits].length} splits retrieved. since=#{since}")
           end
-          SplitLogger.log_if_transport(result.to_s)
+          @config.log_if_transport(result.to_s)
 
           latency = (Time.now - start) * 1000.0
           @metrics.time(METRICS_PREFIX + '.time', latency)
@@ -31,7 +32,7 @@ module SplitIoClient
           result
         else
           @metrics.count(METRICS_PREFIX + '.status.' + response.status.to_s, 1)
-          SplitLogger.log_error("Unexpected status code while fetching splits: #{response.status}. " \
+          @config.log_error("Unexpected status code while fetching splits: #{response.status}. " \
           'Check your API key and base URI')
           raise 'Split SDK failed to connect to backend to fetch split definitions'
         end

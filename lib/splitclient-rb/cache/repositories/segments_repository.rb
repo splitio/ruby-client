@@ -6,14 +6,15 @@ module SplitIoClient
 
         attr_reader :adapter
 
-        def initialize(adapter)
-          @adapter = case adapter.class.to_s
+        def initialize(config)
+          super(config)
+          @adapter = case @config.cache_adapter.class.to_s
           when 'SplitIoClient::Cache::Adapters::RedisAdapter'
-            SplitIoClient::Cache::Adapters::CacheAdapter.new(adapter)
+            SplitIoClient::Cache::Adapters::CacheAdapter.new(@config)
           else
-            adapter
+            @config.cache_adapter
           end
-          @adapter.set_bool(namespace_key('.ready'), false) unless SplitIoClient.configuration.mode.equal?(:consumer)
+          @adapter.set_bool(namespace_key('.ready'), false) unless @config.mode.equal?(:consumer)
         end
 
         # Receives segment data, adds and removes segements from the store

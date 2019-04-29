@@ -4,8 +4,7 @@ require 'spec_helper'
 
 describe SplitIoClient::Cache::Repositories::MetricsRepository do
   RSpec.shared_examples 'metrics specs' do |cache_adapter|
-    let(:adapter) { cache_adapter }
-    let(:repository) { described_class.new(adapter) }
+    let(:repository) { described_class.new(@default_config) }
     let(:binary_search) { SplitIoClient::BinarySearchLatencyTracker.new }
 
     before :each do
@@ -13,6 +12,7 @@ describe SplitIoClient::Cache::Repositories::MetricsRepository do
     end
 
     it 'does not return zero latencies' do
+      @default_config.cache_adapter = cache_adapter
       repository.add_latency('foo', 0, binary_search)
 
       expect(repository.latencies.keys).to eq(%w[foo])

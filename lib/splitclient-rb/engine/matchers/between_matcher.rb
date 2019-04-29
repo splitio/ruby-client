@@ -6,7 +6,8 @@ module SplitIoClient
 
     attr_reader :attribute
 
-    def initialize(attribute_hash)
+    def initialize(attribute_hash, config)
+      super(config)
       @attribute = attribute_hash[:attribute]
       @data_type = attribute_hash[:data_type]
       @start_value = formatted_value(attribute_hash[:start_value], true)
@@ -14,16 +15,16 @@ module SplitIoClient
     end
 
     def match?(args)
-      SplitLogger.log_if_debug('[BetweenMatcher] evaluating value and attributes.')
+      @config.log_if_debug('[BetweenMatcher] evaluating value and attributes.')
 
-      return false unless SplitIoClient::Validators.valid_matcher_arguments(args)
+      return false unless SplitIoClient::Validators.new(@config).valid_matcher_arguments(args)
 
       value = formatted_value(args[:value] || args[:attributes][@attribute.to_sym])
-      SplitLogger.log_if_debug("[BetweenMatcher] Value from parameters: #{value}.")
+      @config.log_if_debug("[BetweenMatcher] Value from parameters: #{value}.")
       return false unless value.is_a?(Integer)
 
       matches = (@start_value..@end_value).cover? value
-      SplitLogger.log_if_debug("[BetweenMatcher] is #{value} between #{@start_value} and #{@end_value} -> #{matches} .")
+      @config.log_if_debug("[BetweenMatcher] is #{value} between #{@start_value} and #{@end_value} -> #{matches} .")
       matches
     end
 

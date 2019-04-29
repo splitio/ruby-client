@@ -13,10 +13,12 @@ module SplitIoClient
     # @param splits_file [File] file that contains some splits
     #
     # @return [LocalhostSplitIoClient] split.io localhost client instance
-    def initialize(splits_file, reload_rate = nil)
+    def initialize(splits_file, config, reload_rate = nil)
       @localhost_mode = true
       @localhost_mode_features = []
       load_localhost_mode_features(splits_file, reload_rate)
+      @config = config
+      @validator = Validators.new(config)
     end
 
     #
@@ -101,12 +103,12 @@ module SplitIoClient
       parsed_control_treatment = parsed_treatment(control_treatment)
 
       bucketing_key, matching_key = keys_from_key(key)
-      return parsed_control_treatment unless SplitIoClient::Validators.valid_get_treatment_parameters(calling_method, key, split_name, matching_key, bucketing_key, attributes)
+      return parsed_control_treatment unless @validator.valid_get_treatment_parameters(calling_method, key, split_name, matching_key, bucketing_key, attributes)
 
       sanitized_split_name = split_name.to_s.strip
 
       if split_name.to_s != sanitized_split_name
-        SplitIoClient.configuration.logger.warn("get_treatment: split_name #{split_name} has extra whitespace, trimming")
+        @config.logger.warn("get_treatment: split_name #{split_name} has extra whitespace, trimming")
         split_name = sanitized_split_name
       end
 
@@ -127,12 +129,12 @@ module SplitIoClient
     end
 
     def get_localhost_treatments(key, split_names, attributes = nil, calling_method = 'get_treatments')
-      return nil unless SplitIoClient::Validators.valid_get_treatments_parameters(calling_method, split_names)
+      return nil unless @validator.valid_get_treatments_parameters(calling_method, split_names)
 
       sanitized_split_names = sanitize_split_names(calling_method, split_names)
 
       if sanitized_split_names.empty?
-        SplitIoClient.configuration.logger.error("#{calling_method}: split_names must be a non-empty Array")
+        @config.logger.error("#{calling_method}: split_names must be a non-empty Array")
         return {}
       end
 
@@ -146,10 +148,10 @@ module SplitIoClient
         if (split_name.is_a?(String) || split_name.is_a?(Symbol)) && !split_name.empty?
           true
         elsif split_name.is_a?(String) && split_name.empty?
-          SplitIoClient.configuration.logger.warn("#{calling_method}: you passed an empty split_name, split_name must be a non-empty String or a Symbol")
+          @config.logger.warn("#{calling_method}: you passed an empty split_name, split_name must be a non-empty String or a Symbol")
           false
         else
-          SplitIoClient.configuration.logger.warn("#{calling_method}: you passed an invalid split_name, split_name must be a non-empty String or a Symbol")
+          @config.logger.warn("#{calling_method}: you passed an invalid split_name, split_name must be a non-empty String or a Symbol")
           false
         end
       end

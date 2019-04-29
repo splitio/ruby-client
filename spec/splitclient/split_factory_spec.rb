@@ -3,10 +3,6 @@
 require 'spec_helper'
 
 describe SplitIoClient::SplitFactory do
-  before do
-    SplitIoClient.configuration = nil
-  end
-
   let(:log) { StringIO.new }
   let(:options) do
     {
@@ -68,7 +64,7 @@ describe SplitIoClient::SplitFactory do
 
       expect(log.string).to include 'Factory Instantiation: you passed a nil' \
         ' api_key, api_key must be a non-empty String'
-      expect(SplitIoClient.configuration.valid_mode).to be false
+      expect(factory.instance_variable_get(:@config).valid_mode).to be false
       expect(factory.client.get_treatment('test_user', 'test_feature'))
         .to eq SplitIoClient::Engine::Models::Treatment::CONTROL
     end
@@ -86,7 +82,7 @@ describe SplitIoClient::SplitFactory do
 
       expect(log.string).to include 'Factory Instantiation: you passed and empty api_key,' \
         ' api_key must be a non-empty String'
-      expect(SplitIoClient.configuration.valid_mode).to be false
+      expect(factory.instance_variable_get(:@config).valid_mode).to be false
       expect(factory.client.track('key', 'traffic_type', 'event_type', 123))
         .to be false
     end
@@ -112,7 +108,7 @@ describe SplitIoClient::SplitFactory do
 
       expect(log.string).to include 'Factory Instantiation: You passed a browser type api_key,' \
         ' please grab an api key from the Split console that is of type sdk'
-      expect(SplitIoClient.configuration.valid_mode).to be false
+      expect(factory.instance_variable_get(:@config).valid_mode).to be false
       expect(factory.manager.split('test_split'))
         .to be nil
     end
@@ -130,7 +126,7 @@ describe SplitIoClient::SplitFactory do
       factory.client.destroy
       factory.client.get_treatment('key', 'split')
       expect(log.string).to include 'Client has already been destroyed - no calls possible'
-      expect(SplitIoClient.configuration.valid_mode).to be false
+      expect(factory.instance_variable_get(:@config).valid_mode).to be false
       expect(factory.manager.split('test_split'))
         .to be nil
     end
