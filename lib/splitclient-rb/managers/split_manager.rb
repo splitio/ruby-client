@@ -75,7 +75,8 @@ module SplitIoClient
           traffic_type_name: split[:trafficTypeName],
           killed: split[:killed],
           treatments: treatments,
-          change_number: split[:changeNumber]
+          change_number: split[:changeNumber],
+          configs: split[:configurations] || {}
         }
     end
   end

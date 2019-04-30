@@ -8,6 +8,9 @@
          "killed":false,
          "defaultTreatment":"default",
          "changeNumber":1473863097220,
+         "configurations": {
+           "on": "{\"size\":15,\"test\":20}"
+         },
          "conditions":[
             {
                "matcherGroup":{

@@ -18,12 +18,13 @@ describe SplitIoClient::Engine::Parser::Evaluator do
 
   it 'returns killed treatment' do
     expect(evaluator.call({ matching_key: 'foo' }, killed_split))
-      .to eq(label: 'killed', treatment: 'default', change_number: nil)
+      .to eq(label: 'killed', treatment: 'default', change_number: nil, config: nil)
   end
 
   it 'returns archived treatment' do
     expect(evaluator.call({ matching_key: 'foo' }, archived_split))
-      .to eq(label: 'archived', treatment: SplitIoClient::Engine::Models::Treatment::CONTROL, change_number: nil)
+      .to eq(label: 'archived', treatment: SplitIoClient::Engine::Models::Treatment::CONTROL,
+             change_number: nil, config: nil)
   end
 
   context 'dependency matcher' do
