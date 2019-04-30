@@ -1,4 +1,4 @@
-6.3.0 (Apr 22, 2019)
+6.3.0 (Apr 30, 2019)
 
 - Added Dynamic Configurations support through two new methods that mimick the regular ones, changing the type of what is returned.
   - get_treatment_with_config: Same as get_treatment but returning the treatment with it's config.
