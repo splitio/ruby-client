@@ -13,7 +13,7 @@ describe SplitIoClient::Cache::Senders::MetricsSender do
     end
 
     it 'calls #post_metrics upon destroy' do
-      expect(sender).to receive(:post_metrics).with(no_args)
+      expect(sender).to receive(:post_metrics).with(no_args).at_least(:once)
 
       sender.send(:metrics_thread)
 

@@ -39,6 +39,9 @@ module SplitIoClient
             items
           end
 
+          def length
+            @current_size.value
+          end
         end
       end
     end

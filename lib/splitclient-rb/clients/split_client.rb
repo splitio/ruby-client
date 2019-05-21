@@ -1,4 +1,6 @@
 module SplitIoClient
+  EVENTS_SIZE_THRESHOLD = 32768
+  EVENT_AVERAGE_SIZE = 1024
 
   class SplitClient
     #
@@ -112,10 +114,22 @@ module SplitIoClient
       @impression_router ||= SplitIoClient::ImpressionRouter.new
     end
 
-    def track(key, traffic_type_name, event_type, value = nil)
-      return false unless valid_client && SplitIoClient::Validators.valid_track_parameters(key, traffic_type_name, event_type, value)
+    def track(key, traffic_type_name, event_type, value = nil, properties = nil)
+      return false unless valid_client && SplitIoClient::Validators.valid_track_parameters(key, traffic_type_name, event_type, value, properties)
+
+      properties_size = EVENT_AVERAGE_SIZE
+
+      if !properties.nil?
+        properties, size = validate_properties(properties)
+        properties_size += size
+        if (properties_size > EVENTS_SIZE_THRESHOLD)
+          SplitIoClient.configuration.logger.error("The maximum size allowed for the properties is #{EVENTS_SIZE_THRESHOLD}. Current is #{properties_size}. Event not queued")
+          return false
+        end
+      end
+
       begin
-        @events_repository.add(key.to_s, traffic_type_name.downcase, event_type.to_s, (Time.now.to_f * 1000).to_i, value)
+        @events_repository.add(key.to_s, traffic_type_name.downcase, event_type.to_s, (Time.now.to_f * 1000).to_i, value, properties, properties_size)
         true
       rescue StandardError => error
         SplitIoClient.configuration.log_found_exception(__method__.to_s, error)
@@ -163,6 +177,30 @@ module SplitIoClient
     end
 
     private
+
+    def validate_properties(properties)
+      properties_count = 0
+      size = 0
+
+      fixed_properties = properties.each_with_object({}) { |(key, value), result|
+
+        if(key.is_a?(String) || key.is_a?(Symbol))
+          properties_count += 1
+          size += variable_size(key)
+          if value.is_a?(String) || value.is_a?(Symbol) || value.is_a?(Numeric) || value.is_a?(TrueClass) || value.is_a?(FalseClass) || value.nil?
+            result[key] = value
+            size += variable_size(value)
+          else
+            SplitIoClient.configuration.logger.warn("Property #{key} is of invalid type. Setting value to nil")
+            result[key] = nil
+          end
+        end
+      }
+
+      SplitIoClient.configuration.logger.warn('Event has more than 300 properties. Some of them will be trimmed when processed') if properties_count > 300
+
+      return fixed_properties, size
+    end
 
     def valid_client
       if @destroyed
@@ -278,6 +316,10 @@ module SplitIoClient
       end
 
       parsed_treatment(multiple, treatment_data)
+    end
+
+    def variable_size(value)
+      value.is_a?(String) ? value.length : 0
     end
   end
 end
