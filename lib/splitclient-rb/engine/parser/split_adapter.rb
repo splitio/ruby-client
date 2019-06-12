@@ -75,7 +75,7 @@ module SplitIoClient
 
     # Starts thread which loops constantly and sends events to the Split API
     def events_sender
-      EventsSender.new(@events_repository, @api_key).call
+      EventsSender.new(@events_repository).call
     end
   end
 end

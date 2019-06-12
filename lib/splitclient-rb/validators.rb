@@ -16,11 +16,12 @@ module SplitIoClient
       valid_split_names?(method, split_names)
     end
 
-    def valid_track_parameters(key, traffic_type_name, event_type, value)
+    def valid_track_parameters(key, traffic_type_name, event_type, value, properties)
       valid_track_key?(key) &&
         valid_traffic_type_name?(traffic_type_name) &&
         valid_event_type?(event_type) &&
-        valid_value?(value)
+        valid_value?(value) &&
+        valid_properties?(properties)
     end
 
     def valid_split_parameters(split_name)
@@ -248,6 +249,15 @@ module SplitIoClient
     def valid_value?(value)
       unless (value.is_a?(Numeric) && !value.to_f.nan?) || value.nil?
         SplitIoClient.configuration.logger.error('track: value must be Numeric')
+        return false
+      end
+
+      true
+    end
+
+    def valid_properties?(properties)
+      unless properties.is_a?(Hash) || properties.nil?
+        SplitIoClient.configuration.logger.error('track: properties must be a Hash')
         return false
       end
 
