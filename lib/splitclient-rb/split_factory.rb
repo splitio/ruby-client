@@ -9,7 +9,6 @@ module SplitIoClient
 
     def initialize(api_key, config_hash = {})
       at_exit do
-        SplitIoClient.split_factory_registry.remove(api_key)
         unless ENV['SPLITCLIENT_ENV'] == 'test'
           if (Process.pid == ROOT_PROCESS_ID)
             @config.logger.info('Split SDK shutdown started...')
@@ -24,9 +23,7 @@ module SplitIoClient
       @config = SplitConfig.new (config_hash)
 
       raise 'Invalid SDK mode' unless valid_mode
-
-      # @cache_adapter = @config.cache_adapter
-
+      
       @splits_repository = SplitsRepository.new(@config)
       @segments_repository = SegmentsRepository.new(@config)
       @impressions_repository = ImpressionsRepository.new(@config)

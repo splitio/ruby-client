@@ -10,6 +10,7 @@ module SplitIoClient
     #
     # @return [SplitIoClient] split.io client instance
     def initialize(api_key, adapter = nil, splits_repository, segments_repository, impressions_repository, metrics_repository, events_repository, sdk_blocker, config)
+      @api_key = api_key
       @splits_repository = splits_repository
       @segments_repository = segments_repository
       @impressions_repository = impressions_repository
@@ -66,6 +67,9 @@ module SplitIoClient
 
       @splits_repository.clear
       @segments_repository.clear
+
+      SplitIoClient.load_factory_registry
+      SplitIoClient.split_factory_registry.remove(@api_key)
 
       @config.logger.info('Split client shutdown complete') if @config.debug_enabled
       @config.valid_mode = false
