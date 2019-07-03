@@ -191,7 +191,6 @@ module SplitIoClient
 
     def block_until_ready(time = nil)
       @sdk_blocker.block(time) if @sdk_blocker && !@sdk_blocker.ready?
-      # TODO: would yield approach work better?
     end
 
     private
