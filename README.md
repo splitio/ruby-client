@@ -1,4 +1,4 @@
-[ ![Codeship Status for splitio/ruby-client](https://app.codeship.com/projects/306c6b60-c164-0133-e179-16471d4e6045/status?branch=master)](https://app.codeship.com/projects/137510)
+[![Build Status](https://travis-ci.com/splitio/ruby-client.svg?branch=master)](https://travis-ci.com/splitio/ruby-client)
 
 # Split Ruby SDK
 
@@ -35,7 +35,7 @@ Split has built and maintains a SDKs for:
 
 For a comprehensive list of opensource projects visit our [Github page](https://github.com/splitio?utf8=%E2%9C%93&query=%20only%3Apublic%20).
 
-**Learn more about Split:** 
+**Learn more about Split:**
 
 Visit [split.io/product](https://www.split.io/product) for an overview of Split, or visit our documentation at [docs.split.io](http://docs.split.io) for more detailed information.
 

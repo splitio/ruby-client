@@ -797,7 +797,7 @@ describe SplitIoClient, type: :client do
 
       it 'event is added and a Warn is logged when capitalized traffic_type_name' do
         expect(subject.instance_variable_get(:@events_repository)).to receive(:add).with(
-          anything, 'traffic_type', anything, anything, anything
+          anything, 'traffic_type', anything, anything, anything, anything, anything
         )
         expect(subject.track('key', 'TRAFFIC_TYPE', 'event_type', 123)).to be true
         expect(log.string).to include 'track: traffic_type_name should be all lowercase - ' \
@@ -843,10 +843,60 @@ describe SplitIoClient, type: :client do
         expect(subject.track('key', 'traffic_type', 'event_type', nil)).to be true
       end
 
+      it 'event is not added when non Hash properties' do
+        expect(subject.instance_variable_get(:@events_repository)).not_to receive(:add)
+        expect(subject.track('key', 'traffic_type', 'event_type', 123, 'not a Hash')).to be false
+        expect(log.string).to include 'track: properties must be a Hash'
+      end
+
       it 'event is not added when error calling add' do
         expect(subject.instance_variable_get(:@events_repository)).to receive(:add).and_throw(StandardError)
         expect(subject.track('key', 'traffic_type', 'event_type', 123)).to be false
         expect(log.string).to include '[splitclient-rb] Unexpected exception in track'
+      end
+
+      it 'warns users when property count exceeds 300' do
+        properties = 301.times.each_with_object({}) { |index, result| result[index.to_s] = index }
+
+        expect(subject.send(:validate_properties, properties)).to eq [properties, 793]
+        expect(subject.instance_variable_get(:@events_repository)).to receive(:add)
+        expect(subject.track('key', 'traffic_type', 'event_type', 123, properties)).to be true
+        expect(log.string).to include 'Event has more than 300 properties. Some of them will be trimmed when processed'
+      end
+
+      it 'removes non String key properties' do
+        properties = 10.times.each_with_object({}) do |index, result|
+          index.even? ? result[index] = index : result[index.to_s] = index
+        end
+
+        expect(subject.send(:validate_properties, properties))
+          .to eq [properties.select { |key, _| key.is_a?(String) }, 5]
+        expect(subject.instance_variable_get(:@events_repository)).to receive(:add)
+        expect(subject.track('key', 'traffic_type', 'event_type', 123, properties)).to be true
+      end
+
+      it 'changes invalid property values to nil' do
+        properties = {
+          valid_property_value: 'valid',
+          invalid_property_value: {}
+        }
+
+        expect(subject.send(:validate_properties, properties)).to eq [
+          { valid_property_value: 'valid', invalid_property_value: nil },
+          5
+        ]
+        expect(subject.instance_variable_get(:@events_repository)).to receive(:add)
+        expect(subject.track('key', 'traffic_type', 'event_type', 123, properties)).to be true
+        expect(log.string).to include 'Property invalid_property_value is of invalid type. Setting value to nil'
+      end
+
+      it 'event is not added when properties size exceeds threshold' do
+        properties = 32.times.each_with_object({}) { |index, result| result[index.to_s] = 'a' * 1000 }
+
+        expect(subject.instance_variable_get(:@events_repository)).not_to receive(:add)
+        expect(subject.track('key', 'traffic_type', 'event_type', 123, properties)).to be false
+        expect(log.string).to include 'The maximum size allowed for the properties is 32768. ' \
+          'Current is 33078. Event not queued'
       end
     end
   end

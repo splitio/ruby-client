@@ -29,7 +29,7 @@ module SplitIoClient
       @segments_repository = SegmentsRepository.new(@cache_adapter)
       @impressions_repository = ImpressionsRepository.new(SplitIoClient.configuration.impressions_adapter)
       @metrics_repository = MetricsRepository.new(SplitIoClient.configuration.metrics_adapter)
-      @events_repository = EventsRepository.new(SplitIoClient.configuration.events_adapter)
+      @events_repository = EventsRepository.new(SplitIoClient.configuration.events_adapter, @api_key)
 
       if SplitIoClient.configuration.mode == :standalone && SplitIoClient.configuration.block_until_ready > 0
         @sdk_blocker = SDKBlocker.new(@splits_repository, @segments_repository)
