@@ -1,3 +1,6 @@
+6.4.0 (Jul 05, 2019)
+ - Added properties to track method.
+
 6.3.0 (Apr 30, 2019)
 
 - Added Dynamic Configurations support through two new methods that mimick the regular ones, changing the type of what is returned.
