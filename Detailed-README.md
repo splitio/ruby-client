@@ -72,15 +72,12 @@ else
 end
 ```
 
-**Note**: You can ensure the SDK resources are loaded before querying for treatments by using `block_until_ready`. See [Advanced Configuration](#advanced-configuration).
-``` ruby
-options = {
-  block_until_ready: 10
-}
+**Note**: You can ensure the SDK resources are loaded before querying for treatments by using `block_until_ready`.
 
-# Then init the factory passing the options hash
-factory  = SplitIoClient::SplitFactoryBuilder.build('YOUR_API_KEY', options)
+``` ruby
+factory  = SplitIoClient::SplitFactoryBuilder.build('YOUR_API_KEY')
 split_client = factory.client
+split_client.block_until_ready # Wait for a specified time (default 15 seconds). SDK raises an SDKBlockerTimeoutExpiredException if not ready by then
 ```
 
 For features that use targeting rules based on user attributes, you can call the `get_treatment` method the following way:
@@ -107,8 +104,6 @@ split_client.get_treatment(
 An scenario that requires the usage of both keys is a visitor user that browses the site and at some point gets logged into the system: as an anonymous visitor, the user browses the home page and is given the `new_homepage` treatment based on her visitor id. If the visitor signs up and turns into a subscriber, then upon being given her `subscriber_id`, Split may decide to give her the old_homepage treatment. This is of course, the opposite of the desired outcome, as the visitor's entire homepage experience would change as soon as she signs up.
 
  Split solves this situation by introducing the concept of a matching_key and a bucketing key. By providing the `subscriber_id` as the `matching_key` and the `visitor_id` as the `bucketing_key`, Split will give the same treatment back to the user that it used to give to the visitor.
-
- **Note**: read more about this topic [here](https://docs.split.io/docs/anonymous-to-logged-in).
 
 The `bucketing_key` may be `nil`. In that case the `matching_key` would be used instead, so calling:
 ```ruby
@@ -174,6 +169,8 @@ Which would produce an output similar to:
 ]
  ```
 
+**Note**: `block_until_ready` is also available as a Split manager method
+
  #### Localhost Mode
 
  You can run the SDK in _localhost_ mode. In this mode, the SDK won't actually communicate with the Split API, but it'll rather return treatments based on a `.split` file on your local environment. This file must be a list of `split_name treatment_name_to_be_returned` entries. e.g.:
@@ -216,7 +213,7 @@ In order to provide consistency among the SDKs for the different programming lan
 
 - `matching_key`, `bucketing_key`: the containing `Hash` must have both keys, and the same rules above apply for each.
 
-- `split_name`: must be a non-empty `String` or a `Symbol`. Whitespaces will be trimmed from both ends of it. The trimmed version of the `split_name` will be used for both evaluation and to store the resulting impression.
+- `split_name`: must be a non-empty `String` or a `Symbol`. Whitespaces will be trimmed from both ends of it. The trimmed version of the `split_name` will be used for both evaluation and to store the resulting impression. In addition, split must exist in the environment.
 
 - `attributes`: must be of type `Hash`.
 
@@ -238,14 +235,11 @@ In order to provide consistency among the SDKs for the different programming lan
 
 #### split (split_manager)
 
-- `split_name`: must be a non-empty `String` or a `Symbol`.
+- `split_name`: must be a non-empty `String` or a `Symbol`. In addition, split must exist in the environment.
 
 #### Configuration Parameters
 
 - `api_key`: must be a non-empty `String` or a `Symbol` of type `sdk` (`browser` type API keys will break this rule).
-
-- `block_until_ready`: a warning log message will be issued if this value is not set.
-
 
 #### Client Destroyed Rules
 Calls to the SDK methods are still possible after `destroy` is called. All will log an error message stating _client has been destroyed_.
@@ -328,12 +322,6 @@ The following values can be customized:
 **impression_listener** : Route impressions' information to a location of your choice (in addition to the SDK servers). _See [Impression Listener](#impression-listener) section for specifics._
 
 *default value* = (no impression listener)
-
-**block_until_ready** : The SDK will block your app for the provided amount of seconds until it's ready. A `SplitIoClient::SDKBlockerTimeoutExpiredException` will be thrown If the provided time expires. When `0` is provided, the SDK runs in non-blocking mode.
-
-_When using consumer mode, blocking has no effect._
-
-*default value* = `0`
 
 **labels_enabled** : Allows preventing labels from being sent to the Split servers, as they may contain sensitive information.
 
@@ -448,7 +436,7 @@ In the example above, the listener simply takes an impression and logs it to the
 The SDK is capable of running in two different modes to fit in different infrastructure configurations:
 
 - `:standalone` - (default) : The SDK will retrieve information (e.g. split definitions) periodically from the Split servers, and store it in the memory cache. It'll also store the application execution information (e.g. impressions) in the cache and send it periodically to the Split servers. As it name implies, in this mode, the SDK neither relies nor synchronizes with any other component. _This mode is only available when using the `memory` cache adapter._
-- `:consumer` - If using a load balancer or more than one SDK in your application, guaranteeing that all changes in split definitions are picked up by all SDK instances at the same time is highly recommended in order to ensure consistent results across your infrastructure (i.e. getting the same treatment for a specific split and user pair). To achieve this, use the [Split Synchronizer](https://docs.split.io/docs/split-synchronizer)) and setup your SDKs to work in the `consumer` mode. Setting the components this way, all communication with the Split server is orchestrated by the Synchronizer, while the SDKs pick up definitions and store the execution information from / into a shared Redis data store. _This mode is only available when using the `redis` cache adapter._
+- `:consumer` - If using a load balancer or more than one SDK in your application, guaranteeing that all changes in split definitions are picked up by all SDK instances at the same time is highly recommended in order to ensure consistent results across your infrastructure (i.e. getting the same treatment for a specific split and user pair). To achieve this, use the [Split Synchronizer](https://docs.split.io/docs/split-synchronizer)) and setup your SDKs to work in the `consumer` mode. Setting the components this way, all communication with the Split server is orchestrated by the Synchronizer, while the SDKs pick up definitions and store the execution information from / into a shared Redis data store. _This mode is only available when using the `redis` cache adapter. In addition, note that `block_until_ready` has no effect in this mode_
 
 _You can choose between these 2 modes setting the `mode` option in the config. An invalid combination of `cache_adaper` and `mode` will result in an Invalid Mode exception being raised._
 
