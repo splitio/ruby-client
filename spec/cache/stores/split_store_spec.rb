@@ -68,10 +68,6 @@ describe SplitIoClient::Cache::Stores::SplitStore do
   end
 
   context 'redis adapter' do
-    # before do
-    #   cache_adapter = SplitIoClient::SplitConfig.init_cache_adapter(:redis, :map_adapter)
-    #   SplitIoClient.configuration.cache_adapter = cache_adapter
-    # end
     let(:log) { StringIO.new }
     let(:config) do
       SplitIoClient::SplitConfig.new(

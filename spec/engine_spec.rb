@@ -232,8 +232,6 @@ describe SplitIoClient, type: :client do
       end
 
       it 'returns CONTROL and logs warning when ready and split does not exist' do
-        # allow(subject).to receive(:ready?).and_return(true)
-
         expect(subject.get_treatment('random_user_id', 'non_existing_feature'))
           .to eq SplitIoClient::Engine::Models::Treatment::CONTROL
         expect(log.string).to include 'get_treatment: you passed non_existing_feature ' \
