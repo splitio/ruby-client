@@ -45,6 +45,15 @@ describe SplitIoClient::Cache::Repositories::SplitsRepository do
       expect(repository.traffic_type_exists('tt_name_3')).to be false
     end
 
+    it 'does not increment traffic type count when adding same split twice' do
+      split = { name: 'quux', trafficTypeName: 'tt_name_4' }
+      repository.add_split(split)
+      repository.add_split(split)
+      repository.remove_split(split)
+
+      expect(repository.traffic_type_exists('tt_name_4')).to be false
+    end
+
     it 'returns splits data' do
       expect(repository.splits).to eq(
         'foo' => { name: 'foo', trafficTypeName: 'tt_name_1' },
