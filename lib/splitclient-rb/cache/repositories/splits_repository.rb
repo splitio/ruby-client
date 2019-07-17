@@ -23,8 +23,14 @@ module SplitIoClient
 
         def add_split(split)
           return unless split[:name]
+          existing_split = get_split(split[:name])
 
-          increase_tt_name_count(split[:trafficTypeName]) unless exists?(split[:name])
+          if(!existing_split)
+            increase_tt_name_count(split[:trafficTypeName])
+          elsif(existing_split[:trafficTypeName] != split[:trafficTypeName])
+            increase_tt_name_count(split[:trafficTypeName])
+            decrease_tt_name_count(existing_split[:trafficTypeName])
+          end
 
           @adapter.set_string(namespace_key(".split.#{split[:name]}"), split.to_json)
         end
