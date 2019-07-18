@@ -3,12 +3,8 @@
 require 'spec_helper'
 
 describe SplitIoClient::Cache::Senders::MetricsSender do
-  RSpec.shared_examples 'metrics sender specs' do |cache_adapter|
-    let(:config) do
-      config = SplitIoClient::SplitConfig.new
-      config.cache_adapter = cache_adapter
-      config
-    end
+  RSpec.shared_examples 'Metrics Sender' do |cache_adapter|
+    let(:config) { SplitIoClient::SplitConfig.new(cache_adapter: cache_adapter) }
     let(:repository) { SplitIoClient::Cache::Repositories::MetricsRepository.new(config) }
     let(:sender) { described_class.new(repository, nil, config) }
 
@@ -29,10 +25,11 @@ describe SplitIoClient::Cache::Senders::MetricsSender do
     end
   end
 
-  include_examples 'metrics sender specs', SplitIoClient::Cache::Adapters::MemoryAdapter.new(
-    SplitIoClient::Cache::Adapters::MemoryAdapters::QueueAdapter.new(3)
-  )
-  include_examples 'metrics sender specs', SplitIoClient::Cache::Adapters::RedisAdapter.new(
-    SplitIoClient::SplitConfig.new.redis_url
-  )
+  describe 'with Memory Adapter' do
+    it_behaves_like 'Metrics Sender', :memory
+  end
+
+  describe 'with Redis Adapter' do
+    it_behaves_like 'Metrics Sender', :redis
+  end
 end
