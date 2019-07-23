@@ -84,6 +84,9 @@ require 'splitclient-rb/engine/models/treatment'
 require 'splitclient-rb/utilitites'
 require 'splitclient-rb/validators'
 
+# redis metrics fixer
+require 'splitclient-rb/redis_metrics_fixer'
+
 # C extension
 require 'murmurhash/murmurhash_mri'
 

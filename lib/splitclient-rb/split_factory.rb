@@ -42,6 +42,8 @@ module SplitIoClient
 
       validate_api_key
 
+      RedisMetricsFixer.new(@metrics_repository).call
+
       @sdk_blocker.block if @sdk_blocker
     end
 
