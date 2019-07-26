@@ -17,12 +17,7 @@ module SplitIoClient
           def add_latency(operation, time_in_ms, binary_search)
             prefixed_name = impressions_metrics_key("latency.#{operation}")
 
-            if operation == 'sdk.get_treatment'
-              @adapter.inc("#{prefixed_name}.#{binary_search.add_latency_millis(time_in_ms, true)}")
-              return
-            end
-
-            @adapter.append_to_string(prefixed_name, "#{time_in_ms},")
+            @adapter.inc("#{prefixed_name}.bucket.#{binary_search.add_latency_millis(time_in_ms, true)}")
           end
 
           def add_gauge(gauge, value)
@@ -40,30 +35,19 @@ module SplitIoClient
           end
 
           def latencies
-            collected_latencies = {}
-            latencies_array = Array.new(BinarySearchLatencyTracker::BUCKETS.length, 0)
             keys = @adapter.find_strings_by_prefix(impressions_metrics_key('latency'))
-
             return [] if keys.empty?
 
-            found_latencies = @adapter.multiple_strings(keys).map do |name, data|
-              [name.gsub(impressions_metrics_key('latency.'), ''), data]
-            end.to_h
+            collected_latencies = collect_latencies(keys)
 
-            found_latencies.each do |key, value|
-              if key.start_with?('sdk.get_treatment')
-                index = key.gsub('sdk.get_treatment.', '').to_i
-                latencies_array[index] = value.to_i
-
-                next
+            collected_latencies.keys.each_with_object({}) do |operation, latencies|
+              operation_latencies = Array.new(BinarySearchLatencyTracker::BUCKETS.length, 0)
+              collected_latencies[operation].each do |bucket, value|
+                operation_latencies[bucket.to_i] = value.to_i
               end
 
-              collected_latencies[key] = value.split(',').map(&:to_f)
+              latencies[operation] = operation_latencies
             end
-
-            collected_latencies['sdk.get_treatment'] = latencies_array unless latencies_array.reduce(:+) == 0
-
-            collected_latencies
           end
 
           def gauges
@@ -80,6 +64,35 @@ module SplitIoClient
             @adapter.delete(keys)
           end
 
+          # introduced to fix incorrect latencies
+          def fix_latencies
+            keys =[]
+
+            23.times do |index|
+              keys.concat @adapter.find_strings_by_pattern(latencies_to_be_deleted_key_pattern_prefix("sdk.get_treatment.#{index}"))
+            end
+
+            keys.concat @adapter.find_strings_by_pattern(latencies_to_be_deleted_key_pattern_prefix('sdk.get_treatments'))
+            keys.concat @adapter.find_strings_by_pattern(latencies_to_be_deleted_key_pattern_prefix('sdk.get_treatment_with_config'))
+            keys.concat @adapter.find_strings_by_pattern(latencies_to_be_deleted_key_pattern_prefix('sdk.get_treatments_with_config'))
+
+            keys.concat @adapter.find_strings_by_pattern(latencies_to_be_deleted_key_pattern_prefix('*.time'))
+
+            SplitIoClient.configuration.logger.info("Found incorrect latency keys, deleting. Keys: #{keys}") unless keys.size == 0
+
+            keys.each_slice(500) do |chunk|
+              @adapter.pipelined do
+                chunk.each do |key|
+                  @adapter.delete key
+                end
+              end
+            end
+          end
+
+          def latencies_to_be_deleted_key_pattern_prefix(key)
+            "#{SplitIoClient.configuration.redis_namespace}/#{SplitIoClient.configuration.language}-*/latency.#{key}"
+          end
+
           def clear_gauges
             # TODO
           end
@@ -88,6 +101,22 @@ module SplitIoClient
             clear_counts
             clear_latencies
             clear_gauges
+          end
+
+          private
+
+          def find_latencies(keys)
+            @adapter.multiple_strings(keys).map do |name, data|
+              [name.gsub(impressions_metrics_key('latency.'), ''), data]
+            end.to_h
+          end
+
+          def collect_latencies(keys)
+            find_latencies(keys).each_with_object({}) do |(key, value), collected_latencies|
+              operation, bucket = key.split('.bucket.')
+              collected_latencies[operation] = {} unless collected_latencies[operation]
+              collected_latencies[operation].merge!({bucket => value})
+            end
           end
         end
       end

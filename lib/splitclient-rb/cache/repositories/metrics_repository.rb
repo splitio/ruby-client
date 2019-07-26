@@ -5,7 +5,7 @@ module SplitIoClient
       class MetricsRepository < Repository
         extend Forwardable
         def_delegators :@adapter, :add_count, :add_latency, :add_gauge, :counts, :latencies, :gauges,
-                       :clear_counts, :clear_latencies, :clear_gauges, :clear
+                       :clear_counts, :clear_latencies, :clear_gauges, :clear, :fix_latencies
 
         def initialize(adapter)
           @adapter = case adapter.class.to_s
