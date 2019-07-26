@@ -56,10 +56,14 @@ module SplitIoClient
         end
 
         def find_strings_by_prefix(prefix)
+          find_strings_by_pattern("#{prefix}*")
+        end
+
+        def find_strings_by_pattern(pattern)
           memo = { items: [], cursor: 0 }
 
           loop do
-            memo[:cursor], items = @redis.scan(memo[:cursor], match: "#{prefix}*", count: SCAN_SLICE)
+            memo[:cursor], items = @redis.scan(memo[:cursor], match: "#{pattern}", count: SCAN_SLICE)
 
             memo[:items].push(*items)
 
