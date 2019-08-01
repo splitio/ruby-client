@@ -6,24 +6,24 @@ module SplitIoClient
 
     attr_reader :attribute
 
-    def initialize(attribute, suffix_list, config)
+    def initialize(attribute, suffix_list, logger)
       @attribute = attribute
       @suffix_list = suffix_list
-      @config = config
+      @logger = logger
     end
 
     def match?(args)
       value = get_value(args)
 
-      @config.log_if_debug("[EndsWithMatcher] Value from parameters: #{value}.")
+      @logger.log_if_debug("[EndsWithMatcher] Value from parameters: #{value}.")
 
       if @suffix_list.empty?
-        @config.log_if_debug('[EndsWithMatcher] Sufix List empty.')
+        @logger.log_if_debug('[EndsWithMatcher] Sufix List empty.')
         return false
       end
 
       matches = @suffix_list.any? { |suffix| value.to_s.end_with? suffix }
-      @config.log_if_debug("[EndsWithMatcher] #{value} ends with any #{@suffix_list}")
+      @logger.log_if_debug("[EndsWithMatcher] #{value} ends with any #{@suffix_list}")
       matches
     end
 

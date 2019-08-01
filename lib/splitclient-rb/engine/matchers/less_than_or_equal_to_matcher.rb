@@ -6,22 +6,23 @@ module SplitIoClient
 
     attr_reader :attribute
 
-    def initialize(attribute_hash, config)
-      super(config)
+    def initialize(attribute_hash, logger, validator)
+      super(logger)
+      @validator = validator
       @attribute = attribute_hash[:attribute]
       @data_type = attribute_hash[:data_type]
       @value = formatted_value(attribute_hash[:value], true)
     end
 
     def match?(args)
-      @config.log_if_debug('[LessThanOrEqualToMatcher] evaluating value and attributes.')
+      @logger.log_if_debug('[LessThanOrEqualToMatcher] evaluating value and attributes.')
 
-      return false unless SplitIoClient::Validators.new(@config).valid_matcher_arguments(args)
+      return false unless @validator.valid_matcher_arguments(args)
 
       value = formatted_value(args[:value] || args[:attributes][@attribute.to_sym])
 
       matches = value.is_a?(Integer) ? (value <= @value) : false
-      @config.log_if_debug("[LessThanOrEqualToMatcher] #{value} less than or equal to #{@value} -> #{matches}")
+      @logger.log_if_debug("[LessThanOrEqualToMatcher] #{value} less than or equal to #{@value} -> #{matches}")
       matches
     end
 

@@ -18,7 +18,7 @@ module SplitIoClient
     end
 
     def create_condition_matcher(matchers)
-      CombiningMatcher.new(@config, combiner, matchers) if combiner
+      CombiningMatcher.new(@config.split_logger, combiner, matchers) if combiner
     end
 
     #
@@ -46,11 +46,11 @@ module SplitIoClient
     end
 
     def negation_matcher(matcher)
-      NegationMatcher.new(@config, matcher)
+      NegationMatcher.new(@config.split_logger, matcher)
     end
 
     def matcher_all_keys(_params)
-      @matcher_all_keys ||= AllKeysMatcher.new(@config)
+      @matcher_all_keys ||= AllKeysMatcher.new(@config.split_logger)
     end
 
     # returns UserDefinedSegmentMatcher[object]
@@ -58,7 +58,7 @@ module SplitIoClient
       matcher = params[:matcher]
       segment_name = matcher[:userDefinedSegmentMatcherData] && matcher[:userDefinedSegmentMatcherData][:segmentName]
 
-      UserDefinedSegmentMatcher.new(params[:segments_repository], segment_name, @config)
+      UserDefinedSegmentMatcher.new(params[:segments_repository], segment_name, @config.split_logger)
     end
 
     # returns WhitelistMatcher[object] the whitelist for this condition in case it has a whitelist matcher
@@ -73,7 +73,7 @@ module SplitIoClient
         white_list = (matcher[:whitelistMatcherData])[:whitelist]
         result =  { attribute: attribute, value: white_list }
       end
-      WhitelistMatcher.new(result, @config)
+      WhitelistMatcher.new(result, @config.split_logger, @config.split_validator)
     end
 
     def matcher_equal_to(params)
@@ -81,7 +81,7 @@ module SplitIoClient
       attribute = (matcher[:keySelector])[:attribute]
       value = (matcher[:unaryNumericMatcherData])[:value]
       data_type = (matcher[:unaryNumericMatcherData])[:dataType]
-      EqualToMatcher.new({attribute: attribute, value: value, data_type: data_type}, @config)
+      EqualToMatcher.new({attribute: attribute, value: value, data_type: data_type}, @config.split_logger, @config.split_validator)
     end
 
     def matcher_greater_than_or_equal_to(params)
@@ -89,7 +89,7 @@ module SplitIoClient
       attribute = (matcher[:keySelector])[:attribute]
       value = (matcher[:unaryNumericMatcherData])[:value]
       data_type = (matcher[:unaryNumericMatcherData])[:dataType]
-      GreaterThanOrEqualToMatcher.new({attribute: attribute, value: value, data_type: data_type}, @config)
+      GreaterThanOrEqualToMatcher.new({attribute: attribute, value: value, data_type: data_type}, @config.split_logger, @config.split_validator)
     end
 
     def matcher_less_than_or_equal_to(params)
@@ -97,7 +97,7 @@ module SplitIoClient
       attribute = (matcher[:keySelector])[:attribute]
       value = (matcher[:unaryNumericMatcherData])[:value]
       data_type = (matcher[:unaryNumericMatcherData])[:dataType]
-      LessThanOrEqualToMatcher.new({attribute: attribute, value: value, data_type: data_type}, @config)
+      LessThanOrEqualToMatcher.new({attribute: attribute, value: value, data_type: data_type}, @config.split_logger, @config.split_validator)
     end
 
     def matcher_between(params)
@@ -106,14 +106,14 @@ module SplitIoClient
       start_value = (matcher[:betweenMatcherData])[:start]
       end_value = (matcher[:betweenMatcherData])[:end]
       data_type = (matcher[:betweenMatcherData])[:dataType]
-      BetweenMatcher.new({attribute: attribute, start_value: start_value, end_value: end_value, data_type: data_type}, @config)
+      BetweenMatcher.new({attribute: attribute, start_value: start_value, end_value: end_value, data_type: data_type}, @config.split_logger, @config.split_validator)
     end
 
     def matcher_equal_to_set(params)
       EqualToSetMatcher.new(
         params[:matcher][:keySelector][:attribute],
         params[:matcher][:whitelistMatcherData][:whitelist],
-        @config
+        @config.split_logger
       )
     end
 
@@ -121,7 +121,7 @@ module SplitIoClient
       ContainsAnyMatcher.new(
         params[:matcher][:keySelector][:attribute],
         params[:matcher][:whitelistMatcherData][:whitelist],
-        @config
+        @config.split_logger
       )
     end
 
@@ -129,7 +129,7 @@ module SplitIoClient
       ContainsAllMatcher.new(
         params[:matcher][:keySelector][:attribute],
         params[:matcher][:whitelistMatcherData][:whitelist],
-        @config
+        @config.split_logger
       )
     end
 
@@ -137,7 +137,7 @@ module SplitIoClient
       PartOfSetMatcher.new(
         params[:matcher][:keySelector][:attribute],
         params[:matcher][:whitelistMatcherData][:whitelist],
-        @config
+        @config.split_logger
       )
     end
 
@@ -145,7 +145,7 @@ module SplitIoClient
       StartsWithMatcher.new(
         params[:matcher][:keySelector][:attribute],
         params[:matcher][:whitelistMatcherData][:whitelist],
-        @config
+        @config.split_logger
       )
     end
 
@@ -153,7 +153,7 @@ module SplitIoClient
       EndsWithMatcher.new(
         params[:matcher][:keySelector][:attribute],
         params[:matcher][:whitelistMatcherData][:whitelist],
-        @config
+        @config.split_logger
       )
     end
 
@@ -161,7 +161,7 @@ module SplitIoClient
       ContainsMatcher.new(
         params[:matcher][:keySelector][:attribute],
         params[:matcher][:whitelistMatcherData][:whitelist],
-        @config
+        @config.split_logger, @config.split_validator
       )
     end
 
@@ -169,7 +169,7 @@ module SplitIoClient
       DependencyMatcher.new(
         params[:matcher][:dependencyMatcherData][:split],
         params[:matcher][:dependencyMatcherData][:treatments],
-        @config
+        @config.split_logger
       )
     end
 
@@ -177,7 +177,7 @@ module SplitIoClient
       EqualToBooleanMatcher.new(
         params[:matcher][:keySelector][:attribute],
         params[:matcher][:booleanMatcherData],
-        @config
+        @config.split_logger
       )
     end
 
@@ -185,7 +185,7 @@ module SplitIoClient
       MatchesStringMatcher.new(
         params[:matcher][:keySelector][:attribute],
         params[:matcher][:stringMatcherData],
-        @config
+        @config.split_logger
       )
     end
 

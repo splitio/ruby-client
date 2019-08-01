@@ -5,8 +5,8 @@ module SplitIoClient
   # class to implement the all keys matcher
   #
   class Matcher
-    def initialize(config)
-      @config = config
+    def initialize(logger)
+      @logger = logger
     end
 
     #

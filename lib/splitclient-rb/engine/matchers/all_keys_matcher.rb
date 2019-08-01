@@ -12,7 +12,7 @@ module SplitIoClient
     #
     # @return [boolean] true for all instances
     def match?(_args)
-      @config.log_if_debug('[AllKeysMatcher] is always -> true')
+      @logger.log_if_debug('[AllKeysMatcher] is always -> true')
       true
     end
 

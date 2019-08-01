@@ -9,8 +9,9 @@ module SplitIoClient
 
     attr_reader :attribute
 
-    def initialize(whitelist_data, config)
-      super(config)
+    def initialize(whitelist_data, logger, validator)
+      super(logger)
+      @validator = validator
       @whitelist = case whitelist_data
                    when Array
                      whitelist_data
@@ -27,9 +28,9 @@ module SplitIoClient
     def match?(args)
       return matches_user_whitelist(args) unless @matcher_type == 'ATTR_WHITELIST'
 
-      @config.log_if_debug('[WhitelistMatcher] evaluating value and attributes.')
+      @logger.log_if_debug('[WhitelistMatcher] evaluating value and attributes.')
 
-      return false unless SplitIoClient::Validators.new(@config).valid_matcher_arguments(args)
+      return false unless @validator.valid_matcher_arguments(args)
 
       matches_attr_whitelist(args)
     end
@@ -50,14 +51,14 @@ module SplitIoClient
 
     def matches_user_whitelist(args)
       matches = @whitelist.include?(args[:value] || args[:matching_key])
-      @config.log_if_debug("[WhitelistMatcher] #{@whitelist} include \
+      @logger.log_if_debug("[WhitelistMatcher] #{@whitelist} include \
         #{args[:value] || args[:matching_key]} -> #{matches}")
       matches
     end
 
     def matches_attr_whitelist(args)
       matches = @whitelist.include?(args[:value] || args[:attributes][@attribute.to_sym])
-      @config.log_if_debug("[WhitelistMatcher] #{@whitelist} include \
+      @logger.log_if_debug("[WhitelistMatcher] #{@whitelist} include \
         #{args[:value] || args[:attributes][@attribute.to_sym]} -> #{matches}")
       matches
     end

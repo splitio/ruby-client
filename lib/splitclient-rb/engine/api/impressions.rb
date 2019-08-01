@@ -10,7 +10,7 @@ module SplitIoClient
 
       def post(impressions)
         if impressions.empty?
-          @config.log_if_debug('No impressions to report')
+          @config.split_logger.log_if_debug('No impressions to report')
           return
         end
 
@@ -18,9 +18,9 @@ module SplitIoClient
           response = post_api("#{@config.events_uri}/testImpressions/bulk", @api_key, impressions_ip, 'SplitSDKMachineIP' => ip)
 
           if response.success?
-            @config.log_if_debug("Impressions reported: #{total_impressions(impressions)}")
+            @config.split_logger.log_if_debug("Impressions reported: #{total_impressions(impressions)}")
           else
-            @config.log_error("Unexpected status code while posting impressions: #{response.status}." \
+            @config.logger.error("Unexpected status code while posting impressions: #{response.status}." \
             ' - Check your API key and base URI')
             raise 'Split SDK failed to connect to backend to post impressions'
           end

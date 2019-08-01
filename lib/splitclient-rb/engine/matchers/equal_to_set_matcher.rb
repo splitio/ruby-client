@@ -6,14 +6,14 @@ module SplitIoClient
 
     attr_reader :attribute
 
-    def initialize(attribute, remote_array, config)
-      super(attribute, remote_array, config)
+    def initialize(attribute, remote_array, logger)
+      super(attribute, remote_array, logger)
     end
 
     def match?(args)
       set = local_set(args[:attributes], @attribute)
       matches = set == @remote_set
-      @config.log_if_debug("[EqualsToSetMatcher] #{set} equals to #{@remote_set} -> #{matches}")
+      @logger.log_if_debug("[EqualsToSetMatcher] #{set} equals to #{@remote_set} -> #{matches}")
       matches
     end
   end

@@ -18,7 +18,7 @@ module SplitIoClient
           req.options[:timeout] = @config.read_timeout
           req.options[:open_timeout] = @config.connection_timeout
 
-          @config.log_if_debug("GET #{url} proxy: #{api_client.proxy}")
+          @config.split_logger.log_if_debug("GET #{url} proxy: #{api_client.proxy}")
         end
       rescue StandardError => e
         @config.logger.warn("#{e}\nURL:#{url}\nparams:#{params}")
@@ -36,8 +36,8 @@ module SplitIoClient
           req.options[:timeout] = @config.read_timeout
           req.options[:open_timeout] = @config.connection_timeout
 
-          @config.log_if_transport("POST #{url} #{req.body}")
-          @config.log_if_debug("POST #{url}")
+          @config.split_logger.log_if_transport("POST #{url} #{req.body}")
+          @config.split_logger.log_if_debug("POST #{url}")
         end
       rescue StandardError => e
         @config.logger.warn("#{e}\nURL:#{url}\ndata:#{data}\nparams:#{params}")

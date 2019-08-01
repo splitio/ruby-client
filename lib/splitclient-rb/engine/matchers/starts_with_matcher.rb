@@ -6,22 +6,22 @@ module SplitIoClient
 
     attr_reader :attribute
 
-    def initialize(attribute, prefix_list, config)
+    def initialize(attribute, prefix_list, logger)
       @attribute = attribute
       @prefix_list = prefix_list
-      @config = config
+      @logger = logger
     end
 
     def match?(args)
       if @prefix_list.empty?
-        @config.log_if_debug('[StartsWithMatcher] Prefix List is empty.')
+        @logger.log_if_debug('[StartsWithMatcher] Prefix List is empty.')
         return false
       end
 
       value = get_value(args)
 
       matches = @prefix_list.any? { |prefix| value.to_s.start_with? prefix }
-      @config.log_if_debug("[StartsWithMatcher] #{value} matches any of #{@prefix_list} -> #{matches}")
+      @logger.log_if_debug("[StartsWithMatcher] #{value} matches any of #{@prefix_list} -> #{matches}")
       matches
     end
 

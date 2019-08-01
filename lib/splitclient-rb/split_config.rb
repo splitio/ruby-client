@@ -85,7 +85,8 @@ module SplitIoClient
         opts[:cache_adapter] || SplitConfig.default_cache_adapter, :queue_adapter, @events_queue_size, @redis_url
       )
       @valid_mode = true
-
+      @split_logger = SplitIoClient::SplitLogger.new(self)
+      @split_validator = SplitIoClient::Validators.new(self)
       startup_log
     end
 
@@ -148,6 +149,21 @@ module SplitIoClient
     #
     # @return [Logger] The configured logger
     attr_accessor :logger
+
+    #
+    # The split logger. The client library uses the split logger
+    # to use common functions around the logger
+    #
+    # @return [SplitLogger] The configured logger
+    attr_accessor :split_logger
+
+
+    #
+    # The split validator. The client library uses the split validator
+    # to validate inputs accross the sdk
+    #
+    # @return [SplitValidator] The validator
+    attr_accessor :split_validator
 
     #
     # The boolean that represents the state of the debug log level
@@ -413,18 +429,6 @@ module SplitIoClient
       message << "\n\t#{error.backtrace.join("\n\t")}" if @debug_enabled
 
       @logger.warn(message)
-    end
-
-    def log_if_debug(message)
-      @logger.debug(message) if @debug_enabled
-    end
-
-    def log_if_transport(message)
-      @logger.debug(message) if @transport_debug_enabled
-    end
-
-    def log_error(message)
-      @logger.error(message)
     end
 
     #

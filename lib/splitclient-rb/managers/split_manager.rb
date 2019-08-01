@@ -12,7 +12,6 @@ module SplitIoClient
       @adapter = adapter
       @sdk_blocker = sdk_blocker
       @config = config
-      @validators = Validators.new(config)
     end
 
     #
@@ -56,7 +55,7 @@ module SplitIoClient
     #
     # @returns a split view
     def split(split_name)
-      return unless @config.valid_mode && @splits_repository && @validators.valid_split_parameters(split_name)
+      return unless @config.valid_mode && @splits_repository && @config.split_validator.valid_split_parameters(split_name)
 
       if !ready?
         @config.logger.error("split: the SDK is not ready, the operation cannot be executed")

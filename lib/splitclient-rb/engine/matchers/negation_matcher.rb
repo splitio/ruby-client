@@ -7,8 +7,8 @@ module SplitIoClient
   class NegationMatcher < Matcher
     MATCHER_TYPE = 'NEGATION_MATCHER'
 
-    def initialize(config, matcher = nil)
-      super(config)
+    def initialize(logger, matcher = nil)
+      super(logger)
       @matcher = matcher
     end
 
@@ -20,7 +20,7 @@ module SplitIoClient
     # @return [boolean] evaluation of the negation matcher
     def match?(args)
       matches = !@matcher.match?(args)
-      @config.log_if_debug("[NegationMatcherMatcher] Matcher #{@matcher} Arguments #{args} -> #{matches}")
+      @logger.log_if_debug("[NegationMatcherMatcher] Matcher #{@matcher} Arguments #{args} -> #{matches}")
       matches
     end
 

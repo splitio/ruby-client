@@ -18,7 +18,7 @@ module SplitIoClient
 
       def post_latencies
         if @metrics_repository.latencies.empty?
-          @config.log_if_debug('No latencies to report.')
+          @config.split_logger.log_if_debug('No latencies to report.')
         else
           @metrics_repository.latencies.each do |name, latencies|
             metrics_time = { name: name, latencies: latencies }
@@ -34,7 +34,7 @@ module SplitIoClient
 
       def post_counts
         if @metrics_repository.counts.empty?
-          @config.log_if_debug('No counts to report.')
+          @config.split_logger.log_if_debug('No counts to report.')
         else
           @metrics_repository.counts.each do |name, count|
             metrics_count = { name: name, delta: count }
@@ -49,9 +49,9 @@ module SplitIoClient
 
       def log_status(response, info_to_log)
         if response.success?
-          @config.log_if_debug("Metric time reported: #{info_to_log}")
+          @config.split_logger.log_if_debug("Metric time reported: #{info_to_log}")
         else
-          @config.log_error("Unexpected status code while posting time metrics: #{response.status}" \
+          @config.logger.error("Unexpected status code while posting time metrics: #{response.status}" \
           ' - Check your API key and base URI')
           raise 'Split SDK failed to connect to backend to post metrics'
         end

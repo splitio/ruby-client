@@ -6,13 +6,13 @@ module SplitIoClient
 
     attr_reader :attribute
 
-    def initialize(attribute, remote_array, config)
-      super(attribute, remote_array, config)
+    def initialize(attribute, remote_array, logger)
+      super(attribute, remote_array, logger)
     end
 
     def match?(args)
       matches = local_set(args[:attributes], @attribute).intersect? @remote_set
-      @config.log_if_debug("[ContainsAnyMatcher] Remote Set #{@remote_set} contains any \
+      @logger.log_if_debug("[ContainsAnyMatcher] Remote Set #{@remote_set} contains any \
         #{@attribute} or #{args[:attributes]}-> #{matches}")
       matches
     end

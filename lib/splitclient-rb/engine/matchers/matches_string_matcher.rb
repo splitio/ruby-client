@@ -6,10 +6,10 @@ module SplitIoClient
 
     attr_reader :attribute
 
-    def initialize(attribute, regexp_string, config)
+    def initialize(attribute, regexp_string, logger)
       @attribute = attribute
       @regexp_string = @regexp_string.is_a?(Regexp) ? regexp_string : Regexp.new(regexp_string)
-      @config = config
+      @logger = logger
     end
 
     def match?(args)
@@ -18,7 +18,7 @@ module SplitIoClient
       end
 
       matches = !(value =~ @regexp_string).nil?
-      @config.log_if_debug("[MatchesStringMatcher] #{value} matches #{@regexp_string} -> #{matches}")
+      @logger.log_if_debug("[MatchesStringMatcher] #{value} matches #{@regexp_string} -> #{matches}")
       matches
     end
 

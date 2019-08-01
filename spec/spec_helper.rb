@@ -18,6 +18,8 @@ RSpec.configure do |config|
   config.include RSpec::RedisHelper, redis: true
   config.before(:all) do
     @default_config = SplitIoClient::SplitConfig.new
+    @split_logger = @default_config.split_logger
+    @split_validator = @default_config.split_validator
   end
 end
 

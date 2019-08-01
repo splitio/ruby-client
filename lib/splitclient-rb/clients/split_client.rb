@@ -19,8 +19,6 @@ module SplitIoClient
       @sdk_blocker = sdk_blocker
       @destroyed = false
       @config = config
-      @validator = Validators.new(config)
-
       @adapter = adapter
     end
 
@@ -122,7 +120,7 @@ module SplitIoClient
     end
 
     def track(key, traffic_type_name, event_type, value = nil, properties = nil)
-      return false unless valid_client && @validator.valid_track_parameters(key, traffic_type_name, event_type, value, properties)
+      return false unless valid_client && @config.split_validator.valid_track_parameters(key, traffic_type_name, event_type, value, properties)
 
       properties_size = EVENT_AVERAGE_SIZE
 
@@ -228,7 +226,7 @@ module SplitIoClient
     end
 
     def treatments(key, split_names, attributes = {}, calling_method = 'get_treatments')
-      return nil unless @validator.valid_get_treatments_parameters(calling_method, split_names)
+      return nil unless @config.split_validator.valid_get_treatments_parameters(calling_method, split_names)
 
       sanitized_split_names = sanitize_split_names(calling_method, split_names)
 
@@ -293,7 +291,7 @@ module SplitIoClient
 
       bucketing_key, matching_key = keys_from_key(key)
 
-      return parsed_control_exception unless valid_client && @validator.valid_get_treatment_parameters(calling_method, key, split_name, matching_key, bucketing_key, attributes)
+      return parsed_control_exception unless valid_client && @config.split_validator.valid_get_treatment_parameters(calling_method, key, split_name, matching_key, bucketing_key, attributes)
 
       bucketing_key = bucketing_key ? bucketing_key.to_s : nil
       matching_key = matching_key.to_s

@@ -18,7 +18,6 @@ module SplitIoClient
       @localhost_mode_features = []
       load_localhost_mode_features(splits_file, reload_rate)
       @config = config
-      @validator = Validators.new(config)
     end
 
     #
@@ -103,7 +102,7 @@ module SplitIoClient
       parsed_control_treatment = parsed_treatment(control_treatment)
 
       bucketing_key, matching_key = keys_from_key(key)
-      return parsed_control_treatment unless @validator.valid_get_treatment_parameters(calling_method, key, split_name, matching_key, bucketing_key, attributes)
+      return parsed_control_treatment unless @config.split_validator.valid_get_treatment_parameters(calling_method, key, split_name, matching_key, bucketing_key, attributes)
 
       sanitized_split_name = split_name.to_s.strip
 
@@ -129,7 +128,7 @@ module SplitIoClient
     end
 
     def get_localhost_treatments(key, split_names, attributes = nil, calling_method = 'get_treatments')
-      return nil unless @validator.valid_get_treatments_parameters(calling_method, split_names)
+      return nil unless @config.split_validator.valid_get_treatments_parameters(calling_method, split_names)
 
       sanitized_split_names = sanitize_split_names(calling_method, split_names)
 

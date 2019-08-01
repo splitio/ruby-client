@@ -6,10 +6,10 @@ module SplitIoClient
 
     attr_reader :attribute
 
-    def initialize(attribute, boolean, config)
+    def initialize(attribute, boolean, logger)
       @attribute = attribute
       @boolean = boolean
-      @config = config
+      @logger = logger
     end
 
     def match?(args)
@@ -18,7 +18,7 @@ module SplitIoClient
       value = true if value.to_s.casecmp('true').zero?
 
       matches = value == @boolean
-      @config.log_if_debug("[EqualToBooleanMatcher] #{value} equals to #{@boolean} -> #{matches}")
+      @logger.log_if_debug("[EqualToBooleanMatcher] #{value} equals to #{@boolean} -> #{matches}")
       matches
     end
 

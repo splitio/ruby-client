@@ -6,20 +6,20 @@ module SplitIoClient
 
     attr_reader :attribute
 
-    def initialize(attribute, remote_array, config)
-      super(attribute, remote_array, config)
+    def initialize(attribute, remote_array, logger)
+      super(attribute, remote_array, logger)
     end
 
     def match?(args)
       @local_set = local_set(args[:attributes], @attribute)
 
       if @local_set.empty?
-        @config.log_if_debug('[PartOfSetMatcher] Local Set is empty.')
+        @logger.log_if_debug('[PartOfSetMatcher] Local Set is empty.')
         return false
       end
 
       matches = @local_set.subset? @remote_set
-      @config.log_if_debug("[PartOfSetMatcher] Local Set #{@local_set} is a subset of #{@remote_set} -> #{matches}")
+      @logger.log_if_debug("[PartOfSetMatcher] Local Set #{@local_set} is a subset of #{@remote_set} -> #{matches}")
       matches
     end
   end

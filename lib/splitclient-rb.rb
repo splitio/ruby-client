@@ -38,6 +38,7 @@ require 'splitclient-rb/split_factory'
 require 'splitclient-rb/split_factory_builder'
 require 'splitclient-rb/localhost_split_factory'
 require 'splitclient-rb/split_config'
+require 'splitclient-rb/split_logger'
 require 'splitclient-rb/validators'
 require 'splitclient-rb/split_factory_registry'
 
@@ -83,7 +84,6 @@ require 'splitclient-rb/engine/models/split'
 require 'splitclient-rb/engine/models/label'
 require 'splitclient-rb/engine/models/treatment'
 require 'splitclient-rb/utilitites'
-require 'splitclient-rb/validators'
 
 # C extension
 require 'murmurhash/murmurhash_mri'
