@@ -3,19 +3,20 @@
 require 'spec_helper'
 
 describe SplitIoClient::Api::Metrics do
-  before do
-    SplitIoClient.configuration.logger = Logger.new(log)
-    SplitIoClient.configuration.debug_enabled = true
-    SplitIoClient.configuration.transport_debug_enabled = true
+  let(:config) do
+    SplitIoClient::SplitConfig.new(
+      logger: Logger.new(log),
+      debug_enabled: true,
+      transport_debug_enabled: true,
+      metrics_adapter: adapter
+    )
   end
-
   let(:log) { StringIO.new }
-  let(:metrics_api) { described_class.new('', metrics_repository) }
+  let(:metrics_api) { described_class.new('', metrics_repository, config) }
   let(:adapter) do
     SplitIoClient::Cache::Adapters::MemoryAdapter.new(SplitIoClient::Cache::Adapters::MemoryAdapters::MapAdapter.new)
   end
-  let(:metrics_adapter) { SplitIoClient.configuration.metrics_adapter }
-  let(:metrics_repository) { SplitIoClient::Cache::Repositories::MetricsRepository.new(metrics_adapter) }
+  let(:metrics_repository) { SplitIoClient::Cache::Repositories::MetricsRepository.new(config) }
 
   context '#post_latencies' do
     let!(:latency) { metrics_repository.add_latency('latency.test', 12, nil) }

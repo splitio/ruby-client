@@ -7,7 +7,8 @@ module SplitIoClient
   class UserDefinedSegmentMatcher < Matcher
     MATCHER_TYPE = 'IN_SEGMENT'
 
-    def initialize(segments_repository, segment_name)
+    def initialize(segments_repository, segment_name, logger)
+      super(logger)
       @segments_repository = segments_repository
       @segment_name = segment_name
     end
@@ -20,7 +21,7 @@ module SplitIoClient
     # @return [boolean] evaluation of the key against the segment
     def match?(args)
       matches = @segments_repository.in_segment?(@segment_name, args[:value] || args[:matching_key])
-      SplitLogger.log_if_debug("[InSegmentMatcher] #{@segment_name} is in segment -> #{matches}")
+      @logger.log_if_debug("[InSegmentMatcher] #{@segment_name} is in segment -> #{matches}")
       matches
     end
   end

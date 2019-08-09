@@ -6,14 +6,21 @@ require 'set'
 describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
   RSpec.shared_examples 'impressions specs' do |cache_adapter|
     let(:adapter) { cache_adapter }
-    let(:repository) { described_class.new(adapter) }
+    let(:config) do
+      SplitIoClient::SplitConfig.new(
+        labels_enabled: true,
+        impressions_bulk_size: 2,
+        impressions_adapter: adapter
+      )
+    end
+    let(:repository) { described_class.new(config) }
     let(:split_adapter) do
       SplitIoClient::SplitAdapter.new(nil, nil, nil, nil, nil, nil)
     end
-    let(:ip) { SplitIoClient.configuration.machine_ip }
-    let(:machine_name) { SplitIoClient.configuration.machine_name }
+    let(:ip) { config.machine_ip }
+    let(:machine_name) { config.machine_name }
     let(:version) do
-      "#{SplitIoClient.configuration.language}-#{SplitIoClient.configuration.version}"
+      "#{config.language}-#{config.version}"
     end
     let(:treatment1) { { treatment: 'on', label: 'sample_rule', change_number: 1_533_177_602_748 } }
     let(:treatment2) { { treatment: 'off', label: 'sample_rule', change_number: 1_533_177_602_749 } }
@@ -24,7 +31,7 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
           i: {
             k: 'matching_key1',
             b: nil,
-            f: :foo,
+            f: 'foo',
             t: 'on',
             r: 'sample_rule',
             c: 1_533_177_602_748,
@@ -36,7 +43,7 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
           i: {
             k: 'matching_key1',
             b: nil,
-            f: :bar,
+            f: 'bar',
             t: 'off',
             r: 'sample_rule',
             c: 1_533_177_602_749,
@@ -48,8 +55,6 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
 
     before :each do
       Redis.new.flushall
-      SplitIoClient.configuration.labels_enabled = true
-      SplitIoClient.configuration.impressions_bulk_size = 2
     end
 
     it 'adds impressions' do
@@ -73,7 +78,7 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
     end
 
     it 'omits label unless labels_enabled' do
-      SplitIoClient.configuration.labels_enabled = false
+      config.labels_enabled = false
 
       repository.add('matching_key1', nil, 'foo', treatment1, 1_478_113_516_002)
       expect(repository.batch.first[:i][:r]).to be_nil
@@ -82,8 +87,7 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
     it 'bulk size less than the actual queue' do
       repository.add('matching_key1', nil, 'foo', treatment1, 1_478_113_516_002)
       repository.add('matching_key1', nil, 'bar', treatment2, 1_478_113_516_002)
-
-      SplitIoClient.configuration.impressions_bulk_size = 1
+      config.impressions_bulk_size = 1
 
       expect(repository.batch.size).to eq(1)
       expect(repository.batch.size).to eq(1)
@@ -92,11 +96,11 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
 
   include_examples 'impressions specs', SplitIoClient::Cache::Adapters::MemoryAdapter.new(
     SplitIoClient::Cache::Adapters::MemoryAdapters::QueueAdapter.new(
-      SplitIoClient::SplitConfig.new.impressions_queue_size
+      SplitIoClient::SplitConfig.default_impressions_queue_size
     )
   )
   include_examples 'impressions specs', SplitIoClient::Cache::Adapters::RedisAdapter.new(
-    SplitIoClient::SplitConfig.new.redis_url
+    SplitIoClient::SplitConfig.default_redis_url
   )
 
   context 'redis adapter' do
@@ -104,18 +108,26 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
       Redis.new.flushall
     end
 
-    let(:adapter) { SplitIoClient::Cache::Adapters::RedisAdapter.new(SplitIoClient.configuration.redis_url) }
-    let(:repository) { described_class.new(adapter) }
+    let(:adapter) { SplitIoClient::Cache::Adapters::RedisAdapter.new(@default_config.redis_url) }
+    let(:config)  do
+      SplitIoClient::SplitConfig.new(
+        labels_enabled: true,
+        impressions_queue_size: 1,
+        impressions_bulk_size: 2
+      )
+    end
+    let(:repository) { described_class.new(config) }
     let(:treatment) { { treatment: 'on', label: 'sample_rule', change_number: 1_533_177_602_748 } }
 
     it 'expiration set when impressions size match number of elements added' do
+      config.impressions_adapter = adapter
       expect(adapter).to receive(:expire).once.with(anything, 3600)
-
       repository.add('matching_key', nil, 'foo1', treatment, 1_478_113_516_002)
       repository.add('matching_key', nil, 'foo1', treatment, 1_478_113_516_002)
     end
 
     it 'returns empty array when adapter#get_from_queue raises an exception' do
+      config.impressions_adapter = adapter
       allow_any_instance_of(SplitIoClient::Cache::Adapters::RedisAdapter)
         .to receive(:get_from_queue).and_throw(RuntimeError)
 
@@ -125,19 +137,21 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
   end
 
   context 'number of impressions is greater than queue size' do
-    before do
-      SplitIoClient.configuration = nil
-      SplitIoClient.configure(logger: Logger.new('/dev/null'), impressions_queue_size: 1, impressions_bulk_size: 2)
-    end
-
     let(:adapter) do
       SplitIoClient::Cache::Adapters::MemoryAdapter.new(
         SplitIoClient::Cache::Adapters::MemoryAdapters::QueueAdapter.new(
-          SplitIoClient::SplitConfig.new.impressions_queue_size
+          @default_config.impressions_queue_size
         )
       )
     end
-    let(:repository) { described_class.new(adapter) }
+    let(:config) do
+      SplitIoClient::SplitConfig.new(
+        impressions_queue_size: 1,
+        impressions_bulk_size: 2,
+        impressions_adapter: adapter
+      )
+    end
+    let(:repository) { described_class.new(config) }
 
     it 'memory adapter drops impressions' do
       treatment = { treatment: 'on', label: 'sample_rule', change_number: 1_533_177_602_748 }

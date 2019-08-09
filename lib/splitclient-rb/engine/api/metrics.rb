@@ -3,7 +3,8 @@
 module SplitIoClient
   module Api
     class Metrics < Client
-      def initialize(api_key, metrics_repository)
+      def initialize(api_key, metrics_repository, config)
+        super(config)
         @api_key = api_key
         @metrics_repository = metrics_repository
       end
@@ -17,12 +18,12 @@ module SplitIoClient
 
       def post_latencies
         if @metrics_repository.latencies.empty?
-          SplitLogger.log_if_debug('No latencies to report.')
+          @config.split_logger.log_if_debug('No latencies to report.')
         else
           @metrics_repository.latencies.each do |name, latencies|
             metrics_time = { name: name, latencies: latencies }
 
-            response = post_api("#{SplitIoClient.configuration.events_uri}/metrics/time", @api_key, metrics_time)
+            response = post_api("#{@config.events_uri}/metrics/time", @api_key, metrics_time)
 
             log_status(response, metrics_time.size)
           end
@@ -33,12 +34,12 @@ module SplitIoClient
 
       def post_counts
         if @metrics_repository.counts.empty?
-          SplitLogger.log_if_debug('No counts to report.')
+          @config.split_logger.log_if_debug('No counts to report.')
         else
           @metrics_repository.counts.each do |name, count|
             metrics_count = { name: name, delta: count }
 
-            response = post_api("#{SplitIoClient.configuration.events_uri}/metrics/counter", @api_key, metrics_count)
+            response = post_api("#{@config.events_uri}/metrics/counter", @api_key, metrics_count)
 
             log_status(response, metrics_count.size)
           end
@@ -48,9 +49,9 @@ module SplitIoClient
 
       def log_status(response, info_to_log)
         if response.success?
-          SplitLogger.log_if_debug("Metric time reported: #{info_to_log}")
+          @config.split_logger.log_if_debug("Metric time reported: #{info_to_log}")
         else
-          SplitLogger.log_error("Unexpected status code while posting time metrics: #{response.status}" \
+          @config.logger.error("Unexpected status code while posting time metrics: #{response.status}" \
           ' - Check your API key and base URI')
           raise 'Split SDK failed to connect to backend to post metrics'
         end

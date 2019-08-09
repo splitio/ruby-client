@@ -4,14 +4,19 @@ require 'spec_helper'
 
 describe SplitIoClient::Cache::Stores::SDKBlocker do
   RSpec.shared_examples 'sdk_blocker specs' do |cache_adapter|
-    let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(cache_adapter) }
-    let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(cache_adapter) }
-    let(:sdk_blocker) { described_class.new(splits_repository, segments_repository) }
+    let(:config) do
+      config = SplitIoClient::SplitConfig.new
+      config.cache_adapter = cache_adapter
+      config.block_until_ready = 0.1
+      config
+    end
+    let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config) }
+    let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
+    let(:sdk_blocker) { described_class.new(splits_repository, segments_repository, config) }
 
     before :each do
       redis = Redis.new
       redis.flushall
-      SplitIoClient.configuration.block_until_ready = 0.1
     end
 
     it 'is not ready after initialization' do
@@ -28,27 +33,8 @@ describe SplitIoClient::Cache::Stores::SDKBlocker do
     end
 
     it 'throws exception if not ready' do
+      allow_any_instance_of(described_class).to receive(:ready?).and_return(false)
       expect { sdk_blocker.block }.to raise_error(SplitIoClient::SDKBlockerTimeoutExpiredException)
-    end
-
-    it 'runs threads when ready' do
-      SplitIoClient.configuration.threads[:split_store] = Thread.new { Thread.stop }
-      SplitIoClient.configuration.threads[:segment_store] = Thread.new { Thread.stop }
-
-      sleep 0.1
-
-      expect(SplitIoClient.configuration.threads[:split_store].status).to eq('sleep')
-      expect(SplitIoClient.configuration.threads[:segment_store].status).to eq('sleep')
-
-      sdk_blocker.splits_ready!
-      sdk_blocker.segments_ready!
-
-      sdk_blocker.block
-
-      sleep 0.1
-
-      expect(SplitIoClient.configuration.threads[:split_store].status).to eq(false)
-      expect(SplitIoClient.configuration.threads[:segment_store].status).to eq(false)
     end
   end
 

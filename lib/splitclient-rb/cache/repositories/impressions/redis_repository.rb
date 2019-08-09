@@ -7,8 +7,9 @@ module SplitIoClient
         class RedisRepository < ImpressionsRepository
           EXPIRE_SECONDS = 3600
 
-          def initialize(adapter)
-            @adapter = adapter
+          def initialize(config)
+            @config = config
+            @adapter = @config.impressions_adapter
           end
 
           def add(matching_key, bucketing_key, split_name, treatment, time)
@@ -42,12 +43,12 @@ module SplitIoClient
               impression
             end
           rescue StandardError => e
-            SplitIoClient.configuration.logger.error("Exception while clearing impressions cache: #{e}")
+            @config.logger.error("Exception while clearing impressions cache: #{e}")
             []
           end
 
           def batch
-            get_impressions(SplitIoClient.configuration.impressions_bulk_size)
+            get_impressions(@config.impressions_bulk_size)
           end
 
           def clear

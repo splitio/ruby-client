@@ -5,6 +5,10 @@ module SplitIoClient
   # class to implement the all keys matcher
   #
   class Matcher
+    def initialize(logger)
+      @logger = logger
+    end
+
     #
     # evaluates if the given object equals the matcher
     #

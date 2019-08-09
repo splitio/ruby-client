@@ -31,7 +31,8 @@ module SplitIoClient
       impressions_repository,
       metrics_repository,
       events_repository,
-      sdk_blocker
+      sdk_blocker,
+      config
     )
       @api_key = api_key
       @splits_repository = splits_repository
@@ -41,8 +42,9 @@ module SplitIoClient
       @events_repository = events_repository
       @metrics = Metrics.new(100, @metrics_repository)
       @sdk_blocker = sdk_blocker
+      @config = config
 
-      start_standalone_components if SplitIoClient.configuration.mode == :standalone
+      start_standalone_components if @config.standalone?
     end
 
     def start_standalone_components
@@ -55,27 +57,27 @@ module SplitIoClient
 
     # Starts thread which loops constantly and stores splits in the splits_repository of choice
     def split_store
-      SplitStore.new(@splits_repository, @api_key, @metrics, @sdk_blocker).call
+      SplitStore.new(@splits_repository, @api_key, @metrics, @config, @sdk_blocker).call
     end
 
     # Starts thread which loops constantly and stores segments in the segments_repository of choice
     def segment_store
-      SegmentStore.new(@segments_repository, @api_key, @metrics, @sdk_blocker).call
+      SegmentStore.new(@segments_repository, @api_key, @metrics, @config, @sdk_blocker).call
     end
 
     # Starts thread which loops constantly and sends impressions to the Split API
     def impressions_sender
-      ImpressionsSender.new(@impressions_repository, @api_key).call
+      ImpressionsSender.new(@impressions_repository, @api_key, @config).call
     end
 
     # Starts thread which loops constantly and sends metrics to the Split API
     def metrics_sender
-      MetricsSender.new(@metrics_repository, @api_key).call
+      MetricsSender.new(@metrics_repository, @api_key, @config).call
     end
 
     # Starts thread which loops constantly and sends events to the Split API
     def events_sender
-      EventsSender.new(@events_repository).call
+      EventsSender.new(@events_repository, @config).call
     end
   end
 end

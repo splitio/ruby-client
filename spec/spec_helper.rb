@@ -17,8 +17,9 @@ RSpec.configure do |config|
   config.run_all_when_everything_filtered = true
   config.include RSpec::RedisHelper, redis: true
   config.before(:all) do
-    SplitIoClient.configuration = nil
-    SplitIoClient.configure
+    @default_config = SplitIoClient::SplitConfig.new
+    @split_logger = @default_config.split_logger
+    @split_validator = @default_config.split_validator
   end
 end
 

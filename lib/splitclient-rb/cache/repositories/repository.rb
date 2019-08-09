@@ -1,6 +1,11 @@
 module SplitIoClient
   module Cache
     class Repository
+
+      def initialize(config)
+        @config = config
+      end
+
       def set_string(key, str)
         @adapter.set_string(namespace_key(key), str)
       end
@@ -12,11 +17,11 @@ module SplitIoClient
       protected
 
       def namespace_key(key = '')
-        "#{SplitIoClient.configuration.redis_namespace}#{key}"
+        "#{@config.redis_namespace}#{key}"
       end
 
       def impressions_metrics_key(key)
-        namespace_key("/#{SplitIoClient.configuration.language}-#{SplitIoClient.configuration.version}/#{SplitIoClient.configuration.machine_ip}/#{key}")
+        namespace_key("/#{@config.language}-#{@config.version}/#{@config.machine_ip}/#{key}")
       end
     end
   end

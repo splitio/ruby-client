@@ -2,10 +2,11 @@ module SplitIoClient
   module Engine
     module Parser
       class Evaluator
-        def initialize(segments_repository, splits_repository, multiple = false)
+        def initialize(segments_repository, splits_repository, config, multiple = false)
           @splits_repository = splits_repository
           @segments_repository = segments_repository
           @multiple = multiple
+          @config = config
           @cache = {}
         end
 
@@ -48,7 +49,7 @@ module SplitIoClient
           splitter = Splitter.new
 
           split[:conditions].each do |c|
-            condition = SplitIoClient::Condition.new(c)
+            condition = SplitIoClient::Condition.new(c, @config)
 
             next if condition.empty?
 

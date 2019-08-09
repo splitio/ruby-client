@@ -7,14 +7,16 @@ module SplitIoClient
         def_delegators :@adapter, :add_count, :add_latency, :add_gauge, :counts, :latencies, :gauges,
                        :clear_counts, :clear_latencies, :clear_gauges, :clear, :fix_latencies
 
-        def initialize(adapter)
-          @adapter = case adapter.class.to_s
+        def initialize(config)
+          super(config)
+          @adapter = case @config.metrics_adapter.class.to_s
           when 'SplitIoClient::Cache::Adapters::MemoryAdapter'
-            Repositories::Metrics::MemoryRepository.new(adapter)
+            Repositories::Metrics::MemoryRepository.new(@config)
           when 'SplitIoClient::Cache::Adapters::RedisAdapter'
-            Repositories::Metrics::RedisRepository.new(adapter)
+            Repositories::Metrics::RedisRepository.new(@config)
           end
         end
+
       end
     end
   end

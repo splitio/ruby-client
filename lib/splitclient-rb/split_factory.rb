@@ -1,82 +1,94 @@
 module SplitIoClient
   class SplitFactory
     ROOT_PROCESS_ID = Process.pid
+    SINGLETON_WARN = 'We recommend keeping only one instance of the factory at all times (Singleton pattern) and reusing it throughout your application'
     include SplitIoClient::Cache::Repositories
     include SplitIoClient::Cache::Stores
 
-    attr_reader :adapter, :client, :manager
+    attr_reader :adapter, :client, :manager, :config
 
     def initialize(api_key, config_hash = {})
       at_exit do
         unless ENV['SPLITCLIENT_ENV'] == 'test'
           if (Process.pid == ROOT_PROCESS_ID)
-            SplitIoClient.configuration.logger.info('Split SDK shutdown started...')
+            @config.logger.info('Split SDK shutdown started...')
             @client.destroy if @client
             stop!
-            SplitIoClient.configuration.logger.info('Split SDK shutdown complete')
+            @config.logger.info('Split SDK shutdown complete')
           end
         end
       end
 
       @api_key = api_key
-      SplitIoClient.configure(config_hash)
+      @config = SplitConfig.new (config_hash)
 
       raise 'Invalid SDK mode' unless valid_mode
+      
+      @splits_repository = SplitsRepository.new(@config)
+      @segments_repository = SegmentsRepository.new(@config)
+      @impressions_repository = ImpressionsRepository.new(@config)
+      @metrics_repository = MetricsRepository.new(@config)
+      @events_repository = EventsRepository.new(@config, @api_key)
 
-      @cache_adapter = SplitIoClient.configuration.cache_adapter
-
-      @splits_repository = SplitsRepository.new(@cache_adapter)
-      @segments_repository = SegmentsRepository.new(@cache_adapter)
-      @impressions_repository = ImpressionsRepository.new(SplitIoClient.configuration.impressions_adapter)
-      @metrics_repository = MetricsRepository.new(SplitIoClient.configuration.metrics_adapter)
-      @events_repository = EventsRepository.new(SplitIoClient.configuration.events_adapter, @api_key)
-
-      if SplitIoClient.configuration.mode == :standalone && SplitIoClient.configuration.block_until_ready > 0
-        @sdk_blocker = SDKBlocker.new(@splits_repository, @segments_repository)
-      end
+      @sdk_blocker = SDKBlocker.new(@splits_repository, @segments_repository, @config)
 
       @adapter = start!
 
-      @client = SplitClient.new(@api_key, @adapter, @splits_repository, @segments_repository, @impressions_repository, @metrics_repository, @events_repository)
-      @manager = SplitManager.new(@api_key, @adapter, @splits_repository)
+      @client = SplitClient.new(@api_key, @adapter, @splits_repository, @segments_repository, @impressions_repository, @metrics_repository, @events_repository, @sdk_blocker, @config)
+      @manager = SplitManager.new(@api_key, @adapter, @splits_repository, @sdk_blocker, @config)
 
       validate_api_key
 
-      RedisMetricsFixer.new(@metrics_repository).call
+      RedisMetricsFixer.new(@metrics_repository, @config).call
 
-      @sdk_blocker.block if @sdk_blocker
+      register_factory
     end
 
     def start!
-      SplitAdapter.new(@api_key, @splits_repository, @segments_repository, @impressions_repository, @metrics_repository, @events_repository, @sdk_blocker)
+      SplitAdapter.new(@api_key, @splits_repository, @segments_repository, @impressions_repository, @metrics_repository, @events_repository, @sdk_blocker, @config)
     end
 
     def stop!
-      SplitIoClient.configuration.threads.each { |_, t| t.exit }
+      @config.threads.each { |_, t| t.exit }
+    end
+
+    def register_factory
+      SplitIoClient.load_factory_registry
+
+      number_of_factories = SplitIoClient.split_factory_registry.number_of_factories_for(@api_key)
+
+      if(number_of_factories > 0)
+        @config.logger.warn("Factory instantiation: You already have #{number_of_factories} factories with this API Key. #{SINGLETON_WARN}")
+      elsif(SplitIoClient.split_factory_registry.other_factories)
+        @config.logger.warn('Factory instantiation: You already have an instance of the Split factory.' \
+          " Make sure you definitely want this additional instance. #{SINGLETON_WARN}")
+      end
+
+      SplitIoClient.split_factory_registry.add(@api_key)
     end
 
     def valid_mode
       valid_startup_mode = false
-      case SplitIoClient.configuration.mode
+      case @config.mode
       when :consumer
-        if SplitIoClient.configuration.cache_adapter.is_a? SplitIoClient::Cache::Adapters::RedisAdapter
+        if @config.cache_adapter.is_a? SplitIoClient::Cache::Adapters::RedisAdapter
           valid_startup_mode = true
         else
-          SplitIoClient.configuration.logger.error('Consumer mode cannot be used with Memory adapter. ' \
+          @config.logger.error('Consumer mode cannot be used with Memory adapter. ' \
             'Use Redis adapter instead.')
         end
       when :standalone
-        if SplitIoClient.configuration.cache_adapter.is_a? SplitIoClient::Cache::Adapters::MemoryAdapter
+        if @config.cache_adapter.is_a? SplitIoClient::Cache::Adapters::MemoryAdapter
           valid_startup_mode = true
         else
-          SplitIoClient.configuration.logger.error('Standalone mode cannot be used with Redis adapter. ' \
+          @config.logger.error('Standalone mode cannot be used with Redis adapter. ' \
             'Use Memory adapter instead.')
         end
       when :producer
-        SplitIoClient.configuration.logger.error('Producer mode is no longer supported. Use Split Synchronizer. ' \
+        @config.logger.error('Producer mode is no longer supported. Use Split Synchronizer. ' \
           'See: https://github.com/splitio/split-synchronizer')
       else
-        SplitIoClient.configuration.logger.error('Invalid SDK mode selected. ' \
+        @config.logger.error('Invalid SDK mode selected. ' \
           "Valid modes are 'standalone with memory adapter' and 'consumer with redis adapter'")
       end
 
@@ -89,11 +101,11 @@ module SplitIoClient
 
     def validate_api_key
       if(@api_key.nil?)
-        SplitIoClient.configuration.logger.error('Factory Instantiation: you passed a nil api_key, api_key must be a non-empty String')
-        SplitIoClient.configuration.valid_mode =  false
+        @config.logger.error('Factory Instantiation: you passed a nil api_key, api_key must be a non-empty String')
+        @config.valid_mode =  false
       elsif (@api_key.empty?)
-        SplitIoClient.configuration.logger.error('Factory Instantiation: you passed and empty api_key, api_key must be a non-empty String')
-        SplitIoClient.configuration.valid_mode =  false
+        @config.logger.error('Factory Instantiation: you passed and empty api_key, api_key must be a non-empty String')
+        @config.valid_mode =  false
       end
     end
   end

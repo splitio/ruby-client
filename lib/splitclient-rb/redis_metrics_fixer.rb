@@ -2,12 +2,13 @@
 
 module SplitIoClient
   class RedisMetricsFixer
-    def initialize(metrics_repository)
+    def initialize(metrics_repository, config)
       @metrics_repository = metrics_repository
+      @config = config
     end
 
     def call
-      return if ENV['SPLITCLIENT_ENV'] == 'test' || SplitIoClient.configuration.mode == :standalone
+      return if ENV['SPLITCLIENT_ENV'] == 'test' || @config.mode == :standalone
 
       fixer_thread
 
@@ -23,11 +24,11 @@ module SplitIoClient
     def fixer_thread
       Thread.new do
         begin
-          SplitIoClient.configuration.logger.info('Starting redis metrics fixer')
+          @config.logger.info('Starting redis metrics fixer')
 
           @metrics_repository.fix_latencies
         rescue StandardError => error
-          SplitIoClient.configuration.log_found_exception(__method__.to_s, error)
+          @config.log_found_exception(__method__.to_s, error)
         end
       end
     end

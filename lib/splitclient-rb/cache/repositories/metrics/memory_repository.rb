@@ -5,10 +5,11 @@ module SplitIoClient
         class MemoryRepository
           OPERATIONS = %w(sdk.get_treatment sdk.get_treatments sdk.get_treatment_with_config sdk.get_treatments_with_config)
 
-          def initialize(_ = nil, adapter)
+          def initialize(_ = nil, config)
             @counts = []
             @latencies = []
             @gauges = []
+            @config = config
           end
 
           def add_count(counter, delta)
@@ -127,7 +128,7 @@ module SplitIoClient
           end
 
           private
-          
+
           def increase_latency_bucket(operation, index)
             operation_latencies = find_operation_latencies(operation)
 

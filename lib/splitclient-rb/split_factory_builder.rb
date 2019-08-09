@@ -5,9 +5,8 @@ module SplitIoClient
     def self.build(api_key, config = {})
       case api_key
       when 'localhost'
-        SplitIoClient.configure( { logger: config[:logger] } )
-
-        LocalhostSplitFactory.new(split_file(config[:split_file]), config[:reload_rate])
+        configuration = SplitConfig.new(config)
+        LocalhostSplitFactory.new(split_file(config[:split_file], configuration.logger), configuration, config[:reload_rate])
       else
         SplitFactory.new(api_key, config)
       end
@@ -15,10 +14,10 @@ module SplitIoClient
 
     private
 
-    def self.split_file(split_file_path)
+    def self.split_file(split_file_path, logger)
       return split_file_path unless split_file_path.nil?
 
-      SplitIoClient.configuration.logger.warn('Localhost mode: .split mocks ' \
+      logger.warn('Localhost mode: .split mocks ' \
         'will be deprecated soon in favor of YAML files, which provide more ' \
         'targeting power. Take a look in our documentation.')
 
