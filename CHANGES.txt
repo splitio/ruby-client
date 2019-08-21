@@ -1,3 +1,6 @@
+7.0.0 (Aug 21, 2019)
+ - Changed the splits method implementation in the splits_repository to make use of get_splits, which outperforms the current implementation.
+
 6.4.1 (Jul 26, 2019)
  - Fixed an issue in the latency metrics format preventing the synchronizer from correctly picking them up (consumer mode only). Old keys will be deleted on SDK startup. 
 
