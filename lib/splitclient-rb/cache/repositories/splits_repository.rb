@@ -43,7 +43,7 @@ module SplitIoClient
           @adapter.delete(namespace_key(".split.#{split[:name]}"))
         end
 
-        def get_splits(names)
+        def get_splits(names, symbolize_names = true)
           splits = {}
           split_names = names.map { |name| namespace_key(".split.#{name}") }
           splits.merge!(
@@ -54,7 +54,8 @@ module SplitIoClient
 
           splits.map do |name, data|
             parsed_data = data ? JSON.parse(data, symbolize_names: true) : nil
-            [name.to_sym, parsed_data]
+            split_name = symbolize_names ? name.to_sym : name
+            [split_name, parsed_data]
           end.to_h
         end
 
@@ -65,13 +66,7 @@ module SplitIoClient
         end
 
         def splits
-          splits_hash = {}
-
-          split_names.each do |name|
-            splits_hash[name] = get_split(name)
-          end
-
-          splits_hash
+          get_splits(split_names, false)
         end
 
         def traffic_type_exists(tt_name)
