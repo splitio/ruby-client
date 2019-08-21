@@ -3,8 +3,9 @@
 require 'spec_helper'
 
 describe SplitIoClient::Cache::Repositories::MetricsRepository do
-  RSpec.shared_examples 'metrics specs' do |cache_adapter|
-    let(:repository) { described_class.new(@default_config) }
+  RSpec.shared_examples 'Metrics Repository' do |cache_adapter|
+    let(:config) { SplitIoClient::SplitConfig.new(cache_adapter: cache_adapter) }
+    let(:repository) { described_class.new(config) }
     let(:binary_search) { SplitIoClient::BinarySearchLatencyTracker.new }
 
     before :each do
@@ -12,7 +13,6 @@ describe SplitIoClient::Cache::Repositories::MetricsRepository do
     end
 
     it 'does not return zero latencies' do
-      @default_config.cache_adapter = cache_adapter
       repository.add_latency('foo', 0, binary_search)
 
       expect(repository.latencies.keys).to eq(%w[foo])
@@ -37,13 +37,13 @@ describe SplitIoClient::Cache::Repositories::MetricsRepository do
     end
   end
 
-  include_examples 'metrics specs', SplitIoClient::Cache::Adapters::RedisAdapter.new(
-    SplitIoClient::SplitConfig.default_redis_url
-  )
+  describe 'with Memory Adapter' do
+    it_behaves_like 'Metrics Repository', :memory
+  end
 
-  include_examples 'metrics specs', SplitIoClient::Cache::Adapters::MemoryAdapter.new(
-    SplitIoClient::Cache::Adapters::MemoryAdapters::MapAdapter.new
-  )
+  describe 'with Redis Adapter' do
+    it_behaves_like 'Metrics Repository', :redis
+  end
 
   context 'fix latencies for redis' do
     before do

@@ -3,10 +3,9 @@
 require 'spec_helper'
 
 describe SplitIoClient::Cache::Stores::SDKBlocker do
-  RSpec.shared_examples 'sdk_blocker specs' do |cache_adapter|
+  RSpec.shared_examples 'SDK Blocker' do |cache_adapter|
     let(:config) do
-      config = SplitIoClient::SplitConfig.new
-      config.cache_adapter = cache_adapter
+      config = SplitIoClient::SplitConfig.new(cache_adapter: cache_adapter)
       config.block_until_ready = 0.1
       config
     end
@@ -15,8 +14,7 @@ describe SplitIoClient::Cache::Stores::SDKBlocker do
     let(:sdk_blocker) { described_class.new(splits_repository, segments_repository, config) }
 
     before :each do
-      redis = Redis.new
-      redis.flushall
+      Redis.new.flushall
     end
 
     it 'is not ready after initialization' do
@@ -38,10 +36,11 @@ describe SplitIoClient::Cache::Stores::SDKBlocker do
     end
   end
 
-  include_examples 'sdk_blocker specs', SplitIoClient::Cache::Adapters::MemoryAdapter.new(
-    SplitIoClient::Cache::Adapters::MemoryAdapters::QueueAdapter.new(3)
-  )
-  include_examples 'sdk_blocker specs', SplitIoClient::Cache::Adapters::RedisAdapter.new(
-    SplitIoClient::SplitConfig.new.redis_url
-  )
+  describe 'with Memory Adapter' do
+    it_behaves_like 'SDK Blocker', :memory
+  end
+
+  describe 'with Redis Adapter' do
+    it_behaves_like 'SDK Blocker', :redis
+  end
 end
