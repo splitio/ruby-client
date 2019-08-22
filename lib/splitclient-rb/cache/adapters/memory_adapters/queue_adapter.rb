@@ -42,6 +42,10 @@ module SplitIoClient
           def length
             @current_size.value
           end
+
+          def empty?
+            @queue.empty?
+          end
         end
       end
     end

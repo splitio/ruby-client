@@ -84,9 +84,15 @@ module SplitIoClient
       @events_adapter = SplitConfig.init_cache_adapter(
         opts[:cache_adapter] || SplitConfig.default_cache_adapter, :queue_adapter, @events_queue_size, @redis_url
       )
+      # offline mode parameters
+      @split_file = opts[:split_file] || SplitConfig.default_split_file
+      @offline_refresh_rate = opts[:reload_rate] ||  SplitConfig.default_offline_refresh_rate
+
       @valid_mode = true
       @split_logger = SplitIoClient::SplitLogger.new(self)
       @split_validator = SplitIoClient::Validators.new(self)
+      @localhost_mode = opts[:localhost_mode]
+
       startup_log
     end
 
@@ -235,6 +241,11 @@ module SplitIoClient
     # @return [Integer]
     attr_accessor :events_queue_size
 
+    attr_accessor :split_file
+    attr_accessor :offline_refresh_rate
+
+    attr_accessor :localhost_mode
+
     #
     # The default split client configuration
     #
@@ -338,6 +349,14 @@ module SplitIoClient
 
     def self.default_events_queue_size
       500
+    end
+
+    def self.default_split_file
+      File.join(Dir.home, '.split')
+    end
+
+    def self.default_offline_refresh_rate
+      5
     end
 
     #
@@ -448,6 +467,10 @@ module SplitIoClient
 
     def consumer?
       @mode.equal?(:consumer)
+    end
+
+    def using_default_split_file?
+      @split_file == SplitConfig.default_split_file
     end
 
     #

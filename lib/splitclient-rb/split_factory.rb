@@ -2,6 +2,8 @@ module SplitIoClient
   class SplitFactory
     ROOT_PROCESS_ID = Process.pid
     SINGLETON_WARN = 'We recommend keeping only one instance of the factory at all times (Singleton pattern) and reusing it throughout your application'
+    LOCALHOST_API_KEY = 'localhost'
+
     include SplitIoClient::Cache::Repositories
     include SplitIoClient::Cache::Stores
 
@@ -20,10 +22,10 @@ module SplitIoClient
       end
 
       @api_key = api_key
-      @config = SplitConfig.new (config_hash)
+      @config = SplitConfig.new(config_hash.merge(localhost_mode: @api_key == LOCALHOST_API_KEY ))
 
       raise 'Invalid SDK mode' unless valid_mode
-      
+
       @splits_repository = SplitsRepository.new(@config)
       @segments_repository = SegmentsRepository.new(@config)
       @impressions_repository = ImpressionsRepository.new(@config)
@@ -35,7 +37,7 @@ module SplitIoClient
       @adapter = start!
 
       @client = SplitClient.new(@api_key, @adapter, @splits_repository, @segments_repository, @impressions_repository, @metrics_repository, @events_repository, @sdk_blocker, @config)
-      @manager = SplitManager.new(@api_key, @adapter, @splits_repository, @sdk_blocker, @config)
+      @manager = SplitManager.new(@splits_repository, @sdk_blocker, @config)
 
       validate_api_key
 
@@ -72,7 +74,12 @@ module SplitIoClient
       case @config.mode
       when :consumer
         if @config.cache_adapter.is_a? SplitIoClient::Cache::Adapters::RedisAdapter
-          valid_startup_mode = true
+          if !@config.localhost_mode
+            valid_startup_mode = true
+          else
+            @config.logger.error('Localhost mode cannot be used with Redis. ' \
+              'Use standalone mode and Memory adapter instead.')
+          end
         else
           @config.logger.error('Consumer mode cannot be used with Memory adapter. ' \
             'Use Redis adapter instead.')

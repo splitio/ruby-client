@@ -32,6 +32,17 @@ describe SplitIoClient::SplitFactory do
     end
   end
 
+  context 'when consumer is used with localhost mode' do
+    let(:cache_adapter) { :redis }
+    let(:mode) { :consumer }
+
+    it 'raises an exception stating unsupported mode' do
+      expect { described_class.new('localhost', options) }.to raise_error('Invalid SDK mode')
+      expect(log.string).to include 'Localhost mode cannot be used with Redis. ' \
+        'Use standalone mode and Memory adapter instead.'
+    end
+  end
+
   context 'when producer mode is used' do
     let(:mode) { :producer }
     let(:cache_adapter) { :memory }
