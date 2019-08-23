@@ -3,8 +3,9 @@ module SplitIoClient
     module Repositories
       module Metrics
         class RedisRepository < Repository
-          def initialize(adapter = nil)
-            @adapter = adapter
+          def initialize(config)
+            @config = config
+            @adapter = config.metrics_adapter
           end
 
           def add_count(counter, delta)
@@ -78,7 +79,7 @@ module SplitIoClient
 
             keys.concat @adapter.find_strings_by_pattern(latencies_to_be_deleted_key_pattern_prefix('*.time'))
 
-            SplitIoClient.configuration.logger.info("Found incorrect latency keys, deleting. Keys: #{keys}") unless keys.size == 0
+            @config.logger.info("Found incorrect latency keys, deleting. Keys: #{keys}") unless keys.size == 0
 
             keys.each_slice(500) do |chunk|
               @adapter.pipelined do
@@ -90,7 +91,7 @@ module SplitIoClient
           end
 
           def latencies_to_be_deleted_key_pattern_prefix(key)
-            "#{SplitIoClient.configuration.redis_namespace}/#{SplitIoClient.configuration.language}-*/latency.#{key}"
+            "#{@config.redis_namespace}/#{@config.language}-*/latency.#{key}"
           end
 
           def clear_gauges

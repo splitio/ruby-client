@@ -3,14 +3,15 @@
 require 'spec_helper'
 
 describe SplitIoClient::Api::Events do
-  before do
-    SplitIoClient.configuration.logger = Logger.new(log)
-    SplitIoClient.configuration.debug_enabled = true
-    SplitIoClient.configuration.transport_debug_enabled = true
+  let(:config) do
+    SplitIoClient::SplitConfig.new(
+      logger: Logger.new(log),
+      debug_enabled: true,
+      transport_debug_enabled: true
+    )
   end
-
   let(:log) { StringIO.new }
-  let(:events_api) { described_class.new('') }
+  let(:events_api) { described_class.new('', config) }
   let(:events) do
     [{
       e: {

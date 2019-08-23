@@ -4,9 +4,8 @@ require 'spec_helper'
 require 'securerandom'
 
 describe SplitIoClient, type: :client do
-  RSpec.shared_examples 'engine specs' do |cache_adapter|
+  RSpec.shared_examples 'SplitIoClient' do |cache_adapter|
     subject do
-      SplitIoClient.configuration = nil
       SplitIoClient::SplitFactory.new('test_api_key',
                                       logger: Logger.new(log),
                                       cache_adapter: cache_adapter,
@@ -16,7 +15,7 @@ describe SplitIoClient, type: :client do
 
     let(:log) { StringIO.new }
 
-    let(:very_long_key) { 'foo' * SplitIoClient.configuration.max_key_size }
+    let(:very_long_key) { 'foo' * subject.instance_variable_get(:@config).max_key_size }
 
     let(:segments_json) do
       File.read(File.join(SplitIoClient.root, 'spec/test_data/segments/engine_segments.json'))
@@ -58,15 +57,13 @@ describe SplitIoClient, type: :client do
       File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/engine/configurations.json'))
     end
 
+    before do
+      @mode = cache_adapter.equal?(:memory) ? :standalone : :consumer
+    end
+
     before :each do
       Redis.new.flushall if @mode.equal?(:consumer)
     end
-
-    after :each do
-      Redis.new.flushall if @mode.equal?(:consumer)
-    end
-
-    before { @mode = cache_adapter.equal?(:memory) ? :standalone : :consumer }
 
     context '#get_treatment' do
       before do
@@ -87,7 +84,7 @@ describe SplitIoClient, type: :client do
       it 'returns CONTROL and label for random key' do
         expect(subject.get_treatment('random_user_id', 'test_feature', nil, nil, false, true)).to eq(
           treatment: SplitIoClient::Engine::Models::Treatment::CONTROL,
-          label: SplitIoClient::Engine::Models::Label::EXCEPTION,
+          label: SplitIoClient::Engine::Models::Label::NOT_FOUND,
           change_number: nil
         )
       end
@@ -121,7 +118,7 @@ describe SplitIoClient, type: :client do
         expect(subject.get_treatment({ bucketing_key: nil, matching_key: very_long_key }, 'test_feature'))
           .to eq SplitIoClient::Engine::Models::Treatment::CONTROL
         expect(log.string).to include 'get_treatment: matching_key is too long - ' \
-          "must be #{SplitIoClient.configuration.max_key_size} characters or less"
+          "must be #{subject.instance_variable_get(:@config).max_key_size} characters or less"
       end
 
       it 'logs warning when Numeric matching_key' do
@@ -149,7 +146,7 @@ describe SplitIoClient, type: :client do
         expect(subject.get_treatment({ bucketing_key: very_long_key, matching_key: 'random_user_id' }, 'test_feature'))
           .to eq SplitIoClient::Engine::Models::Treatment::CONTROL
         expect(log.string).to include 'get_treatment: bucketing_key is too long - ' \
-          "must be #{SplitIoClient.configuration.max_key_size} characters or less"
+          "must be #{subject.instance_variable_get(:@config).max_key_size} characters or less"
       end
 
       it 'logs warning when Numeric bucketing_key' do
@@ -185,7 +182,7 @@ describe SplitIoClient, type: :client do
         expect(subject.get_treatment(very_long_key, 'test_feature'))
           .to eq SplitIoClient::Engine::Models::Treatment::CONTROL
         expect(log.string).to include 'get_treatment: matching_key is too long - ' \
-          "must be #{SplitIoClient.configuration.max_key_size} characters or less"
+          "must be #{subject.instance_variable_get(:@config).max_key_size} characters or less"
       end
 
       it 'logs warning when Numeric key' do
@@ -228,6 +225,31 @@ describe SplitIoClient, type: :client do
         expect(subject.get_treatment('random_user_id', 'test_feature', ["I'm an Array"]))
           .to eq SplitIoClient::Engine::Models::Treatment::CONTROL
         expect(log.string).to include 'get_treatment: attributes must be of type Hash'
+      end
+
+      it 'returns CONTROL and logs warning when ready and split does not exist' do
+        expect(subject.get_treatment('random_user_id', 'non_existing_feature'))
+          .to eq SplitIoClient::Engine::Models::Treatment::CONTROL
+        expect(log.string).to include 'get_treatment: you passed non_existing_feature ' \
+          'that does not exist in this environment, please double check what Splits exist ' \
+          'in the web console'
+      end
+
+      it 'returns CONTROL with NOT_READY label when not ready' do
+        allow(subject).to receive(:ready?).and_return(false)
+
+        treatment_data = {
+          label: SplitIoClient::Engine::Models::Label::NOT_READY,
+          treatment: SplitIoClient::Engine::Models::Treatment::CONTROL
+        }
+
+        expect(subject).to receive(:store_impression).with(
+          'test_feature', 'random_user_id', nil, treatment_data, true, {}
+        ).once.and_call_original
+
+        expect(subject.get_treatment('random_user_id', 'test_feature'))
+          .to eq SplitIoClient::Engine::Models::Treatment::CONTROL
+        expect(log.string).to include 'get_treatment: the SDK is not ready, the operation cannot be executed'
       end
     end
 
@@ -611,7 +633,6 @@ describe SplitIoClient, type: :client do
 
       context 'when impressions are disabled' do
         subject do
-          SplitIoClient.configuration = nil
           mode = cache_adapter.equal?(:memory) ? :standalone : :consumer
 
           SplitIoClient::SplitFactory.new('test_api_key',
@@ -720,9 +741,9 @@ describe SplitIoClient, type: :client do
         event = subject.instance_variable_get(:@events_repository).clear.first
 
         expect(event[:m]).to eq(
-          s: "#{SplitIoClient.configuration.language}-#{SplitIoClient.configuration.version}",
-          i: SplitIoClient.configuration.machine_ip,
-          n: SplitIoClient.configuration.machine_name
+          s: "#{subject.instance_variable_get(:@config).language}-#{subject.instance_variable_get(:@config).version}",
+          i: subject.instance_variable_get(:@config).machine_ip,
+          n: subject.instance_variable_get(:@config).machine_name
         )
 
         expect(event[:e].reject { |e| e == :timestamp }).to eq(
@@ -770,7 +791,7 @@ describe SplitIoClient, type: :client do
         expect(subject.instance_variable_get(:@events_repository)).not_to receive(:add)
         expect(subject.track(very_long_key, 'traffic_type', 'event_type', 123)).to be false
         expect(log.string).to include 'track: key is too long - ' \
-          "must be #{SplitIoClient.configuration.max_key_size} characters or less"
+          "must be #{subject.instance_variable_get(:@config).max_key_size} characters or less"
       end
 
       it 'event is added and a Warn is logged when Integer key' do
@@ -898,6 +919,17 @@ describe SplitIoClient, type: :client do
         expect(log.string).to include 'The maximum size allowed for the properties is 32768. ' \
           'Current is 33078. Event not queued'
       end
+      it 'event is added and a Warn is logged when traffic type does not exist' do
+        expect(subject.instance_variable_get(:@events_repository)).to receive(:add)
+        allow(subject).to receive(:ready?).and_return(true)
+
+        traffic_type_name = 'non_existing_tt_name'
+
+        expect(subject.track('123', traffic_type_name, 'event_type', 123)).to be true
+        expect(log.string).to include "track: Traffic Type #{traffic_type_name} " \
+          "does not have any corresponding Splits in this environment, make sure you're tracking " \
+          'your events to a valid traffic type defined in the Split console'
+      end
     end
   end
 
@@ -913,7 +945,6 @@ describe SplitIoClient, type: :client do
 
     context 'standalone mode' do
       subject do
-        SplitIoClient.configuration = nil
         SplitIoClient::SplitFactory.new('test_api_key',
                                         logger: Logger.new('/dev/null'),
                                         cache_adapter: :memory,
@@ -935,7 +966,6 @@ describe SplitIoClient, type: :client do
       end
 
       subject do
-        SplitIoClient.configuration = nil
         SplitIoClient::SplitFactory.new('test_api_key',
                                         logger: Logger.new('/dev/null'),
                                         cache_adapter: :redis,
@@ -950,12 +980,12 @@ describe SplitIoClient, type: :client do
   end
 end
 
-describe SplitIoClient do
-  include_examples 'engine specs', :memory
+describe 'with Memory Adapter' do
+  it_behaves_like 'SplitIoClient', :memory
 end
 
-describe SplitIoClient do
-  include_examples 'engine specs', :redis
+describe 'with Redis Adapter' do
+  it_behaves_like 'SplitIoClient', :redis
 end
 
 private

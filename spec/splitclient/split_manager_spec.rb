@@ -3,7 +3,11 @@
 require 'spec_helper'
 
 describe SplitIoClient do
-  let(:factory) { SplitIoClient::SplitFactory.new('test_api_key', Logger.new('/dev/null')) }
+  let(:factory) do
+    SplitIoClient::SplitFactory.new('test_api_key', logger: Logger.new(log))
+  end
+
+  let(:log) { StringIO.new }
   subject { factory.manager }
   let(:splits) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../test_data/splits/splits.json'))) }
   let(:segments) do
@@ -22,13 +26,6 @@ describe SplitIoClient do
   end
 
   context '#split' do
-    let(:factory) do
-      SplitIoClient.configuration = nil
-      SplitIoClient::SplitFactory.new('test_api_key', logger: Logger.new(log))
-    end
-
-    let(:log) { StringIO.new }
-
     it 'returns nil when split is nil' do
       expect(subject.split('foo')).to eq(nil)
     end
@@ -51,10 +48,42 @@ describe SplitIoClient do
       expect(log.string)
         .to include "split: split_name #{split_name} has extra whitespace, trimming"
     end
+
+    it 'returns and logs warning when ready and split does not exist' do
+      expect(subject.split('non_existing_feature')).to be_nil
+      expect(log.string).to include 'split: you passed non_existing_feature ' \
+        'that does not exist in this environment, please double check what Splits exist ' \
+        'in the web console'
+    end
+
+    it 'returns and logs error when not ready' do
+      allow(subject).to receive(:ready?).and_return(false)
+
+      expect(subject.split('test_feature')).to be_nil
+      expect(log.string).to include 'split: the SDK is not ready, the operation cannot be executed'
+    end
   end
 
-  it 'returns split_names' do
-    expect(subject.split_names).to match_array(%w[test_1_ruby sample_feature])
+  context '#split_names' do
+    it 'returns split names' do
+      expect(subject.split_names).to match_array(%w[test_1_ruby sample_feature])
+    end
+
+    it 'returns empty array and logs error when not ready' do
+      allow(subject).to receive(:ready?).and_return(false)
+
+      expect(subject.split_names).to be_empty
+      expect(log.string).to include 'split_names: the SDK is not ready, the operation cannot be executed'
+    end
+  end
+
+  context '#splits' do
+    it 'returns empty array and logs error  when not ready' do
+      allow(subject).to receive(:ready?).and_return(false)
+
+      expect(subject.splits).to be_empty
+      expect(log.string).to include 'splits: the SDK is not ready, the operation cannot be executed'
+    end
   end
 
   describe 'configurations' do
@@ -66,17 +95,17 @@ describe SplitIoClient do
     end
 
     it 'returns configurations' do
-      expect(subject.build_split_view(
-        'test_1_ruby',
-        subject.instance_variable_get(:@splits_repository).get_split('test_1_ruby')
-      )[:configs]).to eq(on: '{"size":15,"test":20}')
+      expect(subject.send(:build_split_view,
+                          'test_1_ruby',
+                          subject.instance_variable_get(:@splits_repository).get_split('test_1_ruby'))[:configs])
+        .to eq(on: '{"size":15,"test":20}')
     end
 
     it 'returns empty hash when no configurations' do
-      expect(subject.build_split_view(
-        'sample_feature',
-        subject.instance_variable_get(:@splits_repository).get_split('sample_feature')
-      )[:configs]).to be_empty
+      expect(subject.send(:build_split_view,
+                          'sample_feature',
+                          subject.instance_variable_get(:@splits_repository).get_split('sample_feature'))[:configs])
+        .to be_empty
     end
   end
 
@@ -89,10 +118,10 @@ describe SplitIoClient do
     end
 
     it 'returns expected treatments' do
-      expect(subject.build_split_view(
-        'uber_feature',
-        subject.instance_variable_get(:@splits_repository).get_split('uber_feature')
-      )[:treatments]).to match_array(%w[on off])
+      expect(subject.send(:build_split_view,
+                          'uber_feature',
+                          subject.instance_variable_get(:@splits_repository).get_split('uber_feature'))[:treatments])
+        .to match_array(%w[on off])
     end
   end
 

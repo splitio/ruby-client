@@ -6,14 +6,16 @@ module SplitIoClient
       class SplitsRepository < Repository
         attr_reader :adapter
 
-        def initialize(adapter)
-          @adapter = case adapter.class.to_s
+        def initialize(config)
+          super(config)
+          @tt_cache = {}
+          @adapter = case @config.cache_adapter.class.to_s
           when 'SplitIoClient::Cache::Adapters::RedisAdapter'
-            SplitIoClient::Cache::Adapters::CacheAdapter.new(adapter)
+            SplitIoClient::Cache::Adapters::CacheAdapter.new(@config)
           else
-            adapter
+            @config.cache_adapter
           end
-          unless SplitIoClient.configuration.mode.equal?(:consumer)
+          unless @config.mode.equal?(:consumer)
             @adapter.set_string(namespace_key('.splits.till'), '-1')
             @adapter.initialize_map(namespace_key('.segments.registered'))
           end
@@ -21,15 +23,27 @@ module SplitIoClient
 
         def add_split(split)
           return unless split[:name]
+          existing_split = get_split(split[:name])
+
+          if(!existing_split)
+            increase_tt_name_count(split[:trafficTypeName])
+          elsif(existing_split[:trafficTypeName] != split[:trafficTypeName])
+            increase_tt_name_count(split[:trafficTypeName])
+            decrease_tt_name_count(existing_split[:trafficTypeName])
+          end
 
           @adapter.set_string(namespace_key(".split.#{split[:name]}"), split.to_json)
         end
 
-        def remove_split(name)
-          @adapter.delete(namespace_key(".split.#{name}"))
+        def remove_split(split)
+          tt_name = split[:trafficTypeName]
+
+          decrease_tt_name_count(split[:trafficTypeName])
+
+          @adapter.delete(namespace_key(".split.#{split[:name]}"))
         end
 
-        def get_splits(names)
+        def get_splits(names, symbolize_names = true)
           splits = {}
           split_names = names.map { |name| namespace_key(".split.#{name}") }
           splits.merge!(
@@ -40,7 +54,8 @@ module SplitIoClient
 
           splits.map do |name, data|
             parsed_data = data ? JSON.parse(data, symbolize_names: true) : nil
-            [name.to_sym, parsed_data]
+            split_name = symbolize_names ? name.to_sym : name
+            [split_name, parsed_data]
           end.to_h
         end
 
@@ -51,13 +66,22 @@ module SplitIoClient
         end
 
         def splits
-          splits_hash = {}
+          get_splits(split_names, false)
+        end
 
-          split_names.each do |name|
-            splits_hash[name] = get_split(name)
+        def traffic_type_exists(tt_name)
+          case @adapter
+          when SplitIoClient::Cache::Adapters::CacheAdapter
+            tt_count = @adapter.string(namespace_key(".trafficType.#{tt_name}"))
+            begin
+              !tt_count.nil? && Integer(tt_count, 10) > 0
+            rescue StandardError => e
+              @config.logger.error("Error while parsing Traffic Type count: #{e.message}")
+              false
+            end
+          else
+            @tt_cache.key?(tt_name) && @tt_cache[tt_name] > 0
           end
-
-          splits_hash
         end
 
         # Return an array of Split Names excluding control keys like splits.till
@@ -99,7 +123,25 @@ module SplitIoClient
         end
 
         def clear
+          @tt_cache.clear
+
           @adapter.clear(namespace_key)
+        end
+
+        private
+
+        def increase_tt_name_count(tt_name)
+          return unless tt_name
+
+          @tt_cache[tt_name] = 0 unless @tt_cache[tt_name]
+          @tt_cache[tt_name] += 1
+        end
+
+        def decrease_tt_name_count(tt_name)
+          return unless tt_name
+
+          @tt_cache[tt_name] -= 1 if @tt_cache[tt_name]
+          @tt_cache.delete(tt_name) if @tt_cache[tt_name] == 0
         end
       end
     end

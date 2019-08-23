@@ -8,22 +8,26 @@ describe SplitIoClient::NegationMatcher do
   it 'does not match' do
     expect(
       described_class.new(
-        SplitIoClient::ContainsAllMatcher.new('attr', %w[b])
+        @split_logger,
+        SplitIoClient::ContainsAllMatcher.new('attr', %w[b], @split_logger)
       ).match?(attributes: { attr: local_array })
     ).to be(false)
     expect(
       described_class.new(
-        SplitIoClient::ContainsAllMatcher.new('attr', %w[b c])
+        @split_logger,
+        SplitIoClient::ContainsAllMatcher.new('attr', %w[b c], @split_logger)
       ).match?(attributes: { attr: local_array })
     ).to be(false)
     expect(
       described_class.new(
-        SplitIoClient::ContainsAllMatcher.new('attr', %w[a c])
+        @split_logger,
+        SplitIoClient::ContainsAllMatcher.new('attr', %w[a c], @split_logger)
       ).match?(attributes: { attr: local_array })
     ).to be(false)
     expect(
       described_class.new(
-        SplitIoClient::ContainsAllMatcher.new('attr', %w[a b c])
+        @split_logger,
+        SplitIoClient::ContainsAllMatcher.new('attr', %w[a b c], @split_logger)
       ).match?(attributes: { attr: local_array })
     ).to be(false)
   end
@@ -31,22 +35,26 @@ describe SplitIoClient::NegationMatcher do
   it 'matches' do
     expect(
       described_class.new(
-        SplitIoClient::ContainsAllMatcher.new('attr', %w[a b c d])
+        @split_logger,
+        SplitIoClient::ContainsAllMatcher.new('attr', %w[a b c d], @split_logger)
       ).match?(attributes: { attr: local_array })
     ).to be(true)
     expect(
       described_class.new(
-        SplitIoClient::ContainsAllMatcher.new('attr', %w[a b d])
+        @split_logger,
+        SplitIoClient::ContainsAllMatcher.new('attr', %w[a b d], @split_logger)
       ).match?(attributes: { attr: local_array })
     ).to be(true)
     expect(
       described_class.new(
-        SplitIoClient::ContainsAllMatcher.new('attr', %w[d])
+        @split_logger,
+        SplitIoClient::ContainsAllMatcher.new('attr', %w[d], @split_logger)
       ).match?(attributes: { attr: local_array })
     ).to be(true)
     expect(
       described_class.new(
-        SplitIoClient::ContainsAllMatcher.new('attr', %w[])
+        @split_logger,
+        SplitIoClient::ContainsAllMatcher.new('attr', %w[], @split_logger)
       ).match?(attributes: { attr: local_array })
     ).to be(true)
   end
@@ -54,7 +62,8 @@ describe SplitIoClient::NegationMatcher do
   context '#string_type' do
     it 'is not string type matcher' do
       expect(described_class.new(
-        SplitIoClient::ContainsAllMatcher.new('attr', %w[b])
+        @split_logger,
+        SplitIoClient::ContainsAllMatcher.new('attr', %w[b], @split_logger)
       )
         .string_type?).to be false
     end
@@ -62,7 +71,8 @@ describe SplitIoClient::NegationMatcher do
 
   context '#to_s' do
     it 'it returns not in segment all' do
-      expect(described_class.new(SplitIoClient::AllKeysMatcher.new).to_s).to eq 'not in segment all'
+      expect(described_class.new(@split_logger, SplitIoClient::AllKeysMatcher.new(@split_logger)).to_s)
+        .to eq 'not in segment all'
     end
   end
 end

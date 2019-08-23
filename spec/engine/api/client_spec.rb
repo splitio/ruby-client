@@ -11,7 +11,7 @@ describe SplitIoClient::Api::Client do
 
       stub_request(:get, url).to_return(status: 200)
 
-      expect { described_class.new.get_api(url, api_key, params) }.not_to raise_error
+      expect { described_class.new(@default_config).get_api(url, api_key, params) }.not_to raise_error
     end
 
     it 'makes POST request without error' do
@@ -21,10 +21,10 @@ describe SplitIoClient::Api::Client do
 
       stub_request(:post, url).to_return(status: 200)
 
-      expect { described_class.new.post_api(url, api_key, data) }.not_to raise_error
+      expect { described_class.new(@default_config).post_api(url, api_key, data) }.not_to raise_error
     end
 
-    if described_class.new.send(:needs_patched_net_http_persistent_adapter?)
+    if described_class.new(@default_config).send(:needs_patched_net_http_persistent_adapter?)
       it 'uses PatchedNetHttpPersistent middleware' do
         url     = 'https://example.org?hello=world'
         api_key = 'abc-def-ghi'
@@ -35,7 +35,7 @@ describe SplitIoClient::Api::Client do
         expect_any_instance_of(SplitIoClient::FaradayAdapter::PatchedNetHttpPersistent)
           .to receive(:net_http_connection).and_call_original
 
-        described_class.new.get_api(url, api_key, params)
+        described_class.new(@default_config).get_api(url, api_key, params)
       end
     end
   end

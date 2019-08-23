@@ -39,6 +39,8 @@ require 'splitclient-rb/split_factory_builder'
 require 'splitclient-rb/localhost_split_factory'
 require 'splitclient-rb/split_config'
 require 'splitclient-rb/split_logger'
+require 'splitclient-rb/validators'
+require 'splitclient-rb/split_factory_registry'
 
 require 'splitclient-rb/engine/api/faraday_middleware/gzip'
 require 'splitclient-rb/engine/api/faraday_adapter/patched_net_http_persistent'
@@ -82,7 +84,6 @@ require 'splitclient-rb/engine/models/split'
 require 'splitclient-rb/engine/models/label'
 require 'splitclient-rb/engine/models/treatment'
 require 'splitclient-rb/utilitites'
-require 'splitclient-rb/validators'
 
 # redis metrics fixer
 require 'splitclient-rb/redis_metrics_fixer'

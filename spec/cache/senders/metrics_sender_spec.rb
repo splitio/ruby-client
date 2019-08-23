@@ -3,10 +3,10 @@
 require 'spec_helper'
 
 describe SplitIoClient::Cache::Senders::MetricsSender do
-  RSpec.shared_examples 'metrics sender specs' do |cache_adapter|
-    let(:adapter) { cache_adapter }
-    let(:repository) { SplitIoClient::Cache::Repositories::MetricsRepository.new(adapter) }
-    let(:sender) { described_class.new(repository, nil) }
+  RSpec.shared_examples 'Metrics Sender' do |cache_adapter|
+    let(:config) { SplitIoClient::SplitConfig.new(cache_adapter: cache_adapter) }
+    let(:repository) { SplitIoClient::Cache::Repositories::MetricsRepository.new(config) }
+    let(:sender) { described_class.new(repository, nil, config) }
 
     before :each do
       Redis.new.flushall
@@ -17,7 +17,7 @@ describe SplitIoClient::Cache::Senders::MetricsSender do
 
       sender.send(:metrics_thread)
 
-      sender_thread = SplitIoClient.configuration.threads[:metrics_sender]
+      sender_thread = config.threads[:metrics_sender]
 
       sender_thread.raise(SplitIoClient::SDKShutdownException)
 
@@ -25,10 +25,11 @@ describe SplitIoClient::Cache::Senders::MetricsSender do
     end
   end
 
-  include_examples 'metrics sender specs', SplitIoClient::Cache::Adapters::MemoryAdapter.new(
-    SplitIoClient::Cache::Adapters::MemoryAdapters::QueueAdapter.new(3)
-  )
-  include_examples 'metrics sender specs', SplitIoClient::Cache::Adapters::RedisAdapter.new(
-    SplitIoClient::SplitConfig.new.redis_url
-  )
+  describe 'with Memory Adapter' do
+    it_behaves_like 'Metrics Sender', :memory
+  end
+
+  describe 'with Redis Adapter' do
+    it_behaves_like 'Metrics Sender', :redis
+  end
 end

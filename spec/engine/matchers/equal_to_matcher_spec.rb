@@ -4,7 +4,6 @@ require 'spec_helper'
 
 describe SplitIoClient::EqualToMatcher do
   subject do
-    SplitIoClient.configuration = nil
     SplitIoClient::SplitFactory.new('test_api_key', logger: Logger.new('/dev/null')).client
   end
 

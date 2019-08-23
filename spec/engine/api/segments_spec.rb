@@ -3,20 +3,21 @@
 require 'spec_helper'
 
 describe SplitIoClient::Api::Segments do
-  before do
-    SplitIoClient.configuration.logger = Logger.new(log)
-    SplitIoClient.configuration.debug_enabled = true
-    SplitIoClient.configuration.transport_debug_enabled = true
+  let(:config) do
+    SplitIoClient::SplitConfig.new(
+      logger: Logger.new(log),
+      debug_enabled: true,
+      transport_debug_enabled: true
+    )
   end
-
   let(:log) { StringIO.new }
-  let(:segments_api) { described_class.new('', metrics, segments_repository) }
+  let(:segments_api) { described_class.new('', metrics, segments_repository, config) }
   let(:adapter) do
     SplitIoClient::Cache::Adapters::MemoryAdapter.new(SplitIoClient::Cache::Adapters::MemoryAdapters::MapAdapter.new)
   end
-  let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(adapter) }
-  let(:metrics_adapter) { SplitIoClient.configuration.metrics_adapter }
-  let(:metrics_repository) { SplitIoClient::Cache::Repositories::MetricsRepository.new(metrics_adapter) }
+  let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
+  let(:metrics_adapter) { config.metrics_adapter }
+  let(:metrics_repository) { SplitIoClient::Cache::Repositories::MetricsRepository.new(config) }
   let(:metrics) { SplitIoClient::Metrics.new(100, metrics_repository) }
   let(:segments) do
     File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/segments/segments.json')))

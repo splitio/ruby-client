@@ -3,18 +3,21 @@
 require 'spec_helper'
 
 describe SplitIoClient::Cache::Senders::ImpressionsSender do
-  RSpec.shared_examples 'impressions sender specs' do |cache_adapter|
-    let(:adapter) { cache_adapter }
-    let(:repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(adapter) }
-    let(:sender) { described_class.new(repository, nil) }
+  RSpec.shared_examples 'Impressions Sender' do |cache_adapter|
+    let(:config) do
+      SplitIoClient::SplitConfig.new(
+        cache_adapter: cache_adapter,
+        impressions_queue_size: 5
+      )
+    end
+    let(:repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
+    let(:sender) { described_class.new(repository, nil, config) }
     let(:formatted_impressions) { ImpressionsFormatter.new(repository).call(true) }
-    let(:ip) { SplitIoClient.configuration.machine_ip }
     let(:treatment1) { { treatment: 'on', label: 'custom_label1', change_number: 123_456 } }
     let(:treatment2) { { treatment: 'off', label: 'custom_label2', change_number: 123_499 } }
 
     before :each do
       Redis.new.flushall
-      SplitIoClient.configuration.impressions_queue_size = 5
       repository.add('matching_key', 'foo1', 'foo1', treatment1, 1_478_113_516_002)
       repository.add('matching_key2', 'foo2', 'foo2', treatment2, 1_478_113_518_285)
     end
@@ -28,7 +31,7 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
 
       sender.send(:impressions_thread)
 
-      sender_thread = SplitIoClient.configuration.threads[:impressions_sender]
+      sender_thread = config.threads[:impressions_sender]
 
       sender_thread.raise(SplitIoClient::SDKShutdownException)
 
@@ -36,10 +39,11 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
     end
   end
 
-  include_examples 'impressions sender specs', SplitIoClient::Cache::Adapters::MemoryAdapter.new(
-    SplitIoClient::Cache::Adapters::MemoryAdapters::QueueAdapter.new(3)
-  )
-  include_examples 'impressions sender specs', SplitIoClient::Cache::Adapters::RedisAdapter.new(
-    SplitIoClient::SplitConfig.new.redis_url
-  )
+  describe 'with Memory Adapter' do
+    it_behaves_like 'Impressions Sender', :memory
+  end
+
+  describe 'with Redis Adapter' do
+    it_behaves_like 'Impressions Sender', :redis
+  end
 end

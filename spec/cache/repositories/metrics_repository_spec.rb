@@ -3,9 +3,9 @@
 require 'spec_helper'
 
 describe SplitIoClient::Cache::Repositories::MetricsRepository do
-  RSpec.shared_examples 'metrics specs' do |cache_adapter|
-    let(:adapter) { cache_adapter }
-    let(:repository) { described_class.new(adapter) }
+  RSpec.shared_examples 'Metrics Repository' do |cache_adapter|
+    let(:config) { SplitIoClient::SplitConfig.new(cache_adapter: cache_adapter) }
+    let(:repository) { described_class.new(config) }
     let(:binary_search) { SplitIoClient::BinarySearchLatencyTracker.new }
 
     before :each do
@@ -37,95 +37,97 @@ describe SplitIoClient::Cache::Repositories::MetricsRepository do
     end
   end
 
-  include_examples 'metrics specs', SplitIoClient::Cache::Adapters::RedisAdapter.new(
-    SplitIoClient::SplitConfig.default_redis_url
-  )
+  describe 'with Memory Adapter' do
+    it_behaves_like 'Metrics Repository', :memory
+  end
 
-  include_examples 'metrics specs', SplitIoClient::Cache::Adapters::MemoryAdapter.new(
-    SplitIoClient::Cache::Adapters::MemoryAdapters::MapAdapter.new
-  )
+  describe 'with Redis Adapter' do
+    it_behaves_like 'Metrics Repository', :redis
+  end
 
   context 'fix latencies for redis' do
     before do
       Redis.new.flushall
     end
 
-    let(:adapter) { SplitIoClient::Cache::Adapters::RedisAdapter.new(SplitIoClient.configuration.redis_url) }
-    let(:repository) { described_class.new(adapter) }
+    let(:config) { SplitIoClient::SplitConfig.new(cache_adapter: :redis) }
+
+    let(:adapter) { config.metrics_adapter }
+    let(:repository) { described_class.new(config) }
 
     it 'detects and deletes incorrect latency patterns from the repository' do
-      latency_pattern = "#{SplitIoClient.configuration.redis_namespace}" \
-        "/#{SplitIoClient.configuration.language}-*/latency.*"
+      latency_pattern = "#{config.redis_namespace}" \
+        "/#{config.language}-*/latency.*"
 
       expect(adapter.find_strings_by_pattern(latency_pattern)).to be_empty
 
       # incorrect patterns
-      time_pattern = "#{SplitIoClient.configuration.redis_namespace}" \
-        "/#{SplitIoClient.configuration.language}-5.1.3.pre.rc2" \
-        "/#{SplitIoClient.configuration.machine_ip}/latency.splitChangeFetcher.time"
+      time_pattern = "#{config.redis_namespace}" \
+        "/#{config.language}-5.1.3.pre.rc2" \
+        "/#{config.machine_ip}/latency.splitChangeFetcher.time"
 
       adapter.set_string(time_pattern, '33')
 
-      get_treatment_pattern1 = "#{SplitIoClient.configuration.redis_namespace}" \
-        "/#{SplitIoClient.configuration.language}-3" \
+      get_treatment_pattern1 = "#{config.redis_namespace}" \
+        "/#{config.language}-3" \
         '/172.17.0.2/latency.sdk.get_treatment.1'
 
       adapter.set_string(get_treatment_pattern1, '1')
 
-      get_treatment_pattern2 = "#{SplitIoClient.configuration.redis_namespace}" \
-        "/#{SplitIoClient.configuration.language}-4.1" \
-        "/#{SplitIoClient.configuration.machine_ip}/latency.sdk.get_treatment.22"
+      get_treatment_pattern2 = "#{config.redis_namespace}" \
+        "/#{config.language}-4.1" \
+        "/#{config.machine_ip}/latency.sdk.get_treatment.22"
 
       adapter.set_string(get_treatment_pattern2, '2')
 
-      get_treatment_pattern3 = "#{SplitIoClient.configuration.redis_namespace}" \
-        "/#{SplitIoClient.configuration.language}-5.1.2" \
-        "/#{SplitIoClient.configuration.machine_ip}/latency.sdk.get_treatment.7"
+      get_treatment_pattern3 = "#{config.redis_namespace}" \
+        "/#{config.language}-5.1.2" \
+        "/#{config.machine_ip}/latency.sdk.get_treatment.7"
 
       adapter.set_string(get_treatment_pattern3, '5')
 
-      get_treatments_pattern = "#{SplitIoClient.configuration.redis_namespace}" \
-        "/#{SplitIoClient.configuration.language}-6.3.2" \
-        "/#{SplitIoClient.configuration.machine_ip}/latency.sdk.get_treatments"
+      get_treatments_pattern = "#{config.redis_namespace}" \
+        "/#{config.language}-6.3.2" \
+        "/#{config.machine_ip}/latency.sdk.get_treatments"
 
       adapter.set_string(get_treatments_pattern, '1')
 
       get_treatments_with_config_pattern =
-        "#{SplitIoClient.configuration.redis_namespace}" \
-          "/#{SplitIoClient.configuration.language}-6.4.2" \
-          "/#{SplitIoClient.configuration.machine_ip}/latency.sdk.get_treatments_with_config"
+        "#{config.redis_namespace}" \
+          "/#{config.language}-6.4.2" \
+          "/#{config.machine_ip}/latency.sdk.get_treatments_with_config"
 
       adapter.set_string(get_treatments_with_config_pattern, '6')
 
       # correct patterns - must not be deleted
-      keep_get_treatment_pattern1 = "#{SplitIoClient.configuration.redis_namespace}" \
-        "/#{SplitIoClient.configuration.language}-3" \
+      keep_get_treatment_pattern1 = "#{config.redis_namespace}" \
+        "/#{config.language}-3" \
         '/172.17.0.2/latency.sdk.get_treatment.bucket.1'
 
       adapter.set_string(keep_get_treatment_pattern1, '1')
 
-      keep_get_treatment_pattern2 = "#{SplitIoClient.configuration.redis_namespace}" \
-        "/#{SplitIoClient.configuration.language}-4.1" \
-        "/#{SplitIoClient.configuration.machine_ip}/latency.sdk.get_treatment.bucket.22"
+      keep_get_treatment_pattern2 = "#{config.redis_namespace}" \
+        "/#{config.language}-4.1" \
+        "/#{config.machine_ip}/latency.sdk.get_treatment.bucket.22"
 
       adapter.set_string(keep_get_treatment_pattern2, '2')
 
-      keep_get_treatment_pattern3 = "#{SplitIoClient.configuration.redis_namespace}" \
-        "/#{SplitIoClient.configuration.language}-5.1.2" \
-        "/#{SplitIoClient.configuration.machine_ip}/latency.sdk.get_treatment.bucket.7"
+      keep_get_treatment_pattern3 = "#{config.redis_namespace}" \
+        "/#{config.language}-5.1.2" \
+        "/#{config.machine_ip}/latency.sdk.get_treatment.bucket.7"
 
       adapter.set_string(keep_get_treatment_pattern3, '5')
 
-      keep_get_treatments_pattern = "#{SplitIoClient.configuration.redis_namespace}" \
-        "/#{SplitIoClient.configuration.language}-6.3.2" \
-        "/#{SplitIoClient.configuration.machine_ip}/latency.sdk.get_treatments.bucket.6"
+      keep_get_treatments_pattern = "#{config.redis_namespace}" \
+        "/#{config.language}-6.3.2" \
+        "/#{config.machine_ip}/latency.sdk.get_treatments.bucket.6"
 
       adapter.set_string(keep_get_treatments_pattern, '1')
 
       keep_get_treatments_with_config_pattern =
-        "#{SplitIoClient.configuration.redis_namespace}" \
-          "/#{SplitIoClient.configuration.language}-6.4.2" \
-          "/#{SplitIoClient.configuration.machine_ip}/latency.sdk.get_treatments_with_config.bucket.22"
+        "#{config.redis_namespace}" \
+          "/#{config.language}-6.4.2" \
+          "/#{config.machine_ip}/latency.sdk.get_treatments_with_config.bucket.22"
 
       adapter.set_string(keep_get_treatments_with_config_pattern, '6')
 

@@ -7,37 +7,46 @@ module SplitIoClient
       class SDKBlocker
         attr_reader :splits_repository
 
-        def initialize(splits_repository, segments_repository)
+        def initialize(splits_repository, segments_repository, config)
           @splits_repository = splits_repository
           @segments_repository = segments_repository
+          @config = config
 
-          @splits_repository.not_ready!
-          @segments_repository.not_ready!
+          if @config.standalone?
+            @splits_repository.not_ready!
+            @segments_repository.not_ready!
+          end
         end
 
         def splits_ready!
-          @splits_repository.ready!
+          if !ready?
+            @splits_repository.ready!
+            @config.logger.info('splits are ready')
+          end
         end
 
         def segments_ready!
-          @segments_repository.ready!
+          if !ready?
+            @segments_repository.ready!
+            @config.logger.info('segments are ready')
+          end
         end
 
-        def block
+        def block(time = nil)
           begin
-            Timeout::timeout(SplitIoClient.configuration.block_until_ready) do
+            timeout = time || @config.block_until_ready
+            Timeout::timeout(timeout) do
               sleep 0.1 until ready?
             end
           rescue Timeout::Error
             fail SDKBlockerTimeoutExpiredException, 'SDK start up timeout expired'
           end
 
-          SplitIoClient.configuration.logger.info('SplitIO SDK is ready')
-          SplitIoClient.configuration.threads[:split_store].run
-          SplitIoClient.configuration.threads[:segment_store].run
+          @config.logger.info('SplitIO SDK is ready')
         end
 
         def ready?
+          return true if @config.consumer?
           @splits_repository.ready? && @segments_repository.ready?
         end
       end

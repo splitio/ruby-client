@@ -1,8 +1,11 @@
 # frozen_string_literal: true
 
 module SplitIoClient
-  module Validators
-    extend self
+  class Validators
+
+    def initialize(config)
+      @config = config
+    end
 
     def valid_get_treatment_parameters(method, key, split_name, matching_key, bucketing_key, attributes)
       valid_key?(method, key) &&
@@ -50,23 +53,23 @@ module SplitIoClient
     end
 
     def log_nil(key, method)
-      SplitIoClient.configuration.logger.error("#{method}: you passed a nil #{key}, #{key} must be a non-empty String or a Symbol")
+      @config.logger.error("#{method}: you passed a nil #{key}, #{key} must be a non-empty String or a Symbol")
     end
 
     def log_empty_string(key, method)
-      SplitIoClient.configuration.logger.error("#{method}: you passed an empty #{key}, #{key} must be a non-empty String or a Symbol")
+      @config.logger.error("#{method}: you passed an empty #{key}, #{key} must be a non-empty String or a Symbol")
     end
 
     def log_invalid_type(key, method)
-      SplitIoClient.configuration.logger.error("#{method}: you passed an invalid #{key} type, #{key} must be a non-empty String or a Symbol")
+      @config.logger.error("#{method}: you passed an invalid #{key} type, #{key} must be a non-empty String or a Symbol")
     end
 
     def log_convert_numeric(key, method, value)
-      SplitIoClient.configuration.logger.warn("#{method}: #{key} \"#{value}\" is not of type String, converting")
+      @config.logger.warn("#{method}: #{key} \"#{value}\" is not of type String, converting")
     end
 
     def log_key_too_long(key, method)
-      SplitIoClient.configuration.logger.error("#{method}: #{key} is too long - must be #{SplitIoClient.configuration.max_key_size} characters or less")
+      @config.logger.error("#{method}: #{key} is too long - must be #{@config.max_key_size} characters or less")
     end
 
     def valid_split_name?(method, split_name)
@@ -115,7 +118,7 @@ module SplitIoClient
 
       log_convert_numeric(:matching_key, method, matching_key) if matching_key.is_a? Numeric
 
-      if matching_key.size > SplitIoClient.configuration.max_key_size
+      if matching_key.size > @config.max_key_size
         log_key_too_long(:matching_key, method)
         return false
       end
@@ -142,7 +145,7 @@ module SplitIoClient
 
         log_convert_numeric(:bucketing_key, method, bucketing_key) if bucketing_key.is_a? Numeric
 
-        if bucketing_key.size > SplitIoClient.configuration.max_key_size
+        if bucketing_key.size > @config.max_key_size
           log_key_too_long(:bucketing_key, method)
           return false
         end
@@ -153,7 +156,7 @@ module SplitIoClient
 
     def valid_split_names?(method, split_names)
       unless !split_names.nil? && split_names.is_a?(Array)
-        SplitIoClient.configuration.logger.error("#{method}: split_names must be a non-empty Array")
+        @config.logger.error("#{method}: split_names must be a non-empty Array")
         return false
       end
 
@@ -162,7 +165,7 @@ module SplitIoClient
 
     def valid_attributes?(method, attributes)
       unless attributes.nil? || attributes.is_a?(Hash)
-        SplitIoClient.configuration.logger.error("#{method}: attributes must be of type Hash")
+        @config.logger.error("#{method}: attributes must be of type Hash")
         return false
       end
 
@@ -187,7 +190,7 @@ module SplitIoClient
 
       log_convert_numeric(:key, :track, key) if key.is_a? Numeric
 
-      if key.size > SplitIoClient.configuration.max_key_size
+      if key.size > @config.max_key_size
         log_key_too_long(:key, :track)
         return false
       end
@@ -212,7 +215,7 @@ module SplitIoClient
       end
 
       if (event_type.to_s =~ /^[a-zA-Z0-9][-_.:a-zA-Z0-9]{0,79}$/).nil?
-        SplitIoClient.configuration.logger.error("track: you passed '#{event_type}', " \
+        @config.logger.error("track: you passed '#{event_type}', " \
           'event_type must adhere to the regular expression ^[a-zA-Z0-9][-_.:a-zA-Z0-9]{0,79}$. ' \
           'This means an event name must be alphanumeric, cannot be more than 80 characters long, ' \
           'and can only include a dash, underscore, period, or colon as separators of alphanumeric characters')
@@ -239,7 +242,7 @@ module SplitIoClient
       end
 
       unless traffic_type_name == traffic_type_name.downcase
-        SplitIoClient.configuration.logger.warn('track: traffic_type_name should be all lowercase - ' \
+        @config.logger.warn('track: traffic_type_name should be all lowercase - ' \
           'converting string to lowercase')
       end
 
@@ -248,7 +251,7 @@ module SplitIoClient
 
     def valid_value?(value)
       unless (value.is_a?(Numeric) && !value.to_f.nan?) || value.nil?
-        SplitIoClient.configuration.logger.error('track: value must be Numeric')
+        @config.logger.error('track: value must be Numeric')
         return false
       end
 
@@ -257,7 +260,7 @@ module SplitIoClient
 
     def valid_properties?(properties)
       unless properties.is_a?(Hash) || properties.nil?
-        SplitIoClient.configuration.logger.error('track: properties must be a Hash')
+        @config.logger.error('track: properties must be a Hash')
         return false
       end
 

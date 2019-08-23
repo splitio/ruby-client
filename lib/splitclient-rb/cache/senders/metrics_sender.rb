@@ -4,9 +4,10 @@ module SplitIoClient
   module Cache
     module Senders
       class MetricsSender
-        def initialize(metrics_repository, api_key)
+        def initialize(metrics_repository, api_key, config)
           @metrics_repository = metrics_repository
           @api_key = api_key
+          @config = config
         end
 
         def call
@@ -24,19 +25,19 @@ module SplitIoClient
         private
 
         def metrics_thread
-          SplitIoClient.configuration.threads[:metrics_sender] = Thread.new do
+          @config.threads[:metrics_sender] = Thread.new do
             begin
-              SplitIoClient.configuration.logger.info('Starting metrics service')
-              
+              @config.logger.info('Starting metrics service')
+
               loop do
                 post_metrics
 
-                sleep(SplitIoClient::Utilities.randomize_interval(SplitIoClient.configuration.metrics_refresh_rate))
+                sleep(SplitIoClient::Utilities.randomize_interval(@config.metrics_refresh_rate))
               end
             rescue SplitIoClient::SDKShutdownException
               post_metrics
 
-              SplitIoClient.configuration.logger.info('Posting metrics due to shutdown')
+              @config.logger.info('Posting metrics due to shutdown')
             end
           end
         end
@@ -44,11 +45,11 @@ module SplitIoClient
         def post_metrics
           metrics_api.post
         rescue StandardError => error
-          SplitIoClient.configuration.log_found_exception(__method__.to_s, error)
+          @config.log_found_exception(__method__.to_s, error)
         end
 
         def metrics_api
-          @metrics_api ||= SplitIoClient::Api::Metrics.new(@api_key, @metrics_repository)
+          @metrics_api ||= SplitIoClient::Api::Metrics.new(@api_key, @metrics_repository, @config)
         end
       end
     end
