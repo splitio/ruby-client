@@ -1,8 +1,14 @@
-7.0.0 (Aug 21, 2019)
+7.0.0 (Aug 23, 2019)
+ - BREAKING CHANGE: block_until_ready is now a method in both split_client and split_manager that needs to be explicitly called. The block_until_ready parameter is now ignored if passed in the configuration, and defaults to 15s unless passed as a parameter of the block_until_ready method.
+ - Added warning to track calls when traffic type does not belong to an existing split (only issued in the online client and when SDK is ready).
+ - Added warning to the get_treatment's method family when split does not exist in the current environment (only issued by online client and when SDK is ready).
+ - Added warning to the split_manager's split method when split does not exist in the current environment (only issued by online client and when SDK is ready).
+ - Added ability to create multiple split_factory instances. Added factory counts and warnings.
+ - Added SDK not ready impressions label.
  - Changed the splits method implementation in the splits_repository to make use of get_splits, which outperforms the current implementation.
 
 6.4.1 (Jul 26, 2019)
- - Fixed an issue in the latency metrics format preventing the synchronizer from correctly picking them up (consumer mode only). Old keys will be deleted on SDK startup. 
+ - Fixed an issue in the latency metrics format preventing the synchronizer from correctly picking them up (consumer mode only). Old keys will be deleted on SDK startup.
 
 6.4.0 (Jul 05, 2019)
  - Added properties to track method.
