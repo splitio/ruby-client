@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module SplitIoClient
   module Cache
     module Stores
@@ -8,12 +10,6 @@ module SplitIoClient
           @splits_repository = splits_repository
           @config = config
           @sdk_blocker = sdk_blocker
-
-          if @config.using_default_split_file?
-            @config.logger.warn('Localhost mode: .split mocks ' \
-              'will be deprecated soon in favor of YAML files, which provide more ' \
-              'targeting power. Take a look in our documentation.')
-          end
         end
 
         def call
@@ -53,7 +49,8 @@ module SplitIoClient
             @sdk_blocker.segments_ready!
           end
         rescue StandardError => error
-          @config.logger.error('Error while parsing the split file. Check that the input file matches the expected format')
+          @config.logger.error('Error while parsing the split file. ' \
+            'Check that the input file matches the expected format')
           @config.log_found_exception(__method__.to_s, error)
         end
 
@@ -64,127 +61,49 @@ module SplitIoClient
         end
 
         def load_features
-          yaml_extensions = [".yml", ".yaml"]
+          yaml_extensions = ['.yml', '.yaml']
           if yaml_extensions.include? File.extname(@config.split_file)
             parse_yaml_features
           else
+            @config.logger.warn('Localhost mode: .split mocks ' \
+              'will be deprecated soon in favor of YAML files, which provide more ' \
+              'targeting power. Take a look in our documentation.')
+
             parse_plain_text_features
           end
         end
 
         def parse_plain_text_features
-          splits = {}
-
-          File.open(@config.split_file).each do |line|
+          splits = File.open(@config.split_file).each_with_object({}) do |line, memo|
             feature, treatment = line.strip.split(' ')
 
             next if line.start_with?('#') || line.strip.empty?
 
-            splits[feature] = [{ treatment: treatment }]
+            memo[feature] = [{ treatment: treatment }]
           end
 
-          build_splits(splits)
+          LocalhostSplitBuilder.build_splits(splits)
         end
 
         def parse_yaml_features
-          splits = {}
+          splits = YAML.safe_load(File.read(@config.split_file)).each_with_object({}) do |feature, memo|
+            feat_symbolized_keys = symbolize_feat_keys(feature)
 
-          YAML.load(File.read(@config.split_file)).each do |feature|
-            feat_symbolized_keys = feature[feature.keys.first].inject({}){|memo,(k,v)| memo[k.to_sym] = v; memo}
+            feat_name = feature.keys.first
 
-            feat_symbolized_keys[:config] = feat_symbolized_keys[:config].to_json
-
-            if splits[feature.keys.first].nil?
-              splits[feature.keys.first] = [feat_symbolized_keys]
+            if memo[feat_name]
+              memo[feat_name] << feat_symbolized_keys
             else
-              splits[feature.keys.first] << feat_symbolized_keys
+              memo[feat_name] = [feat_symbolized_keys]
             end
           end
 
-          build_splits(splits)
+          LocalhostSplitBuilder.build_splits(splits)
         end
 
-        def build_splits(splits)
-          splits.map do |feature, treatments|
-            build_split(feature, treatments)
-          end
-        end
-
-        def build_split(feature, treatments)
-          {
-            name: feature,
-            status: 'ACTIVE',
-            killed: false,
-            trafficAllocation: 100,
-            seed: 2089907429,
-            defaultTreatment: 'control_treatment',
-            configurations: build_configurations(treatments),
-            conditions: build_conditions(treatments)
-          }
-        end
-
-        def build_configurations(treatments)
-          treatments.reduce({}) do |hash, treatment|
-            hash.merge(treatment[:treatment].to_sym => treatment[:config])
-          end
-        end
-
-        def build_conditions(treatments)
-          conditions = treatments.map do |treatment|
-            if treatment[:keys]
-              build_whitelist_treatment(treatment[:treatment], Array(treatment[:keys]))
-                .merge(partitions: build_partitions(treatment[:treatment], treatments))
-            else
-              build_rollout_treatment
-                .merge(partitions: build_partitions(treatment[:treatment], treatments))
-            end
-          end
-
-          conditions.sort_by { |condition| condition[:conditionType]}.reverse!
-        end
-
-        def build_whitelist_treatment(treatment_name, whitelist_keys)
-          {
-            conditionType: 'WHITELIST',
-            matcherGroup: {
-              combiner: 'AND',
-              matchers: [
-                {
-                  keySelector: nil,
-                  matcherType: 'WHITELIST',
-                  negate: false,
-                  whitelistMatcherData: {
-                    whitelist: whitelist_keys
-                  }
-                }
-              ]
-            },
-            label: "whitelisted #{treatment_name}"
-          }
-        end
-
-        def build_rollout_treatment
-          {
-            conditionType: 'ROLLOUT',
-            matcherGroup: {
-              combiner: 'AND',
-              matchers: [
-                {
-                  matcherType: 'ALL_KEYS',
-                  negate: false
-                }
-              ]
-            },
-            label: 'default rule'
-          }
-        end
-
-        def build_partitions(current_treatment_name, treatments)
-          treatments.map do |treatment|
-            {
-              treatment: treatment[:treatment],
-              size: treatment[:treatment] == current_treatment_name ? 100 : 0
-            }
+        def symbolize_feat_keys(yaml_feature)
+          yaml_feature.values.first.each_with_object({}) do |(k, v), memo|
+            memo[k.to_sym] = k == 'config' ? v.to_json : v
           end
         end
       end

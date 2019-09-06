@@ -469,10 +469,6 @@ module SplitIoClient
       @mode.equal?(:consumer)
     end
 
-    def using_default_split_file?
-      @split_file == SplitConfig.default_split_file
-    end
-
     #
     # gets the hostname where the sdk gem is running
     #

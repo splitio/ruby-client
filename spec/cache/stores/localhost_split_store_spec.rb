@@ -15,7 +15,7 @@ describe SplitIoClient::Cache::Stores::LocalhostSplitStore do
 
   context '#initialize' do
     it 'logs warning when using old split file format' do
-      described_class.new(splits_repository, config)
+      described_class.new(splits_repository, config).call
 
       expect(log.string).to include 'Localhost mode: .split mocks ' \
         'will be deprecated soon in favor of YAML files, which provide more ' \
