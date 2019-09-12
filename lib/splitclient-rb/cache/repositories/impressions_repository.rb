@@ -6,11 +6,11 @@ module SplitIoClient
       # Repository which forwards impressions interface to the selected adapter
       class ImpressionsRepository < Repository
         extend Forwardable
-        def_delegators :@adapter, :add, :add_bulk, :batch, :clear, :empty?
+        def_delegators :@repository, :add, :add_bulk, :batch, :clear, :empty?
 
         def initialize(config)
           super(config)
-          @adapter = case @config.impressions_adapter.class.to_s
+          @repository = case @config.impressions_adapter.class.to_s
                      when 'SplitIoClient::Cache::Adapters::MemoryAdapter'
                        Repositories::Impressions::MemoryRepository.new(@config)
                      when 'SplitIoClient::Cache::Adapters::RedisAdapter'

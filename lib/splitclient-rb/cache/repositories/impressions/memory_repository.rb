@@ -46,6 +46,10 @@ module SplitIoClient
             @adapter.clear
           end
 
+          def empty?
+            @adapter.empty?
+          end
+
           private
 
           def random_sampler

@@ -133,7 +133,7 @@ module SplitIoClient
         end
       end
 
-      if ready? && !@splits_repository.traffic_type_exists(traffic_type_name)
+      if ready? && !@config.localhost_mode && !@splits_repository.traffic_type_exists(traffic_type_name)
         @config.logger.warn("track: Traffic Type #{traffic_type_name} " \
           "does not have any corresponding Splits in this environment, make sure you're tracking " \
           'your events to a valid traffic type defined in the Split console')

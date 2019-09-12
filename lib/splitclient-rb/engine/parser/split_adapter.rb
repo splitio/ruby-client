@@ -44,7 +44,9 @@ module SplitIoClient
       @sdk_blocker = sdk_blocker
       @config = config
 
-      start_standalone_components if @config.standalone?
+      start_localhost_components if @config.localhost_mode
+
+      start_standalone_components if @config.standalone? && !@config.localhost_mode
     end
 
     def start_standalone_components
@@ -53,6 +55,21 @@ module SplitIoClient
       metrics_sender
       impressions_sender
       events_sender
+    end
+
+    def start_localhost_components
+      localhost_split_store
+      localhost_repo_cleaner
+    end
+
+    # Starts thread which loops constantly and retrieves splits from a file source
+    def localhost_split_store
+      LocalhostSplitStore.new(@splits_repository, @config, @sdk_blocker).call
+    end
+
+    # Starts thread which loops constantly and cleans up repositories to avoid memory issues in localhost mode
+    def localhost_repo_cleaner
+      LocalhostRepoCleaner.new(@impressions_repository, @metrics_repository, @events_repository, @config).call
     end
 
     # Starts thread which loops constantly and stores splits in the splits_repository of choice

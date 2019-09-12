@@ -3,13 +3,9 @@ module SplitIoClient
     #
     # Creates a new split manager instance that connects to split.io API.
     #
-    # @param api_key [String] the API key for your split account
-    #
     # @return [SplitIoManager] split.io client instance
-    def initialize(api_key, adapter = nil, splits_repository = nil, sdk_blocker, config)
-      @localhost_mode_features = []
+    def initialize(splits_repository = nil, sdk_blocker, config)
       @splits_repository = splits_repository
-      @adapter = adapter
       @sdk_blocker = sdk_blocker
       @config = config
     end
@@ -91,13 +87,18 @@ module SplitIoClient
       return {} unless split
 
       begin
-        treatments = split[:conditions]
-          .detect { |c| c[:conditionType] == 'ROLLOUT' }[:partitions]
-          .map { |partition| partition[:treatment] }
+        if @config.localhost_mode
+          treatments = split[:conditions]
+            .first[:partitions]
+            .map { |partition| partition[:treatment] }
+        else
+          treatments = split[:conditions]
+            .detect { |c| c[:conditionType] == 'ROLLOUT' }[:partitions]
+            .map { |partition| partition[:treatment] }
+        end
       rescue StandardError
         treatments = []
       end
-
         {
           name: name,
           traffic_type_name: split[:trafficTypeName],

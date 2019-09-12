@@ -10,8 +10,6 @@ describe SplitIoClient do
     allow(File).to receive(:open).and_return(split_file)
   end
 
-  let(:reloaded_factory) { SplitIoClient::SplitFactoryBuilder.build('localhost', reload_rate: 0.1).manager }
-
   let(:split_file) { ['local_feature local_treatment', 'local_feature2 local_treatment2'] }
   let(:split_file2) { ['local_feature local_treatment2', 'local_feature2 local_treatment2'] }
   let(:split_file3) do
@@ -26,7 +24,7 @@ describe SplitIoClient do
       configs: { local_treatment: nil },
       killed: false,
       name: 'local_feature',
-      traffic_type: nil,
+      traffic_type_name: nil,
       treatments: ['local_treatment'] }
   end
 
@@ -35,13 +33,13 @@ describe SplitIoClient do
        configs: { local_treatment: nil },
        killed: false,
        name: 'local_feature',
-       traffic_type: nil,
+       traffic_type_name: nil,
        treatments: ['local_treatment'] },
      { change_number: nil,
        configs: { local_treatment2: nil },
        killed: false,
        name: 'local_feature2',
-       traffic_type: nil,
+       traffic_type_name: nil,
        treatments: ['local_treatment2'] }]
   end
   let(:split_views2) do
@@ -49,13 +47,13 @@ describe SplitIoClient do
        configs: { local_treatment2: nil },
        killed: false,
        name: 'local_feature',
-       traffic_type: nil,
+       traffic_type_name: nil,
        treatments: ['local_treatment2'] },
      { change_number: nil,
        configs: { local_treatment2: nil },
        killed: false,
        name: 'local_feature2',
-       traffic_type: nil,
+       traffic_type_name: nil,
        treatments: ['local_treatment2'] }]
   end
 
@@ -66,24 +64,6 @@ describe SplitIoClient do
 
   it 'validates the calling manager.splits returns the offline data' do
     expect(subject.split_names).to eq(split_names)
-  end
-
-  it 'receives updated split views' do
-    expect(reloaded_factory.splits).to eq(split_views)
-
-    allow(File).to receive(:open).and_return(split_file2)
-
-    sleep 0.2
-    expect(reloaded_factory.splits).to eq(split_views2)
-  end
-
-  it 'receives updated split_names' do
-    expect(reloaded_factory.split_names).to eq(split_names)
-
-    allow(File).to receive(:open).and_return(split_file3)
-
-    sleep 0.2
-    expect(reloaded_factory.split_names).to eq(split_names2)
   end
 
   context 'yaml file' do
@@ -101,7 +81,7 @@ describe SplitIoClient do
          },
          killed: false,
          name: 'multiple_keys_feature',
-         traffic_type: nil,
+         traffic_type_name: nil,
          treatments: %w[off on] },
        { change_number: nil,
          configs: {
@@ -110,7 +90,7 @@ describe SplitIoClient do
          },
          killed: false,
          name: 'single_key_feature',
-         traffic_type: nil,
+         traffic_type_name: nil,
          treatments: %w[on off] },
        { change_number: nil,
          configs: {
@@ -118,7 +98,7 @@ describe SplitIoClient do
          },
          killed: false,
          name: 'no_keys_feature',
-         traffic_type: nil,
+         traffic_type_name: nil,
          treatments: %w[off] }]
     end
 

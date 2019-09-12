@@ -5,9 +5,6 @@ require 'set'
 
 describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
   RSpec.shared_examples 'Impressions Repository' do
-    let(:split_adapter) do
-      SplitIoClient::SplitAdapter.new(nil, nil, nil, nil, nil, nil)
-    end
     let(:ip) { config.machine_ip }
     let(:machine_name) { config.machine_name }
     let(:version) do
