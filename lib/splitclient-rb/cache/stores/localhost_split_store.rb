@@ -34,7 +34,7 @@ module SplitIoClient
             loop do
               store_splits
 
-              sleep(StoreUtils.random_interval(@config.offline_refresh_rate))
+              sleep(StoreUtils.random_interval(@config.features_refresh_rate))
             end
           end
         end

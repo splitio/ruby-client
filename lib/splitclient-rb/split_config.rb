@@ -38,7 +38,18 @@ module SplitIoClient
       )
       @connection_timeout = opts[:connection_timeout] || SplitConfig.default_connection_timeout
       @read_timeout = opts[:read_timeout] || SplitConfig.default_read_timeout
-      @features_refresh_rate = opts[:features_refresh_rate] || SplitConfig.default_features_refresh_rate
+
+      @logger = opts[:logger] || SplitConfig.default_logger
+
+      if(opts[:reload_rate])
+        @features_refresh_rate = opts[:reload_rate]
+        @logger.warn('Localhost mode: reload_rate will be deprecated soon in favor of ' \
+          'features_refresh_rate. Take a look in our documentation.'
+        )
+      else
+        @features_refresh_rate = opts[:features_refresh_rate] || SplitConfig.default_features_refresh_rate
+      end
+
       @segments_refresh_rate = opts[:segments_refresh_rate] || SplitConfig.default_segments_refresh_rate
       @metrics_refresh_rate = opts[:metrics_refresh_rate] || SplitConfig.default_metrics_refresh_rate
 
@@ -56,7 +67,6 @@ module SplitIoClient
         opts[:cache_adapter] || SplitConfig.default_cache_adapter, :map_adapter, nil, @redis_url
       )
 
-      @logger = opts[:logger] || SplitConfig.default_logger
       @debug_enabled = opts[:debug_enabled] || SplitConfig.default_debug
       @transport_debug_enabled = opts[:transport_debug_enabled] || SplitConfig.default_debug
       @block_until_ready = SplitConfig.default_block_until_ready
@@ -84,9 +94,8 @@ module SplitIoClient
       @events_adapter = SplitConfig.init_cache_adapter(
         opts[:cache_adapter] || SplitConfig.default_cache_adapter, :queue_adapter, @events_queue_size, @redis_url
       )
-      # offline mode parameters
+
       @split_file = opts[:split_file] || SplitConfig.default_split_file
-      @offline_refresh_rate = opts[:reload_rate] ||  SplitConfig.default_offline_refresh_rate
 
       @valid_mode = true
       @split_logger = SplitIoClient::SplitLogger.new(self)
@@ -242,7 +251,6 @@ module SplitIoClient
     attr_accessor :events_queue_size
 
     attr_accessor :split_file
-    attr_accessor :offline_refresh_rate
 
     attr_accessor :localhost_mode
 

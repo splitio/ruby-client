@@ -33,7 +33,7 @@ module SplitIoClient
             loop do
               clear_repositories
 
-              sleep(SplitIoClient::Utilities.randomize_interval(@config.offline_refresh_rate))
+              sleep(SplitIoClient::Utilities.randomize_interval(@config.features_refresh_rate))
             end
           end
         end
