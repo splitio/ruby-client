@@ -177,34 +177,27 @@
 - Detach implementation for local factory and regular one.
 
 3.0.3
-
 - Fix nil ref in manager
 
 3.0.2
-
 - add ability to provide different bucketing/matching keys
 
 3.0.1
-
 - fix segments not deleting from the cache
 
 3.0.0
-
 - add new caching interface
 - add replaceable adapters to store cache in
 - add first cache adapter: MemoryAdapter
 - refactoring
 
 2.0.1
-
 - Supress warnings cause by Net::HTTP when it already exists.
 
 2.0.0
-
 - Add Factory for creation of Client and Manager interface.
 
 1.0.4
-
 - added support for AND combiner on conditions
 - added events_uri as config param which defines the metrics post url
 - updated metrics post default endpoint to be https://events.split.io/api/
@@ -220,10 +213,8 @@
 - added condition to return CONTROL on the deleted features
 
 1.0.1
-
 - .splits to .split for local env
 - isTreatment was removed from the API.
 
 1.0.0
-
 - Support multivariate treatment
