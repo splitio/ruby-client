@@ -5,12 +5,12 @@
 This SDK is designed to work with [Split](https://www.split.io), the platform for controlled rollouts, serving features to your users via the Split feature flag to manage your complete customer experience.
 
 ## Compatibility
-The Split Ruby SDK has been tested as a standalone app as well as using the following web servers:
+The Ruby SDK support Ruby version 2.3.0 or later and JRuby or 9.1.17 o later.
+
+Also the Ruby SDK has been tested as a standalone app as well as using the following web servers:
  - Puma
  - Passenger
  - Unicorn
- - Webrick
- - Thin
 
 For other setups, please reach out to [support@split.io](mailto:support@split.io).
 
