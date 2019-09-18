@@ -1,44 +1,68 @@
+# Split Ruby SDK
 [![Build Status](https://travis-ci.com/splitio/ruby-client.svg?branch=master)](https://travis-ci.com/splitio/ruby-client)
 
-# Split Ruby SDK
-
+## Overview
 This SDK is designed to work with [Split](https://www.split.io), the platform for controlled rollouts, serving features to your users via the Split feature flag to manage your complete customer experience.
 
-### Quick setup
+## Compatibility
+The Ruby SDK support Ruby version 2.3.0 or later and JRuby or 9.1.17 o later.
 
-For specific instructions on how to set up the Split SDK refer to our [Detailed-README](Detailed-README.md) or our [official SDK documentation](http://docs.split.io/docs/sdk-overview).
+Also the Ruby SDK has been tested as a standalone app as well as using the following web servers:
+ - Puma
+ - Passenger
+ - Unicorn
 
-### Commitment to Quality:
+For other setups, please reach out to [support@split.io](mailto:support@split.io).
 
-Split’s SDKs are in active development and are constantly tested for quality. Unit tests are developed for each SDK based on the unique needs of that language, and integration tests, load and performance tests, and behavior consistency tests are running 24/7 via automated bots. In addition, monitoring instrumentation ensures that these SDKs behave under the expected parameters of memory, CPU, and I/O.
+## Development
+### Building the SDK
+To install this gem dependencies onto your local machine, run `bundle exec rake install`.
 
-### About Split:
+### Benchmarks
+To benchmark the hashing algorithms (MurmurHash) run:
 
-Split is the leading platform for feature experimentation, empowering businesses of all sizes to make smarter product decisions. Companies like Vevo, Twilio, and LendingTree rely on Split to securely release new features, target them to customers, and measure the impact of features on their customer experience metrics. Founded in 2015, Split's team comes from some of the most innovative enterprises in Silicon Valley, including Google, LinkedIn, Salesforce and Databricks. Split is based in Redwood City, California and backed by Accel Partners and Lightspeed Venture Partners.
+```bash
+bundle exec rake compile:murmurhash
+```
 
-Our platform is a unified solution for continuous delivery and full-stack experimentation. Split unifies DevOps and product management, helping agile engineering and product teams accelerate the pace of product delivery and make data-driven decisions, through our robust feature flagging and extensive experimentation capabilities. With Split, organizations can now accelerate time to value, mitigate risk, and drive better outcomes, all in a unified platform.
+### Running tests
+The gem uses `rspec` for unit testing. You can find the files for the unit tests and the specs helper file (`spec_helper.rb`) under the default `/spec` folder.
 
-To learn more about Split, contact hello@split.io, or start a 14-day trial at https://www.split.io/signup/.
+To run all the specs in the `spec` folder, use the provided rake task (_make sure Redis is running in localhost_):
 
+```bash
+  bundle exec rspec
+```
+
+`Simplecov` is used for coverage reporting. Upon executing the rake task it will store the reports in the `/coverage` folder.
+
+## Contributing
+Please see [Contributors Guide](CONTRIBUTORS-GUIDE.md) 
+ 
+## License
+The gem is available as open source under the terms of the [Apache License](http://www.apache.org/licenses/).
+
+## About Split 
+Split is the leading Feature Delivery Platform for engineering teams that want to confidently release features as fast as they can develop them.
+Split’s fine-grained management, real-time monitoring, and data-driven experimentation ensure that new features will improve customer experience without breaking or degrading performance.
+Companies like Twilio, Salesforce, GoDaddy and WePay trust Split to power their feature delivery.
+ 
+To learn more about Split, contact hello@split.io, or get started with feature flags for free at https://www.split.io/signup.
+ 
 Split has built and maintains a SDKs for:
-
+ 
 * Java [Github](https://github.com/splitio/java-client) [Docs](http://docs.split.io/docs/java-sdk-guide)
 * Javascript [Github](https://github.com/splitio/javascript-client) [Docs](http://docs.split.io/docs/javascript-sdk-overview)
 * Node [Github](https://github.com/splitio/javascript-client) [Docs](http://docs.split.io/docs/nodejs-sdk-overview)
-* .NET [Github](https://github.com/splitio/.net-client) [Docs](http://docs.split.io/docs/net-sdk-overview)
+* .NET [Github](https://github.com/splitio/.net-core-client) [Docs](http://docs.split.io/docs/net-sdk-overview)
 * Ruby [Github](https://github.com/splitio/ruby-client) [Docs](http://docs.split.io/docs/ruby-sdk-overview)
 * PHP [Github](https://github.com/splitio/php-client) [Docs](http://docs.split.io/docs/php-sdk-overview)
 * Python [Github](https://github.com/splitio/python-client) [Docs](http://docs.split.io/docs/python-sdk-overview)
 * GO [Github](https://github.com/splitio/go-client) [Docs](http://docs.split.io/docs/go-sdk-overview)
 * Android [Github](https://github.com/splitio/android-client) [Docs](https://docs.split.io/docs/android-sdk-overview)
 * IOS [Github](https://github.com/splitio/ios-client) [Docs](https://docs.split.io/docs/ios-sdk-overview)
-
+ 
 For a comprehensive list of opensource projects visit our [Github page](https://github.com/splitio?utf8=%E2%9C%93&query=%20only%3Apublic%20).
-
-**Learn more about Split:**
-
+ 
+**Learn more about Split:** 
 Visit [split.io/product](https://www.split.io/product) for an overview of Split, or visit our documentation at [docs.split.io](http://docs.split.io) for more detailed information.
-
-**System Status:**
-
-We use a status page to monitor the availability of Split’s various services. You can check the current status at [status.split.io](http://status.split.io).
