@@ -16,7 +16,7 @@ For other setups, please reach out to [support@split.io](mailto:support@split.io
 
 ## Development
 ### Building the SDK
-To install this gem dependencies onto your local machine, run `bundle install`.
+To install this gem dependencies onto your local machine, run `bundle exec rake install`.
 
 ### Benchmarks
 To benchmark the hashing algorithms (MurmurHash) run:
