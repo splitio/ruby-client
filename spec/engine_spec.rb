@@ -984,6 +984,8 @@ describe SplitIoClient, type: :client do
 
         expect_any_instance_of(Redis)
           .to receive(:mget).once.and_call_original
+        expect_any_instance_of(Redis)
+          .not_to receive(:get)
 
         subject.get_treatments(222, %w[new_feature foo test_feature])
       end
