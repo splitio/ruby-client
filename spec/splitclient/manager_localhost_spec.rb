@@ -6,18 +6,12 @@ describe SplitIoClient do
   subject { SplitIoClient::SplitFactoryBuilder.build('localhost').manager }
 
   before do
-    allow(File).to receive(:exists?).and_return(true)
-    allow(File).to receive(:open).and_return(split_file)
+    allow(File).to receive(:open).and_call_original
+    allow(File).to receive(:open).with(@default_config.split_file).and_return(split_file)
   end
 
   let(:split_file) { ['local_feature local_treatment', 'local_feature2 local_treatment2'] }
-  let(:split_file2) { ['local_feature local_treatment2', 'local_feature2 local_treatment2'] }
-  let(:split_file3) do
-    ['local_feature local_treatment2', 'local_feature2 local_treatment2', 'local_feature3 local_treatment2']
-  end
-
   let(:split_names) { %w[local_feature local_feature2] }
-  let(:split_names2) { %w[local_feature local_feature2 local_feature3] }
 
   let(:split_view) do
     { change_number: nil,
@@ -35,20 +29,6 @@ describe SplitIoClient do
        name: 'local_feature',
        traffic_type_name: nil,
        treatments: ['local_treatment'] },
-     { change_number: nil,
-       configs: { local_treatment2: nil },
-       killed: false,
-       name: 'local_feature2',
-       traffic_type_name: nil,
-       treatments: ['local_treatment2'] }]
-  end
-  let(:split_views2) do
-    [{ change_number: nil,
-       configs: { local_treatment2: nil },
-       killed: false,
-       name: 'local_feature',
-       traffic_type_name: nil,
-       treatments: ['local_treatment2'] },
      { change_number: nil,
        configs: { local_treatment2: nil },
        killed: false,

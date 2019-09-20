@@ -8,18 +8,16 @@ describe SplitIoClient do
   let(:split_file) do
     ['local_feature local_treatment', 'local_feature2 local_treatment2', 'local_feature local_treatment_rewritten']
   end
-  let(:split_file2) do
-    ['local_feature local_treatment', 'local_feature2 local_treatment3', 'local_feature local_treatment_rewritten']
-  end
   let(:split_string) do
     "local_feature local_treatment\nlocal_feature2 local_treatment2\local_feature local_treatment_rewritten"
   end
 
   describe '#get_treatment_with_config' do
     before do
-      allow(File).to receive(:exists?).and_return(true)
-      allow(File).to receive(:open).and_return(split_file)
-      allow(File).to receive(:read).and_return(split_string)
+      allow(File).to receive(:open).and_call_original
+      allow(File).to receive(:open).with(@default_config.split_file).and_return(split_file)
+      allow(File).to receive(:read).and_call_original
+      allow(File).to receive(:read).with(@default_config.split_file).and_return(split_string)
     end
 
     let(:user_id_1) { 'my_random_user_id' }
@@ -33,9 +31,10 @@ describe SplitIoClient do
 
   describe '#get_treatment returns localhost mode' do
     before do
-      allow(File).to receive(:exists?).and_return(true)
-      allow(File).to receive(:open).and_return(split_file)
-      allow(File).to receive(:read).and_return(split_string)
+      allow(File).to receive(:open).and_call_original
+      allow(File).to receive(:open).with(@default_config.split_file).and_return(split_file)
+      allow(File).to receive(:read).and_call_original
+      allow(File).to receive(:read).with(@default_config.split_file).and_return(split_string)
     end
 
     let(:user_id_1) { 'my_random_user_id' }
