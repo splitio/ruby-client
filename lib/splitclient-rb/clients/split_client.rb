@@ -74,10 +74,8 @@ module SplitIoClient
       @destroyed = true
     end
 
-    def store_impression(split_name, matching_key, bucketing_key, treatment, store_impressions, attributes)
+    def store_impression(split_name, matching_key, bucketing_key, treatment, attributes)
       time = (Time.now.to_f * 1000.0).to_i
-
-      return if @config.disable_impressions || !store_impressions
 
       @impressions_repository.add(
         matching_key,
@@ -249,14 +247,12 @@ module SplitIoClient
       # Measure
       @adapter.metrics.time('sdk.' + calling_method, latency)
 
-      unless @config.disable_impressions
-        time = (Time.now.to_f * 1000.0).to_i
-        @impressions_repository.add_bulk(
-          matching_key, bucketing_key, treatments_labels_change_numbers, time
-        )
+      time = (Time.now.to_f * 1000.0).to_i
+      @impressions_repository.add_bulk(
+        matching_key, bucketing_key, treatments_labels_change_numbers, time
+      )
 
-        route_impressions(sanitized_split_names, matching_key, bucketing_key, time, treatments_labels_change_numbers, attributes)
-      end
+      route_impressions(sanitized_split_names, matching_key, bucketing_key, time, treatments_labels_change_numbers, attributes)
 
       split_names_keys = treatments_labels_change_numbers.keys
       treatments = treatments_labels_change_numbers.values.map do |v|
@@ -328,14 +324,15 @@ module SplitIoClient
         end
 
         latency = (Time.now - start) * 1000.0
-        store_impression(split_name, matching_key, bucketing_key, treatment_data, store_impressions, attributes)
+
+        store_impression(split_name, matching_key, bucketing_key, treatment_data, attributes) if store_impressions
 
         # Measure
         @adapter.metrics.time('sdk.' + calling_method, latency) unless multiple
       rescue StandardError => error
         @config.log_found_exception(__method__.to_s, error)
 
-        store_impression(split_name, matching_key, bucketing_key, control_treatment, store_impressions, attributes)
+        store_impression(split_name, matching_key, bucketing_key, control_treatment, attributes) if store_impressions
 
         return parsed_control_exception
       end
