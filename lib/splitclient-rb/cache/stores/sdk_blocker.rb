@@ -5,8 +5,6 @@ module SplitIoClient
   module Cache
     module Stores
       class SDKBlocker
-        attr_reader :splits_repository
-
         def initialize(splits_repository, segments_repository, config)
           @splits_repository = splits_repository
           @segments_repository = segments_repository
@@ -47,7 +45,11 @@ module SplitIoClient
 
         def ready?
           return true if @config.consumer?
-          @splits_repository.ready? && @segments_repository.ready?
+          splits_ready? && @segments_repository.ready?
+        end
+
+        def splits_ready?
+          @splits_repository.ready?
         end
       end
     end

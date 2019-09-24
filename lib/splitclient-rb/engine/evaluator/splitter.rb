@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module SplitIoClient
   # Misc class in charge of providing hash functions and
   # determination of treatment based on concept of buckets
@@ -6,13 +8,13 @@ module SplitIoClient
   class Splitter < NoMethodError
     def initialize
       @murmur_hash = case RUBY_PLATFORM
-      when 'java' 
-        Proc.new { |key, seed| Java::MurmurHash3.murmurhash3_x86_32(key, seed) }
-      else
-        Proc.new { |key, seed| Digest::MurmurHashMRI3_x86_32.rawdigest(key, [seed].pack('L')) }
-      end
+                     when 'java'
+                       proc { |key, seed| Java::MurmurHash3.murmurhash3_x86_32(key, seed) }
+                     else
+                       proc { |key, seed| Digest::MurmurHashMRI3_x86_32.rawdigest(key, [seed].pack('L')) }
+                     end
     end
-    
+
     #
     # Checks if the partiotion size is 100%
     #
@@ -20,7 +22,7 @@ module SplitIoClient
     #
     # @return [boolean] true if partition is 100% false otherwise
     def hundred_percent_one_treatment?(partitions)
-      (partitions.size != 1) ? false : (partitions.first.size == 100)
+      partitions.size != 1 ? false : partitions.first.size == 100
     end
 
     #
@@ -34,15 +36,11 @@ module SplitIoClient
     def get_treatment(id, seed, partitions, legacy_algo)
       legacy = [1, nil].include?(legacy_algo)
 
-      if partitions.empty?
-        return SplitIoClient::Engine::Models::Treatment::CONTROL
-      end
+      return SplitIoClient::Engine::Models::Treatment::CONTROL if partitions.empty?
 
-      if hundred_percent_one_treatment?(partitions)
-        return (partitions.first).treatment
-      end
+      return partitions.first.treatment if hundred_percent_one_treatment?(partitions)
 
-      return get_treatment_for_key(bucket(count_hash(id, seed, legacy)), partitions)
+      get_treatment_for_key(bucket(count_hash(id, seed, legacy)), partitions)
     end
 
     # returns a hash value for the give key, seed pair
@@ -62,11 +60,11 @@ module SplitIoClient
     def legacy_hash(key, seed)
       h = 0
 
-      for i in 0..key.length-1
+      (0..key.length - 1).each do |i|
         h = to_int32(31 * h + key[i].ord)
       end
 
-      h^seed
+      h ^ seed
     end
 
     #
@@ -77,10 +75,10 @@ module SplitIoClient
     # @return [int] returns the int 32 value of the provided number
     def to_int32(number)
       begin
-        sign = number < 0 ? -1 : 1
+        sign = number.negative? ? -1 : 1
         abs = number.abs
-        return 0 if abs == 0 || abs == Float::INFINITY
-      rescue
+        return 0 if abs.zero? || abs == Float::INFINITY
+      rescue StandardError
         return 0
       end
 
@@ -88,6 +86,7 @@ module SplitIoClient
       int_32bit = pos_int % 2**32
 
       return int_32bit - 2**32 if int_32bit >= 2**31
+
       int_32bit
     end
 
@@ -101,13 +100,13 @@ module SplitIoClient
     def get_treatment_for_key(bucket, partitions)
       buckets_covered_thus_far = 0
       partitions.each do |p|
-        unless p.is_empty?
+        unless p.empty?
           buckets_covered_thus_far += p.size
           return p.treatment if buckets_covered_thus_far >= bucket
         end
       end
 
-      return SplitIoClient::Engine::Models::Treatment::CONTROL
+      SplitIoClient::Engine::Models::Treatment::CONTROL
     end
 
     #

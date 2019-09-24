@@ -1,13 +1,10 @@
-module SplitIoClient
+# frozen_string_literal: true
 
+module SplitIoClient
   #
   # class to handle cached metrics
   #
   class Metrics < NoMethodError
-
-    @counter
-    @delta
-
     #
     # cached latencies
     #
@@ -59,7 +56,7 @@ module SplitIoClient
     #
     # @return void
     def time(operation, time_in_ms)
-      return if operation.nil? || operation.empty? || time_in_ms < 0
+      return if operation.nil? || operation.empty? || time_in_ms.negative?
 
       @repository.add_latency(operation, time_in_ms, @binary_search)
     end

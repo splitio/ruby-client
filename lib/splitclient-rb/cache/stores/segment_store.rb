@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module SplitIoClient
   module Cache
     module Stores
@@ -33,13 +35,13 @@ module SplitIoClient
             @config.logger.info('Starting segments fetcher service')
 
             loop do
-              next unless @sdk_blocker.splits_repository.ready?
+              next unless @sdk_blocker.splits_ready?
 
               store_segments
-              @config.logger.debug("Segment names: #{@segments_repository.used_segment_names.to_a}") if @config.debug_enabled
+              @config.split_logger.log_if_debug("Segment names: #{@segments_repository.used_segment_names}")
 
               sleep_for = StoreUtils.random_interval(@config.segments_refresh_rate)
-              @config.logger.debug("Segments store is sleeping for: #{sleep_for} seconds") if @config.debug_enabled
+              @config.split_logger.log_if_debug("Segments store is sleeping for: #{sleep_for} seconds")
               sleep(sleep_for)
             end
           end
