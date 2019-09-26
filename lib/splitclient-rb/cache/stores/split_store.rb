@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module SplitIoClient
   module Cache
     module Stores
@@ -40,30 +42,33 @@ module SplitIoClient
         end
 
         def store_splits
-          data = splits_since(@splits_repository.get_change_number)
+          data = splits_since
+          segment_names = data[:segment_names]
 
-          data[:splits] && data[:splits].each do |split|
+          # TODO: remove safe navigation (&.) if supporting Ruby 2.2 and below
+          data[:splits]&.each do |split|
             add_split_unless_archived(split)
           end
 
-          @splits_repository.set_segment_names(data[:segment_names])
+          @splits_repository.set_segment_names(segment_names)
           @splits_repository.set_change_number(data[:till])
 
-          @config.logger.debug("segments seen(#{data[:segment_names].length}): #{data[:segment_names].to_a}") if @config.debug_enabled
+          @config.split_logger.log_if_debug(
+            "segments seen(#{segment_names.length}): #{segment_names}"
+          )
 
           @sdk_blocker.splits_ready!
-
         rescue StandardError => error
           @config.log_found_exception(__method__.to_s, error)
         end
 
-        def splits_since(since)
+        def splits_since(since = @splits_repository.get_change_number)
           splits_api.since(since)
         end
 
         def add_split_unless_archived(split)
           if Engine::Models::Split.archived?(split)
-            @config.logger.debug("Seeing archived split #{split[:name]}") if @config.debug_enabled
+            @config.split_logger.log_if_debug("Seeing archived split #{split[:name]}")
 
             remove_archived_split(split)
           else
@@ -82,8 +87,6 @@ module SplitIoClient
 
           @splits_repository.add_split(split)
         end
-
-        private
 
         def splits_api
           @splits_api ||= SplitIoClient::Api::Splits.new(@api_key, @metrics, @config)

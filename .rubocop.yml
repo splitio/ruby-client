@@ -27,7 +27,7 @@ AllCops:
     - lib/splitclient-rb/cache/repositories/**/*
     - lib/splitclient-rb/cache/routers/**/*
     - lib/splitclient-rb/cache/senders/**/*
-    - lib/splitclient-rb/cache/stores/sdk_blocker.rb
+    - lib/splitclient-rb/cache/stores/sdk_blocker.rb # ABC for store_splits is 15.33/15
     - lib/splitclient-rb/cache/stores/segment_store.rb # ABC for segments_thread is 15.17/15
     - lib/splitclient-rb/cache/stores/split_store.rb
     - lib/splitclient-rb/clients/**/*
