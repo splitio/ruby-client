@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module SplitIoClient
   module Engine
     module Parser
@@ -14,21 +16,26 @@ module SplitIoClient
           # DependencyMatcher here, split is actually a split_name in this case
           cache_result = split.is_a? String
           split = @splits_repository.get_split(split) if cache_result
-          digest = Digest::MD5.hexdigest("#{{matching_key: keys[:matching_key]}}#{split}#{attributes}")
+          digest = Digest::MD5.hexdigest("#{{ matching_key: keys[:matching_key] }}#{split}#{attributes}")
 
           if Models::Split.archived?(split)
             return treatment_hash(Models::Label::ARCHIVED, Models::Treatment::CONTROL, split[:changeNumber])
           end
 
           treatment = if Models::Split.matchable?(split)
-            if @multiple && @cache[digest]
-              @cache[digest]
-            else
-              match(split, keys, attributes)
-            end
-          else
-            treatment_hash(Models::Label::KILLED, split[:defaultTreatment], split[:changeNumber], split_configurations(split[:defaultTreatment], split))
-          end
+                        if @multiple && @cache[digest]
+                          @cache[digest]
+                        else
+                          match(split, keys, attributes)
+                        end
+                      else
+                        treatment_hash(
+                          Models::Label::KILLED,
+                          split[:defaultTreatment],
+                          split[:changeNumber],
+                          split_configurations(split[:defaultTreatment], split)
+                        )
+                      end
 
           @cache[digest] = treatment if cache_result
 
@@ -38,14 +45,15 @@ module SplitIoClient
         private
 
         def split_configurations(treatment, split)
-          return nil if split[:configurations].nil?
+          return nil unless split[:configurations]
+
           split[:configurations][treatment.to_sym]
         end
 
         def match(split, keys, attributes)
           in_rollout = false
-          key = keys[:bucketing_key] ? keys[:bucketing_key] : keys[:matching_key]
-          legacy_algo = (split[:algo] == 1 || split[:algo] == nil) ? true : false
+          key = keys[:bucketing_key] || keys[:matching_key]
+          legacy_algo = split[:algo] == 1 || split[:algo].nil?
           splitter = Splitter.new
 
           split[:conditions].each do |c|
@@ -58,7 +66,12 @@ module SplitIoClient
                 bucket = splitter.bucket(splitter.count_hash(key, split[:trafficAllocationSeed].to_i, legacy_algo))
 
                 if bucket > split[:trafficAllocation]
-                  return treatment_hash(Models::Label::NOT_IN_SPLIT, split[:defaultTreatment], split[:changeNumber], split_configurations(split[:defaultTreatment], split))
+                  return treatment_hash(
+                    Models::Label::NOT_IN_SPLIT,
+                    split[:defaultTreatment],
+                    split[:changeNumber],
+                    split_configurations(split[:defaultTreatment], split)
+                  )
                 end
               end
 
@@ -77,13 +90,23 @@ module SplitIoClient
             result = splitter.get_treatment(key, split[:seed], condition.partitions, split[:algo])
 
             if result.nil?
-              return treatment_hash(Models::Label::NO_RULE_MATCHED, split[:defaultTreatment], split[:changeNumber], split_configurations(split[:defaultTreatment], split))
-            else
-              return treatment_hash(c[:label], result, split[:changeNumber],split_configurations(result, split))
+              return treatment_hash(
+                Models::Label::NO_RULE_MATCHED,
+                split[:defaultTreatment],
+                split[:changeNumber],
+                split_configurations(split[:defaultTreatment], split)
+              )
             end
+
+            return treatment_hash(c[:label], result, split[:changeNumber], split_configurations(result, split))
           end
 
-          treatment_hash(Models::Label::NO_RULE_MATCHED, split[:defaultTreatment], split[:changeNumber], split_configurations(split[:defaultTreatment], split))
+          treatment_hash(
+            Models::Label::NO_RULE_MATCHED,
+            split[:defaultTreatment],
+            split[:changeNumber],
+            split_configurations(split[:defaultTreatment], split)
+          )
         end
 
         def matcher_type(condition)
@@ -92,10 +115,10 @@ module SplitIoClient
           @segments_repository.adapter.pipelined do
             condition.matchers.each do |matcher|
               matchers << if matcher[:negate]
-                condition.negation_matcher(matcher_instance(matcher[:matcherType], condition, matcher))
-              else
-                matcher_instance(matcher[:matcherType], condition, matcher)
-              end
+                            condition.negation_matcher(matcher_instance(matcher[:matcherType], condition, matcher))
+                          else
+                            matcher_instance(matcher[:matcherType], condition, matcher)
+                          end
             end
           end
 

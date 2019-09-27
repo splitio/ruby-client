@@ -1,4 +1,5 @@
-require 'thread'
+# frozen_string_literal: true
+
 require 'timeout'
 
 module SplitIoClient
@@ -10,34 +11,34 @@ module SplitIoClient
           @segments_repository = segments_repository
           @config = config
 
-          if @config.standalone?
-            @splits_repository.not_ready!
-            @segments_repository.not_ready!
-          end
+          return unless @config.standalone?
+
+          @splits_repository.not_ready!
+          @segments_repository.not_ready!
         end
 
         def splits_ready!
-          if !ready?
-            @splits_repository.ready!
-            @config.logger.info('splits are ready')
-          end
+          return if ready?
+
+          @splits_repository.ready!
+          @config.logger.info('splits are ready')
         end
 
         def segments_ready!
-          if !ready?
-            @segments_repository.ready!
-            @config.logger.info('segments are ready')
-          end
+          return if ready?
+
+          @segments_repository.ready!
+          @config.logger.info('segments are ready')
         end
 
         def block(time = nil)
           begin
             timeout = time || @config.block_until_ready
-            Timeout::timeout(timeout) do
+            Timeout.timeout(timeout) do
               sleep 0.1 until ready?
             end
           rescue Timeout::Error
-            fail SDKBlockerTimeoutExpiredException, 'SDK start up timeout expired'
+            raise SDKBlockerTimeoutExpiredException, 'SDK start up timeout expired'
           end
 
           @config.logger.info('SplitIO SDK is ready')
@@ -45,6 +46,7 @@ module SplitIoClient
 
         def ready?
           return true if @config.consumer?
+
           splits_ready? && @segments_repository.ready?
         end
 

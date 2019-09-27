@@ -1,10 +1,12 @@
+# frozen_string_literal: true
+
 module SplitIoClient
   #
   # acts as dto for a condition structure
   #
   class Condition < NoMethodError
-    TYPE_ROLLOUT = 'ROLLOUT'.freeze
-    TYPE_WHITELIST = 'WHITELIST'.freeze
+    TYPE_ROLLOUT = 'ROLLOUT'
+    TYPE_WHITELIST = 'WHITELIST'
     #
     # definition of the condition
     #
@@ -71,7 +73,7 @@ module SplitIoClient
       else
         attribute = (matcher[:keySelector])[:attribute]
         white_list = (matcher[:whitelistMatcherData])[:whitelist]
-        result =  { attribute: attribute, value: white_list }
+        result = { attribute: attribute, value: white_list }
       end
       WhitelistMatcher.new(result, @config.split_logger, @config.split_validator)
     end
@@ -81,7 +83,15 @@ module SplitIoClient
       attribute = (matcher[:keySelector])[:attribute]
       value = (matcher[:unaryNumericMatcherData])[:value]
       data_type = (matcher[:unaryNumericMatcherData])[:dataType]
-      EqualToMatcher.new({attribute: attribute, value: value, data_type: data_type}, @config.split_logger, @config.split_validator)
+      EqualToMatcher.new(
+        {
+          attribute: attribute,
+          value: value,
+          data_type: data_type
+        },
+        @config.split_logger,
+        @config.split_validator
+      )
     end
 
     def matcher_greater_than_or_equal_to(params)
@@ -89,7 +99,15 @@ module SplitIoClient
       attribute = (matcher[:keySelector])[:attribute]
       value = (matcher[:unaryNumericMatcherData])[:value]
       data_type = (matcher[:unaryNumericMatcherData])[:dataType]
-      GreaterThanOrEqualToMatcher.new({attribute: attribute, value: value, data_type: data_type}, @config.split_logger, @config.split_validator)
+      GreaterThanOrEqualToMatcher.new(
+        {
+          attribute: attribute,
+          value: value,
+          data_type: data_type
+        },
+        @config.split_logger,
+        @config.split_validator
+      )
     end
 
     def matcher_less_than_or_equal_to(params)
@@ -97,7 +115,15 @@ module SplitIoClient
       attribute = (matcher[:keySelector])[:attribute]
       value = (matcher[:unaryNumericMatcherData])[:value]
       data_type = (matcher[:unaryNumericMatcherData])[:dataType]
-      LessThanOrEqualToMatcher.new({attribute: attribute, value: value, data_type: data_type}, @config.split_logger, @config.split_validator)
+      LessThanOrEqualToMatcher.new(
+        {
+          attribute: attribute,
+          value: value,
+          data_type: data_type
+        },
+        @config.split_logger,
+        @config.split_validator
+      )
     end
 
     def matcher_between(params)
@@ -106,7 +132,16 @@ module SplitIoClient
       start_value = (matcher[:betweenMatcherData])[:start]
       end_value = (matcher[:betweenMatcherData])[:end]
       data_type = (matcher[:betweenMatcherData])[:dataType]
-      BetweenMatcher.new({attribute: attribute, start_value: start_value, end_value: end_value, data_type: data_type}, @config.split_logger, @config.split_validator)
+      BetweenMatcher.new(
+        {
+          attribute: attribute,
+          start_value: start_value,
+          end_value: end_value,
+          data_type: data_type
+        },
+        @config.split_logger,
+        @config.split_validator
+      )
     end
 
     def matcher_equal_to_set(params)
