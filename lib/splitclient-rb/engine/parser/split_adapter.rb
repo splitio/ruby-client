@@ -1,16 +1,17 @@
+# frozen_string_literal: true
+
 require 'json'
-require 'thread'
-
-include SplitIoClient::Cache::Stores
-include SplitIoClient::Cache::Senders
-
 module SplitIoClient
   #
   # acts as an api adapater to connect to split endpoints
   # uses a configuration object that can be modified when creating the client instance
   # also, uses safe threads to execute fetches and post give the time execution values from the config
   #
+
   class SplitAdapter < NoMethodError
+    include SplitIoClient::Cache::Stores
+    include SplitIoClient::Cache::Senders
+    
     attr_reader :splits_repository, :segments_repository, :impressions_repository, :metrics
 
     #

@@ -60,7 +60,7 @@ describe SplitIoClient::Cache::Stores::SplitStore do
     end
 
     it 'rescues from error when split_store#splits_since raises an exception' do
-      allow_any_instance_of(SplitStore).to receive(:splits_since).and_throw(RuntimeError)
+      allow_any_instance_of(SplitIoClient::Cache::Stores::SplitStore).to receive(:splits_since).and_throw(RuntimeError)
 
       expect { store.send(:store_splits) }.to_not raise_error
       expect(log.string).to include('Unexpected exception in store_splits')
