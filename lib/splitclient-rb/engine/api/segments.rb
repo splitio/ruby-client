@@ -57,9 +57,9 @@ module SplitIoClient
 
           segment
         elsif response.status == 403
-            @config.logger.error('Factory Instantiation: You passed a browser type api_key, ' \
-              'please grab an api key from the Split console that is of type sdk')
-            @config.valid_mode =  false
+          @config.logger.error('Factory Instantiation: You passed a browser type api_key, ' \
+            'please grab an api key from the Split console that is of type sdk')
+          @config.valid_mode =  false
         else
           @config.logger.error("Unexpected status code while fetching segments: #{response.status}." \
           "Since #{since} - Check your API key and base URI")

@@ -4,8 +4,9 @@ module SplitIoClient
   module Api
     class Impressions < Client
       def initialize(api_key, config)
+        super(config)
         @api_key = api_key
-        @config = config
+        @impressions_post_uri = "#{@config.events_uri}/testImpressions/bulk"
       end
 
       def post(impressions)
@@ -15,7 +16,7 @@ module SplitIoClient
         end
 
         impressions_by_ip(impressions).each do |ip, impressions_ip|
-          response = post_api("#{@config.events_uri}/testImpressions/bulk", @api_key, impressions_ip, 'SplitSDKMachineIP' => ip)
+          response = post_api(@impressions_post_uri, @api_key, impressions_ip, 'SplitSDKMachineIP' => ip)
 
           if response.success?
             @config.split_logger.log_if_debug("Impressions reported: #{total_impressions(impressions)}")
@@ -31,7 +32,7 @@ module SplitIoClient
         return 0 if impressions.nil?
 
         impressions.reduce(0) do |impressions_count, impression|
-          impressions_count += impression[:keyImpressions].length
+          impressions_count + impression[:keyImpressions].length
         end
       end
 

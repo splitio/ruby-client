@@ -6,6 +6,7 @@ module SplitIoClient
       def initialize(api_key, config)
         super(config)
         @api_key = api_key
+        @events_post_uri = "#{@config.events_uri}/events/bulk"
       end
 
       def post(events)
@@ -15,14 +16,7 @@ module SplitIoClient
         end
 
         events.each_slice(@config.events_queue_size) do |events_slice|
-          response = post_api(
-            "#{@config.events_uri}/events/bulk",
-            @api_key,
-            events_slice.map { |event| formatted_event(event[:e]) },
-            'SplitSDKMachineIP' => events_slice[0][:m][:i],
-            'SplitSDKMachineName' => events_slice[0][:m][:n],
-            'SplitSDKVersion' => events_slice[0][:m][:s]
-          )
+          response = post_api(@events_post_uri, @api_key, events_slice.map { |event| formatted_event(event) })
 
           if response.success?
             @config.split_logger.log_if_debug("Events reported: #{events_slice.size}")
@@ -37,13 +31,10 @@ module SplitIoClient
       private
 
       def formatted_event(event)
-        {
-          key: event[:key],
-          trafficTypeName: event[:trafficTypeName],
-          eventTypeId: event[:eventTypeId],
+        event.merge(
           value: event[:value].to_f,
           timestamp: event[:timestamp].to_i
-        }
+        )
       end
     end
   end

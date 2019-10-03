@@ -26,14 +26,6 @@ module SplitIoClient
 
         protected
 
-        def metadata
-          {
-            s: "#{@config.language}-#{@config.version}",
-            i: @config.machine_ip,
-            n: @config.machine_name
-          }
-        end
-
         def event(key, traffic_type, event_type, time, value, properties)
           {
             key: key,

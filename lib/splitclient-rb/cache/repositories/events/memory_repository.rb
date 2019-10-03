@@ -12,7 +12,7 @@ module SplitIoClient
           end
 
           def add(key, traffic_type, event_type, time, value, properties, event_size)
-            @adapter.add_to_queue(m: metadata, e: event(key, traffic_type, event_type, time, value, properties))
+            @adapter.add_to_queue(event(key, traffic_type, event_type, time, value, properties))
             @size += event_size
 
             post_events if @size >= EVENTS_MAX_SIZE_BYTES || @adapter.length == @config.events_queue_size

@@ -33,7 +33,11 @@ AllCops:
     - lib/splitclient-rb/cache/senders/**/*
     - lib/splitclient-rb/clients/**/*
     - lib/splitclient-rb/managers/**/*
-    - lib/splitclient-rb/engine/api/**/*
+    - lib/splitclient-rb/engine/api/faraday_adapter/**/*
+    - lib/splitclient-rb/engine/api/faraday_middleware/**/*
+    - lib/splitclient-rb/engine/api/client.rb
+    - lib/splitclient-rb/engine/api/segments.rb
+    - lib/splitclient-rb/engine/api/splits.rb
     - lib/splitclient-rb/engine/parser/condition.rb # TODO: Metrics/ClassLength: Class has too many lines. [194/100]
     - lib/splitclient-rb/engine/parser/evaluator.rb # TODO: Refactor to decrease complexity
     - lib/splitclient-rb/engine/parser/split_adapter.rb # TODO: Metrics/ParameterLists: Avoid parameter lists longer than 5 parameters. [8/5]

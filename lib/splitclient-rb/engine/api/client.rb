@@ -9,6 +9,16 @@ module SplitIoClient
 
       def initialize(config)
         @config = config
+
+        hostname = SplitIoClient::SplitConfig.machine_hostname
+        referer = hostname == 'localhost' ? sdk_version :  sdk_version + "::#{hostname}"
+
+        @metadata = {
+          'SplitSDKVersion' => sdk_version,
+          'SplitSDKMachineName' => @config.machine_name,
+          'SplitSDKMachineIP' => @config.machine_ip,
+          'Referer' => referer
+        }
       end
 
       def get_api(url, api_key, params = {})
@@ -75,21 +85,11 @@ module SplitIoClient
       end
 
       def common_headers(api_key)
-        {
-          'Authorization' => "Bearer #{api_key}",
-          'SplitSDKVersion' => "#{@config.language}-#{@config.version}",
-          'SplitSDKMachineName' => @config.machine_name,
-          'SplitSDKMachineIP' => @config.machine_ip,
-          'Referer' => referer
-        }
+        @metadata.merge({ 'Authorization' => "Bearer #{api_key}" })
       end
 
-      def referer
-        result = "#{@config.language}-#{@config.version}"
-
-        result = "#{result}::#{SplitIoClient::SplitConfig.machine_hostname}" unless SplitIoClient::SplitConfig.machine_hostname == 'localhost'
-
-        result
+      def sdk_version
+        "#{@config.language}-#{@config.version}"
       end
     end
   end

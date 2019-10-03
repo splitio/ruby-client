@@ -740,13 +740,19 @@ describe SplitIoClient, type: :client do
 
         event = subject.instance_variable_get(:@events_repository).clear.first
 
-        expect(event[:m]).to eq(
-          s: "#{subject.instance_variable_get(:@config).language}-#{subject.instance_variable_get(:@config).version}",
-          i: subject.instance_variable_get(:@config).machine_ip,
-          n: subject.instance_variable_get(:@config).machine_name
-        )
+        if @mode.equal?(:consumer)
+          expect(event[:m]).to eq(
+            s: "#{subject.instance_variable_get(:@config).language}-#{subject.instance_variable_get(:@config).version}",
+            i: subject.instance_variable_get(:@config).machine_ip,
+            n: subject.instance_variable_get(:@config).machine_name
+          )
+        else
+          expect(event[:m]).to be nil
+        end
 
-        expect(event[:e].reject { |e| e == :timestamp }).to eq(
+        event_data = @mode.equal?(:consumer) ? event[:e] : event
+
+        expect(event_data.reject { |e| e == :timestamp }).to eq(
           key: 'key',
           trafficTypeName: 'traffic_type',
           eventTypeId: 'event_type',
