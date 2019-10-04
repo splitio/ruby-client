@@ -21,7 +21,7 @@ Below is a simple example that describes the instantiation and most basic usage 
 ```ruby
 require 'splitclient-rb'
 
-split_factory = SplitIoClient::SplitFactory.new('YOUR_API_KEY')
+split_factory = SplitIoClient::SplitFactory.new('SDK_API_KEY')
 split_client = split_factory.client
 
 begin  
