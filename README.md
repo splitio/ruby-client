@@ -18,11 +18,27 @@ For other setups, please reach out to [support@split.io](mailto:support@split.io
 
 ## Getting started
 Below is a simple example that describes the instantiation and most basic usage of our SDK:
-```
-<Factory instantiation>
-<Block until Ready>
-<Get treatment>
-<If treatment == ...>
+```ruby
+require 'splitclient-rb'
+
+split_factory = SplitIoClient::SplitFactory.new('YOUR_API_KEY')
+split_client = split_factory.client
+
+begin  
+  split_client.block_until_ready  
+rescue SplitIoClient::SDKBlockerTimeoutExpiredException
+  puts 'SDK is not ready. Decide whether to continue or abort execution'  
+end  
+
+treatment = split_client.get_treatment('CUSTOMER_ID', 'SPLIT_NAME');
+
+if treatment == 'on'
+  # insert code here to show on treatment
+elsif treatment == 'off'
+  # insert code here to show off treatment
+else
+  # insert your control treatment code here
+end
 ```
 For multi-process environments you also need to setup Split Synchronizer. See [Sharing state: Redis integration](https://help.split.io/hc/en-us/articles/360020673251-Ruby-SDK#sharing-state-redis-integration)
  
