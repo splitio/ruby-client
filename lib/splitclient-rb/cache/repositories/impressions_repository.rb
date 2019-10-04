@@ -32,14 +32,6 @@ module SplitIoClient
           }
         end
 
-        def metadata
-          {
-            s: "#{@config.language}-#{@config.version}",
-            i: @config.machine_ip,
-            n: @config.machine_name
-          }
-        end
-
         def applied_rule(label)
           @config.labels_enabled ? label : nil
         end

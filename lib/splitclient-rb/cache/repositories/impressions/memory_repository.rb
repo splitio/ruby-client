@@ -13,7 +13,6 @@ module SplitIoClient
           # Store impression data in the selected adapter
           def add(matching_key, bucketing_key, split_name, treatment, time)
             @adapter.add_to_queue(
-              m: metadata,
               i: impression_data(
                 matching_key,
                 bucketing_key,

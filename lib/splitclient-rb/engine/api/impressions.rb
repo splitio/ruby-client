@@ -15,16 +15,14 @@ module SplitIoClient
           return
         end
 
-        impressions_by_ip(impressions).each do |ip, impressions_ip|
-          response = post_api(@impressions_post_uri, @api_key, impressions_ip, 'SplitSDKMachineIP' => ip)
+        response = post_api(@impressions_post_uri, @api_key, impressions)
 
-          if response.success?
-            @config.split_logger.log_if_debug("Impressions reported: #{total_impressions(impressions)}")
-          else
-            @config.logger.error("Unexpected status code while posting impressions: #{response.status}." \
-            ' - Check your API key and base URI')
-            raise 'Split SDK failed to connect to backend to post impressions'
-          end
+        if response.success?
+          @config.split_logger.log_if_debug("Impressions reported: #{total_impressions(impressions)}")
+        else
+          @config.logger.error("Unexpected status code while posting impressions: #{response.status}." \
+          ' - Check your API key and base URI')
+          raise 'Split SDK failed to connect to backend to post impressions'
         end
       end
 
@@ -34,12 +32,6 @@ module SplitIoClient
         impressions.reduce(0) do |impressions_count, impression|
           impressions_count + impression[:keyImpressions].length
         end
-      end
-
-      private
-
-      def impressions_by_ip(impressions)
-        impressions.group_by { |impression| impression[:ip] }
       end
     end
   end

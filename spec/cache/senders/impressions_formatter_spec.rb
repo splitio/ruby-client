@@ -8,7 +8,6 @@ describe SplitIoClient::Cache::Senders::ImpressionsFormatter do
     let(:repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
     let(:formatter) { described_class.new(repository) }
     let(:formatted_impressions) { formatter.send(:call, true) }
-    let(:ip) { config.machine_ip }
     let(:treatment1) { { treatment: 'on', label: 'custom_label1', change_number: 123_456 } }
     let(:treatment2) { { treatment: 'off', label: 'custom_label2', change_number: 123_499 } }
     let(:treatment3) { { treatment: 'off', label: nil, change_number: nil } }
@@ -27,8 +26,7 @@ describe SplitIoClient::Cache::Senders::ImpressionsFormatter do
                                              treatment: 'on',
                                              time: 1_478_113_516_002,
                                              bucketingKey: 'foo1', label: 'custom_label1',
-                                             changeNumber: 123_456 }],
-                          ip: ip
+                                             changeNumber: 123_456 }]
                         },
                          {
                            testName: :foo2,
@@ -37,8 +35,7 @@ describe SplitIoClient::Cache::Senders::ImpressionsFormatter do
                                               time: 1_478_113_518_285,
                                               bucketingKey: 'foo2',
                                               label: 'custom_label2',
-                                              changeNumber: 123_499 }],
-                           ip: ip
+                                              changeNumber: 123_499 }]
                          }])
     end
 

@@ -28,7 +28,14 @@ AllCops:
     - lib/murmurhash/**/*
     - lib/splitclient-rb/*
     - lib/splitclient-rb/cache/adapters/**/*
-    - lib/splitclient-rb/cache/repositories/**/*
+    - lib/splitclient-rb/cache/repositories/events/**/*
+    - lib/splitclient-rb/cache/repositories/impressions/**/*
+    - lib/splitclient-rb/cache/repositories/metrics/**/*
+    - lib/splitclient-rb/cache/repositories/events_repository.rb
+    - lib/splitclient-rb/cache/repositories/impressions_repository.rb
+    - lib/splitclient-rb/cache/repositories/metrics_repository.rb
+    - lib/splitclient-rb/cache/repositories/segments_repository.rb
+    - lib/splitclient-rb/cache/repositories/splits_repository.rb
     - lib/splitclient-rb/cache/routers/**/*
     - lib/splitclient-rb/cache/senders/**/*
     - lib/splitclient-rb/clients/**/*

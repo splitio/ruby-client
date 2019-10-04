@@ -10,6 +10,12 @@ module SplitIoClient
           def initialize(config)
             @config = config
             @adapter = @config.impressions_adapter
+
+            @metadata = {
+              s: "#{@config.language}-#{@config.version}",
+              i: @config.machine_ip,
+              n: @config.machine_name
+            }
           end
 
           def add(matching_key, bucketing_key, split_name, treatment, time)
@@ -19,7 +25,7 @@ module SplitIoClient
           def add_bulk(matching_key, bucketing_key, treatments, time)
             impressions = treatments.map do |split_name, treatment|
               {
-                m: metadata,
+                m: @metadata,
                 i: impression_data(
                   matching_key,
                   bucketing_key,

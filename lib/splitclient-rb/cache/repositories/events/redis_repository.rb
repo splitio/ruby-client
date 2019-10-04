@@ -1,9 +1,10 @@
+# frozen_string_literal: true
+
 module SplitIoClient
   module Cache
     module Repositories
       module Events
         class RedisRepository < EventsRepository
-
           def initialize(config)
             @config = config
             @adapter = @config.events_adapter
@@ -15,7 +16,7 @@ module SplitIoClient
             }
           end
 
-          def add(key, traffic_type, event_type, time, value, properties, size)
+          def add(key, traffic_type, event_type, time, value, properties, _size)
             @adapter.add_to_queue(
               namespace_key('.events'),
               { m: @metadata, e: event(key, traffic_type, event_type, time, value, properties) }.to_json
