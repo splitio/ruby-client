@@ -52,9 +52,7 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
       repository.add('matching_key1', nil, :foo, treatment1, 1_478_113_516_002)
       repository.add('matching_key1', nil, :bar, treatment2, 1_478_113_516_002)
 
-      if config.impressions_adapter.is_a? SplitIoClient::Cache::Adapters::MemoryAdapter
-        result.each { |h| h.delete(:m) }
-      end
+      result.each { |h| h.delete(:m) } if config.impressions_adapter.is_a? SplitIoClient::Cache::Adapters::MemoryAdapter
 
       expect(repository.batch).to match_array(result)
 
@@ -69,9 +67,7 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
 
       repository.add_bulk('matching_key1', nil, treatments, 1_478_113_516_002)
 
-      if config.impressions_adapter.is_a? SplitIoClient::Cache::Adapters::MemoryAdapter
-        result.each { |h| h.delete(:m) }
-      end
+      result.each { |h| h.delete(:m) } if config.impressions_adapter.is_a? SplitIoClient::Cache::Adapters::MemoryAdapter
 
       expect(repository.batch).to match_array(result)
 
