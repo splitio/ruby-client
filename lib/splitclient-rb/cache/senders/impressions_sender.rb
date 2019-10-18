@@ -11,11 +11,6 @@ module SplitIoClient
         end
 
         def call
-          if @config.disable_impressions
-            @config.logger.info('Disabling impressions service by config')
-            return
-          end
-
           if ENV['SPLITCLIENT_ENV'] == 'test'
             post_impressions
           else

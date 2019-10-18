@@ -59,8 +59,6 @@ module SplitIoClient
         opts[:cache_adapter] || SplitConfig.default_cache_adapter, :queue_adapter, @impressions_queue_size, @redis_url
       )
       #Safeguard for users of older SDK versions.
-      @disable_impressions = @impressions_queue_size == -1
-      #Safeguard for users of older SDK versions.
       @impressions_bulk_size = opts[:impressions_bulk_size] || @impressions_queue_size > 0 ? @impressions_queue_size : 0
 
       @metrics_adapter = SplitConfig.init_cache_adapter(
@@ -224,12 +222,11 @@ module SplitIoClient
     attr_accessor :impression_listener_refresh_rate
 
     #
-    # How big the impressions queue is before dropping impressions. -1 to disable it.
+    # How big the impressions queue is before dropping impressions
     #
     # @return [Integer]
     attr_accessor :impressions_queue_size
     attr_accessor :impressions_bulk_size
-    attr_accessor :disable_impressions
 
     attr_accessor :redis_url
     attr_accessor :redis_namespace

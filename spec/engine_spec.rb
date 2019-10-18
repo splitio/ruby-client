@@ -244,7 +244,7 @@ describe SplitIoClient, type: :client do
         }
 
         expect(subject).to receive(:store_impression).with(
-          'test_feature', 'random_user_id', nil, treatment_data, true, {}
+          'test_feature', 'random_user_id', nil, treatment_data, {}
         ).once.and_call_original
 
         expect(subject.get_treatment('random_user_id', 'test_feature'))
@@ -631,35 +631,6 @@ describe SplitIoClient, type: :client do
         expect(formatted_impressions.find { |i| i[:testName] == :beta_feature }[:keyImpressions].size).to eq(6)
       end
 
-      context 'when impressions are disabled' do
-        subject do
-          mode = cache_adapter.equal?(:memory) ? :standalone : :consumer
-
-          SplitIoClient::SplitFactory.new('test_api_key',
-                                          logger: Logger.new('/dev/null'),
-                                          cache_adapter: cache_adapter,
-                                          redis_namespace: 'test',
-                                          impressions_queue_size: -1,
-                                          mode: mode).client
-        end
-        let(:impressions) { subject.instance_variable_get(:@impressions_repository).batch }
-
-        it 'works when impressions are disabled for get_treatments' do
-          expect(subject.get_treatments('21', %w[sample_feature beta_feature])).to eq(
-            sample_feature: 'off',
-            beta_feature: 'off'
-          )
-
-          expect(impressions).to eq([])
-        end
-
-        it 'works when impressions are disabled for get_treatment' do
-          expect(subject.get_treatment('21', 'sample_feature')).to eq('off')
-
-          expect(impressions).to eq([])
-        end
-      end
-
       context 'traffic allocations' do
         before do
           load_splits(traffic_allocation_json)
@@ -725,7 +696,7 @@ describe SplitIoClient, type: :client do
         allow(subject.instance_variable_get(:@impressions_repository))
           .to receive(:add).and_raise(Redis::CannotConnectError)
 
-        expect { subject.store_impression('', '', '', {}, '', '') }.not_to raise_error
+        expect { subject.store_impression('', '', '', {}, {}) }.not_to raise_error
       end
     end
 
