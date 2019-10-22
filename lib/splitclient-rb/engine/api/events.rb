@@ -42,7 +42,8 @@ module SplitIoClient
           trafficTypeName: event[:trafficTypeName],
           eventTypeId: event[:eventTypeId],
           value: event[:value].to_f,
-          timestamp: event[:timestamp].to_i
+          timestamp: event[:timestamp].to_i,
+          properties: event[:properties]
         }
       end
     end

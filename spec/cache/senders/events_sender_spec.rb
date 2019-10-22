@@ -12,6 +12,31 @@ describe SplitIoClient::Cache::Senders::EventsSender do
       Redis.new.flushall
     end
 
+    it 'post events with corresponding event metadata' do
+      stub_request(:post, 'https://events.split.io/api/events/bulk')
+        .to_return(status: 200, body: 'ok')
+
+      repository.add('key', 'traffic_type', 'event_type', 0, 0.0, { property_value: 'valid' }, 0)
+
+      sender.call
+
+      expect(a_request(:post, 'https://events.split.io/api/events/bulk')
+      .with(
+        body: [
+          {
+            key: 'key',
+            trafficTypeName: 'traffic_type',
+            eventTypeId: 'event_type',
+            value: 0.0,
+            timestamp: 0,
+            properties: {
+              property_value: 'valid'
+            }
+          }
+        ].to_json
+      )).to have_been_made
+    end
+
     it 'calls #post_events upon destroy' do
       expect(sender).to receive(:post_events).with(no_args).at_least(:once)
 
