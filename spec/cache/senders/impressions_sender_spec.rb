@@ -26,6 +26,47 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
       expect(sender.send(:impressions_api).total_impressions(formatted_impressions)).to eq(2)
     end
 
+    it 'post impressions with corresponding impressions metadata' do
+      stub_request(:post, 'https://events.split.io/api/testImpressions/bulk')
+        .to_return(status: 200, body: 'ok')
+
+      sender.call
+
+      expect(a_request(:post, 'https://events.split.io/api/testImpressions/bulk')
+      .with(
+        body: [
+          {
+            testName: 'foo1',
+            keyImpressions: [
+              {
+                keyName: 'matching_key',
+                treatment: 'on',
+                time: 1_478_113_516_002,
+                bucketingKey: 'foo1',
+                label: 'custom_label1',
+                changeNumber: 123_456
+              }
+            ],
+            ip: config.machine_ip
+          },
+          {
+            testName: 'foo2',
+            keyImpressions: [
+              {
+                keyName: 'matching_key2',
+                treatment: 'off',
+                time: 1_478_113_518_285,
+                bucketingKey: 'foo2',
+                label: 'custom_label2',
+                changeNumber: 123_499
+              }
+            ],
+            ip: config.machine_ip
+          }
+        ].to_json
+      )).to have_been_made
+    end
+
     it 'calls #post_impressions upon destroy' do
       expect(sender).to receive(:post_impressions).with(no_args)
 
