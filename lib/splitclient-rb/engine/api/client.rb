@@ -30,8 +30,14 @@ module SplitIoClient
           req.headers = common_headers(api_key)
                         .merge('Content-Type' => 'application/json')
                         .merge(headers)
-                        .merge('SplitSDKMachineName' => @config.machine_name) unless @config.machine_name.blank?
-                        .merge('SplitSDKMachineIP' => @config.machine_ip) unless @config.machine_ip.blank?
+                        
+          if (!@config.machine_ip.empty?)
+            req.headers = req.headers.merge('SplitSDKMachineIP' => @config.machine_ip)
+          end
+
+          if (!@config.machine_name.empty?)
+            req.headers = req.headers.merge('SplitSDKMachineName' => @config.machine_name)
+          end
 
           req.body = data.to_json
 
@@ -79,7 +85,7 @@ module SplitIoClient
       def common_headers(api_key)
         {
           'Authorization' => "Bearer #{api_key}",
-          'SplitSDKVersion' => "#{@config.language}-#{@config.version}",          
+          'SplitSDKVersion' => "#{@config.language}-#{@config.version}",
         }
       end
     end

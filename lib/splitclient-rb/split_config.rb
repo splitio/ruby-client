@@ -69,10 +69,10 @@ module SplitIoClient
       @transport_debug_enabled = opts[:transport_debug_enabled] || SplitConfig.default_debug
       @block_until_ready = SplitConfig.default_block_until_ready
 
-      ip_addresses_enabled = opts[:ip_addresses_enabled] || true;
+      @ip_addresses_enabled = opts[:ip_addresses_enabled].nil? ? SplitConfig.default_ip_addresses_enabled : opts[:ip_addresses_enabled]
 
-      @machine_name = SplitConfig.machine_hostname(ip_addresses_enabled, opts[:machine_name], @cache_adapter)
-      @machine_ip = SplitConfig.machine_ip(ip_addresses_enabled, opts[:machine_ip], @cache_adapter)
+      @machine_name = SplitConfig.machine_hostname(@ip_addresses_enabled, opts[:machine_name], opts[:cache_adapter] || SplitConfig.default_cache_adapter)
+      @machine_ip = SplitConfig.machine_ip(@ip_addresses_enabled, opts[:machine_ip], opts[:cache_adapter] || SplitConfig.default_cache_adapter)
 
       @cache_ttl = opts[:cache_ttl] || SplitConfig.cache_ttl
       @max_cache_size = opts[:max_cache_size] || SplitConfig.max_cache_size
@@ -417,6 +417,14 @@ module SplitIoClient
     end
 
     #
+    # The default ip addresses enabled value
+    #
+    # @return [boolean]
+    def self.default_ip_addresses_enabled
+      true
+    end
+
+    #
     # The default transport_debug_enabled value
     #
     # @return [boolean]
@@ -489,8 +497,11 @@ module SplitIoClient
         rescue
           return 'unknown'.freeze
         end
-      elsif adapter == :redis
-        return 'NA'.freeze
+      else
+        case adapter
+        when :redis
+          return 'NA'.freeze
+        end
       end
       
       return ''.freeze
@@ -514,8 +525,11 @@ module SplitIoClient
         rescue
           return 'unknown'.freeze
         end
-      elsif adapter == :redis
-        return 'NA'.freeze
+      else
+        case adapter
+        when :redis
+          return 'NA'.freeze
+        end
       end
 
       return ''.freeze

@@ -22,6 +22,13 @@ describe SplitIoClient::Api::Metrics do
     let!(:latency) { metrics_repository.add_latency('latency.test', 12, nil) }
     it 'post latencies' do
       stub_request(:post, 'https://events.split.io/api/metrics/time')
+        .with(headers: {
+          'Authorization' => "Bearer",
+          'SplitSDKVersion' => "#{config.language}-#{config.version}",
+          'Content-Type' => 'application/json',
+          'SplitSDKMachineIP' => config.machine_ip,
+          'SplitSDKMachineName' => config.machine_name
+        })
         .to_return(status: 200, body: 'ok')
       metrics_api.send(:post_latencies)
 
@@ -55,12 +62,51 @@ describe SplitIoClient::Api::Metrics do
         'Split SDK failed to connect to backend to post information'
       )
     end
+
+    it 'when ip_addresses_enabled is false' do 
+      custom_config = SplitIoClient::SplitConfig.new(
+        logger: Logger.new(log),
+        debug_enabled: true,
+        transport_debug_enabled: true,
+        ip_addresses_enabled: false)
+
+      api = described_class.new('', metrics_repository, custom_config)
+
+      stub_request(:post, 'https://events.split.io/api/metrics/time')
+        .with(headers: {
+          'Authorization' => "Bearer",
+          'SplitSDKVersion' => "#{config.language}-#{config.version}",
+          'Content-Type' => 'application/json',
+          'SplitSDKMachineIP' => config.machine_ip,
+          'SplitSDKMachineName' => config.machine_name
+        })
+        .to_return(status: [500, "Internal Server Error"])
+
+      stub_request(:post, 'https://events.split.io/api/metrics/time')
+        .with(headers: {
+          'Authorization' => "Bearer",
+          'SplitSDKVersion' => "#{config.language}-#{config.version}",
+          'Content-Type' => 'application/json'
+        })
+        .to_return(status: 200, body: 'ok')
+
+        api.send(:post_latencies)
+        
+        expect(metrics_repository.latencies.size).to eq 0
+    end
   end
 
   context '#post_counts' do
     let!(:count) { metrics_repository.add_count('count.test', 12) }
     it 'post counts' do
       stub_request(:post, 'https://events.split.io/api/metrics/counter')
+        .with(headers: {
+          'Authorization' => "Bearer",
+          'SplitSDKVersion' => "#{config.language}-#{config.version}",
+          'Content-Type' => 'application/json',
+          'SplitSDKMachineIP' => config.machine_ip,
+          'SplitSDKMachineName' => config.machine_name
+        })
         .to_return(status: 200, body: 'ok')
       metrics_api.send(:post_counts)
 
@@ -94,15 +140,64 @@ describe SplitIoClient::Api::Metrics do
         'Split SDK failed to connect to backend to post information'
       )
     end
+
+    it 'when ip_addresses_enabled is false' do
+      custom_config = SplitIoClient::SplitConfig.new(
+        logger: Logger.new(log),
+        debug_enabled: true,
+        transport_debug_enabled: true,
+        ip_addresses_enabled: false)
+
+      api = described_class.new('', metrics_repository, custom_config)
+
+      stub_request(:post, 'https://events.split.io/api/metrics/counter')
+        .with(headers: {
+          'Authorization' => "Bearer",
+          'SplitSDKVersion' => "#{config.language}-#{config.version}",
+          'Content-Type' => 'application/json',
+          'SplitSDKMachineIP' => config.machine_ip,
+          'SplitSDKMachineName' => config.machine_name
+        })
+        .to_return(status: [500, "Internal Server Error"])
+
+      stub_request(:post, 'https://events.split.io/api/metrics/counter')
+        .with(headers: {
+          'Authorization' => "Bearer",
+          'SplitSDKVersion' => "#{config.language}-#{config.version}",
+          'Content-Type' => 'application/json'
+        })
+        .to_return(status: 200, body: 'ok')
+
+      api.send(:post_counts)
+
+      expect(metrics_repository.counts.size).to eq 0
+    end
+
   end
 
   context '#post' do
     it 'post without latencies nor counters' do
       stub_request(:post, 'https://events.split.io/api/metrics/counter')
+        .with(headers: {
+          'Authorization' => "Bearer",
+          'SplitSDKVersion' => "#{config.language}-#{config.version}",
+          'Content-Type' => 'application/json',
+          'SplitSDKMachineIP' => config.machine_ip,
+          'SplitSDKMachineName' => config.machine_name
+        })
         .to_return(status: 200, body: 'ok')
+
       stub_request(:post, 'https://events.split.io/api/metrics/time')
+        .with(headers: {
+          'Authorization' => "Bearer",
+          'SplitSDKVersion' => "#{config.language}-#{config.version}",
+          'Content-Type' => 'application/json',
+          'SplitSDKMachineIP' => config.machine_ip,
+          'SplitSDKMachineName' => config.machine_name
+        })
         .to_return(status: 200, body: 'ok')
-      metrics_api.post
+      
+        metrics_api.post
 
       expect(log.string).to include 'No counts to report.'
       expect(log.string).to include 'No latencies to report.'

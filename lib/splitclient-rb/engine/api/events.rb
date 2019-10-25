@@ -18,10 +18,7 @@ module SplitIoClient
           response = post_api(
             "#{@config.events_uri}/events/bulk",
             @api_key,
-            events_slice.map { |event| formatted_event(event[:e]) },
-            'SplitSDKMachineIP' => events_slice[0][:m][:i],
-            'SplitSDKMachineName' => events_slice[0][:m][:n],
-            'SplitSDKVersion' => events_slice[0][:m][:s]
+            events_slice.map { |event| formatted_event(event[:e]) }
           )
 
           if response.success?

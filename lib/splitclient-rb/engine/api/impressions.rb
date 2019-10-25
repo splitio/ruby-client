@@ -15,7 +15,7 @@ module SplitIoClient
         end
 
         impressions_by_ip(impressions).each do |ip, impressions_ip|
-          response = post_api("#{@config.events_uri}/testImpressions/bulk", @api_key, impressions_ip, 'SplitSDKMachineIP' => ip)
+          response = post_api("#{@config.events_uri}/testImpressions/bulk", @api_key, impressions_ip)
 
           if response.success?
             @config.split_logger.log_if_debug("Impressions reported: #{total_impressions(impressions)}")

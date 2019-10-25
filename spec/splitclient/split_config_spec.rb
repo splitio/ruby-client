@@ -29,8 +29,9 @@ describe SplitIoClient do
       expect(configs.impressions_refresh_rate).to eq SplitIoClient::SplitConfig.default_impressions_refresh_rate
       expect(configs.impressions_queue_size).to eq SplitIoClient::SplitConfig.default_impressions_queue_size
       expect(configs.debug_enabled).to eq SplitIoClient::SplitConfig.default_debug
-      expect(configs.machine_name).to eq SplitIoClient::SplitConfig.machine_hostname
-      expect(configs.machine_ip).to eq SplitIoClient::SplitConfig.machine_ip
+      expect(configs.ip_addresses_enabled).to eq SplitIoClient::SplitConfig.default_ip_addresses_enabled
+      expect(configs.machine_name).to eq SplitIoClient::SplitConfig.machine_hostname(SplitIoClient::SplitConfig.default_ip_addresses_enabled, nil, :redis)
+      expect(configs.machine_ip).to eq SplitIoClient::SplitConfig.machine_ip(SplitIoClient::SplitConfig.default_ip_addresses_enabled, nil, :redis)
     end
 
     it 'stores and retrieves correctly the customized values' do
@@ -59,5 +60,44 @@ describe SplitIoClient do
       expect(configs.impressions_refresh_rate).to eq 60
       expect(configs.impressions_queue_size).to eq 5000
     end
+
+    it 'set ip addresses disabled' do 
+      options = 
+        {
+          ip_addresses_enabled: false,
+        }
+
+      configs = SplitIoClient::SplitConfig.new(options)
+
+      expect(configs.ip_addresses_enabled).to eq false
+      expect(configs.machine_name).to eq ""
+      expect(configs.machine_ip).to eq ""
+    end 
+
+    it 'set ip addresses disabled and cache adapter is redis' do 
+      options = {
+          ip_addresses_enabled: false,
+          cache_adapter: :redis,
+        }
+
+      configs = SplitIoClient::SplitConfig.new(options)
+
+      expect(configs.ip_addresses_enabled).to eq false
+      expect(configs.machine_name).to eq "NA"
+      expect(configs.machine_ip).to eq "NA"
+    end 
+
+    it 'set ip addresses disabled and cache adapter is memory' do 
+      options = {
+          ip_addresses_enabled: false,
+          cache_adapter: :memory,
+        }
+
+      configs = SplitIoClient::SplitConfig.new(options)
+
+      expect(configs.ip_addresses_enabled).to eq false
+      expect(configs.machine_name).to eq ""
+      expect(configs.machine_ip).to eq ""
+    end 
   end
 end
