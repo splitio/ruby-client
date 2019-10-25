@@ -26,12 +26,17 @@ if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
     -Dsonar.pullrequest.branch=$TRAVIS_PULL_REQUEST_BRANCH \
     -Dsonar.pullrequest.base=$TRAVIS_BRANCH
 else
-  if [ "$TRAVIS_BRANCH" == 'development' ]; then
-    TARGET_BRANCH='master'
+  if [ "$TRAVIS_BRANCH" == 'master' ]; then
+    sonar_scanner \
+      -Dsonar.branch.name=$TRAVIS_BRANCH
   else
-    TARGET_BRANCH='development'
+    if [ "$TRAVIS_BRANCH" == 'development' ]; then
+      TARGET_BRANCH='master'
+    else
+      TARGET_BRANCH='development'
+    fi
+    sonar_scanner \
+      -Dsonar.branch.name=$TRAVIS_BRANCH \
+      -Dsonar.branch.target=$TARGET_BRANCH
   fi
-  sonar_scanner \
-    -Dsonar.branch.name=$TRAVIS_BRANCH \
-    -Dsonar.branch.target=$TARGET_BRANCH
 fi
