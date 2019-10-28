@@ -31,13 +31,8 @@ module SplitIoClient
                         .merge('Content-Type' => 'application/json')
                         .merge(headers)
                         
-          if (!@config.machine_ip.empty?)
-            req.headers = req.headers.merge('SplitSDKMachineIP' => @config.machine_ip)
-          end
-
-          if (!@config.machine_name.empty?)
-            req.headers = req.headers.merge('SplitSDKMachineName' => @config.machine_name)
-          end
+          req.headers = req.headers.merge('SplitSDKMachineIP' => @config.machine_ip) unless @config.machine_ip.empty?
+          req.headers = req.headers.merge('SplitSDKMachineName' => @config.machine_name) unless @config.machine_name.empty?
 
           req.body = data.to_json
 
