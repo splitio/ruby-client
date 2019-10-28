@@ -35,6 +35,25 @@ describe SplitIoClient::Cache::Repositories::MetricsRepository do
         'sdk.get_treatments_with_config' => [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
       )
     end
+
+    it 'validate latency redis keys with machine ip' do
+      custom_adapter = config.metrics_adapter
+
+      repository.add_latency('sdk.get_treatment', 1, binary_search)
+      repository.add_latency('sdk.get_treatment', 22, binary_search)
+      repository.add_latency('sdk.get_treatment', 21, binary_search)
+      repository.add_latency('sdk.get_treatment', 19, binary_search)
+      repository.add_latency('sdk.get_treatments', 2, binary_search)
+      repository.add_latency('sdk.get_treatments', 5, binary_search)
+      repository.add_latency('sdk.get_treatment_with_config', 5, binary_search)
+      repository.add_latency('sdk.get_treatments_with_config', 15, binary_search)
+
+      keys = custom_adapter.find_strings_by_prefix('SPLITIO/')
+
+      keys.each { |key|
+        expect(key).to include '/' + config.machine_ip + '/'
+      }
+    end
   end
 
   describe 'with Memory Adapter' do
@@ -144,6 +163,35 @@ describe SplitIoClient::Cache::Repositories::MetricsRepository do
           keep_get_treatments_with_config_pattern
         ]
       )
+    end
+  end
+
+  context 'with ip addresses disabled' do
+    before do
+      Redis.new.flushall
+    end
+
+    let(:config) { SplitIoClient::SplitConfig.new(cache_adapter: :redis, ip_addresses_enabled: false) }
+
+    let(:adapter) { config.metrics_adapter }
+    let(:repository) { described_class.new(config) }
+    let(:binary_search) { SplitIoClient::BinarySearchLatencyTracker.new }
+
+    it 'validate latency redis keys with NA' do
+      repository.add_latency('sdk.get_treatment', 1, binary_search)
+      repository.add_latency('sdk.get_treatment', 22, binary_search)
+      repository.add_latency('sdk.get_treatment', 21, binary_search)
+      repository.add_latency('sdk.get_treatment', 19, binary_search)
+      repository.add_latency('sdk.get_treatments', 2, binary_search)
+      repository.add_latency('sdk.get_treatments', 5, binary_search)
+      repository.add_latency('sdk.get_treatment_with_config', 5, binary_search)
+      repository.add_latency('sdk.get_treatments_with_config', 15, binary_search)
+
+      keys = adapter.find_strings_by_pattern('*')
+
+      keys.each { |key|
+        expect(key).to include '/NA/'
+      }
     end
   end
 end
