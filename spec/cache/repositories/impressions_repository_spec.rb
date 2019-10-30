@@ -161,10 +161,9 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
     it 'with ip_addresses_enabled set false' do
       custom_config = SplitIoClient::SplitConfig.new(
                         labels_enabled: true,
-                        impressions_bulk_size: 2,
-                        cache_adapter: :redis,
-                        ip_addresses_enabled: false
-                      )
+                      impressions_bulk_size: 2,
+                      cache_adapter: :redis,
+                      ip_addresses_enabled: false)
 
       custom_repository = described_class.new(custom_config)
       custom_adapter = config.impressions_adapter
