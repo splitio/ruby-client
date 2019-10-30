@@ -92,7 +92,7 @@ describe SplitIoClient::Api::Events do
                 'Content-Type' => 'application/json',
                 'SplitSDKMachineIP' => config.machine_ip,
                 'SplitSDKMachineName' => config.machine_name
-              )
+              })
         .to_return(status: [500, 'Internal Server Error'])
 
       stub_request(:post, 'https://events.split.io/api/events/bulk')
