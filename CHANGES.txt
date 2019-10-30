@@ -1,4 +1,4 @@
-7.0.1 (Oct 25, 2019)
+7.0.1 (Oct 31, 2019)
  - Updated localhost mode so that parsing of test files results in JSON data for splits analogous to that returned by the Split backend.
  - Resulting localhost data is now used indifferently from actual backend data by the SDK code.
  - Removed specific spare code dealing with localhost operations.
