@@ -32,13 +32,13 @@ describe SplitIoClient::Api::Events do
   context '#post' do
     it 'post events' do
       stub_request(:post, 'https://events.split.io/api/events/bulk')
-        .with(headers: {
-          'Authorization' => "Bearer",
-          'SplitSDKVersion' => "#{config.language}-#{config.version}",
-          'Content-Type' => 'application/json',
-          'SplitSDKMachineIP' => config.machine_ip,
-          'SplitSDKMachineName' => config.machine_name
-        })
+        .with(headers: { 
+                'Authorization' => 'Bearer',
+                'SplitSDKVersion' => "#{config.language}-#{config.version}",
+                'Content-Type' => 'application/json',
+                'SplitSDKMachineIP' => config.machine_ip,
+                'SplitSDKMachineName' => config.machine_name
+              })
         .to_return(status: 200, body: 'ok')
 
       events_api.post(events)
@@ -80,33 +80,31 @@ describe SplitIoClient::Api::Events do
         logger: Logger.new(log),
         debug_enabled: true,
         transport_debug_enabled: true,
-        ip_addresses_enabled: false)
+        ip_addresses_enabled: false
+      )
 
       api = described_class.new('', custom_config)
 
       stub_request(:post, 'https://events.split.io/api/events/bulk')
         .with(headers: {
-          'Authorization' => "Bearer",
-          'SplitSDKVersion' => "#{config.language}-#{config.version}",
-          'Content-Type' => 'application/json',
-          'SplitSDKMachineIP' => config.machine_ip,
-          'SplitSDKMachineName' => config.machine_name
-        })
-        .to_return(status: [500, "Internal Server Error"])
+                'Authorization' => 'Bearer',
+                'SplitSDKVersion' => "#{config.language}-#{config.version}",
+                'Content-Type' => 'application/json',
+                'SplitSDKMachineIP' => config.machine_ip,
+                'SplitSDKMachineName' => config.machine_name
+              )
+        .to_return(status: [500, 'Internal Server Error'])
 
       stub_request(:post, 'https://events.split.io/api/events/bulk')
         .with(headers: {
-          'Authorization' => "Bearer",
-          'SplitSDKVersion' => "#{config.language}-#{config.version}",
-          'Content-Type' => 'application/json'
-        })
+                'Authorization' => 'Bearer',
+                'SplitSDKVersion' => "#{config.language}-#{config.version}",
+                'Content-Type' => 'application/json'
+              })
         .to_return(status: 200, body: 'ok')
 
       api.post(events)
-
       expect(log.string).to include 'Events reported: 1'
-
-
     end
   end
 end

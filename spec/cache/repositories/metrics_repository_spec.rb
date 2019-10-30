@@ -50,9 +50,7 @@ describe SplitIoClient::Cache::Repositories::MetricsRepository do
 
       keys = custom_adapter.find_strings_by_prefix('SPLITIO/')
 
-      keys.each { |key|
-        expect(key).to include '/' + config.machine_ip + '/'
-      }
+      keys.each { |key| expect(key).to include '/' + config.machine_ip + '/' }
     end
   end
 
@@ -189,9 +187,7 @@ describe SplitIoClient::Cache::Repositories::MetricsRepository do
 
       keys = adapter.find_strings_by_pattern('*')
 
-      keys.each { |key|
-        expect(key).to include '/NA/'
-      }
+      keys.each { |key| expect(key).to include '/NA/' }
     end
   end
 end

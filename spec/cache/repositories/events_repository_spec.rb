@@ -76,7 +76,6 @@ describe SplitIoClient::Cache::Repositories::EventsRepository do
 
       adapter.get_from_queue('SPLITIO.events', 0).map do |e|
         event = JSON.parse(e, symbolize_names: true)
-        
         expect(event[:m][:i]).to eq config.machine_ip
         expect(event[:m][:n]).to eq config.machine_name
       end
@@ -85,15 +84,13 @@ describe SplitIoClient::Cache::Repositories::EventsRepository do
     it 'with ip_addresses_enabled set false' do
       config = SplitIoClient::SplitConfig.new(cache_adapter: :redis, events_queue_size: 3, ip_addresses_enabled: false)
       repository = described_class.new(config, nil)
-      adapter = config.events_adapter 
-
+      adapter = config.events_adapter
       config.events_queue_size.times do |index|
         repository.add(index.to_s, 'traffic_type', 'event_type', (Time.now.to_f * 1000).to_i, 'value', nil, 0)
       end
 
       adapter.get_from_queue('SPLITIO.events', 0).map do |e|
         event = JSON.parse(e, symbolize_names: true)
-        
         expect(event[:m][:i]).to eq 'NA'
         expect(event[:m][:n]).to eq 'NA'
       end

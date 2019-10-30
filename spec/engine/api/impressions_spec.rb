@@ -25,16 +25,15 @@ describe SplitIoClient::Api::Impressions do
     it 'post impressions' do
       stub_request(:post, 'https://events.split.io/api/testImpressions/bulk')
         .with(headers: {
-          'Authorization' => "Bearer",
-          'SplitSDKVersion' => "#{config.language}-#{config.version}",
-          'Content-Type' => 'application/json',
-          'SplitSDKMachineIP' => config.machine_ip,
-          'SplitSDKMachineName' => config.machine_name
-        })
+                'Authorization' => 'Bearer',
+                'SplitSDKVersion' => "#{config.language}-#{config.version}",
+                'Content-Type' => 'application/json',
+                'SplitSDKMachineIP' => config.machine_ip,
+                'SplitSDKMachineName' => config.machine_name
+              })
         .to_return(status: 200, body: 'ok')
 
       impressions_api.post(impressions)
-
       expect(log.string).to include 'Impressions reported: 1'
     end
 
@@ -72,31 +71,31 @@ describe SplitIoClient::Api::Impressions do
         logger: Logger.new(log),
         debug_enabled: true,
         transport_debug_enabled: true,
-        ip_addresses_enabled: false)
+        ip_addresses_enabled: false
+      )
 
       api = described_class.new('', custom_config)
 
       stub_request(:post, 'https://events.split.io/api/testImpressions/bulk')
         .with(headers: {
-          'Authorization' => "Bearer",
-          'SplitSDKVersion' => "#{config.language}-#{config.version}",
-          'Content-Type' => 'application/json',
-          'SplitSDKMachineIP' => config.machine_ip,
-          'SplitSDKMachineName' => config.machine_name
-        })
-        .to_return(status: [500, "Internal Server Error"])
+                'Authorization' => 'Bearer',
+                'SplitSDKVersion' => "#{config.language}-#{config.version}",
+                'Content-Type' => 'application/json',
+                'SplitSDKMachineIP' => config.machine_ip,
+                'SplitSDKMachineName' => config.machine_name
+              })
+        .to_return(status: [500, 'Internal Server Error'])
 
       stub_request(:post, 'https://events.split.io/api/testImpressions/bulk')
         .with(headers: {
-          'Authorization' => "Bearer",
-          'SplitSDKVersion' => "#{config.language}-#{config.version}",
-          'Content-Type' => 'application/json'
-        })
+                'Authorization' => 'Bearer',
+                'SplitSDKVersion' => "#{config.language}-#{config.version}",
+                'Content-Type' => 'application/json'
+              })
         .to_return(status: 200, body: 'ok')
 
-        api.post(impressions)
-
-        expect(log.string).to include 'Impressions reported: 1'
+      api.post(impressions)
+      expect(log.string).to include 'Impressions reported: 1'
     end
   end
 end

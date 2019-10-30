@@ -146,34 +146,31 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
       expect(repository.batch).to eq([])
     end
 
-    it 'with ip_addresses_enabled set true' do 
-      treatment_2 = { treatment: 'on', label: 'sample_rule_2', change_number: 1_533_177_602_748 }
-
+    it 'with ip_addresses_enabled set true' do
+      other_treatment = { treatment: 'on', label: 'sample_rule_2', change_number: 1_533_177_602_748 }
       repository.add('matching_key', nil, :foo1, treatment, 1_478_113_516_002)
-      repository.add('matching_key', nil, :foo2, treatment_2, 1_478_113_516_002)
+      repository.add('matching_key', nil, :foo2, other_treatment, 1_478_113_516_002)
 
       adapter.get_from_queue('SPLITIO.impressions', 0).map do |e|
         impression = JSON.parse(e, symbolize_names: true)
-        
         expect(impression[:m][:i]).to eq config.machine_ip
         expect(impression[:m][:n]).to eq config.machine_name
       end
     end
 
-    it 'with ip_addresses_enabled set false' do 
+    it 'with ip_addresses_enabled set false' do
       custom_config = SplitIoClient::SplitConfig.new(
           labels_enabled: true,
-          impressions_bulk_size: 2,
-          cache_adapter: :redis,
-          ip_addresses_enabled: false
-        )
+        impressions_bulk_size: 2,
+        cache_adapter: :redis,
+        ip_addresses_enabled: false)
   
       custom_repository = described_class.new(custom_config)
       custom_adapter = config.impressions_adapter
-      treatment_2 = { treatment: 'on', label: 'sample_rule_2', change_number: 1_533_177_602_748 }
+      other_treatment = { treatment: 'on', label: 'sample_rule_2', change_number: 1_533_177_602_748 }
 
       custom_repository.add('matching_key', nil, :foo1, treatment, 1_478_113_516_002)
-      custom_repository.add('matching_key', nil, :foo2, treatment_2, 1_478_113_516_002)
+      custom_repository.add('matching_key', nil, :foo2, other_treatment, 1_478_113_516_002)
 
       custom_adapter.get_from_queue('SPLITIO.impressions', 0).map do |e|
         impression = JSON.parse(e, symbolize_names: true)
