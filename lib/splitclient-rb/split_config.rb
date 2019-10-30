@@ -511,10 +511,10 @@ module SplitIoClient
     # gets the ip where the sdk gem is running
     #
     # @return [string]
-    def self.machine_ip(ip_addresses_enabled, machine_ip, adapter)
+    def self.machine_ip(ip_addresses_enabled, ip, adapter)
       if ip_addresses_enabled
-        begin
-          return machine_ip unless machine_ip.blank?
+        begin          
+          return ip unless ip.nil? || ip.to_s.empty?
 
           loopback_ip = Socket.ip_address_list.find { |ip| ip.ipv4_loopback? }
           private_ip = Socket.ip_address_list.find { |ip| ip.ipv4_private? }

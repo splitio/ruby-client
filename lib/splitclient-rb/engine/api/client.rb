@@ -30,9 +30,12 @@ module SplitIoClient
           req.headers = common_headers(api_key)
                         .merge('Content-Type' => 'application/json')
                         .merge(headers)
-                        
-          req.headers = req.headers.merge('SplitSDKMachineIP' => @config.machine_ip) unless @config.machine_ip.empty?
-          req.headers = req.headers.merge('SplitSDKMachineName' => @config.machine_name) unless @config.machine_name.empty?
+          
+          machine_ip = @config.machine_ip
+          machine_name = @config.machine_name
+
+          req.headers = req.headers.merge('SplitSDKMachineIP' => machine_ip) unless machine_ip.empty? || machine_ip == 'unknown'
+          req.headers = req.headers.merge('SplitSDKMachineName' => machine_name) unless machine_name.empty? || machine_name == 'unknown'
 
           req.body = data.to_json
 

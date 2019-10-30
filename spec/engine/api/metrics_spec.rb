@@ -8,7 +8,8 @@ describe SplitIoClient::Api::Metrics do
       logger: Logger.new(log),
       debug_enabled: true,
       transport_debug_enabled: true,
-      metrics_adapter: adapter
+      metrics_adapter: adapter,
+      machine_ip: 'mauro'
     )
   end
   let(:log) { StringIO.new }
