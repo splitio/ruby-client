@@ -69,8 +69,10 @@ module SplitIoClient
       @transport_debug_enabled = opts[:transport_debug_enabled] || SplitConfig.default_debug
       @block_until_ready = SplitConfig.default_block_until_ready
 
-      @machine_name = opts[:machine_name] || SplitConfig.machine_hostname
-      @machine_ip = opts[:machine_ip] || SplitConfig.machine_ip
+      @ip_addresses_enabled = opts[:ip_addresses_enabled].nil? ? SplitConfig.default_ip_addresses_enabled : opts[:ip_addresses_enabled]
+
+      @machine_name = SplitConfig.machine_hostname(@ip_addresses_enabled, opts[:machine_name], opts[:cache_adapter] || SplitConfig.default_cache_adapter)
+      @machine_ip = SplitConfig.machine_ip(@ip_addresses_enabled, opts[:machine_ip], opts[:cache_adapter] || SplitConfig.default_cache_adapter)
 
       @cache_ttl = opts[:cache_ttl] || SplitConfig.cache_ttl
       @max_cache_size = opts[:max_cache_size] || SplitConfig.max_cache_size
@@ -251,6 +253,8 @@ module SplitIoClient
 
     attr_accessor :localhost_mode
 
+    attr_accessor :ip_addresses_enabled
+
     #
     # The default split client configuration
     #
@@ -413,6 +417,14 @@ module SplitIoClient
     end
 
     #
+    # The default ip addresses enabled value
+    #
+    # @return [boolean]
+    def self.default_ip_addresses_enabled
+      true
+    end
+
+    #
     # The default transport_debug_enabled value
     #
     # @return [boolean]
@@ -478,23 +490,49 @@ module SplitIoClient
     # gets the hostname where the sdk gem is running
     #
     # @return [string]
-    def self.machine_hostname
-      Socket.gethostname
-    rescue
-      'localhost'.freeze
+    def self.machine_hostname(ip_addresses_enabled, machine_name, adapter)
+      if ip_addresses_enabled
+        begin
+          return machine_name || Socket.gethostname
+        rescue
+          return 'unknown'.freeze
+        end
+      else
+        case adapter
+        when :redis
+          return 'NA'.freeze
+        end
+      end
+      
+      return ''.freeze
     end
 
     #
     # gets the ip where the sdk gem is running
     #
     # @return [string]
-    def self.machine_ip
-      loopback_ip = Socket.ip_address_list.find { |ip| ip.ipv4_loopback? }
-      private_ip = Socket.ip_address_list.find { |ip| ip.ipv4_private? }
+    def self.machine_ip(ip_addresses_enabled, ip, adapter)
+      if ip_addresses_enabled
+        begin          
+          return ip unless ip.nil? || ip.to_s.empty?
 
-      addr_info = private_ip || loopback_ip
+          loopback_ip = Socket.ip_address_list.find { |ip| ip.ipv4_loopback? }
+          private_ip = Socket.ip_address_list.find { |ip| ip.ipv4_private? }
 
-      addr_info.ip_address
+          addr_info = private_ip || loopback_ip
+
+          return addr_info.ip_address
+        rescue
+          return 'unknown'.freeze
+        end
+      else
+        case adapter
+        when :redis
+          return 'NA'.freeze
+        end
+      end
+
+      return ''.freeze
     end
   end
 end
