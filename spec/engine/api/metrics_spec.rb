@@ -22,7 +22,7 @@ describe SplitIoClient::Api::Metrics do
     let!(:latency) { metrics_repository.add_latency('latency.test', 12, nil) }
     it 'post latencies' do
       stub_request(:post, 'https://events.split.io/api/metrics/time')
-        .with(headers: { 
+        .with(headers: {
                 'Authorization' => 'Bearer',
                 'SplitSDKVersion' => "#{config.language}-#{config.version}",
                 'Content-Type' => 'application/json',
@@ -91,7 +91,7 @@ describe SplitIoClient::Api::Metrics do
               })
         .to_return(status: 200, body: 'ok')
 
-      api.send(:post_latencies)      
+      api.send(:post_latencies)
       expect(metrics_repository.latencies.size).to eq 0
     end
   end
@@ -100,7 +100,7 @@ describe SplitIoClient::Api::Metrics do
     let!(:count) { metrics_repository.add_count('count.test', 12) }
     it 'post counts' do
       stub_request(:post, 'https://events.split.io/api/metrics/counter')
-        .with(headers: { 
+        .with(headers: {
                 'Authorization' => 'Bearer',
                 'SplitSDKVersion' => "#{config.language}-#{config.version}",
                 'Content-Type' => 'application/json',
@@ -178,7 +178,7 @@ describe SplitIoClient::Api::Metrics do
     it 'post without latencies nor counters' do
       stub_request(:post, 'https://events.split.io/api/metrics/counter')
         .with(headers: {
-                'Authorization' => "Bearer",
+                'Authorization' => 'Bearer',
                 'SplitSDKVersion' => "#{config.language}-#{config.version}",
                 'Content-Type' => 'application/json',
                 'SplitSDKMachineIP' => config.machine_ip,
@@ -195,9 +195,8 @@ describe SplitIoClient::Api::Metrics do
                 'SplitSDKMachineName' => config.machine_name
               })
         .to_return(status: 200, body: 'ok')
-      
-        metrics_api.post
 
+      metrics_api.post
       expect(log.string).to include 'No counts to report.'
       expect(log.string).to include 'No latencies to report.'
     end

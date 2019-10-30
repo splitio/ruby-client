@@ -32,7 +32,7 @@ describe SplitIoClient::Api::Events do
   context '#post' do
     it 'post events' do
       stub_request(:post, 'https://events.split.io/api/events/bulk')
-        .with(headers: { 
+        .with(headers: {
                 'Authorization' => 'Bearer',
                 'SplitSDKVersion' => "#{config.language}-#{config.version}",
                 'Content-Type' => 'application/json',

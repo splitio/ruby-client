@@ -160,11 +160,12 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
 
     it 'with ip_addresses_enabled set false' do
       custom_config = SplitIoClient::SplitConfig.new(
-          labels_enabled: true,
-        impressions_bulk_size: 2,
-        cache_adapter: :redis,
-        ip_addresses_enabled: false)
-  
+                        labels_enabled: true,
+                        impressions_bulk_size: 2,
+                        cache_adapter: :redis,
+                        ip_addresses_enabled: false
+                      )
+
       custom_repository = described_class.new(custom_config)
       custom_adapter = config.impressions_adapter
       other_treatment = { treatment: 'on', label: 'sample_rule_2', change_number: 1_533_177_602_748 }
@@ -174,7 +175,7 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
 
       custom_adapter.get_from_queue('SPLITIO.impressions', 0).map do |e|
         impression = JSON.parse(e, symbolize_names: true)
-        
+
         expect(impression[:m][:i]).to eq 'NA'
         expect(impression[:m][:n]).to eq 'NA'
       end

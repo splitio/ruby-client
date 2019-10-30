@@ -66,7 +66,7 @@ describe SplitIoClient::Api::Impressions do
       )
     end
 
-    it 'when ip_addresses_enabled is false' do 
+    it 'when ip_addresses_enabled is false' do
       custom_config = SplitIoClient::SplitConfig.new(
         logger: Logger.new(log),
         debug_enabled: true,
