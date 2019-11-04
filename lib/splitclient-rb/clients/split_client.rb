@@ -287,6 +287,8 @@ module SplitIoClient
 
       bucketing_key, matching_key = keys_from_key(key)
 
+      attributes = attributes || attributes.to_h
+
       return parsed_control_exception unless valid_client && @config.split_validator.valid_get_treatment_parameters(calling_method, key, split_name, matching_key, bucketing_key, attributes)
 
       bucketing_key = bucketing_key ? bucketing_key.to_s : nil
