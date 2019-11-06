@@ -56,6 +56,9 @@ describe SplitIoClient, type: :client do
     let(:configurations_json) do
       File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/engine/configurations.json'))
     end
+    let(:equal_to_set_matcher_json) do
+      File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/engine/equal_to_set_matcher.json'))
+    end
 
     before do
       @mode = cache_adapter.equal?(:memory) ? :standalone : :consumer
@@ -63,6 +66,45 @@ describe SplitIoClient, type: :client do
 
     before :each do
       Redis.new.flushall if @mode.equal?(:consumer)
+    end
+
+    context '#equal_to_set_matcher and get_treatment validation attributes' do
+      before do 
+        load_splits(equal_to_set_matcher_json)
+      end
+
+      it 'get_treatment_with_config returns off' do
+        expect(subject.get_treatment_with_config('nicolas', 'mauro_test', nil)).to eq(
+          treatment: 'off',
+          config: nil
+        )
+        expect(subject.get_treatment_with_config('nicolas', 'mauro_test')).to eq(
+          treatment: 'off',
+          config: nil
+        )
+        expect(subject.get_treatment_with_config('nicolas', 'mauro_test', {})).to eq(
+          treatment: 'off',
+          config: nil
+        )
+      end
+
+      it 'get_treatment returns off' do
+        expect(subject.get_treatment('nicolas', 'mauro_test', nil)).to eq 'off'
+        expect(subject.get_treatment('nicolas', 'mauro_test')).to eq 'off'
+        expect(subject.get_treatment('nicolas', 'mauro_test', {})).to eq 'off'
+      end 
+
+      it 'get_treatments returns off' do
+        expect(subject.get_treatments('nicolas', ['mauro_test'], nil)).to eq(
+          mauro_test: 'off'
+        )
+        expect(subject.get_treatments('nicolas', ['mauro_test'])).to eq(
+          mauro_test: 'off'
+        )
+        expect(subject.get_treatments('nicolas', ['mauro_test'], {})).to eq(
+          mauro_test: 'off'
+        )
+      end
     end
 
     context '#get_treatment' do
