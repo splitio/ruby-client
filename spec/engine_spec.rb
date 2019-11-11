@@ -69,7 +69,7 @@ describe SplitIoClient, type: :client do
     end
 
     context '#equal_to_set_matcher and get_treatment validation attributes' do
-      before do 
+      before do
         load_splits(equal_to_set_matcher_json)
       end
 
@@ -92,7 +92,7 @@ describe SplitIoClient, type: :client do
         expect(subject.get_treatment('nicolas', 'mauro_test', nil)).to eq 'off'
         expect(subject.get_treatment('nicolas', 'mauro_test')).to eq 'off'
         expect(subject.get_treatment('nicolas', 'mauro_test', {})).to eq 'off'
-      end 
+      end
 
       it 'get_treatments returns off' do
         expect(subject.get_treatments('nicolas', ['mauro_test'], nil)).to eq(
