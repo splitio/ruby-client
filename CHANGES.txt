@@ -5,6 +5,8 @@
  - Removed the disable_impressions configuration param.
  - Fixed an issue about Event properties were not sent to be.
  - Added ip_addresses_enabled to enable/disable sending MachineName and MachineIP headers when data is posted to Split Servers.
+ - Fixed an issue about attributes in matchers.
+ - Fixed an issue about find latencies.
 
 7.0.0 (Aug 23, 2019)
  - BREAKING CHANGE: block_until_ready is now a method in both split_client and split_manager that needs to be explicitly called. The block_until_ready parameter is now ignored if passed in the configuration, and defaults to 15s unless passed as a parameter of the block_until_ready method.
