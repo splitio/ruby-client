@@ -1,12 +1,12 @@
 7.0.1 (Oct 31, 2019)
  - Updated localhost mode so that parsing of test files results in JSON data for splits analogous to that returned by the Split backend.
- - Resulting localhost data is now used indifferently from actual backend data by the SDK code.
+ - Updated localhost mode to parse the mock data into Split objects to keep differences in operation to a minimum.
  - Removed specific spare code dealing with localhost operations.
  - Removed the disable_impressions configuration param.
  - Fixed an issue about Event properties were not sent to be.
  - Added ip_addresses_enabled to enable/disable sending MachineName and MachineIP headers when data is posted to Split Servers.
  - Fixed an issue about attributes in matchers.
- - Fixed an issue about find latencies.
+ - Fixed an issue about trying to access a nil property when sending telemetry metrics.
 
 7.0.0 (Aug 23, 2019)
  - BREAKING CHANGE: block_until_ready is now a method in both split_client and split_manager that needs to be explicitly called. The block_until_ready parameter is now ignored if passed in the configuration, and defaults to 15s unless passed as a parameter of the block_until_ready method.
