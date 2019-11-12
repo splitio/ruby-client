@@ -1,0 +1,122 @@
+{
+    "splits":[
+        {
+            "trafficTypeName": "user",
+            "name": "mauro_test",
+            "trafficAllocation": 100,
+            "trafficAllocationSeed": 1683824785,
+            "seed": 1681260525,
+            "status": "ACTIVE",
+            "killed": false,
+            "defaultTreatment": "off",
+            "changeNumber": 1573070783286,
+            "algo": 2,
+            "configurations": {},
+            "conditions": [
+            {
+                "conditionType": "WHITELIST",
+                "matcherGroup": {
+                "combiner": "AND",
+                "matchers": [
+                    {
+                    "keySelector": null,
+                    "matcherType": "WHITELIST",
+                    "negate": false,
+                    "userDefinedSegmentMatcherData": null,
+                    "whitelistMatcherData": {
+                        "whitelist": [
+                        "mauro"
+                        ]
+                    },
+                    "unaryNumericMatcherData": null,
+                    "betweenMatcherData": null,
+                    "booleanMatcherData": null,
+                    "dependencyMatcherData": null,
+                    "stringMatcherData": null
+                    }
+                ]
+                },
+                "partitions": [
+                {
+                    "treatment": "on",
+                    "size": 100
+                }
+                ],
+                "label": "whitelisted"
+            },
+            {
+                "conditionType": "ROLLOUT",
+                "matcherGroup": {
+                "combiner": "AND",
+                "matchers": [
+                    {
+                    "keySelector": {
+                        "trafficType": "user",
+                        "attribute": "contains_all"
+                    },
+                    "matcherType": "EQUAL_TO_SET",
+                    "negate": false,
+                    "userDefinedSegmentMatcherData": null,
+                    "whitelistMatcherData": {
+                        "whitelist": [
+                        "nicolas"
+                        ]
+                    },
+                    "unaryNumericMatcherData": null,
+                    "betweenMatcherData": null,
+                    "booleanMatcherData": null,
+                    "dependencyMatcherData": null,
+                    "stringMatcherData": null
+                    }
+                ]
+                },
+                "partitions": [
+                {
+                    "treatment": "on",
+                    "size": 0
+                },
+                {
+                    "treatment": "off",
+                    "size": 100
+                }
+                ],
+                "label": "contains_all exactly matches [nicolas]"
+            },
+            {
+                "conditionType": "ROLLOUT",
+                "matcherGroup": {
+                "combiner": "AND",
+                "matchers": [
+                    {
+                    "keySelector": {
+                        "trafficType": "user",
+                        "attribute": null
+                    },
+                    "matcherType": "ALL_KEYS",
+                    "negate": false,
+                    "userDefinedSegmentMatcherData": null,
+                    "whitelistMatcherData": null,
+                    "unaryNumericMatcherData": null,
+                    "betweenMatcherData": null,
+                    "booleanMatcherData": null,
+                    "dependencyMatcherData": null,
+                    "stringMatcherData": null
+                    }
+                ]
+                },
+                "partitions": [
+                {
+                    "treatment": "on",
+                    "size": 0
+                },
+                {
+                    "treatment": "off",
+                    "size": 100
+                }
+                ],
+                "label": "default rule"
+            }
+            ]
+        }
+    ]
+}
