@@ -74,10 +74,8 @@ module SplitIoClient
       @destroyed = true
     end
 
-    def store_impression(split_name, matching_key, bucketing_key, treatment, store_impressions, attributes)
+    def store_impression(split_name, matching_key, bucketing_key, treatment, attributes)
       time = (Time.now.to_f * 1000.0).to_i
-
-      return if @config.disable_impressions || !store_impressions
 
       @impressions_repository.add(
         matching_key,
@@ -133,7 +131,7 @@ module SplitIoClient
         end
       end
 
-      if ready? && !@splits_repository.traffic_type_exists(traffic_type_name)
+      if ready? && !@config.localhost_mode && !@splits_repository.traffic_type_exists(traffic_type_name)
         @config.logger.warn("track: Traffic Type #{traffic_type_name} " \
           "does not have any corresponding Splits in this environment, make sure you're tracking " \
           'your events to a valid traffic type defined in the Split console')
@@ -249,14 +247,12 @@ module SplitIoClient
       # Measure
       @adapter.metrics.time('sdk.' + calling_method, latency)
 
-      unless @config.disable_impressions
-        time = (Time.now.to_f * 1000.0).to_i
-        @impressions_repository.add_bulk(
-          matching_key, bucketing_key, treatments_labels_change_numbers, time
-        )
+      time = (Time.now.to_f * 1000.0).to_i
+      @impressions_repository.add_bulk(
+        matching_key, bucketing_key, treatments_labels_change_numbers, time
+      )
 
-        route_impressions(sanitized_split_names, matching_key, bucketing_key, time, treatments_labels_change_numbers, attributes)
-      end
+      route_impressions(sanitized_split_names, matching_key, bucketing_key, time, treatments_labels_change_numbers, attributes)
 
       split_names_keys = treatments_labels_change_numbers.keys
       treatments = treatments_labels_change_numbers.values.map do |v|
@@ -290,6 +286,8 @@ module SplitIoClient
         control_treatment.merge({ label: Engine::Models::Label::EXCEPTION }))
 
       bucketing_key, matching_key = keys_from_key(key)
+
+      attributes = parsed_attributes(attributes)
 
       return parsed_control_exception unless valid_client && @config.split_validator.valid_get_treatment_parameters(calling_method, key, split_name, matching_key, bucketing_key, attributes)
 
@@ -328,14 +326,15 @@ module SplitIoClient
         end
 
         latency = (Time.now - start) * 1000.0
-        store_impression(split_name, matching_key, bucketing_key, treatment_data, store_impressions, attributes)
+
+        store_impression(split_name, matching_key, bucketing_key, treatment_data, attributes) if store_impressions
 
         # Measure
         @adapter.metrics.time('sdk.' + calling_method, latency) unless multiple
       rescue StandardError => error
         @config.log_found_exception(__method__.to_s, error)
 
-        store_impression(split_name, matching_key, bucketing_key, control_treatment, store_impressions, attributes)
+        store_impression(split_name, matching_key, bucketing_key, control_treatment, attributes) if store_impressions
 
         return parsed_control_exception
       end
@@ -350,6 +349,10 @@ module SplitIoClient
     def ready?
       return @sdk_blocker.ready? if @sdk_blocker
       true
+    end
+
+    def parsed_attributes(attributes)
+      return attributes || attributes.to_h
     end
   end
 end

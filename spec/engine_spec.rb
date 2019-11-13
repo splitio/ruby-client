@@ -56,6 +56,9 @@ describe SplitIoClient, type: :client do
     let(:configurations_json) do
       File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/engine/configurations.json'))
     end
+    let(:equal_to_set_matcher_json) do
+      File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/engine/equal_to_set_matcher.json'))
+    end
 
     before do
       @mode = cache_adapter.equal?(:memory) ? :standalone : :consumer
@@ -63,6 +66,45 @@ describe SplitIoClient, type: :client do
 
     before :each do
       Redis.new.flushall if @mode.equal?(:consumer)
+    end
+
+    context '#equal_to_set_matcher and get_treatment validation attributes' do
+      before do
+        load_splits(equal_to_set_matcher_json)
+      end
+
+      it 'get_treatment_with_config returns off' do
+        expect(subject.get_treatment_with_config('nicolas', 'mauro_test', nil)).to eq(
+          treatment: 'off',
+          config: nil
+        )
+        expect(subject.get_treatment_with_config('nicolas', 'mauro_test')).to eq(
+          treatment: 'off',
+          config: nil
+        )
+        expect(subject.get_treatment_with_config('nicolas', 'mauro_test', {})).to eq(
+          treatment: 'off',
+          config: nil
+        )
+      end
+
+      it 'get_treatment returns off' do
+        expect(subject.get_treatment('nicolas', 'mauro_test', nil)).to eq 'off'
+        expect(subject.get_treatment('nicolas', 'mauro_test')).to eq 'off'
+        expect(subject.get_treatment('nicolas', 'mauro_test', {})).to eq 'off'
+      end
+
+      it 'get_treatments returns off' do
+        expect(subject.get_treatments('nicolas', ['mauro_test'], nil)).to eq(
+          mauro_test: 'off'
+        )
+        expect(subject.get_treatments('nicolas', ['mauro_test'])).to eq(
+          mauro_test: 'off'
+        )
+        expect(subject.get_treatments('nicolas', ['mauro_test'], {})).to eq(
+          mauro_test: 'off'
+        )
+      end
     end
 
     context '#get_treatment' do
@@ -244,7 +286,7 @@ describe SplitIoClient, type: :client do
         }
 
         expect(subject).to receive(:store_impression).with(
-          'test_feature', 'random_user_id', nil, treatment_data, true, {}
+          'test_feature', 'random_user_id', nil, treatment_data, {}
         ).once.and_call_original
 
         expect(subject.get_treatment('random_user_id', 'test_feature'))
@@ -631,35 +673,6 @@ describe SplitIoClient, type: :client do
         expect(formatted_impressions.find { |i| i[:testName] == :beta_feature }[:keyImpressions].size).to eq(6)
       end
 
-      context 'when impressions are disabled' do
-        subject do
-          mode = cache_adapter.equal?(:memory) ? :standalone : :consumer
-
-          SplitIoClient::SplitFactory.new('test_api_key',
-                                          logger: Logger.new('/dev/null'),
-                                          cache_adapter: cache_adapter,
-                                          redis_namespace: 'test',
-                                          impressions_queue_size: -1,
-                                          mode: mode).client
-        end
-        let(:impressions) { subject.instance_variable_get(:@impressions_repository).batch }
-
-        it 'works when impressions are disabled for get_treatments' do
-          expect(subject.get_treatments('21', %w[sample_feature beta_feature])).to eq(
-            sample_feature: 'off',
-            beta_feature: 'off'
-          )
-
-          expect(impressions).to eq([])
-        end
-
-        it 'works when impressions are disabled for get_treatment' do
-          expect(subject.get_treatment('21', 'sample_feature')).to eq('off')
-
-          expect(impressions).to eq([])
-        end
-      end
-
       context 'traffic allocations' do
         before do
           load_splits(traffic_allocation_json)
@@ -725,7 +738,7 @@ describe SplitIoClient, type: :client do
         allow(subject.instance_variable_get(:@impressions_repository))
           .to receive(:add).and_raise(Redis::CannotConnectError)
 
-        expect { subject.store_impression('', '', '', {}, '', '') }.not_to raise_error
+        expect { subject.store_impression('', '', '', {}, {}) }.not_to raise_error
       end
     end
 
@@ -970,11 +983,24 @@ describe SplitIoClient, type: :client do
                                         logger: Logger.new('/dev/null'),
                                         cache_adapter: :redis,
                                         redis_namespace: 'test',
+                                        max_cache_size: 1,
                                         mode: :consumer).client
       end
 
       it 'does not store splits' do
         expect(subject.instance_variable_get(:@adapter).splits_repository.splits.size).to eq(0)
+      end
+
+      # config.max_cache_size set to 1 forcing cache adapter to fallback to redis
+      it 'retrieves splits from redis adapter in a single mget call' do
+        load_splits(all_keys_matcher_json)
+
+        expect_any_instance_of(Redis)
+          .to receive(:mget).once.and_call_original
+        expect_any_instance_of(Redis)
+          .not_to receive(:get)
+
+        subject.get_treatments(222, %w[new_feature foo test_feature])
       end
     end
   end

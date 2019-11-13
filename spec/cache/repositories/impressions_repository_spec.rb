@@ -5,9 +5,6 @@ require 'set'
 
 describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
   RSpec.shared_examples 'Impressions Repository' do
-    let(:split_adapter) do
-      SplitIoClient::SplitAdapter.new(nil, nil, nil, nil, nil, nil)
-    end
     let(:ip) { config.machine_ip }
     let(:machine_name) { config.machine_name }
     let(:version) do
@@ -129,6 +126,8 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
 
     let(:treatment) { { treatment: 'on', label: 'sample_rule', change_number: 1_533_177_602_748 } }
 
+    let(:adapter) { config.impressions_adapter }
+
     before :each do
       Redis.new.flushall
     end
@@ -145,6 +144,41 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
 
       repository.add('matching_key', nil, :foo1, treatment, 1_478_113_516_002)
       expect(repository.batch).to eq([])
+    end
+
+    it 'with ip_addresses_enabled set true' do
+      other_treatment = { treatment: 'on', label: 'sample_rule_2', change_number: 1_533_177_602_748 }
+      repository.add('matching_key', nil, :foo1, treatment, 1_478_113_516_002)
+      repository.add('matching_key', nil, :foo2, other_treatment, 1_478_113_516_002)
+
+      adapter.get_from_queue('SPLITIO.impressions', 0).map do |e|
+        impression = JSON.parse(e, symbolize_names: true)
+        expect(impression[:m][:i]).to eq config.machine_ip
+        expect(impression[:m][:n]).to eq config.machine_name
+      end
+    end
+
+    it 'with ip_addresses_enabled set false' do
+      custom_config = SplitIoClient::SplitConfig.new(
+        labels_enabled: true,
+        impressions_bulk_size: 2,
+        cache_adapter: :redis,
+        ip_addresses_enabled: false
+      )
+
+      custom_repository = described_class.new(custom_config)
+      custom_adapter = config.impressions_adapter
+      other_treatment = { treatment: 'on', label: 'sample_rule_2', change_number: 1_533_177_602_748 }
+
+      custom_repository.add('matching_key', nil, :foo1, treatment, 1_478_113_516_002)
+      custom_repository.add('matching_key', nil, :foo2, other_treatment, 1_478_113_516_002)
+
+      custom_adapter.get_from_queue('SPLITIO.impressions', 0).map do |e|
+        impression = JSON.parse(e, symbolize_names: true)
+
+        expect(impression[:m][:i]).to eq 'NA'
+        expect(impression[:m][:n]).to eq 'NA'
+      end
     end
   end
 end

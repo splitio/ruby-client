@@ -52,3 +52,5 @@ dump.rdb
 
 # Ignore Appraisal gemfile.lock files
 /gemfiles/*.gemfile.lock
+
+release.sh

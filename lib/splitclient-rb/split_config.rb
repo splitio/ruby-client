@@ -38,7 +38,18 @@ module SplitIoClient
       )
       @connection_timeout = opts[:connection_timeout] || SplitConfig.default_connection_timeout
       @read_timeout = opts[:read_timeout] || SplitConfig.default_read_timeout
-      @features_refresh_rate = opts[:features_refresh_rate] || SplitConfig.default_features_refresh_rate
+
+      @logger = opts[:logger] || SplitConfig.default_logger
+
+      if(opts[:reload_rate])
+        @features_refresh_rate = opts[:reload_rate]
+        @logger.warn('Localhost mode: reload_rate will be deprecated soon in favor of ' \
+          'features_refresh_rate. Take a look in our documentation.'
+        )
+      else
+        @features_refresh_rate = opts[:features_refresh_rate] || SplitConfig.default_features_refresh_rate
+      end
+
       @segments_refresh_rate = opts[:segments_refresh_rate] || SplitConfig.default_segments_refresh_rate
       @metrics_refresh_rate = opts[:metrics_refresh_rate] || SplitConfig.default_metrics_refresh_rate
 
@@ -48,21 +59,20 @@ module SplitIoClient
         opts[:cache_adapter] || SplitConfig.default_cache_adapter, :queue_adapter, @impressions_queue_size, @redis_url
       )
       #Safeguard for users of older SDK versions.
-      @disable_impressions = @impressions_queue_size == -1
-      #Safeguard for users of older SDK versions.
       @impressions_bulk_size = opts[:impressions_bulk_size] || @impressions_queue_size > 0 ? @impressions_queue_size : 0
 
       @metrics_adapter = SplitConfig.init_cache_adapter(
         opts[:cache_adapter] || SplitConfig.default_cache_adapter, :map_adapter, nil, @redis_url
       )
 
-      @logger = opts[:logger] || SplitConfig.default_logger
       @debug_enabled = opts[:debug_enabled] || SplitConfig.default_debug
       @transport_debug_enabled = opts[:transport_debug_enabled] || SplitConfig.default_debug
       @block_until_ready = SplitConfig.default_block_until_ready
 
-      @machine_name = opts[:machine_name] || SplitConfig.machine_hostname
-      @machine_ip = opts[:machine_ip] || SplitConfig.machine_ip
+      @ip_addresses_enabled = opts[:ip_addresses_enabled].nil? ? SplitConfig.default_ip_addresses_enabled : opts[:ip_addresses_enabled]
+
+      @machine_name = SplitConfig.machine_hostname(@ip_addresses_enabled, opts[:machine_name], opts[:cache_adapter] || SplitConfig.default_cache_adapter)
+      @machine_ip = SplitConfig.machine_ip(@ip_addresses_enabled, opts[:machine_ip], opts[:cache_adapter] || SplitConfig.default_cache_adapter)
 
       @cache_ttl = opts[:cache_ttl] || SplitConfig.cache_ttl
       @max_cache_size = opts[:max_cache_size] || SplitConfig.max_cache_size
@@ -84,9 +94,14 @@ module SplitIoClient
       @events_adapter = SplitConfig.init_cache_adapter(
         opts[:cache_adapter] || SplitConfig.default_cache_adapter, :queue_adapter, @events_queue_size, @redis_url
       )
+
+      @split_file = opts[:split_file] || SplitConfig.default_split_file
+
       @valid_mode = true
       @split_logger = SplitIoClient::SplitLogger.new(self)
       @split_validator = SplitIoClient::Validators.new(self)
+      @localhost_mode = opts[:localhost_mode]
+
       startup_log
     end
 
@@ -209,12 +224,11 @@ module SplitIoClient
     attr_accessor :impression_listener_refresh_rate
 
     #
-    # How big the impressions queue is before dropping impressions. -1 to disable it.
+    # How big the impressions queue is before dropping impressions
     #
     # @return [Integer]
     attr_accessor :impressions_queue_size
     attr_accessor :impressions_bulk_size
-    attr_accessor :disable_impressions
 
     attr_accessor :redis_url
     attr_accessor :redis_namespace
@@ -234,6 +248,12 @@ module SplitIoClient
     #
     # @return [Integer]
     attr_accessor :events_queue_size
+
+    attr_accessor :split_file
+
+    attr_accessor :localhost_mode
+
+    attr_accessor :ip_addresses_enabled
 
     #
     # The default split client configuration
@@ -340,6 +360,14 @@ module SplitIoClient
       500
     end
 
+    def self.default_split_file
+      File.join(Dir.home, '.split')
+    end
+
+    def self.default_offline_refresh_rate
+      5
+    end
+
     #
     # The default logger object
     #
@@ -386,6 +414,14 @@ module SplitIoClient
     # @return [int]
     def self.default_block_until_ready
       15
+    end
+
+    #
+    # The default ip addresses enabled value
+    #
+    # @return [boolean]
+    def self.default_ip_addresses_enabled
+      true
     end
 
     #
@@ -454,23 +490,49 @@ module SplitIoClient
     # gets the hostname where the sdk gem is running
     #
     # @return [string]
-    def self.machine_hostname
-      Socket.gethostname
-    rescue
-      'localhost'.freeze
+    def self.machine_hostname(ip_addresses_enabled, machine_name, adapter)
+      if ip_addresses_enabled
+        begin
+          return machine_name || Socket.gethostname
+        rescue
+          return 'unknown'.freeze
+        end
+      else
+        case adapter
+        when :redis
+          return 'NA'.freeze
+        end
+      end
+      
+      return ''.freeze
     end
 
     #
     # gets the ip where the sdk gem is running
     #
     # @return [string]
-    def self.machine_ip
-      loopback_ip = Socket.ip_address_list.find { |ip| ip.ipv4_loopback? }
-      private_ip = Socket.ip_address_list.find { |ip| ip.ipv4_private? }
+    def self.machine_ip(ip_addresses_enabled, ip, adapter)
+      if ip_addresses_enabled
+        begin          
+          return ip unless ip.nil? || ip.to_s.empty?
 
-      addr_info = private_ip || loopback_ip
+          loopback_ip = Socket.ip_address_list.find { |ip| ip.ipv4_loopback? }
+          private_ip = Socket.ip_address_list.find { |ip| ip.ipv4_private? }
 
-      addr_info.ip_address
+          addr_info = private_ip || loopback_ip
+
+          return addr_info.ip_address
+        rescue
+          return 'unknown'.freeze
+        end
+      else
+        case adapter
+        when :redis
+          return 'NA'.freeze
+        end
+      end
+
+      return ''.freeze
     end
   end
 end

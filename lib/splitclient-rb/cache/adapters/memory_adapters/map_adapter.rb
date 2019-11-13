@@ -121,6 +121,10 @@ module SplitIoClient
             end
           end
 
+          def empty?
+            @map.empty?
+          end
+
           # This method is used in Redis adapter
           # "stubbing" it here to keep the interface
           def pipelined(&block)

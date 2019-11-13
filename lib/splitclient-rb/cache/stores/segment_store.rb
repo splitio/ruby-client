@@ -38,7 +38,7 @@ module SplitIoClient
               store_segments
               @config.logger.debug("Segment names: #{@segments_repository.used_segment_names.to_a}") if @config.debug_enabled
 
-              sleep_for = random_interval(@config.segments_refresh_rate)
+              sleep_for = StoreUtils.random_interval(@config.segments_refresh_rate)
               @config.logger.debug("Segments store is sleeping for: #{sleep_for} seconds") if @config.debug_enabled
               sleep(sleep_for)
             end
@@ -51,12 +51,6 @@ module SplitIoClient
           @sdk_blocker.segments_ready!
         rescue StandardError => error
           @config.log_found_exception(__method__.to_s, error)
-        end
-
-        def random_interval(interval)
-          random_factor = Random.new.rand(50..100) / 100.0
-
-          interval * random_factor
         end
 
         def segments_api

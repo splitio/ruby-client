@@ -34,7 +34,7 @@ module SplitIoClient
             loop do
               store_splits
 
-              sleep(random_interval(@config.features_refresh_rate))
+              sleep(StoreUtils.random_interval(@config.features_refresh_rate))
             end
           end
         end
@@ -55,12 +55,6 @@ module SplitIoClient
 
         rescue StandardError => error
           @config.log_found_exception(__method__.to_s, error)
-        end
-
-        def random_interval(interval)
-          random_factor = Random.new.rand(50..100) / 100.0
-
-          interval * random_factor
         end
 
         def splits_since(since)

@@ -30,6 +30,12 @@ module SplitIoClient
           req.headers = common_headers(api_key)
                         .merge('Content-Type' => 'application/json')
                         .merge(headers)
+          
+          machine_ip = @config.machine_ip
+          machine_name = @config.machine_name
+
+          req.headers = req.headers.merge('SplitSDKMachineIP' => machine_ip) unless machine_ip.empty? || machine_ip == 'unknown'
+          req.headers = req.headers.merge('SplitSDKMachineName' => machine_name) unless machine_name.empty? || machine_name == 'unknown'
 
           req.body = data.to_json
 
@@ -78,18 +84,7 @@ module SplitIoClient
         {
           'Authorization' => "Bearer #{api_key}",
           'SplitSDKVersion' => "#{@config.language}-#{@config.version}",
-          'SplitSDKMachineName' => @config.machine_name,
-          'SplitSDKMachineIP' => @config.machine_ip,
-          'Referer' => referer
         }
-      end
-
-      def referer
-        result = "#{@config.language}-#{@config.version}"
-
-        result = "#{result}::#{SplitIoClient::SplitConfig.machine_hostname}" unless SplitIoClient::SplitConfig.machine_hostname == 'localhost'
-
-        result
       end
     end
   end

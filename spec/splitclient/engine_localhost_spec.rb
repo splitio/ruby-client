@@ -8,18 +8,16 @@ describe SplitIoClient do
   let(:split_file) do
     ['local_feature local_treatment', 'local_feature2 local_treatment2', 'local_feature local_treatment_rewritten']
   end
-  let(:split_file2) do
-    ['local_feature local_treatment', 'local_feature2 local_treatment3', 'local_feature local_treatment_rewritten']
-  end
   let(:split_string) do
     "local_feature local_treatment\nlocal_feature2 local_treatment2\local_feature local_treatment_rewritten"
   end
 
   describe '#get_treatment_with_config' do
     before do
-      allow(File).to receive(:exists?).and_return(true)
-      allow(File).to receive(:open).and_return(split_file)
-      allow(File).to receive(:read).and_return(split_string)
+      allow(File).to receive(:open).and_call_original
+      allow(File).to receive(:open).with(@default_config.split_file).and_return(split_file)
+      allow(File).to receive(:read).and_call_original
+      allow(File).to receive(:read).with(@default_config.split_file).and_return(split_string)
     end
 
     let(:user_id_1) { 'my_random_user_id' }
@@ -33,14 +31,14 @@ describe SplitIoClient do
 
   describe '#get_treatment returns localhost mode' do
     before do
-      allow(File).to receive(:exists?).and_return(true)
-      allow(File).to receive(:open).and_return(split_file)
-      allow(File).to receive(:read).and_return(split_string)
+      allow(File).to receive(:open).and_call_original
+      allow(File).to receive(:open).with(@default_config.split_file).and_return(split_file)
+      allow(File).to receive(:read).and_call_original
+      allow(File).to receive(:read).with(@default_config.split_file).and_return(split_string)
     end
 
     let(:user_id_1) { 'my_random_user_id' }
     let(:user_id_2) { 'my_random_user_id' }
-    let(:reloaded_factory) { SplitIoClient::SplitFactoryBuilder.build('localhost', reload_rate: 0.1).client }
 
     it 'validates the feature has the correct treatment for any user id in local mode' do
       # Also testing in the following expectation, that the last line of a repeated treatment prevails
@@ -53,16 +51,6 @@ describe SplitIoClient do
         .to eq(SplitIoClient::Engine::Models::Treatment::CONTROL)
       expect(subject.get_treatment(user_id_2, 'non_existent_local_feature'))
         .to eq(SplitIoClient::Engine::Models::Treatment::CONTROL)
-    end
-
-    it 'receives updated features' do
-      skip if RUBY_PLATFORM == 'java'
-      expect(reloaded_factory.get_treatment(user_id_2, 'local_feature2')).to eq('local_treatment2')
-
-      allow(File).to receive(:open).and_return(split_file2)
-
-      sleep 0.2
-      expect(reloaded_factory.get_treatment(user_id_2, 'local_feature2')).to eq('local_treatment3')
     end
   end
 
@@ -140,9 +128,9 @@ describe SplitIoClient do
     describe '#get_treatments' do
       it 'returns corresponding treatments' do
         expect(subject.get_treatments('john_doe', %w[multiple_keys_feature single_key_feature invalid_feature])).to eq(
-          'multiple_keys_feature' => 'on',
-          'single_key_feature' => 'on',
-          'invalid_feature' => 'control'
+          multiple_keys_feature: 'on',
+          single_key_feature: 'on',
+          invalid_feature: 'control'
         )
       end
 
@@ -160,14 +148,14 @@ describe SplitIoClient do
         expect(subject.get_treatments_with_config(
                  'john_doe', %w[multiple_keys_feature single_key_feature invalid_feature]
                )).to eq(
-                 'multiple_keys_feature' => { treatment: 'on',
-                                              config: '{"desc":"this applies only to ON and only for john_doe' \
+                 multiple_keys_feature: { treatment: 'on',
+                                          config: '{"desc":"this applies only to ON and only for john_doe' \
                                                ' and jane_doe. The rest will receive OFF"}' },
-                 'single_key_feature' => { treatment: 'on',
-                                           config: '{"desc":"this applies only to ON and only for john_doe.' \
+                 single_key_feature: { treatment: 'on',
+                                       config: '{"desc":"this applies only to ON and only for john_doe.' \
                                    ' The rest will receive OFF"}' },
-                 'invalid_feature' => { treatment: 'control',
-                                        config: nil }
+                 invalid_feature: { treatment: 'control',
+                                    config: nil }
                )
       end
     end
