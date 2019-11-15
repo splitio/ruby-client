@@ -24,7 +24,7 @@ module SplitIoClient
           unless result[:splits].empty?
             @config.split_logger.log_if_debug("#{result[:splits].length} splits retrieved. since=#{since}")
           end
-          @config.split_logger.log_if_transport(result.to_s)
+          @config.split_logger.log_if_transport("Split changes response: #{result.to_s}")
 
           latency = (Time.now - start) * 1000.0
           @metrics.time(METRICS_PREFIX + '.time', latency)
