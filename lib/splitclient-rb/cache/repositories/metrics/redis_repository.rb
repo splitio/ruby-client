@@ -67,7 +67,7 @@ module SplitIoClient
 
           # introduced to fix incorrect latencies
           def fix_latencies
-            return if @adapter.exists?(impressions_metrics_key('lantencies.cleaned'))
+            return if @adapter.exists?(impressions_metrics_key('latencies.cleaned'))
 
             keys =[]
 
@@ -91,7 +91,7 @@ module SplitIoClient
               end
             end
 
-            @adapter.set_string(impressions_metrics_key('lantencies.cleaned'), '1')
+            @adapter.set_string(impressions_metrics_key('latencies.cleaned'), '1')
           end
 
           def latencies_to_be_deleted_key_pattern_prefix(key)

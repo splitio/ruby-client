@@ -152,7 +152,7 @@ describe SplitIoClient::Cache::Repositories::MetricsRepository do
 
       lc_key = "#{config.redis_namespace}"\
         "/#{config.language}-#{config.version}"\
-        "/#{config.machine_ip}/lantencies.cleaned"
+        "/#{config.machine_ip}/latencies.cleaned"
 
       expect(adapter.exists?(lc_key)).to be false
 
