@@ -53,7 +53,7 @@ module SplitIoClient
           unless segment[:removed].empty?
             @config.split_logger.log_if_debug("\'#{segment[:name]}\' #{segment[:removed].size} removed keys")
           end
-          @config.split_logger.log_if_transport(segment.to_s)
+          @config.split_logger.log_if_transport("Segment changes response: #{segment.to_s}")
 
           segment
         elsif response.status == 403

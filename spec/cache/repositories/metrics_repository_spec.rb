@@ -150,7 +150,15 @@ describe SplitIoClient::Cache::Repositories::MetricsRepository do
 
       expect(adapter.find_strings_by_pattern(latency_pattern).size).to eq 11
 
+      lc_key = "#{config.redis_namespace}"\
+        "/#{config.language}-#{config.version}"\
+        "/#{config.machine_ip}/latencies.cleaned"
+
+      expect(adapter.exists?(lc_key)).to be false
+
       repository.fix_latencies
+
+      expect(adapter.find_strings_by_pattern(latency_pattern).size).to eq 5
 
       expect(adapter.find_strings_by_pattern(latency_pattern)).to match_array(
         [
@@ -159,6 +167,26 @@ describe SplitIoClient::Cache::Repositories::MetricsRepository do
           keep_get_treatment_pattern3,
           keep_get_treatments_pattern,
           keep_get_treatments_with_config_pattern
+        ]
+      )
+
+      expect(adapter.exists?(lc_key)).to be true
+
+      # adding a incorrect pattern and check that enter in the if and does not remove it.
+      adapter.set_string(time_pattern, '33')
+
+      repository.fix_latencies
+
+      expect(adapter.find_strings_by_pattern(latency_pattern).size).to eq 6
+
+      expect(adapter.find_strings_by_pattern(latency_pattern)).to match_array(
+        [
+          keep_get_treatment_pattern1,
+          keep_get_treatment_pattern2,
+          keep_get_treatment_pattern3,
+          keep_get_treatments_pattern,
+          keep_get_treatments_with_config_pattern,
+          time_pattern
         ]
       )
     end
