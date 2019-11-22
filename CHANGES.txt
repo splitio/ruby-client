@@ -1,4 +1,5 @@
 7.0.2 (Nov 11, 2019)
+- Fixed an issue about empty logs.
 - Fixed an issue about reducing scan commands in redis.
 
 7.0.1 (Oct 31, 2019)
