@@ -168,7 +168,7 @@ describe SplitIoClient::Cache::Repositories::MetricsRepository do
           keep_get_treatments_pattern,
           keep_get_treatments_with_config_pattern
         ]
-      )    
+      )
 
       expect(adapter.exists?(lc_key)).to be true
 
