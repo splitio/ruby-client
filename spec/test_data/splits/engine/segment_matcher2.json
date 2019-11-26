@@ -34,7 +34,8 @@
                    "treatment":"control",
                    "size":0
                 }
-             ]
+             ],
+             "label": "default label"
           }
        ]
     },
@@ -72,7 +73,8 @@
                    "treatment":"control",
                    "size":0
                 }
-             ]
+             ],
+             "label": "default label"
           }
        ]
     },
@@ -110,7 +112,8 @@
                    "treatment":"control",
                    "size":0
                 }
-             ]
+             ],
+             "label": "default label"
           }
        ]
     }

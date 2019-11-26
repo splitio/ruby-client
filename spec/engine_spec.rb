@@ -201,7 +201,7 @@ describe SplitIoClient, type: :client do
       it 'returns CONTROL and label on nil key' do
         expect(subject.get_treatment(nil, 'test_feature', nil, nil, false, true)).to eq(
           treatment: SplitIoClient::Engine::Models::Treatment::CONTROL,
-          label: SplitIoClient::Engine::Models::Label::EXCEPTION,
+          label: nil,
           change_number: nil
         )
       end
@@ -252,7 +252,7 @@ describe SplitIoClient, type: :client do
       it 'returns CONTROL and label on nil split_name' do
         expect(subject.get_treatment('random_user_id', nil, nil, nil, false, true)).to eq(
           treatment: SplitIoClient::Engine::Models::Treatment::CONTROL,
-          label: SplitIoClient::Engine::Models::Label::EXCEPTION,
+          label: nil,
           change_number: nil
         )
       end
@@ -460,7 +460,7 @@ describe SplitIoClient, type: :client do
           new_feature: 'on', foo: SplitIoClient::Engine::Models::Treatment::CONTROL
         )
         impressions = subject.instance_variable_get(:@impressions_repository).batch
-        expect(impressions.map { |i| i[:i][:f] }).to match_array %i[foo new_feature]
+        expect(impressions.size).to eq(1)
       end
 
       it 'validates the feature is on for all ids multiple keys for integer key' do

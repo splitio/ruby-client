@@ -354,8 +354,7 @@ describe SplitIoClient do
       config = client.instance_variable_get(:@config)
       impressions = client.instance_variable_get(:@impressions_repository).batch
       
-      # TODO: impressions size is wrong. the exception impressions are not correctly. the correct size is 1.
-      expect(impressions.size).to eq 5
+      expect(impressions.size).to eq 1
       expect_impression(impressions[0],
         config.version,
         config.machine_ip,
@@ -377,8 +376,7 @@ describe SplitIoClient do
       config = client.instance_variable_get(:@config)
       impressions = client.instance_variable_get(:@impressions_repository).batch
       
-      # TODO: impressions size is wrong. the exception impressions are not correctly. the correct size is 1.
-      expect(impressions.size).to eq 2
+      expect(impressions.size).to eq 1
       expect_impression(impressions[0],
         config.version,
         config.machine_ip,
@@ -483,8 +481,7 @@ describe SplitIoClient do
       config = client.instance_variable_get(:@config)
       impressions = client.instance_variable_get(:@impressions_repository).batch
       
-      # TODO: impressions size is wrong. the exception impressions are not correctly. the correct size is 1.
-      expect(impressions.size).to eq 5
+      expect(impressions.size).to eq 1
       expect_impression(impressions[0],
         config.version,
         config.machine_ip,
@@ -512,8 +509,7 @@ describe SplitIoClient do
       config = client.instance_variable_get(:@config)
       impressions = client.instance_variable_get(:@impressions_repository).batch
       
-      # TODO: impressions size is wrong. the exception impressions are not correctly. the correct size is 1.
-      expect(impressions.size).to eq 2
+      expect(impressions.size).to eq 1
       expect_impression(impressions[0],
         config.version,
         config.machine_ip,
