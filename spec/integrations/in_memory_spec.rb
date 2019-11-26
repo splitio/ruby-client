@@ -4,7 +4,7 @@ require 'spec_helper'
 
 describe SplitIoClient do
   let(:factory) do
-      SplitIoClient::SplitFactory.new('test_api_key')
+    SplitIoClient::SplitFactory.new('test_api_key')
   end
 
   let(:log) { StringIO.new }
@@ -26,7 +26,7 @@ describe SplitIoClient do
   end
 
   let(:client) { factory.client }
-  
+
   context '#get_treatment' do
     before do
       mock_split_changes(splits)
@@ -46,26 +46,30 @@ describe SplitIoClient do
       impressions = client.instance_variable_get(:@impressions_repository).batch
 
       expect(impressions.size).to eq 2
-      expect_impression(impressions[0],
-        config.version,
-        config.machine_ip,
-        config.machine_name,
-        'nico_test',
-        'FACUNDO_TEST',
-        'on',
-        'whitelisted',
-        1506703262916
-      )
-      expect_impression(impressions[1],
-        config.version,
-        config.machine_ip,
-        config.machine_name,
-        'mauro_test',
-        'FACUNDO_TEST',
-        'off',
-        'in segment all',
-        1506703262916
-      )
+
+      actual_impression = {
+        version: config.version,
+        machine_ip: config.machine_ip,
+        machine_name: config.machine_name,
+        key: 'nico_test',
+        feature: 'FACUNDO_TEST',
+        treatment: 'on',
+        condition: 'whitelisted',
+        change_number: 1_506_703_262_916
+      }
+      expect_impression(impressions[0], actual_impression)
+
+      actual_impression = {
+        version: config.version,
+        machine_ip: config.machine_ip,
+        machine_name: config.machine_name,
+        key: 'mauro_test',
+        feature: 'FACUNDO_TEST',
+        treatment: 'off',
+        condition: 'in segment all',
+        change_number: 1_506_703_262_916
+      }
+      expect_impression(impressions[1], actual_impression)
     end
 
     it 'returns treatments with Test_Save_1 feature and check impressions' do
@@ -76,26 +80,30 @@ describe SplitIoClient do
       impressions = client.instance_variable_get(:@impressions_repository).batch
 
       expect(impressions.size).to eq 2
-      expect_impression(impressions[0],
-        config.version, 
-        config.machine_ip,
-        config.machine_name,
-        '1',
-        'Test_Save_1',
-        'on',
-        'whitelisted',
-        1503956389520
-      )
-      expect_impression(impressions[1],
-        config.version,
-        config.machine_ip,
-        config.machine_name,
-        '24',
-        'Test_Save_1',
-        'off',
-        'in segment all',
-        1503956389520
-      )
+
+      actual_impression = {
+        version: config.version,
+        machine_ip: config.machine_ip,
+        machine_name: config.machine_name,
+        key: '1',
+        feature: 'Test_Save_1',
+        treatment: 'on',
+        condition: 'whitelisted',
+        change_number: 1_503_956_389_520
+      }
+      expect_impression(impressions[0], actual_impression)
+
+      actual_impression = {
+        version: config.version,
+        machine_ip: config.machine_ip,
+        machine_name: config.machine_name,
+        key: '24',
+        feature: 'Test_Save_1',
+        treatment: 'off',
+        condition: 'in segment all',
+        change_number: 1_503_956_389_520
+      }
+      expect_impression(impressions[1], actual_impression)
     end
 
     it 'returns treatments with input validations' do
@@ -110,26 +118,30 @@ describe SplitIoClient do
       impressions = client.instance_variable_get(:@impressions_repository).batch
 
       expect(impressions.size).to eq 2
-      expect_impression(impressions[0],
-        config.version,
-        config.machine_ip,
-        config.machine_name,
-        'nico_test',
-        'FACUNDO_TEST',
-        'on',
-        'whitelisted',
-        1506703262916
-      )
-      expect_impression(impressions[1],
-        config.version,
-        config.machine_ip,
-        config.machine_name,
-        '24',
-        'Test_Save_1',
-        'off',
-        'in segment all',
-        1503956389520
-      )
+
+      actual_impression = {
+        version: config.version,
+        machine_ip: config.machine_ip,
+        machine_name: config.machine_name,
+        key: 'nico_test',
+        feature: 'FACUNDO_TEST',
+        treatment: 'on',
+        condition: 'whitelisted',
+        change_number: 1_506_703_262_916
+      }
+      expect_impression(impressions[0], actual_impression)
+
+      actual_impression = {
+        version: config.version,
+        machine_ip: config.machine_ip,
+        machine_name: config.machine_name,
+        key: '24',
+        feature: 'Test_Save_1',
+        treatment: 'off',
+        condition: 'in segment all',
+        change_number: 1_503_956_389_520
+      }
+      expect_impression(impressions[1], actual_impression)
     end
 
     it 'returns CONTROL with treatment doesnt exist' do
@@ -165,26 +177,30 @@ describe SplitIoClient do
       impressions = client.instance_variable_get(:@impressions_repository).batch
 
       expect(impressions.size).to eq 2
-      expect_impression(impressions[0],
-        config.version,
-        config.machine_ip,
-        config.machine_name,
-        'nico_test',
-        'FACUNDO_TEST',
-        'on',
-        'whitelisted',
-        1506703262916
-      )
-      expect_impression(impressions[1],
-        config.version,
-        config.machine_ip,
-        config.machine_name,
-        'mauro_test',
-        'FACUNDO_TEST',
-        'off',
-        'in segment all',
-        1506703262916
-      )
+
+      actual_impression = {
+        version: config.version,
+        machine_ip: config.machine_ip,
+        machine_name: config.machine_name,
+        key: 'nico_test',
+        feature: 'FACUNDO_TEST',
+        treatment: 'on',
+        condition: 'whitelisted',
+        change_number: 1_506_703_262_916
+      }
+      expect_impression(impressions[0], actual_impression)
+
+      actual_impression = {
+        version: config.version,
+        machine_ip: config.machine_ip,
+        machine_name: config.machine_name,
+        key: 'mauro_test',
+        feature: 'FACUNDO_TEST',
+        treatment: 'off',
+        condition: 'in segment all',
+        change_number: 1_506_703_262_916
+      }
+      expect_impression(impressions[1], actual_impression)
     end
 
     it 'returns treatments and configs with MAURO_TEST treatment and check impressions' do
@@ -201,26 +217,30 @@ describe SplitIoClient do
       impressions = client.instance_variable_get(:@impressions_repository).batch
 
       expect(impressions.size).to eq 2
-      expect_impression(impressions[0],
-        config.version,
-        config.machine_ip,
-        config.machine_name,
-        'mauro',
-        'MAURO_TEST',
-        'on',
-        'whitelisted',
-        1506703262966
-      )
-      expect_impression(impressions[1],
-        config.version,
-        config.machine_ip,
-        config.machine_name,
-        'test',
-        'MAURO_TEST',
-        'off',
-        'not in split',
-        1506703262966
-      )
+
+      actual_impression = {
+        version: config.version,
+        machine_ip: config.machine_ip,
+        machine_name: config.machine_name,
+        key: 'mauro',
+        feature: 'MAURO_TEST',
+        treatment: 'on',
+        condition: 'whitelisted',
+        change_number: 1_506_703_262_966
+      }
+      expect_impression(impressions[0], actual_impression)
+
+      actual_impression = {
+        version: config.version,
+        machine_ip: config.machine_ip,
+        machine_name: config.machine_name,
+        key: 'test',
+        feature: 'MAURO_TEST',
+        treatment: 'off',
+        condition: 'not in split',
+        change_number: 1_506_703_262_966
+      }
+      expect_impression(impressions[1], actual_impression)
     end
 
     it 'returns treatments with input validations' do
@@ -252,27 +272,31 @@ describe SplitIoClient do
       config = client.instance_variable_get(:@config)
       impressions = client.instance_variable_get(:@impressions_repository).batch
 
-      expect(impressions.size).to eq 2      
-      expect_impression(impressions[0],
-        config.version,
-        config.machine_ip,
-        config.machine_name,
-        'nico_test',
-        'FACUNDO_TEST',
-        'on',
-        'whitelisted',
-        1506703262916
-      )
-      expect_impression(impressions[1],
-        config.version,
-        config.machine_ip,
-        config.machine_name,
-        '24',
-        'Test_Save_1',
-        'off',
-        'in segment all',
-        1503956389520
-      )
+      expect(impressions.size).to eq 2
+
+      actual_impression = {
+        version: config.version,
+        machine_ip: config.machine_ip,
+        machine_name: config.machine_name,
+        key: 'nico_test',
+        feature: 'FACUNDO_TEST',
+        treatment: 'on',
+        condition: 'whitelisted',
+        change_number: 1_506_703_262_916
+      }
+      expect_impression(impressions[0], actual_impression)
+
+      actual_impression = {
+        version: config.version,
+        machine_ip: config.machine_ip,
+        machine_name: config.machine_name,
+        key: '24',
+        feature: 'Test_Save_1',
+        treatment: 'off',
+        condition: 'in segment all',
+        change_number: 1_503_956_389_520
+      }
+      expect_impression(impressions[1], actual_impression)
     end
 
     it 'returns CONTROL with treatment doesnt exist' do
@@ -298,8 +322,8 @@ describe SplitIoClient do
     end
 
     it 'returns treatments and check impressions' do
-      result = client.get_treatments('nico_test', ['FACUNDO_TEST', 'MAURO_TEST', 'Test_Save_1'])
-      
+      result = client.get_treatments('nico_test', %w[FACUNDO_TEST MAURO_TEST Test_Save_1])
+
       expect(result[:FACUNDO_TEST]).to eq 'on'
       expect(result[:MAURO_TEST]).to eq 'off'
       expect(result[:Test_Save_1]).to eq 'off'
@@ -308,36 +332,42 @@ describe SplitIoClient do
       impressions = client.instance_variable_get(:@impressions_repository).batch
 
       expect(impressions.size).to eq 3
-      expect_impression(impressions[0],
-        config.version,
-        config.machine_ip,
-        config.machine_name,
-        'nico_test',
-        :FACUNDO_TEST,
-        'on',
-        'whitelisted',
-        1506703262916
-      )
-      expect_impression(impressions[1],
-        config.version,
-        config.machine_ip,
-        config.machine_name,
-        'nico_test',
-        :MAURO_TEST,
-        'off',
-        'not in split',
-        1506703262966
-      )
-      expect_impression(impressions[2],
-        config.version,
-        config.machine_ip,
-        config.machine_name,
-        'nico_test',
-        :Test_Save_1,
-        'off',
-        'in segment all',
-        1503956389520
-      )
+
+      actual_impression = {
+        version: config.version,
+        machine_ip: config.machine_ip,
+        machine_name: config.machine_name,
+        key: 'nico_test',
+        feature: :FACUNDO_TEST,
+        treatment: 'on',
+        condition: 'whitelisted',
+        change_number: 1_506_703_262_916
+      }
+      expect_impression(impressions[0], actual_impression)
+
+      actual_impression = {
+        version: config.version,
+        machine_ip: config.machine_ip,
+        machine_name: config.machine_name,
+        key: 'nico_test',
+        feature: :MAURO_TEST,
+        treatment: 'off',
+        condition: 'not in split',
+        change_number: 1_506_703_262_966
+      }
+      expect_impression(impressions[1], actual_impression)
+
+      actual_impression = {
+        version: config.version,
+        machine_ip: config.machine_ip,
+        machine_name: config.machine_name,
+        key: 'nico_test',
+        feature: :Test_Save_1,
+        treatment: 'off',
+        condition: 'in segment all',
+        change_number: 1_503_956_389_520
+      }
+      expect_impression(impressions[2], actual_impression)
     end
 
     it 'returns treatments with input validation' do
@@ -353,40 +383,42 @@ describe SplitIoClient do
 
       config = client.instance_variable_get(:@config)
       impressions = client.instance_variable_get(:@impressions_repository).batch
-      
+      actual_impression = {
+        version: config.version,
+        machine_ip: config.machine_ip,
+        machine_name: config.machine_name,
+        key: 'nico_test',
+        feature: :FACUNDO_TEST,
+        treatment: 'on',
+        condition: 'whitelisted',
+        change_number: 1_506_703_262_916
+      }
+
       expect(impressions.size).to eq 1
-      expect_impression(impressions[0],
-        config.version,
-        config.machine_ip,
-        config.machine_name,
-        'nico_test',
-        :FACUNDO_TEST,
-        'on',
-        'whitelisted',
-        1506703262916
-      )
+      expect_impression(impressions[0], actual_impression)
     end
-    
+
     it 'returns CONTROL with treatment doesnt exist' do
-      result = client.get_treatments('nico_test', ['FACUNDO_TEST', 'random_treatment'])
+      result = client.get_treatments('nico_test', %w[FACUNDO_TEST random_treatment])
 
       expect(result[:FACUNDO_TEST]).to eq 'on'
       expect(result[:random_treatment]).to eq 'control'
 
       config = client.instance_variable_get(:@config)
       impressions = client.instance_variable_get(:@impressions_repository).batch
-      
+      actual_impression = {
+        version: config.version,
+        machine_ip: config.machine_ip,
+        machine_name: config.machine_name,
+        key: 'nico_test',
+        feature: :FACUNDO_TEST,
+        treatment: 'on',
+        condition: 'whitelisted',
+        change_number: 1_506_703_262_916
+      }
+
       expect(impressions.size).to eq 1
-      expect_impression(impressions[0],
-        config.version,
-        config.machine_ip,
-        config.machine_name,
-        'nico_test',
-        :FACUNDO_TEST,
-        'on',
-        'whitelisted',
-        1506703262916
-      )
+      expect_impression(impressions[0], actual_impression)
     end
   end
 
@@ -402,7 +434,7 @@ describe SplitIoClient do
     end
 
     it 'returns treatments and check impressions' do
-      result = client.get_treatments_with_config('nico_test', ['FACUNDO_TEST', 'MAURO_TEST', 'Test_Save_1'])
+      result = client.get_treatments_with_config('nico_test', %w[FACUNDO_TEST MAURO_TEST Test_Save_1])
       expect(result[:FACUNDO_TEST]).to eq(
         treatment: 'on',
         config: '{"color":"green"}'
@@ -420,42 +452,47 @@ describe SplitIoClient do
       impressions = client.instance_variable_get(:@impressions_repository).batch
 
       expect(impressions.size).to eq 3
-      expect_impression(impressions[0],
-        config.version,
-        config.machine_ip,
-        config.machine_name,
-        'nico_test',
-        :FACUNDO_TEST,
-        'on',
-        'whitelisted',
-        1506703262916
-      )
-      expect_impression(impressions[1],
-        config.version,
-        config.machine_ip,
-        config.machine_name,
-        'nico_test',
-        :MAURO_TEST,
-        'off',
-        'not in split',
-        1506703262966
-      )
-      expect_impression(impressions[2],
-        config.version,
-        config.machine_ip,
-        config.machine_name,
-        'nico_test',
-        :Test_Save_1,
-        'off',
-        'in segment all',
-        1503956389520
-      )
+      actual_impression = {
+        version: config.version,
+        machine_ip: config.machine_ip,
+        machine_name: config.machine_name,
+        key: 'nico_test',
+        feature: :FACUNDO_TEST,
+        treatment: 'on',
+        condition: 'whitelisted',
+        change_number: 1_506_703_262_916
+      }
+      expect_impression(impressions[0], actual_impression)
+
+      actual_impression = {
+        version: config.version,
+        machine_ip: config.machine_ip,
+        machine_name: config.machine_name,
+        key: 'nico_test',
+        feature: :MAURO_TEST,
+        treatment: 'off',
+        condition: 'not in split',
+        change_number: 1_506_703_262_966
+      }
+      expect_impression(impressions[1], actual_impression)
+
+      actual_impression = {
+        version: config.version,
+        machine_ip: config.machine_ip,
+        machine_name: config.machine_name,
+        key: 'nico_test',
+        feature: :Test_Save_1,
+        treatment: 'off',
+        condition: 'in segment all',
+        change_number: 1_503_956_389_520
+      }
+      expect_impression(impressions[2], actual_impression)
     end
 
     it 'returns treatments with input validation' do
-      result1 = client.get_treatments_with_config('nico_test', ['FACUNDO_TEST', '', nil])
-      result2 = client.get_treatments_with_config('', ['', 'MAURO_TEST', 'Test_Save_1'])
-      result3 = client.get_treatments_with_config(nil, ['', 'MAURO_TEST', 'Test_Save_1'])
+      result1 = client.get_treatments_with_config('nico_test', %w[FACUNDO_TEST "" nil])
+      result2 = client.get_treatments_with_config('', %w["" MAURO_TEST Test_Save_1])
+      result3 = client.get_treatments_with_config(nil, %w["" MAURO_TEST Test_Save_1])
 
       expect(result1[:FACUNDO_TEST]).to eq(
         treatment: 'on',
@@ -480,22 +517,23 @@ describe SplitIoClient do
 
       config = client.instance_variable_get(:@config)
       impressions = client.instance_variable_get(:@impressions_repository).batch
-      
+      actual_impression = {
+        version: config.version,
+        machine_ip: config.machine_ip,
+        machine_name: config.machine_name,
+        key: 'nico_test',
+        feature: :FACUNDO_TEST,
+        treatment: 'on',
+        condition: 'whitelisted',
+        change_number: 1_506_703_262_916
+      }
+
       expect(impressions.size).to eq 1
-      expect_impression(impressions[0],
-        config.version,
-        config.machine_ip,
-        config.machine_name,
-        'nico_test',
-        :FACUNDO_TEST,
-        'on',
-        'whitelisted',
-        1506703262916
-      )
+      expect_impression(impressions[0], actual_impression)
     end
-    
+
     it 'returns CONTROL with treatment doesnt exist' do
-      result = client.get_treatments_with_config('nico_test', ['FACUNDO_TEST', 'random_treatment'])
+      result = client.get_treatments_with_config('nico_test', %w[FACUNDO_TEST random_treatment])
 
       expect(result[:FACUNDO_TEST]).to eq(
         treatment: 'on',
@@ -508,23 +546,35 @@ describe SplitIoClient do
 
       config = client.instance_variable_get(:@config)
       impressions = client.instance_variable_get(:@impressions_repository).batch
-      
+      actual_impression = {
+        version: config.version,
+        machine_ip: config.machine_ip,
+        machine_name: config.machine_name,
+        key: 'nico_test',
+        feature: :FACUNDO_TEST,
+        treatment: 'on',
+        condition: 'whitelisted',
+        change_number: 1_506_703_262_916
+      }
+
       expect(impressions.size).to eq 1
-      expect_impression(impressions[0],
-        config.version,
-        config.machine_ip,
-        config.machine_name,
-        'nico_test',
-        :FACUNDO_TEST,
-        'on',
-        'whitelisted',
-        1506703262916
-      )
+      expect_impression(impressions[0], actual_impression)
     end
   end
 end
 
 private
+
+def expect_impression(imp, actual_imp)
+  expect(imp[:m][:s]).to eq "ruby-#{actual_imp[:version]}"
+  expect(imp[:m][:i]).to eq actual_imp[:machine_ip]
+  expect(imp[:m][:n]).to eq actual_imp[:machine_name]
+  expect(imp[:i][:k]).to eq actual_imp[:key]
+  expect(imp[:i][:f]).to eq actual_imp[:feature]
+  expect(imp[:i][:t]).to eq actual_imp[:treatment]
+  expect(imp[:i][:r]).to eq actual_imp[:condition]
+  expect(imp[:i][:c]).to eq actual_imp[:change_number]
+end
 
 def mock_split_changes(splits_json)
   stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
@@ -534,15 +584,4 @@ end
 def mock_segment_changes(segment_name, segment_json, since)
   stub_request(:get, "https://sdk.split.io/api/segmentChanges/#{segment_name}?since=#{since}")
     .to_return(status: 200, body: segment_json)
-end
-
-def expect_impression(impression, version, machine_ip, machine_name, key, feature, treatment, condition, change_number)
-  expect(impression[:m][:s]).to eq "ruby-#{version}"
-  expect(impression[:m][:i]).to eq machine_ip
-  expect(impression[:m][:n]).to eq machine_name
-  expect(impression[:i][:k]).to eq key
-  expect(impression[:i][:f]).to eq feature
-  expect(impression[:i][:t]).to eq treatment
-  expect(impression[:i][:r]).to eq condition
-  expect(impression[:i][:c]).to eq change_number
 end
