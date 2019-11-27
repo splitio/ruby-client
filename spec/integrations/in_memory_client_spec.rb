@@ -135,9 +135,9 @@ describe SplitIoClient do
       mock_split_changes_error
 
       expect(client.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'control'
-      
+
       impressions = client.instance_variable_get(:@impressions_repository).batch
-      
+
       expect(impressions.size).to eq 1
       expect(impressions[0][:m][:s]).to eq("ruby-#{config.version}")
       expect(impressions[0][:m][:i]).to eq(config.machine_ip)
@@ -283,9 +283,9 @@ describe SplitIoClient do
         treatment: 'control',
         config: nil
       )
-      
+
       impressions = client.instance_variable_get(:@impressions_repository).batch
-      
+
       expect(impressions.size).to eq 1
       expect(impressions[0][:m][:s]).to eq("ruby-#{config.version}")
       expect(impressions[0][:m][:i]).to eq(config.machine_ip)
@@ -388,9 +388,9 @@ describe SplitIoClient do
 
       expect(result[:FACUNDO_TEST]).to eq 'control'
       expect(result[:random_treatment]).to eq 'control'
-      
+
       impressions = client.instance_variable_get(:@impressions_repository).batch
-      
+
       expect(impressions.size).to eq 2
       expect(impressions[0][:m][:s]).to eq("ruby-#{config.version}")
       expect(impressions[0][:m][:i]).to eq(config.machine_ip)
@@ -572,9 +572,13 @@ describe SplitIoClient do
     end
   end
 
-  context "#track" do
+  context '#track' do
     it 'returns true' do
-      expect(client.track('key_1', 'traffic_type_1', 'event_type_1', 123, {property_1: 1, property_2: 2})).to be_truthy
+      properties = {
+        property_1: 1,
+        property_2: 2
+      }
+      expect(client.track('key_1', 'traffic_type_1', 'event_type_1', 123, properties)).to be_truthy
       expect(client.track('key_2', 'traffic_type_2', 'event_type_2', 125)).to be_truthy
 
       events = client.instance_variable_get(:@events_repository).batch
@@ -584,7 +588,7 @@ describe SplitIoClient do
       expect(events[0][:m][:s]).to eq("ruby-#{config.version}")
       expect(events[0][:m][:i]).to eq(config.machine_ip)
       expect(events[0][:m][:n]).to eq(config.machine_name)
-      expect(events[0][:e][:key]).to eq("key_1")
+      expect(events[0][:e][:key]).to eq('key_1')
       expect(events[0][:e][:trafficTypeName]).to eq('traffic_type_1')
       expect(events[0][:e][:eventTypeId]).to eq('event_type_1')
       expect(events[0][:e][:value]).to eq(123)
@@ -594,7 +598,7 @@ describe SplitIoClient do
       expect(events[1][:m][:s]).to eq("ruby-#{config.version}")
       expect(events[1][:m][:i]).to eq(config.machine_ip)
       expect(events[1][:m][:n]).to eq(config.machine_name)
-      expect(events[1][:e][:key]).to eq("key_2")
+      expect(events[1][:e][:key]).to eq('key_2')
       expect(events[1][:e][:trafficTypeName]).to eq('traffic_type_2')
       expect(events[1][:e][:eventTypeId]).to eq('event_type_2')
       expect(events[1][:e][:value]).to eq(125)
@@ -602,7 +606,11 @@ describe SplitIoClient do
     end
 
     it 'returns false with invalid data' do
-      expect(client.track('', 'traffic_type_1', 'event_type_1', 123, {property_1: 1, property_2: 2})).to be_falsey
+      properties = {
+        property_1: 1,
+        property_2: 2
+      }
+      expect(client.track('', 'traffic_type_1', 'event_type_1', 123, properties)).to be_falsey
       expect(client.track('key_2', nil, 'event_type_2', 125)).to be_falsey
       expect(client.track('key_3', 'traffic_type_3', '', 125)).to be_falsey
       expect(client.track('key_4', 'traffic_type_4', 'event_type_4', '')).to be_falsey
