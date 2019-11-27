@@ -57,7 +57,7 @@ describe SplitIoClient do
         condition: 'whitelisted',
         change_number: 1_506_703_262_916
       }
-      expect_impression(impressions[0], actual_impression)
+      assert_impression(impressions[0], actual_impression)
 
       actual_impression = {
         version: config.version,
@@ -69,7 +69,7 @@ describe SplitIoClient do
         condition: 'in segment all',
         change_number: 1_506_703_262_916
       }
-      expect_impression(impressions[1], actual_impression)
+      assert_impression(impressions[1], actual_impression)
     end
 
     it 'returns treatments with Test_Save_1 feature and check impressions' do
@@ -91,7 +91,7 @@ describe SplitIoClient do
         condition: 'whitelisted',
         change_number: 1_503_956_389_520
       }
-      expect_impression(impressions[0], actual_impression)
+      assert_impression(impressions[0], actual_impression)
 
       actual_impression = {
         version: config.version,
@@ -103,7 +103,7 @@ describe SplitIoClient do
         condition: 'in segment all',
         change_number: 1_503_956_389_520
       }
-      expect_impression(impressions[1], actual_impression)
+      assert_impression(impressions[1], actual_impression)
     end
 
     it 'returns treatments with input validations' do
@@ -129,7 +129,7 @@ describe SplitIoClient do
         condition: 'whitelisted',
         change_number: 1_506_703_262_916
       }
-      expect_impression(impressions[0], actual_impression)
+      assert_impression(impressions[0], actual_impression)
 
       actual_impression = {
         version: config.version,
@@ -141,7 +141,7 @@ describe SplitIoClient do
         condition: 'in segment all',
         change_number: 1_503_956_389_520
       }
-      expect_impression(impressions[1], actual_impression)
+      assert_impression(impressions[1], actual_impression)
     end
 
     it 'returns CONTROL with treatment doesnt exist' do
@@ -188,7 +188,7 @@ describe SplitIoClient do
         condition: 'whitelisted',
         change_number: 1_506_703_262_916
       }
-      expect_impression(impressions[0], actual_impression)
+      assert_impression(impressions[0], actual_impression)
 
       actual_impression = {
         version: config.version,
@@ -200,7 +200,7 @@ describe SplitIoClient do
         condition: 'in segment all',
         change_number: 1_506_703_262_916
       }
-      expect_impression(impressions[1], actual_impression)
+      assert_impression(impressions[1], actual_impression)
     end
 
     it 'returns treatments and configs with MAURO_TEST treatment and check impressions' do
@@ -228,7 +228,7 @@ describe SplitIoClient do
         condition: 'whitelisted',
         change_number: 1_506_703_262_966
       }
-      expect_impression(impressions[0], actual_impression)
+      assert_impression(impressions[0], actual_impression)
 
       actual_impression = {
         version: config.version,
@@ -240,7 +240,7 @@ describe SplitIoClient do
         condition: 'not in split',
         change_number: 1_506_703_262_966
       }
-      expect_impression(impressions[1], actual_impression)
+      assert_impression(impressions[1], actual_impression)
     end
 
     it 'returns treatments with input validations' do
@@ -284,7 +284,7 @@ describe SplitIoClient do
         condition: 'whitelisted',
         change_number: 1_506_703_262_916
       }
-      expect_impression(impressions[0], actual_impression)
+      assert_impression(impressions[0], actual_impression)
 
       actual_impression = {
         version: config.version,
@@ -296,7 +296,7 @@ describe SplitIoClient do
         condition: 'in segment all',
         change_number: 1_503_956_389_520
       }
-      expect_impression(impressions[1], actual_impression)
+      assert_impression(impressions[1], actual_impression)
     end
 
     it 'returns CONTROL with treatment doesnt exist' do
@@ -343,7 +343,7 @@ describe SplitIoClient do
         condition: 'whitelisted',
         change_number: 1_506_703_262_916
       }
-      expect_impression(impressions[0], actual_impression)
+      assert_impression(impressions[0], actual_impression)
 
       actual_impression = {
         version: config.version,
@@ -355,7 +355,7 @@ describe SplitIoClient do
         condition: 'not in split',
         change_number: 1_506_703_262_966
       }
-      expect_impression(impressions[1], actual_impression)
+      assert_impression(impressions[1], actual_impression)
 
       actual_impression = {
         version: config.version,
@@ -367,7 +367,7 @@ describe SplitIoClient do
         condition: 'in segment all',
         change_number: 1_503_956_389_520
       }
-      expect_impression(impressions[2], actual_impression)
+      assert_impression(impressions[2], actual_impression)
     end
 
     it 'returns treatments with input validation' do
@@ -395,7 +395,7 @@ describe SplitIoClient do
       }
 
       expect(impressions.size).to eq 1
-      expect_impression(impressions[0], actual_impression)
+      assert_impression(impressions[0], actual_impression)
     end
 
     it 'returns CONTROL with treatment doesnt exist' do
@@ -418,7 +418,7 @@ describe SplitIoClient do
       }
 
       expect(impressions.size).to eq 1
-      expect_impression(impressions[0], actual_impression)
+      assert_impression(impressions[0], actual_impression)
     end
   end
 
@@ -462,7 +462,7 @@ describe SplitIoClient do
         condition: 'whitelisted',
         change_number: 1_506_703_262_916
       }
-      expect_impression(impressions[0], actual_impression)
+      assert_impression(impressions[0], actual_impression)
 
       actual_impression = {
         version: config.version,
@@ -474,7 +474,7 @@ describe SplitIoClient do
         condition: 'not in split',
         change_number: 1_506_703_262_966
       }
-      expect_impression(impressions[1], actual_impression)
+      assert_impression(impressions[1], actual_impression)
 
       actual_impression = {
         version: config.version,
@@ -486,7 +486,7 @@ describe SplitIoClient do
         condition: 'in segment all',
         change_number: 1_503_956_389_520
       }
-      expect_impression(impressions[2], actual_impression)
+      assert_impression(impressions[2], actual_impression)
     end
 
     it 'returns treatments with input validation' do
@@ -529,7 +529,7 @@ describe SplitIoClient do
       }
 
       expect(impressions.size).to eq 1
-      expect_impression(impressions[0], actual_impression)
+      assert_impression(impressions[0], actual_impression)
     end
 
     it 'returns CONTROL with treatment doesnt exist' do
@@ -558,23 +558,12 @@ describe SplitIoClient do
       }
 
       expect(impressions.size).to eq 1
-      expect_impression(impressions[0], actual_impression)
+      assert_impression(impressions[0], actual_impression)
     end
   end
 end
 
 private
-
-def expect_impression(imp, actual_imp)
-  expect(imp[:m][:s]).to eq "ruby-#{actual_imp[:version]}"
-  expect(imp[:m][:i]).to eq actual_imp[:machine_ip]
-  expect(imp[:m][:n]).to eq actual_imp[:machine_name]
-  expect(imp[:i][:k]).to eq actual_imp[:key]
-  expect(imp[:i][:f]).to eq actual_imp[:feature]
-  expect(imp[:i][:t]).to eq actual_imp[:treatment]
-  expect(imp[:i][:r]).to eq actual_imp[:condition]
-  expect(imp[:i][:c]).to eq actual_imp[:change_number]
-end
 
 def mock_split_changes(splits_json)
   stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
@@ -584,4 +573,15 @@ end
 def mock_segment_changes(segment_name, segment_json, since)
   stub_request(:get, "https://sdk.split.io/api/segmentChanges/#{segment_name}?since=#{since}")
     .to_return(status: 200, body: segment_json)
+end
+
+def assert_impression(imp, actual_imp)
+  expect(imp[:m][:s]).to eq("ruby-#{actual_imp[:version]}")
+  expect(imp[:m][:i]).to eq(actual_imp[:machine_ip])
+  expect(imp[:m][:n]).to eq(actual_imp[:machine_name])
+  expect(imp[:i][:k]).to eq(actual_imp[:key])
+  expect(imp[:i][:f]).to eq(actual_imp[:feature])
+  expect(imp[:i][:t]).to eq(actual_imp[:treatment])
+  expect(imp[:i][:r]).to eq(actual_imp[:condition])
+  expect(imp[:i][:c]).to eq(actual_imp[:change_number])
 end
