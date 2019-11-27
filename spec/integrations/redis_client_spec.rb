@@ -33,6 +33,7 @@ describe SplitIoClient do
   end
 
   let(:client) { factory.client }
+  let(:config) { client.instance_variable_get(:@config) }
 
   before do
     load_splits_redis(splits)
@@ -46,7 +47,6 @@ describe SplitIoClient do
       expect(client.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
       expect(client.get_treatment('mauro_test', 'FACUNDO_TEST')).to eq 'off'
 
-      config = client.instance_variable_get(:@config)
       impressions = client.instance_variable_get(:@impressions_repository).batch
 
       expect(impressions.size).to eq 2
@@ -74,7 +74,6 @@ describe SplitIoClient do
       expect(client.get_treatment('1', 'Test_Save_1')).to eq 'on'
       expect(client.get_treatment('24', 'Test_Save_1')).to eq 'off'
 
-      config = client.instance_variable_get(:@config)
       impressions = client.instance_variable_get(:@impressions_repository).batch
 
       expect(impressions.size).to eq 2
@@ -106,7 +105,6 @@ describe SplitIoClient do
       expect(client.get_treatment('1', nil)).to eq 'control'
       expect(client.get_treatment('24', 'Test_Save_1')).to eq 'off'
 
-      config = client.instance_variable_get(:@config)
       impressions = client.instance_variable_get(:@impressions_repository).batch
 
       expect(impressions.size).to eq 2
@@ -149,7 +147,6 @@ describe SplitIoClient do
         config: nil
       )
 
-      config = client.instance_variable_get(:@config)
       impressions = client.instance_variable_get(:@impressions_repository).batch
 
       expect(impressions.size).to eq 2
@@ -183,7 +180,6 @@ describe SplitIoClient do
         config: '{"version":"v1"}'
       )
 
-      config = client.instance_variable_get(:@config)
       impressions = client.instance_variable_get(:@impressions_repository).batch
 
       expect(impressions.size).to eq 2
@@ -233,7 +229,6 @@ describe SplitIoClient do
         config: nil
       )
 
-      config = client.instance_variable_get(:@config)
       impressions = client.instance_variable_get(:@impressions_repository).batch
 
       expect(impressions.size).to eq 2
@@ -276,7 +271,6 @@ describe SplitIoClient do
       expect(result[:MAURO_TEST]).to eq 'off'
       expect(result[:Test_Save_1]).to eq 'off'
 
-      config = client.instance_variable_get(:@config)
       impressions = client.instance_variable_get(:@impressions_repository).batch
 
       expect(impressions.size).to eq 3
@@ -320,7 +314,6 @@ describe SplitIoClient do
       expect(result3[:MAURO_TEST]).to eq 'control'
       expect(result3[:Test_Save_1]).to eq 'control'
 
-      config = client.instance_variable_get(:@config)
       impressions = client.instance_variable_get(:@impressions_repository).batch
 
       expect(impressions.size).to eq 1
@@ -340,7 +333,6 @@ describe SplitIoClient do
       expect(result[:FACUNDO_TEST]).to eq 'on'
       expect(result[:random_treatment]).to eq 'control'
 
-      config = client.instance_variable_get(:@config)
       impressions = client.instance_variable_get(:@impressions_repository).batch
 
       expect(impressions.size).to eq 1
@@ -371,7 +363,6 @@ describe SplitIoClient do
         config: nil
       )
 
-      config = client.instance_variable_get(:@config)
       impressions = client.instance_variable_get(:@impressions_repository).batch
 
       expect(impressions.size).to eq 3
@@ -429,7 +420,6 @@ describe SplitIoClient do
         config: nil
       )
 
-      config = client.instance_variable_get(:@config)
       impressions = client.instance_variable_get(:@impressions_repository).batch
 
       expect(impressions.size).to eq 1
@@ -455,7 +445,6 @@ describe SplitIoClient do
         config: nil
       )
 
-      config = client.instance_variable_get(:@config)
       impressions = client.instance_variable_get(:@impressions_repository).batch
 
       expect(impressions.size).to eq 1
@@ -467,6 +456,48 @@ describe SplitIoClient do
       expect(impressions[0][:i][:t]).to eq('on')
       expect(impressions[0][:i][:r]).to eq('whitelisted')
       expect(impressions[0][:i][:c]).to eq(1_506_703_262_916)
+    end
+  end
+
+  context "#track" do
+    it 'returns true' do
+      expect(client.track('key_1', 'traffic_type_1', 'event_type_1', 123, {property_1: 1, property_2: 2})).to be_truthy
+      expect(client.track('key_2', 'traffic_type_2', 'event_type_2', 125)).to be_truthy
+
+      events = client.instance_variable_get(:@events_repository).batch
+
+      expect(events.size).to eq 2
+
+      expect(events[0][:m][:s]).to eq("ruby-#{config.version}")
+      expect(events[0][:m][:i]).to eq(config.machine_ip)
+      expect(events[0][:m][:n]).to eq(config.machine_name)
+      expect(events[0][:e][:key]).to eq("key_1")
+      expect(events[0][:e][:trafficTypeName]).to eq('traffic_type_1')
+      expect(events[0][:e][:eventTypeId]).to eq('event_type_1')
+      expect(events[0][:e][:value]).to eq(123)
+      expect(events[0][:e][:properties][:property_1]).to eq(1)
+      expect(events[0][:e][:properties][:property_2]).to eq(2)
+
+      expect(events[1][:m][:s]).to eq("ruby-#{config.version}")
+      expect(events[1][:m][:i]).to eq(config.machine_ip)
+      expect(events[1][:m][:n]).to eq(config.machine_name)
+      expect(events[1][:e][:key]).to eq("key_2")
+      expect(events[1][:e][:trafficTypeName]).to eq('traffic_type_2')
+      expect(events[1][:e][:eventTypeId]).to eq('event_type_2')
+      expect(events[1][:e][:value]).to eq(125)
+      expect(events[1][:e][:properties].nil?).to be_truthy
+    end
+
+    it 'returns false with invalid data' do
+      expect(client.track('', 'traffic_type_1', 'event_type_1', 123, {property_1: 1, property_2: 2})).to be_falsey
+      expect(client.track('key_2', nil, 'event_type_2', 125)).to be_falsey
+      expect(client.track('key_3', 'traffic_type_3', '', 125)).to be_falsey
+      expect(client.track('key_4', 'traffic_type_4', 'event_type_4', '')).to be_falsey
+      expect(client.track('key_5', 'traffic_type_5', 'event_type_5', 555, '')).to be_falsey
+
+      events = client.instance_variable_get(:@events_repository).batch
+
+      expect(events.size).to eq 0
     end
   end
 end
