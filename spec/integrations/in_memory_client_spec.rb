@@ -130,6 +130,24 @@ describe SplitIoClient do
       impressions = client.instance_variable_get(:@impressions_repository).batch
       expect(impressions.size).to eq 0
     end
+
+    it 'returns CONTROL when server return 500' do
+      mock_split_changes_error
+
+      expect(client.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'control'
+      
+      impressions = client.instance_variable_get(:@impressions_repository).batch
+      
+      expect(impressions.size).to eq 1
+      expect(impressions[0][:m][:s]).to eq("ruby-#{config.version}")
+      expect(impressions[0][:m][:i]).to eq(config.machine_ip)
+      expect(impressions[0][:m][:n]).to eq(config.machine_name)
+      expect(impressions[0][:i][:k]).to eq('nico_test')
+      expect(impressions[0][:i][:f]).to eq('FACUNDO_TEST')
+      expect(impressions[0][:i][:t]).to eq('control')
+      expect(impressions[0][:i][:r]).to eq('not ready')
+      expect(impressions[0][:i][:c]).to eq(nil)
+    end
   end
 
   context '#get_treatment_with_config' do
@@ -257,6 +275,27 @@ describe SplitIoClient do
       impressions = client.instance_variable_get(:@impressions_repository).batch
       expect(impressions.size).to eq 0
     end
+
+    it 'returns CONTROL when server return 500' do
+      mock_split_changes_error
+
+      expect(client.get_treatment_with_config('nico_test', 'FACUNDO_TEST')).to eq(
+        treatment: 'control',
+        config: nil
+      )
+      
+      impressions = client.instance_variable_get(:@impressions_repository).batch
+      
+      expect(impressions.size).to eq 1
+      expect(impressions[0][:m][:s]).to eq("ruby-#{config.version}")
+      expect(impressions[0][:m][:i]).to eq(config.machine_ip)
+      expect(impressions[0][:m][:n]).to eq(config.machine_name)
+      expect(impressions[0][:i][:k]).to eq('nico_test')
+      expect(impressions[0][:i][:f]).to eq('FACUNDO_TEST')
+      expect(impressions[0][:i][:t]).to eq('control')
+      expect(impressions[0][:i][:r]).to eq('not ready')
+      expect(impressions[0][:i][:c]).to eq(nil)
+    end
   end
 
   context '#get_treatments' do
@@ -340,6 +379,36 @@ describe SplitIoClient do
       expect(impressions[0][:i][:t]).to eq('on')
       expect(impressions[0][:i][:r]).to eq('whitelisted')
       expect(impressions[0][:i][:c]).to eq(1_506_703_262_916)
+    end
+
+    it 'returns CONTROL when server return 500' do
+      mock_split_changes_error
+
+      result = client.get_treatments('nico_test', %w[FACUNDO_TEST random_treatment])
+
+      expect(result[:FACUNDO_TEST]).to eq 'control'
+      expect(result[:random_treatment]).to eq 'control'
+      
+      impressions = client.instance_variable_get(:@impressions_repository).batch
+      
+      expect(impressions.size).to eq 2
+      expect(impressions[0][:m][:s]).to eq("ruby-#{config.version}")
+      expect(impressions[0][:m][:i]).to eq(config.machine_ip)
+      expect(impressions[0][:m][:n]).to eq(config.machine_name)
+      expect(impressions[0][:i][:k]).to eq('nico_test')
+      expect(impressions[0][:i][:f]).to eq(:FACUNDO_TEST)
+      expect(impressions[0][:i][:t]).to eq('control')
+      expect(impressions[0][:i][:r]).to eq('not ready')
+      expect(impressions[0][:i][:c]).to eq(nil)
+
+      expect(impressions[1][:m][:s]).to eq("ruby-#{config.version}")
+      expect(impressions[1][:m][:i]).to eq(config.machine_ip)
+      expect(impressions[1][:m][:n]).to eq(config.machine_name)
+      expect(impressions[1][:i][:k]).to eq('nico_test')
+      expect(impressions[1][:i][:f]).to eq(:random_treatment)
+      expect(impressions[1][:i][:t]).to eq('control')
+      expect(impressions[1][:i][:r]).to eq('not ready')
+      expect(impressions[1][:i][:c]).to eq(nil)
     end
   end
 
@@ -453,6 +522,54 @@ describe SplitIoClient do
       expect(impressions[0][:i][:r]).to eq('whitelisted')
       expect(impressions[0][:i][:c]).to eq(1_506_703_262_916)
     end
+
+    it 'returns CONTROL when server return 500' do
+      mock_split_changes_error
+
+      result = client.get_treatments_with_config('nico_test', %w[FACUNDO_TEST MAURO_TEST Test_Save_1])
+      expect(result[:FACUNDO_TEST]).to eq(
+        treatment: 'control',
+        config: nil
+      )
+      expect(result[:MAURO_TEST]).to eq(
+        treatment: 'control',
+        config: nil
+      )
+      expect(result[:Test_Save_1]).to eq(
+        treatment: 'control',
+        config: nil
+      )
+
+      impressions = client.instance_variable_get(:@impressions_repository).batch
+
+      expect(impressions.size).to eq 3
+      expect(impressions[0][:m][:s]).to eq("ruby-#{config.version}")
+      expect(impressions[0][:m][:i]).to eq(config.machine_ip)
+      expect(impressions[0][:m][:n]).to eq(config.machine_name)
+      expect(impressions[0][:i][:k]).to eq('nico_test')
+      expect(impressions[0][:i][:f]).to eq(:FACUNDO_TEST)
+      expect(impressions[0][:i][:t]).to eq('control')
+      expect(impressions[0][:i][:r]).to eq('not ready')
+      expect(impressions[0][:i][:c]).to eq(nil)
+
+      expect(impressions[1][:m][:s]).to eq("ruby-#{config.version}")
+      expect(impressions[1][:m][:i]).to eq(config.machine_ip)
+      expect(impressions[1][:m][:n]).to eq(config.machine_name)
+      expect(impressions[1][:i][:k]).to eq('nico_test')
+      expect(impressions[1][:i][:f]).to eq(:MAURO_TEST)
+      expect(impressions[1][:i][:t]).to eq('control')
+      expect(impressions[1][:i][:r]).to eq('not ready')
+      expect(impressions[1][:i][:c]).to eq(nil)
+
+      expect(impressions[2][:m][:s]).to eq("ruby-#{config.version}")
+      expect(impressions[2][:m][:i]).to eq(config.machine_ip)
+      expect(impressions[2][:m][:n]).to eq(config.machine_name)
+      expect(impressions[2][:i][:k]).to eq('nico_test')
+      expect(impressions[2][:i][:f]).to eq(:Test_Save_1)
+      expect(impressions[2][:i][:t]).to eq('control')
+      expect(impressions[2][:i][:r]).to eq('not ready')
+      expect(impressions[2][:i][:c]).to eq(nil)
+    end
   end
 
   context "#track" do
@@ -503,6 +620,11 @@ private
 def mock_split_changes(splits_json)
   stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
     .to_return(status: 200, body: splits_json)
+end
+
+def mock_split_changes_error
+  stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+    .to_return(status: 500)
 end
 
 def mock_segment_changes(segment_name, segment_json, since)
