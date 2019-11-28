@@ -25,6 +25,12 @@ module SplitIoClient
             @size = 0
             @adapter.clear
           end
+
+          def batch
+            return [] if @config.events_queue_size.zero?
+
+            @adapter.get_batch(@config.events_queue_size)
+          end
         end
       end
     end

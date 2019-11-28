@@ -34,7 +34,7 @@ module SplitIoClient
             change_number: impressions[:treatments_labels_change_numbers][split_name.to_sym][:change_number]
           },
           attributes: impressions[:attributes]
-        )
+        ) unless impressions[:treatments_labels_change_numbers][split_name.to_sym].nil?
       end
     end
 

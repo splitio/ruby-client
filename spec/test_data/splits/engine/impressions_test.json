@@ -37,7 +37,8 @@
                    "treatment":"off",
                    "size":100
                 }
-             ]
+             ],
+             "label": "default label"
           }
        ]
     },
@@ -78,7 +79,8 @@
                    "treatment":"off",
                    "size":100
                 }
-             ]
+             ],
+             "label": "default label"
           }
        ]
     }
