@@ -1,3 +1,7 @@
+7.0.3 (Dec 6, 2019)
+- Added integration tests.
+- Fixed impressions labels.
+
 7.0.2 (Nov 11, 2019)
 - Fixed an issue about empty logs.
 - Fixed an issue about reducing scan commands in redis.
