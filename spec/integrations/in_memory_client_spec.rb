@@ -148,6 +148,37 @@ describe SplitIoClient do
       expect(impressions[0][:i][:r]).to eq('not ready')
       expect(impressions[0][:i][:c]).to eq(nil)
     end
+
+    it 'with multiple factories returns on' do
+      local_log = StringIO.new
+      factory1 = SplitIoClient::SplitFactory.new('api_key', logger: Logger.new(local_log))
+      factory2 = SplitIoClient::SplitFactory.new('another_key', logger: Logger.new(local_log))
+      factory3 = SplitIoClient::SplitFactory.new('random_key', logger: Logger.new(local_log))
+      factory4 = SplitIoClient::SplitFactory.new('api_key', logger: Logger.new(local_log))
+
+      client1 = factory1.client
+      client2 = factory2.client
+      client3 = factory3.client
+      client4 = factory4.client
+
+      expect(client1.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
+      expect(client2.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
+      expect(client3.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
+      expect(client4.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
+
+      impressions1 = client1.instance_variable_get(:@impressions_repository).batch
+      impressions2 = client2.instance_variable_get(:@impressions_repository).batch
+      impressions3 = client3.instance_variable_get(:@impressions_repository).batch
+      impressions4 = client4.instance_variable_get(:@impressions_repository).batch
+
+      expect(impressions1.size).to eq 1
+      expect(impressions2.size).to eq 1
+      expect(impressions3.size).to eq 1
+      expect(impressions4.size).to eq 1
+
+      expect(local_log.string)
+        .to include 'Factory instantiation: You already have 1 factories with this API Key.'
+    end
   end
 
   context '#get_treatment_with_config' do
@@ -569,6 +600,45 @@ describe SplitIoClient do
       expect(impressions[2][:i][:t]).to eq('control')
       expect(impressions[2][:i][:r]).to eq('not ready')
       expect(impressions[2][:i][:c]).to eq(nil)
+    end
+
+    it 'with multiple factories returns on' do
+      local_log = StringIO.new
+      factory1 = SplitIoClient::SplitFactory.new('api_key', logger: Logger.new(local_log))
+      factory2 = SplitIoClient::SplitFactory.new('another_key', logger: Logger.new(local_log))
+      factory3 = SplitIoClient::SplitFactory.new('api_key', logger: Logger.new(local_log))
+
+      client1 = factory1.client
+      client2 = factory2.client
+      client3 = factory3.client
+
+      result1 = client1.get_treatments_with_config('nico_test', %w[MAURO_TEST])
+      result2 = client2.get_treatments_with_config('nico_test', %w[MAURO_TEST])
+      result3 = client3.get_treatments_with_config('nico_test', %w[FACUNDO_TEST])
+
+      expect(result1[:MAURO_TEST]).to eq(
+        treatment: 'off',
+        config: '{"version":"v1"}'
+      )
+      expect(result2[:MAURO_TEST]).to eq(
+        treatment: 'off',
+        config: '{"version":"v1"}'
+      )
+      expect(result3[:FACUNDO_TEST]).to eq(
+        treatment: 'on',
+        config: '{"color":"green"}'
+      )
+
+      impressions1 = client1.instance_variable_get(:@impressions_repository).batch
+      impressions2 = client2.instance_variable_get(:@impressions_repository).batch
+      impressions3 = client3.instance_variable_get(:@impressions_repository).batch
+
+      expect(impressions1.size).to eq 1
+      expect(impressions2.size).to eq 1
+      expect(impressions3.size).to eq 1
+
+      expect(local_log.string)
+        .to include 'Factory instantiation: You already have 1 factories with this API Key.'
     end
   end
 

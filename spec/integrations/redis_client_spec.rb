@@ -134,6 +134,59 @@ describe SplitIoClient do
       impressions = client.instance_variable_get(:@impressions_repository).batch
       expect(impressions.size).to eq 0
     end
+
+    it 'with multiple factories returns on' do
+      local_log = StringIO.new
+      factory1 = SplitIoClient::SplitFactory.new(
+        'api_key',
+        logger: Logger.new(local_log),
+        cache_adapter: :redis,
+        redis_namespace: 'test',
+        mode: :consumer,
+        redis_url: 'redis://127.0.0.1:6379/0'
+      )
+      factory2 = SplitIoClient::SplitFactory.new(
+        'another_key',
+        logger: Logger.new(local_log),
+        cache_adapter: :redis,
+        redis_namespace: 'test',
+        mode: :consumer,
+        redis_url: 'redis://127.0.0.1:6379/0'
+      )
+      factory3 = SplitIoClient::SplitFactory.new(
+        'random_key',
+        logger: Logger.new(local_log),
+        cache_adapter: :redis,
+        redis_namespace: 'test',
+        mode: :consumer,
+        redis_url: 'redis://127.0.0.1:6379/0'
+      )
+      factory4 = SplitIoClient::SplitFactory.new(
+        'api_key',
+        logger: Logger.new(local_log),
+        cache_adapter: :redis,
+        redis_namespace: 'test',
+        mode: :consumer,
+        redis_url: 'redis://127.0.0.1:6379/0'
+      )
+
+      client1 = factory1.client
+      client2 = factory2.client
+      client3 = factory3.client
+      client4 = factory4.client
+
+      expect(client1.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
+      expect(client2.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
+      expect(client3.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
+      expect(client4.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
+
+      impressions = client1.instance_variable_get(:@impressions_repository).batch
+
+      expect(impressions.size).to eq 4
+
+      expect(local_log.string)
+        .to include 'Factory instantiation: You already have 1 factories with this API Key.'
+    end
   end
 
   context '#get_treatment_with_config' do
@@ -456,6 +509,58 @@ describe SplitIoClient do
       expect(impressions[0][:i][:t]).to eq('on')
       expect(impressions[0][:i][:r]).to eq('whitelisted')
       expect(impressions[0][:i][:c]).to eq(1_506_703_262_916)
+    end
+
+    it 'with multiple factories returns on' do
+      local_log = StringIO.new
+      factory1 = SplitIoClient::SplitFactory.new(
+        'api_key_multiple',
+        logger: Logger.new(local_log),
+        cache_adapter: :redis,
+        redis_namespace: 'test',
+        mode: :consumer,
+        redis_url: 'redis://127.0.0.1:6379/0'
+      )
+      factory2 = SplitIoClient::SplitFactory.new(
+        'another_key_multiple',
+        logger: Logger.new(local_log),
+        cache_adapter: :redis,
+        redis_namespace: 'test',
+        mode: :consumer,
+        redis_url: 'redis://127.0.0.1:6379/0'
+      )
+      factory3 = SplitIoClient::SplitFactory.new(
+        'api_key_multiple',
+        logger: Logger.new(local_log),
+        cache_adapter: :redis,
+        redis_namespace: 'test',
+        mode: :consumer,
+        redis_url: 'redis://127.0.0.1:6379/0'
+      )
+
+      client1 = factory1.client
+      client2 = factory2.client
+      client3 = factory3.client
+
+      result1 = client1.get_treatments_with_config('nico_test', %w[MAURO_TEST])
+      result2 = client2.get_treatments_with_config('nico_test', %w[MAURO_TEST])
+      result3 = client3.get_treatments_with_config('nico_test', %w[FACUNDO_TEST])
+
+      expect(result1[:MAURO_TEST]).to eq(
+        treatment: 'off',
+        config: '{"version":"v1"}'
+      )
+      expect(result2[:MAURO_TEST]).to eq(
+        treatment: 'off',
+        config: '{"version":"v1"}'
+      )
+      expect(result3[:FACUNDO_TEST]).to eq(
+        treatment: 'on',
+        config: '{"color":"green"}'
+      )
+
+      expect(local_log.string)
+        .to include 'Factory instantiation: You already have 1 factories with this API Key.'
     end
   end
 
