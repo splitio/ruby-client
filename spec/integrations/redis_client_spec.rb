@@ -36,10 +36,14 @@ describe SplitIoClient do
   let(:config) { client.instance_variable_get(:@config) }
 
   before do
-    load_splits_redis(splits)
-    load_segment_redis(segment1)
-    load_segment_redis(segment2)
-    load_segment_redis(segment3)
+    load_splits_redis(splits, client)
+    load_segment_redis(segment1, client)
+    load_segment_redis(segment2, client)
+    load_segment_redis(segment3, client)
+  end
+
+  after do 
+    Redis.new.flushall
   end
 
   context '#get_treatment' do
@@ -141,7 +145,7 @@ describe SplitIoClient do
         'api_key',
         logger: Logger.new(local_log),
         cache_adapter: :redis,
-        redis_namespace: 'test',
+        redis_namespace: 'test1',
         mode: :consumer,
         redis_url: 'redis://127.0.0.1:6379/0'
       )
@@ -149,7 +153,7 @@ describe SplitIoClient do
         'another_key',
         logger: Logger.new(local_log),
         cache_adapter: :redis,
-        redis_namespace: 'test',
+        redis_namespace: 'test2',
         mode: :consumer,
         redis_url: 'redis://127.0.0.1:6379/0'
       )
@@ -157,7 +161,7 @@ describe SplitIoClient do
         'random_key',
         logger: Logger.new(local_log),
         cache_adapter: :redis,
-        redis_namespace: 'test',
+        redis_namespace: 'test3',
         mode: :consumer,
         redis_url: 'redis://127.0.0.1:6379/0'
       )
@@ -165,24 +169,46 @@ describe SplitIoClient do
         'api_key',
         logger: Logger.new(local_log),
         cache_adapter: :redis,
-        redis_namespace: 'test',
+        redis_namespace: 'test4',
         mode: :consumer,
         redis_url: 'redis://127.0.0.1:6379/0'
       )
 
       client1 = factory1.client
+      load_splits_redis(splits, client1)
+      load_segment_redis(segment1, client1)
+      load_segment_redis(segment2, client1)
+      load_segment_redis(segment3, client1)
       client2 = factory2.client
+      load_splits_redis(splits, client2)
+      load_segment_redis(segment1, client2)
+      load_segment_redis(segment2, client2)
+      load_segment_redis(segment3, client2)
       client3 = factory3.client
+      load_splits_redis(splits, client3)
+      load_segment_redis(segment1, client3)
+      load_segment_redis(segment2, client3)
+      load_segment_redis(segment3, client3)
       client4 = factory4.client
+      load_splits_redis(splits, client4)
+      load_segment_redis(segment1, client4)
+      load_segment_redis(segment2, client4)
+      load_segment_redis(segment3, client4)
 
       expect(client1.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
       expect(client2.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
       expect(client3.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
       expect(client4.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
 
-      impressions = client1.instance_variable_get(:@impressions_repository).batch
+      impressions1 = client1.instance_variable_get(:@impressions_repository).batch
+      impressions2 = client2.instance_variable_get(:@impressions_repository).batch
+      impressions3 = client3.instance_variable_get(:@impressions_repository).batch
+      impressions4 = client4.instance_variable_get(:@impressions_repository).batch
 
-      expect(impressions.size).to eq 4
+      expect(impressions1.size).to eq 1
+      expect(impressions2.size).to eq 1
+      expect(impressions3.size).to eq 1
+      expect(impressions4.size).to eq 1
 
       expect(local_log.string)
         .to include 'Factory instantiation: You already have 1 factories with this API Key.'
@@ -517,7 +543,7 @@ describe SplitIoClient do
         'api_key_multiple',
         logger: Logger.new(local_log),
         cache_adapter: :redis,
-        redis_namespace: 'test',
+        redis_namespace: 'test1',
         mode: :consumer,
         redis_url: 'redis://127.0.0.1:6379/0'
       )
@@ -525,7 +551,7 @@ describe SplitIoClient do
         'another_key_multiple',
         logger: Logger.new(local_log),
         cache_adapter: :redis,
-        redis_namespace: 'test',
+        redis_namespace: 'test2',
         mode: :consumer,
         redis_url: 'redis://127.0.0.1:6379/0'
       )
@@ -533,14 +559,26 @@ describe SplitIoClient do
         'api_key_multiple',
         logger: Logger.new(local_log),
         cache_adapter: :redis,
-        redis_namespace: 'test',
+        redis_namespace: 'test3',
         mode: :consumer,
         redis_url: 'redis://127.0.0.1:6379/0'
       )
 
       client1 = factory1.client
+      load_splits_redis(splits, client1)
+      load_segment_redis(segment1, client1)
+      load_segment_redis(segment2, client1)
+      load_segment_redis(segment3, client1)
       client2 = factory2.client
+      load_splits_redis(splits, client2)
+      load_segment_redis(segment1, client2)
+      load_segment_redis(segment2, client2)
+      load_segment_redis(segment3, client2)
       client3 = factory3.client
+      load_splits_redis(splits, client3)
+      load_segment_redis(segment1, client3)
+      load_segment_redis(segment2, client3)
+      load_segment_redis(segment3, client3)
 
       result1 = client1.get_treatments_with_config('nico_test', %w[MAURO_TEST])
       result2 = client2.get_treatments_with_config('nico_test', %w[MAURO_TEST])
@@ -558,6 +596,14 @@ describe SplitIoClient do
         treatment: 'on',
         config: '{"color":"green"}'
       )
+
+      impressions1 = client1.instance_variable_get(:@impressions_repository).batch
+      impressions2 = client2.instance_variable_get(:@impressions_repository).batch
+      impressions3 = client3.instance_variable_get(:@impressions_repository).batch
+
+      expect(impressions1.size).to eq 1
+      expect(impressions2.size).to eq 1
+      expect(impressions3.size).to eq 1
 
       expect(local_log.string)
         .to include 'Factory instantiation: You already have 1 factories with this API Key.'
@@ -617,18 +663,18 @@ end
 
 private
 
-def load_splits_redis(splits_json)
+def load_splits_redis(splits_json, cli)
   splits = JSON.parse(splits_json, symbolize_names: true)[:splits]
 
-  splits_repository = client.instance_variable_get(:@splits_repository)
+  splits_repository = cli.instance_variable_get(:@splits_repository)
 
   splits.each do |split|
     splits_repository.add_split(split)
   end
 end
 
-def load_segment_redis(segment_json)
-  segments_repository = client.instance_variable_get(:@segments_repository)
+def load_segment_redis(segment_json, cli)
+  segments_repository = cli.instance_variable_get(:@segments_repository)
 
   segments_repository.add_to_segment(JSON.parse(segment_json, symbolize_names: true))
 end

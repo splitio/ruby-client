@@ -150,9 +150,7 @@ describe SplitIoClient::Cache::Repositories::MetricsRepository do
 
       expect(adapter.find_strings_by_pattern(latency_pattern).size).to eq 11
 
-      lc_key = "#{config.redis_namespace}"\
-        "/#{config.language}-#{config.version}"\
-        "/#{config.machine_ip}/latencies.cleaned"
+      lc_key = "#{config.redis_namespace}/latencies.cleaned"
 
       expect(adapter.exists?(lc_key)).to be false
 
