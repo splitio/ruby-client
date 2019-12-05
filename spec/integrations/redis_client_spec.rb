@@ -42,7 +42,7 @@ describe SplitIoClient do
     load_segment_redis(segment3, client)
   end
 
-  after do 
+  after do
     Redis.new.flushall
   end
 

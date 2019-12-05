@@ -152,7 +152,7 @@ module SplitIoClient
           end
 
           def find_operation_latencies(operation)
-            @latencies.find { |l| l[:operation] == operation unless l.nil? }
+            @latencies.find { |l| l[:operation] == operation }
           end
         end
       end
