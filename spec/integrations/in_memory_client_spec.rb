@@ -3,6 +3,9 @@
 require 'spec_helper'
 
 describe SplitIoClient do
+  SINGLETON_WARN = 'We recommend keeping only one instance of the factory at all times ' \
+    '(Singleton pattern) and reusing it throughout your application'
+
   let(:factory) do
     SplitIoClient::SplitFactory.new('test_api_key')
   end
@@ -151,10 +154,20 @@ describe SplitIoClient do
 
     it 'with multiple factories returns on' do
       local_log = StringIO.new
-      factory1 = SplitIoClient::SplitFactory.new('api_key', logger: Logger.new(local_log))
-      factory2 = SplitIoClient::SplitFactory.new('another_key', logger: Logger.new(local_log))
-      factory3 = SplitIoClient::SplitFactory.new('random_key', logger: Logger.new(local_log))
-      factory4 = SplitIoClient::SplitFactory.new('api_key', logger: Logger.new(local_log))
+      logger = Logger.new(local_log)
+
+      expect(logger).to receive(:warn)
+        .with('Factory instantiation: You already have an instance of the Split factory.' \
+          " Make sure you definitely want this additional instance. #{SINGLETON_WARN}")
+        .exactly(3).times
+      expect(logger).to receive(:warn)
+        .with("Factory instantiation: You already have 1 factories with this API Key. #{SINGLETON_WARN}")
+        .once
+
+      factory1 = SplitIoClient::SplitFactory.new('api_key', logger: logger)
+      factory2 = SplitIoClient::SplitFactory.new('another_key', logger: logger)
+      factory3 = SplitIoClient::SplitFactory.new('random_key', logger: logger)
+      factory4 = SplitIoClient::SplitFactory.new('api_key', logger: logger)
 
       client1 = factory1.client
       client2 = factory2.client
@@ -175,9 +188,6 @@ describe SplitIoClient do
       expect(impressions2.size).to eq 1
       expect(impressions3.size).to eq 1
       expect(impressions4.size).to eq 1
-
-      expect(local_log.string)
-        .to include 'Factory instantiation: You already have 1 factories with this API Key.'
     end
   end
 
@@ -604,9 +614,19 @@ describe SplitIoClient do
 
     it 'with multiple factories returns on' do
       local_log = StringIO.new
-      factory1 = SplitIoClient::SplitFactory.new('api_key', logger: Logger.new(local_log))
-      factory2 = SplitIoClient::SplitFactory.new('another_key', logger: Logger.new(local_log))
-      factory3 = SplitIoClient::SplitFactory.new('api_key', logger: Logger.new(local_log))
+      logger = Logger.new(local_log)
+
+      expect(logger).to receive(:warn)
+        .with('Factory instantiation: You already have an instance of the Split factory.' \
+          " Make sure you definitely want this additional instance. #{SINGLETON_WARN}")
+        .twice
+      expect(logger).to receive(:warn)
+        .with("Factory instantiation: You already have 1 factories with this API Key. #{SINGLETON_WARN}")
+        .once
+
+      factory1 = SplitIoClient::SplitFactory.new('api_key_other', logger: logger)
+      factory2 = SplitIoClient::SplitFactory.new('another_key_second', logger: logger)
+      factory3 = SplitIoClient::SplitFactory.new('api_key_other', logger: logger)
 
       client1 = factory1.client
       client2 = factory2.client
@@ -636,9 +656,6 @@ describe SplitIoClient do
       expect(impressions1.size).to eq 1
       expect(impressions2.size).to eq 1
       expect(impressions3.size).to eq 1
-
-      expect(local_log.string)
-        .to include 'Factory instantiation: You already have 1 factories with this API Key.'
     end
   end
 
