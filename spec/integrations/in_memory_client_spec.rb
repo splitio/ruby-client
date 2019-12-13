@@ -3,6 +3,9 @@
 require 'spec_helper'
 
 describe SplitIoClient do
+  SINGLETON_WARN = 'We recommend keeping only one instance of the factory at all times ' \
+    '(Singleton pattern) and reusing it throughout your application'
+
   let(:factory) do
     SplitIoClient::SplitFactory.new('test_api_key')
   end
@@ -147,6 +150,44 @@ describe SplitIoClient do
       expect(impressions[0][:i][:t]).to eq('control')
       expect(impressions[0][:i][:r]).to eq('not ready')
       expect(impressions[0][:i][:c]).to eq(nil)
+    end
+
+    it 'with multiple factories returns on' do
+      local_log = StringIO.new
+      logger = Logger.new(local_log)
+
+      expect(logger).to receive(:warn)
+        .with('Factory instantiation: You already have an instance of the Split factory.' \
+          " Make sure you definitely want this additional instance. #{SINGLETON_WARN}")
+        .exactly(3).times
+      expect(logger).to receive(:warn)
+        .with("Factory instantiation: You already have 1 factories with this API Key. #{SINGLETON_WARN}")
+        .once
+
+      factory1 = SplitIoClient::SplitFactory.new('api_key', logger: logger)
+      factory2 = SplitIoClient::SplitFactory.new('another_key', logger: logger)
+      factory3 = SplitIoClient::SplitFactory.new('random_key', logger: logger)
+      factory4 = SplitIoClient::SplitFactory.new('api_key', logger: logger)
+
+      client1 = factory1.client
+      client2 = factory2.client
+      client3 = factory3.client
+      client4 = factory4.client
+
+      expect(client1.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
+      expect(client2.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
+      expect(client3.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
+      expect(client4.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
+
+      impressions1 = client1.instance_variable_get(:@impressions_repository).batch
+      impressions2 = client2.instance_variable_get(:@impressions_repository).batch
+      impressions3 = client3.instance_variable_get(:@impressions_repository).batch
+      impressions4 = client4.instance_variable_get(:@impressions_repository).batch
+
+      expect(impressions1.size).to eq 1
+      expect(impressions2.size).to eq 1
+      expect(impressions3.size).to eq 1
+      expect(impressions4.size).to eq 1
     end
   end
 
@@ -569,6 +610,52 @@ describe SplitIoClient do
       expect(impressions[2][:i][:t]).to eq('control')
       expect(impressions[2][:i][:r]).to eq('not ready')
       expect(impressions[2][:i][:c]).to eq(nil)
+    end
+
+    it 'with multiple factories returns on' do
+      local_log = StringIO.new
+      logger = Logger.new(local_log)
+
+      expect(logger).to receive(:warn)
+        .with('Factory instantiation: You already have an instance of the Split factory.' \
+          " Make sure you definitely want this additional instance. #{SINGLETON_WARN}")
+        .twice
+      expect(logger).to receive(:warn)
+        .with("Factory instantiation: You already have 1 factories with this API Key. #{SINGLETON_WARN}")
+        .once
+
+      factory1 = SplitIoClient::SplitFactory.new('api_key_other', logger: logger)
+      factory2 = SplitIoClient::SplitFactory.new('another_key_second', logger: logger)
+      factory3 = SplitIoClient::SplitFactory.new('api_key_other', logger: logger)
+
+      client1 = factory1.client
+      client2 = factory2.client
+      client3 = factory3.client
+
+      result1 = client1.get_treatments_with_config('nico_test', %w[MAURO_TEST])
+      result2 = client2.get_treatments_with_config('nico_test', %w[MAURO_TEST])
+      result3 = client3.get_treatments_with_config('nico_test', %w[FACUNDO_TEST])
+
+      expect(result1[:MAURO_TEST]).to eq(
+        treatment: 'off',
+        config: '{"version":"v1"}'
+      )
+      expect(result2[:MAURO_TEST]).to eq(
+        treatment: 'off',
+        config: '{"version":"v1"}'
+      )
+      expect(result3[:FACUNDO_TEST]).to eq(
+        treatment: 'on',
+        config: '{"color":"green"}'
+      )
+
+      impressions1 = client1.instance_variable_get(:@impressions_repository).batch
+      impressions2 = client2.instance_variable_get(:@impressions_repository).batch
+      impressions3 = client3.instance_variable_get(:@impressions_repository).batch
+
+      expect(impressions1.size).to eq 1
+      expect(impressions2.size).to eq 1
+      expect(impressions3.size).to eq 1
     end
   end
 
