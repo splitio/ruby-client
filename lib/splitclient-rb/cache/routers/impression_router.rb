@@ -28,6 +28,7 @@ module SplitIoClient
           split_name: split_name.to_s,
           matching_key: impressions[:matching_key],
           bucketing_key: impressions[:bucketing_key],
+          time: impressions[:time],
           treatment: {
             label: impressions[:treatments_labels_change_numbers][split_name.to_sym][:label],
             treatment: impressions[:treatments_labels_change_numbers][split_name.to_sym][:treatment],

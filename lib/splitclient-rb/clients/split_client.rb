@@ -97,7 +97,11 @@ module SplitIoClient
         matching_key: matching_key,
         bucketing_key: bucketing_key,
         time: time,
-        treatment: treatment,
+        treatment: {
+          label: treatment[:label],
+          treatment: treatment[:treatment],
+          change_number: treatment[:change_number]
+        },
         attributes: attributes
       )
     end
