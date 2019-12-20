@@ -153,10 +153,18 @@ describe SplitIoClient do
       impression_listener2 = MyImpressionListener.new
       impression_listener3 = MyImpressionListener.new
       impression_listener4 = MyImpressionListener.new
-      factory1 = SplitIoClient::SplitFactory.new('api_key', logger: logger, impression_listener: impression_listener1)
-      factory2 = SplitIoClient::SplitFactory.new('another_key', logger: logger, impression_listener: impression_listener2)
-      factory3 = SplitIoClient::SplitFactory.new('random_key', logger: logger, impression_listener: impression_listener3)
-      factory4 = SplitIoClient::SplitFactory.new('api_key', logger: logger, impression_listener: impression_listener4)
+      factory1 = SplitIoClient::SplitFactory.new('api_key',
+                                                 logger: logger,
+                                                 impression_listener: impression_listener1)
+      factory2 = SplitIoClient::SplitFactory.new('another_key',
+                                                 logger: logger,
+                                                 impression_listener: impression_listener2)
+      factory3 = SplitIoClient::SplitFactory.new('random_key',
+                                                 logger: logger,
+                                                 impression_listener: impression_listener3)
+      factory4 = SplitIoClient::SplitFactory.new('api_key',
+                                                 logger: logger,
+                                                 impression_listener: impression_listener4)
 
       client1 = factory1.client
       client2 = factory2.client
@@ -560,13 +568,19 @@ describe SplitIoClient do
       expect(logger).to receive(:warn)
         .with("Factory instantiation: You already have 1 factories with this API Key. #{SINGLETON_WARN}")
         .once
-      
+
       impression_listener1 = MyImpressionListener.new
       impression_listener2 = MyImpressionListener.new
       impression_listener3 = MyImpressionListener.new
-      factory1 = SplitIoClient::SplitFactory.new('api_key_other', logger: logger, impression_listener: impression_listener1)
-      factory2 = SplitIoClient::SplitFactory.new('another_key_second', logger: logger, impression_listener: impression_listener2)
-      factory3 = SplitIoClient::SplitFactory.new('api_key_other', logger: logger, impression_listener: impression_listener3)
+      factory1 = SplitIoClient::SplitFactory.new('api_key_other',
+                                                 logger: logger,
+                                                 impression_listener: impression_listener1)
+      factory2 = SplitIoClient::SplitFactory.new('another_key_second',
+                                                 logger: logger,
+                                                 impression_listener: impression_listener2)
+      factory3 = SplitIoClient::SplitFactory.new('api_key_other',
+                                                 logger: logger,
+                                                 impression_listener: impression_listener3)
 
       client1 = factory1.client
       client2 = factory2.client
