@@ -19,6 +19,8 @@ describe SplitIoClient::Cache::Senders::EventsSender do
       repository.add('key', 'traffic_type', 'event_type', 0, 0.0, { property_value: 'valid' }, 0)
 
       sender.call
+      
+      sleep 0.1
 
       expect(a_request(:post, 'https://events.split.io/api/events/bulk')
       .with(
