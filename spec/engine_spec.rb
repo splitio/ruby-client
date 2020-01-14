@@ -735,6 +735,12 @@ describe SplitIoClient, type: :client do
         stub_request(:post, "https://events.split.io/api/testImpressions/bulk")
           .to_return(status: 200, body: "", headers: {})
 
+        stub_request(:post, 'https://events.split.io/api/metrics/time')
+          .to_return(status: 200)
+
+        stub_request(:post, 'https://events.split.io/api/metrics/counter')
+          .to_return(status: 200)
+
         expect(subject.get_treatment('fake_user_id_1', 'test_feature')).to eq 'on'
         subject.destroy
         expect(subject.get_treatment('fake_user_id_1', 'test_feature')).to eq 'control'
