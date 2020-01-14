@@ -32,6 +32,7 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
 
       sender.call
 
+      sleep 0.5
       expect(a_request(:post, 'https://events.split.io/api/testImpressions/bulk')
       .with(
         body: [
