@@ -620,6 +620,7 @@ describe SplitIoClient do
         property_1: 1,
         property_2: 2
       }
+
       expect(client.track('key_1', 'traffic_type_1', 'event_type_1', 123, properties)).to be_truthy
       expect(client.track('key_2', 'traffic_type_2', 'event_type_2', 125)).to be_truthy
 
