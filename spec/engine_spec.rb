@@ -660,9 +660,8 @@ describe SplitIoClient, type: :client do
         sleep 0.01
         subject.get_treatments('26', %w[sample_feature beta_feature])
 
-        config = subject.instance_variable_get(:@config)
         impressions = customer_impression_listener.queue
-        
+
         expect(impressions.size).to eq(2)
       end
 
@@ -673,10 +672,10 @@ describe SplitIoClient, type: :client do
         subject.get_treatments('24', %w[sample_feature beta_feature])
         subject.get_treatments('25', %w[sample_feature beta_feature])
         subject.get_treatments('26', %w[sample_feature beta_feature])
-        
+
         sleep 0.1
         impressions = customer_impression_listener.queue
-        
+
         expect(impressions.size).to eq(12)
 
         expect(impressions.select { |i| i[:split_name] == 'sample_feature' }.size).to eq(6)
@@ -732,8 +731,8 @@ describe SplitIoClient, type: :client do
       end
 
       it 'returns control' do
-        stub_request(:post, "https://events.split.io/api/testImpressions/bulk")
-          .to_return(status: 200, body: "", headers: {})
+        stub_request(:post, 'https://events.split.io/api/testImpressions/bulk')
+          .to_return(status: 200, body: '', headers: {})
 
         stub_request(:post, 'https://events.split.io/api/metrics/time')
           .to_return(status: 200)
