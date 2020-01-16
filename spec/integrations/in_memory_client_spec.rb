@@ -1,13 +1,14 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+require 'my_impression_listener'
 
 describe SplitIoClient do
   SINGLETON_WARN = 'We recommend keeping only one instance of the factory at all times ' \
     '(Singleton pattern) and reusing it throughout your application'
 
   let(:factory) do
-    SplitIoClient::SplitFactory.new('test_api_key')
+    SplitIoClient::SplitFactory.new('test_api_key', impression_listener: custom_impression_listener)
   end
 
   let(:log) { StringIO.new }
@@ -30,6 +31,7 @@ describe SplitIoClient do
 
   let(:client) { factory.client }
   let(:config) { client.instance_variable_get(:@config) }
+  let(:custom_impression_listener) { MyImpressionListener.new }
 
   before do
     mock_split_changes(splits)
@@ -46,54 +48,44 @@ describe SplitIoClient do
       expect(client.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
       expect(client.get_treatment('mauro_test', 'FACUNDO_TEST')).to eq 'off'
 
-      impressions = client.instance_variable_get(:@impressions_repository).batch
+      sleep 0.5
+      impressions = custom_impression_listener.queue
 
       expect(impressions.size).to eq 2
 
-      expect(impressions[0][:m][:s]).to eq("ruby-#{config.version}")
-      expect(impressions[0][:m][:i]).to eq(config.machine_ip)
-      expect(impressions[0][:m][:n]).to eq(config.machine_name)
-      expect(impressions[0][:i][:k]).to eq('nico_test')
-      expect(impressions[0][:i][:f]).to eq('FACUNDO_TEST')
-      expect(impressions[0][:i][:t]).to eq('on')
-      expect(impressions[0][:i][:r]).to eq('whitelisted')
-      expect(impressions[0][:i][:c]).to eq(1_506_703_262_916)
+      expect(impressions[0][:matching_key]).to eq('nico_test')
+      expect(impressions[0][:split_name]).to eq('FACUNDO_TEST')
+      expect(impressions[0][:treatment][:treatment]).to eq('on')
+      expect(impressions[0][:treatment][:label]).to eq('whitelisted')
+      expect(impressions[0][:treatment][:change_number]).to eq(1_506_703_262_916)
 
-      expect(impressions[1][:m][:s]).to eq("ruby-#{config.version}")
-      expect(impressions[1][:m][:i]).to eq(config.machine_ip)
-      expect(impressions[1][:m][:n]).to eq(config.machine_name)
-      expect(impressions[1][:i][:k]).to eq('mauro_test')
-      expect(impressions[1][:i][:f]).to eq('FACUNDO_TEST')
-      expect(impressions[1][:i][:t]).to eq('off')
-      expect(impressions[1][:i][:r]).to eq('in segment all')
-      expect(impressions[1][:i][:c]).to eq(1_506_703_262_916)
+      expect(impressions[1][:matching_key]).to eq('mauro_test')
+      expect(impressions[1][:split_name]).to eq('FACUNDO_TEST')
+      expect(impressions[1][:treatment][:treatment]).to eq('off')
+      expect(impressions[1][:treatment][:label]).to eq('in segment all')
+      expect(impressions[1][:treatment][:change_number]).to eq(1_506_703_262_916)
     end
 
     it 'returns treatments with Test_Save_1 feature and check impressions' do
       expect(client.get_treatment('1', 'Test_Save_1')).to eq 'on'
       expect(client.get_treatment('24', 'Test_Save_1')).to eq 'off'
 
-      impressions = client.instance_variable_get(:@impressions_repository).batch
+      sleep 0.5
+      impressions = custom_impression_listener.queue
 
       expect(impressions.size).to eq 2
 
-      expect(impressions[0][:m][:s]).to eq("ruby-#{config.version}")
-      expect(impressions[0][:m][:i]).to eq(config.machine_ip)
-      expect(impressions[0][:m][:n]).to eq(config.machine_name)
-      expect(impressions[0][:i][:k]).to eq('1')
-      expect(impressions[0][:i][:f]).to eq('Test_Save_1')
-      expect(impressions[0][:i][:t]).to eq('on')
-      expect(impressions[0][:i][:r]).to eq('whitelisted')
-      expect(impressions[0][:i][:c]).to eq(1_503_956_389_520)
+      expect(impressions[0][:matching_key]).to eq('1')
+      expect(impressions[0][:split_name]).to eq('Test_Save_1')
+      expect(impressions[0][:treatment][:treatment]).to eq('on')
+      expect(impressions[0][:treatment][:label]).to eq('whitelisted')
+      expect(impressions[0][:treatment][:change_number]).to eq(1_503_956_389_520)
 
-      expect(impressions[1][:m][:s]).to eq("ruby-#{config.version}")
-      expect(impressions[1][:m][:i]).to eq(config.machine_ip)
-      expect(impressions[1][:m][:n]).to eq(config.machine_name)
-      expect(impressions[1][:i][:k]).to eq('24')
-      expect(impressions[1][:i][:f]).to eq('Test_Save_1')
-      expect(impressions[1][:i][:t]).to eq('off')
-      expect(impressions[1][:i][:r]).to eq('in segment all')
-      expect(impressions[1][:i][:c]).to eq(1_503_956_389_520)
+      expect(impressions[1][:matching_key]).to eq('24')
+      expect(impressions[1][:split_name]).to eq('Test_Save_1')
+      expect(impressions[1][:treatment][:treatment]).to eq('off')
+      expect(impressions[1][:treatment][:label]).to eq('in segment all')
+      expect(impressions[1][:treatment][:change_number]).to eq(1_503_956_389_520)
     end
 
     it 'returns treatments with input validations' do
@@ -104,33 +96,28 @@ describe SplitIoClient do
       expect(client.get_treatment('1', nil)).to eq 'control'
       expect(client.get_treatment('24', 'Test_Save_1')).to eq 'off'
 
-      impressions = client.instance_variable_get(:@impressions_repository).batch
+      sleep 0.5
+      impressions = custom_impression_listener.queue
 
       expect(impressions.size).to eq 2
 
-      expect(impressions[0][:m][:s]).to eq("ruby-#{config.version}")
-      expect(impressions[0][:m][:i]).to eq(config.machine_ip)
-      expect(impressions[0][:m][:n]).to eq(config.machine_name)
-      expect(impressions[0][:i][:k]).to eq('nico_test')
-      expect(impressions[0][:i][:f]).to eq('FACUNDO_TEST')
-      expect(impressions[0][:i][:t]).to eq('on')
-      expect(impressions[0][:i][:r]).to eq('whitelisted')
-      expect(impressions[0][:i][:c]).to eq(1_506_703_262_916)
+      expect(impressions[0][:matching_key]).to eq('nico_test')
+      expect(impressions[0][:split_name]).to eq('FACUNDO_TEST')
+      expect(impressions[0][:treatment][:treatment]).to eq('on')
+      expect(impressions[0][:treatment][:label]).to eq('whitelisted')
+      expect(impressions[0][:treatment][:change_number]).to eq(1_506_703_262_916)
 
-      expect(impressions[1][:m][:s]).to eq("ruby-#{config.version}")
-      expect(impressions[1][:m][:i]).to eq(config.machine_ip)
-      expect(impressions[1][:m][:n]).to eq(config.machine_name)
-      expect(impressions[1][:i][:k]).to eq('24')
-      expect(impressions[1][:i][:f]).to eq('Test_Save_1')
-      expect(impressions[1][:i][:t]).to eq('off')
-      expect(impressions[1][:i][:r]).to eq('in segment all')
-      expect(impressions[1][:i][:c]).to eq(1_503_956_389_520)
+      expect(impressions[1][:matching_key]).to eq('24')
+      expect(impressions[1][:split_name]).to eq('Test_Save_1')
+      expect(impressions[1][:treatment][:treatment]).to eq('off')
+      expect(impressions[1][:treatment][:label]).to eq('in segment all')
+      expect(impressions[1][:treatment][:change_number]).to eq(1_503_956_389_520)
     end
 
     it 'returns CONTROL with treatment doesnt exist' do
       expect(client.get_treatment('nico_test', 'random_treatment')).to eq 'control'
 
-      impressions = client.instance_variable_get(:@impressions_repository).batch
+      impressions = custom_impression_listener.queue
       expect(impressions.size).to eq 0
     end
 
@@ -139,17 +126,15 @@ describe SplitIoClient do
 
       expect(client.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'control'
 
-      impressions = client.instance_variable_get(:@impressions_repository).batch
+      sleep 0.5
+      impressions = custom_impression_listener.queue
 
       expect(impressions.size).to eq 1
-      expect(impressions[0][:m][:s]).to eq("ruby-#{config.version}")
-      expect(impressions[0][:m][:i]).to eq(config.machine_ip)
-      expect(impressions[0][:m][:n]).to eq(config.machine_name)
-      expect(impressions[0][:i][:k]).to eq('nico_test')
-      expect(impressions[0][:i][:f]).to eq('FACUNDO_TEST')
-      expect(impressions[0][:i][:t]).to eq('control')
-      expect(impressions[0][:i][:r]).to eq('not ready')
-      expect(impressions[0][:i][:c]).to eq(nil)
+      expect(impressions[0][:matching_key]).to eq('nico_test')
+      expect(impressions[0][:split_name]).to eq('FACUNDO_TEST')
+      expect(impressions[0][:treatment][:treatment]).to eq('control')
+      expect(impressions[0][:treatment][:label]).to eq('not ready')
+      expect(impressions[0][:treatment][:change_number]).to eq(nil)
     end
 
     it 'with multiple factories returns on' do
@@ -164,10 +149,22 @@ describe SplitIoClient do
         .with("Factory instantiation: You already have 1 factories with this API Key. #{SINGLETON_WARN}")
         .once
 
-      factory1 = SplitIoClient::SplitFactory.new('api_key', logger: logger)
-      factory2 = SplitIoClient::SplitFactory.new('another_key', logger: logger)
-      factory3 = SplitIoClient::SplitFactory.new('random_key', logger: logger)
-      factory4 = SplitIoClient::SplitFactory.new('api_key', logger: logger)
+      impression_listener1 = MyImpressionListener.new
+      impression_listener2 = MyImpressionListener.new
+      impression_listener3 = MyImpressionListener.new
+      impression_listener4 = MyImpressionListener.new
+      factory1 = SplitIoClient::SplitFactory.new('api_key',
+                                                 logger: logger,
+                                                 impression_listener: impression_listener1)
+      factory2 = SplitIoClient::SplitFactory.new('another_key',
+                                                 logger: logger,
+                                                 impression_listener: impression_listener2)
+      factory3 = SplitIoClient::SplitFactory.new('random_key',
+                                                 logger: logger,
+                                                 impression_listener: impression_listener3)
+      factory4 = SplitIoClient::SplitFactory.new('api_key',
+                                                 logger: logger,
+                                                 impression_listener: impression_listener4)
 
       client1 = factory1.client
       client2 = factory2.client
@@ -179,10 +176,11 @@ describe SplitIoClient do
       expect(client3.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
       expect(client4.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
 
-      impressions1 = client1.instance_variable_get(:@impressions_repository).batch
-      impressions2 = client2.instance_variable_get(:@impressions_repository).batch
-      impressions3 = client3.instance_variable_get(:@impressions_repository).batch
-      impressions4 = client4.instance_variable_get(:@impressions_repository).batch
+      sleep 0.5
+      impressions1 = impression_listener1.queue
+      impressions2 = impression_listener2.queue
+      impressions3 = impression_listener3.queue
+      impressions4 = impression_listener4.queue
 
       expect(impressions1.size).to eq 1
       expect(impressions2.size).to eq 1
@@ -202,27 +200,22 @@ describe SplitIoClient do
         config: nil
       )
 
-      impressions = client.instance_variable_get(:@impressions_repository).batch
+      sleep 0.5
+      impressions = custom_impression_listener.queue
 
       expect(impressions.size).to eq 2
 
-      expect(impressions[0][:m][:s]).to eq("ruby-#{config.version}")
-      expect(impressions[0][:m][:i]).to eq(config.machine_ip)
-      expect(impressions[0][:m][:n]).to eq(config.machine_name)
-      expect(impressions[0][:i][:k]).to eq('nico_test')
-      expect(impressions[0][:i][:f]).to eq('FACUNDO_TEST')
-      expect(impressions[0][:i][:t]).to eq('on')
-      expect(impressions[0][:i][:r]).to eq('whitelisted')
-      expect(impressions[0][:i][:c]).to eq(1_506_703_262_916)
+      expect(impressions[0][:matching_key]).to eq('nico_test')
+      expect(impressions[0][:split_name]).to eq('FACUNDO_TEST')
+      expect(impressions[0][:treatment][:treatment]).to eq('on')
+      expect(impressions[0][:treatment][:label]).to eq('whitelisted')
+      expect(impressions[0][:treatment][:change_number]).to eq(1_506_703_262_916)
 
-      expect(impressions[1][:m][:s]).to eq("ruby-#{config.version}")
-      expect(impressions[1][:m][:i]).to eq(config.machine_ip)
-      expect(impressions[1][:m][:n]).to eq(config.machine_name)
-      expect(impressions[1][:i][:k]).to eq('mauro_test')
-      expect(impressions[1][:i][:f]).to eq('FACUNDO_TEST')
-      expect(impressions[1][:i][:t]).to eq('off')
-      expect(impressions[1][:i][:r]).to eq('in segment all')
-      expect(impressions[1][:i][:c]).to eq(1_506_703_262_916)
+      expect(impressions[1][:matching_key]).to eq('mauro_test')
+      expect(impressions[1][:split_name]).to eq('FACUNDO_TEST')
+      expect(impressions[1][:treatment][:treatment]).to eq('off')
+      expect(impressions[1][:treatment][:label]).to eq('in segment all')
+      expect(impressions[1][:treatment][:change_number]).to eq(1_506_703_262_916)
     end
 
     it 'returns treatments and configs with MAURO_TEST treatment and check impressions' do
@@ -235,27 +228,22 @@ describe SplitIoClient do
         config: '{"version":"v1"}'
       )
 
-      impressions = client.instance_variable_get(:@impressions_repository).batch
+      sleep 0.5
+      impressions = custom_impression_listener.queue
 
       expect(impressions.size).to eq 2
 
-      expect(impressions[0][:m][:s]).to eq("ruby-#{config.version}")
-      expect(impressions[0][:m][:i]).to eq(config.machine_ip)
-      expect(impressions[0][:m][:n]).to eq(config.machine_name)
-      expect(impressions[0][:i][:k]).to eq('mauro')
-      expect(impressions[0][:i][:f]).to eq('MAURO_TEST')
-      expect(impressions[0][:i][:t]).to eq('on')
-      expect(impressions[0][:i][:r]).to eq('whitelisted')
-      expect(impressions[0][:i][:c]).to eq(1_506_703_262_966)
+      expect(impressions[0][:matching_key]).to eq('mauro')
+      expect(impressions[0][:split_name]).to eq('MAURO_TEST')
+      expect(impressions[0][:treatment][:treatment]).to eq('on')
+      expect(impressions[0][:treatment][:label]).to eq('whitelisted')
+      expect(impressions[0][:treatment][:change_number]).to eq(1_506_703_262_966)
 
-      expect(impressions[1][:m][:s]).to eq("ruby-#{config.version}")
-      expect(impressions[1][:m][:i]).to eq(config.machine_ip)
-      expect(impressions[1][:m][:n]).to eq(config.machine_name)
-      expect(impressions[1][:i][:k]).to eq('test')
-      expect(impressions[1][:i][:f]).to eq('MAURO_TEST')
-      expect(impressions[1][:i][:t]).to eq('off')
-      expect(impressions[1][:i][:r]).to eq('not in split')
-      expect(impressions[1][:i][:c]).to eq(1_506_703_262_966)
+      expect(impressions[1][:matching_key]).to eq('test')
+      expect(impressions[1][:split_name]).to eq('MAURO_TEST')
+      expect(impressions[1][:treatment][:treatment]).to eq('off')
+      expect(impressions[1][:treatment][:label]).to eq('not in split')
+      expect(impressions[1][:treatment][:change_number]).to eq(1_506_703_262_966)
     end
 
     it 'returns treatments with input validations' do
@@ -284,27 +272,22 @@ describe SplitIoClient do
         config: nil
       )
 
-      impressions = client.instance_variable_get(:@impressions_repository).batch
+      sleep 0.5
+      impressions = custom_impression_listener.queue
 
       expect(impressions.size).to eq 2
 
-      expect(impressions[0][:m][:s]).to eq("ruby-#{config.version}")
-      expect(impressions[0][:m][:i]).to eq(config.machine_ip)
-      expect(impressions[0][:m][:n]).to eq(config.machine_name)
-      expect(impressions[0][:i][:k]).to eq('nico_test')
-      expect(impressions[0][:i][:f]).to eq('FACUNDO_TEST')
-      expect(impressions[0][:i][:t]).to eq('on')
-      expect(impressions[0][:i][:r]).to eq('whitelisted')
-      expect(impressions[0][:i][:c]).to eq(1_506_703_262_916)
+      expect(impressions[0][:matching_key]).to eq('nico_test')
+      expect(impressions[0][:split_name]).to eq('FACUNDO_TEST')
+      expect(impressions[0][:treatment][:treatment]).to eq('on')
+      expect(impressions[0][:treatment][:label]).to eq('whitelisted')
+      expect(impressions[0][:treatment][:change_number]).to eq(1_506_703_262_916)
 
-      expect(impressions[1][:m][:s]).to eq("ruby-#{config.version}")
-      expect(impressions[1][:m][:i]).to eq(config.machine_ip)
-      expect(impressions[1][:m][:n]).to eq(config.machine_name)
-      expect(impressions[1][:i][:k]).to eq('24')
-      expect(impressions[1][:i][:f]).to eq('Test_Save_1')
-      expect(impressions[1][:i][:t]).to eq('off')
-      expect(impressions[1][:i][:r]).to eq('in segment all')
-      expect(impressions[1][:i][:c]).to eq(1_503_956_389_520)
+      expect(impressions[1][:matching_key]).to eq('24')
+      expect(impressions[1][:split_name]).to eq('Test_Save_1')
+      expect(impressions[1][:treatment][:treatment]).to eq('off')
+      expect(impressions[1][:treatment][:label]).to eq('in segment all')
+      expect(impressions[1][:treatment][:change_number]).to eq(1_503_956_389_520)
     end
 
     it 'returns CONTROL with treatment doesnt exist' do
@@ -313,7 +296,8 @@ describe SplitIoClient do
         config: nil
       )
 
-      impressions = client.instance_variable_get(:@impressions_repository).batch
+      sleep 0.5
+      impressions = custom_impression_listener.queue
       expect(impressions.size).to eq 0
     end
 
@@ -325,17 +309,15 @@ describe SplitIoClient do
         config: nil
       )
 
-      impressions = client.instance_variable_get(:@impressions_repository).batch
+      sleep 0.5
+      impressions = custom_impression_listener.queue
 
       expect(impressions.size).to eq 1
-      expect(impressions[0][:m][:s]).to eq("ruby-#{config.version}")
-      expect(impressions[0][:m][:i]).to eq(config.machine_ip)
-      expect(impressions[0][:m][:n]).to eq(config.machine_name)
-      expect(impressions[0][:i][:k]).to eq('nico_test')
-      expect(impressions[0][:i][:f]).to eq('FACUNDO_TEST')
-      expect(impressions[0][:i][:t]).to eq('control')
-      expect(impressions[0][:i][:r]).to eq('not ready')
-      expect(impressions[0][:i][:c]).to eq(nil)
+      expect(impressions[0][:matching_key]).to eq('nico_test')
+      expect(impressions[0][:split_name]).to eq('FACUNDO_TEST')
+      expect(impressions[0][:treatment][:treatment]).to eq('control')
+      expect(impressions[0][:treatment][:label]).to eq('not ready')
+      expect(impressions[0][:treatment][:change_number]).to eq(nil)
     end
   end
 
@@ -347,36 +329,28 @@ describe SplitIoClient do
       expect(result[:MAURO_TEST]).to eq 'off'
       expect(result[:Test_Save_1]).to eq 'off'
 
-      impressions = client.instance_variable_get(:@impressions_repository).batch
+      sleep 0.5
+      impressions = custom_impression_listener.queue
 
       expect(impressions.size).to eq 3
 
-      expect(impressions[0][:m][:s]).to eq("ruby-#{config.version}")
-      expect(impressions[0][:m][:i]).to eq(config.machine_ip)
-      expect(impressions[0][:m][:n]).to eq(config.machine_name)
-      expect(impressions[0][:i][:k]).to eq('nico_test')
-      expect(impressions[0][:i][:f]).to eq(:FACUNDO_TEST)
-      expect(impressions[0][:i][:t]).to eq('on')
-      expect(impressions[0][:i][:r]).to eq('whitelisted')
-      expect(impressions[0][:i][:c]).to eq(1_506_703_262_916)
+      expect(impressions[0][:matching_key]).to eq('nico_test')
+      expect(impressions[0][:split_name]).to eq('FACUNDO_TEST')
+      expect(impressions[0][:treatment][:treatment]).to eq('on')
+      expect(impressions[0][:treatment][:label]).to eq('whitelisted')
+      expect(impressions[0][:treatment][:change_number]).to eq(1_506_703_262_916)
 
-      expect(impressions[1][:m][:s]).to eq("ruby-#{config.version}")
-      expect(impressions[1][:m][:i]).to eq(config.machine_ip)
-      expect(impressions[1][:m][:n]).to eq(config.machine_name)
-      expect(impressions[1][:i][:k]).to eq('nico_test')
-      expect(impressions[1][:i][:f]).to eq(:MAURO_TEST)
-      expect(impressions[1][:i][:t]).to eq('off')
-      expect(impressions[1][:i][:r]).to eq('not in split')
-      expect(impressions[1][:i][:c]).to eq(1_506_703_262_966)
+      expect(impressions[1][:matching_key]).to eq('nico_test')
+      expect(impressions[1][:split_name]).to eq('MAURO_TEST')
+      expect(impressions[1][:treatment][:treatment]).to eq('off')
+      expect(impressions[1][:treatment][:label]).to eq('not in split')
+      expect(impressions[1][:treatment][:change_number]).to eq(1_506_703_262_966)
 
-      expect(impressions[2][:m][:s]).to eq("ruby-#{config.version}")
-      expect(impressions[2][:m][:i]).to eq(config.machine_ip)
-      expect(impressions[2][:m][:n]).to eq(config.machine_name)
-      expect(impressions[2][:i][:k]).to eq('nico_test')
-      expect(impressions[2][:i][:f]).to eq(:Test_Save_1)
-      expect(impressions[2][:i][:t]).to eq('off')
-      expect(impressions[2][:i][:r]).to eq('in segment all')
-      expect(impressions[2][:i][:c]).to eq(1_503_956_389_520)
+      expect(impressions[2][:matching_key]).to eq('nico_test')
+      expect(impressions[2][:split_name]).to eq('Test_Save_1')
+      expect(impressions[2][:treatment][:treatment]).to eq('off')
+      expect(impressions[2][:treatment][:label]).to eq('in segment all')
+      expect(impressions[2][:treatment][:change_number]).to eq(1_503_956_389_520)
     end
 
     it 'returns treatments with input validation' do
@@ -390,17 +364,15 @@ describe SplitIoClient do
       expect(result3[:MAURO_TEST]).to eq 'control'
       expect(result3[:Test_Save_1]).to eq 'control'
 
-      impressions = client.instance_variable_get(:@impressions_repository).batch
+      sleep 0.5
+      impressions = custom_impression_listener.queue
 
       expect(impressions.size).to eq 1
-      expect(impressions[0][:m][:s]).to eq("ruby-#{config.version}")
-      expect(impressions[0][:m][:i]).to eq(config.machine_ip)
-      expect(impressions[0][:m][:n]).to eq(config.machine_name)
-      expect(impressions[0][:i][:k]).to eq('nico_test')
-      expect(impressions[0][:i][:f]).to eq(:FACUNDO_TEST)
-      expect(impressions[0][:i][:t]).to eq('on')
-      expect(impressions[0][:i][:r]).to eq('whitelisted')
-      expect(impressions[0][:i][:c]).to eq(1_506_703_262_916)
+      expect(impressions[0][:matching_key]).to eq('nico_test')
+      expect(impressions[0][:split_name]).to eq('FACUNDO_TEST')
+      expect(impressions[0][:treatment][:treatment]).to eq('on')
+      expect(impressions[0][:treatment][:label]).to eq('whitelisted')
+      expect(impressions[0][:treatment][:change_number]).to eq(1_506_703_262_916)
     end
 
     it 'returns CONTROL with treatment doesnt exist' do
@@ -409,17 +381,15 @@ describe SplitIoClient do
       expect(result[:FACUNDO_TEST]).to eq 'on'
       expect(result[:random_treatment]).to eq 'control'
 
-      impressions = client.instance_variable_get(:@impressions_repository).batch
+      sleep 0.5
+      impressions = custom_impression_listener.queue
 
       expect(impressions.size).to eq 1
-      expect(impressions[0][:m][:s]).to eq("ruby-#{config.version}")
-      expect(impressions[0][:m][:i]).to eq(config.machine_ip)
-      expect(impressions[0][:m][:n]).to eq(config.machine_name)
-      expect(impressions[0][:i][:k]).to eq('nico_test')
-      expect(impressions[0][:i][:f]).to eq(:FACUNDO_TEST)
-      expect(impressions[0][:i][:t]).to eq('on')
-      expect(impressions[0][:i][:r]).to eq('whitelisted')
-      expect(impressions[0][:i][:c]).to eq(1_506_703_262_916)
+      expect(impressions[0][:matching_key]).to eq('nico_test')
+      expect(impressions[0][:split_name]).to eq('FACUNDO_TEST')
+      expect(impressions[0][:treatment][:treatment]).to eq('on')
+      expect(impressions[0][:treatment][:label]).to eq('whitelisted')
+      expect(impressions[0][:treatment][:change_number]).to eq(1_506_703_262_916)
     end
 
     it 'returns CONTROL when server return 500' do
@@ -430,26 +400,21 @@ describe SplitIoClient do
       expect(result[:FACUNDO_TEST]).to eq 'control'
       expect(result[:random_treatment]).to eq 'control'
 
-      impressions = client.instance_variable_get(:@impressions_repository).batch
+      sleep 0.5
+      impressions = custom_impression_listener.queue
 
       expect(impressions.size).to eq 2
-      expect(impressions[0][:m][:s]).to eq("ruby-#{config.version}")
-      expect(impressions[0][:m][:i]).to eq(config.machine_ip)
-      expect(impressions[0][:m][:n]).to eq(config.machine_name)
-      expect(impressions[0][:i][:k]).to eq('nico_test')
-      expect(impressions[0][:i][:f]).to eq(:FACUNDO_TEST)
-      expect(impressions[0][:i][:t]).to eq('control')
-      expect(impressions[0][:i][:r]).to eq('not ready')
-      expect(impressions[0][:i][:c]).to eq(nil)
+      expect(impressions[0][:matching_key]).to eq('nico_test')
+      expect(impressions[0][:split_name]).to eq('FACUNDO_TEST')
+      expect(impressions[0][:treatment][:treatment]).to eq('control')
+      expect(impressions[0][:treatment][:label]).to eq('not ready')
+      expect(impressions[0][:treatment][:change_number]).to eq(nil)
 
-      expect(impressions[1][:m][:s]).to eq("ruby-#{config.version}")
-      expect(impressions[1][:m][:i]).to eq(config.machine_ip)
-      expect(impressions[1][:m][:n]).to eq(config.machine_name)
-      expect(impressions[1][:i][:k]).to eq('nico_test')
-      expect(impressions[1][:i][:f]).to eq(:random_treatment)
-      expect(impressions[1][:i][:t]).to eq('control')
-      expect(impressions[1][:i][:r]).to eq('not ready')
-      expect(impressions[1][:i][:c]).to eq(nil)
+      expect(impressions[1][:matching_key]).to eq('nico_test')
+      expect(impressions[1][:split_name]).to eq('random_treatment')
+      expect(impressions[1][:treatment][:treatment]).to eq('control')
+      expect(impressions[1][:treatment][:label]).to eq('not ready')
+      expect(impressions[1][:treatment][:change_number]).to eq(nil)
     end
   end
 
@@ -469,35 +434,27 @@ describe SplitIoClient do
         config: nil
       )
 
-      impressions = client.instance_variable_get(:@impressions_repository).batch
+      sleep 0.5
+      impressions = custom_impression_listener.queue
 
       expect(impressions.size).to eq 3
-      expect(impressions[0][:m][:s]).to eq("ruby-#{config.version}")
-      expect(impressions[0][:m][:i]).to eq(config.machine_ip)
-      expect(impressions[0][:m][:n]).to eq(config.machine_name)
-      expect(impressions[0][:i][:k]).to eq('nico_test')
-      expect(impressions[0][:i][:f]).to eq(:FACUNDO_TEST)
-      expect(impressions[0][:i][:t]).to eq('on')
-      expect(impressions[0][:i][:r]).to eq('whitelisted')
-      expect(impressions[0][:i][:c]).to eq(1_506_703_262_916)
+      expect(impressions[0][:matching_key]).to eq('nico_test')
+      expect(impressions[0][:split_name]).to eq('FACUNDO_TEST')
+      expect(impressions[0][:treatment][:treatment]).to eq('on')
+      expect(impressions[0][:treatment][:label]).to eq('whitelisted')
+      expect(impressions[0][:treatment][:change_number]).to eq(1_506_703_262_916)
 
-      expect(impressions[1][:m][:s]).to eq("ruby-#{config.version}")
-      expect(impressions[1][:m][:i]).to eq(config.machine_ip)
-      expect(impressions[1][:m][:n]).to eq(config.machine_name)
-      expect(impressions[1][:i][:k]).to eq('nico_test')
-      expect(impressions[1][:i][:f]).to eq(:MAURO_TEST)
-      expect(impressions[1][:i][:t]).to eq('off')
-      expect(impressions[1][:i][:r]).to eq('not in split')
-      expect(impressions[1][:i][:c]).to eq(1_506_703_262_966)
+      expect(impressions[1][:matching_key]).to eq('nico_test')
+      expect(impressions[1][:split_name]).to eq('MAURO_TEST')
+      expect(impressions[1][:treatment][:treatment]).to eq('off')
+      expect(impressions[1][:treatment][:label]).to eq('not in split')
+      expect(impressions[1][:treatment][:change_number]).to eq(1_506_703_262_966)
 
-      expect(impressions[2][:m][:s]).to eq("ruby-#{config.version}")
-      expect(impressions[2][:m][:i]).to eq(config.machine_ip)
-      expect(impressions[2][:m][:n]).to eq(config.machine_name)
-      expect(impressions[2][:i][:k]).to eq('nico_test')
-      expect(impressions[2][:i][:f]).to eq(:Test_Save_1)
-      expect(impressions[2][:i][:t]).to eq('off')
-      expect(impressions[2][:i][:r]).to eq('in segment all')
-      expect(impressions[2][:i][:c]).to eq(1_503_956_389_520)
+      expect(impressions[2][:matching_key]).to eq('nico_test')
+      expect(impressions[2][:split_name]).to eq('Test_Save_1')
+      expect(impressions[2][:treatment][:treatment]).to eq('off')
+      expect(impressions[2][:treatment][:label]).to eq('in segment all')
+      expect(impressions[2][:treatment][:change_number]).to eq(1_503_956_389_520)
     end
 
     it 'returns treatments with input validation' do
@@ -526,17 +483,15 @@ describe SplitIoClient do
         config: nil
       )
 
-      impressions = client.instance_variable_get(:@impressions_repository).batch
+      sleep 0.5
+      impressions = custom_impression_listener.queue
 
       expect(impressions.size).to eq 1
-      expect(impressions[0][:m][:s]).to eq("ruby-#{config.version}")
-      expect(impressions[0][:m][:i]).to eq(config.machine_ip)
-      expect(impressions[0][:m][:n]).to eq(config.machine_name)
-      expect(impressions[0][:i][:k]).to eq('nico_test')
-      expect(impressions[0][:i][:f]).to eq(:FACUNDO_TEST)
-      expect(impressions[0][:i][:t]).to eq('on')
-      expect(impressions[0][:i][:r]).to eq('whitelisted')
-      expect(impressions[0][:i][:c]).to eq(1_506_703_262_916)
+      expect(impressions[0][:matching_key]).to eq('nico_test')
+      expect(impressions[0][:split_name]).to eq('FACUNDO_TEST')
+      expect(impressions[0][:treatment][:treatment]).to eq('on')
+      expect(impressions[0][:treatment][:label]).to eq('whitelisted')
+      expect(impressions[0][:treatment][:change_number]).to eq(1_506_703_262_916)
     end
 
     it 'returns CONTROL with treatment doesnt exist' do
@@ -551,17 +506,15 @@ describe SplitIoClient do
         config: nil
       )
 
-      impressions = client.instance_variable_get(:@impressions_repository).batch
+      sleep 0.5
+      impressions = custom_impression_listener.queue
 
       expect(impressions.size).to eq 1
-      expect(impressions[0][:m][:s]).to eq("ruby-#{config.version}")
-      expect(impressions[0][:m][:i]).to eq(config.machine_ip)
-      expect(impressions[0][:m][:n]).to eq(config.machine_name)
-      expect(impressions[0][:i][:k]).to eq('nico_test')
-      expect(impressions[0][:i][:f]).to eq(:FACUNDO_TEST)
-      expect(impressions[0][:i][:t]).to eq('on')
-      expect(impressions[0][:i][:r]).to eq('whitelisted')
-      expect(impressions[0][:i][:c]).to eq(1_506_703_262_916)
+      expect(impressions[0][:matching_key]).to eq('nico_test')
+      expect(impressions[0][:split_name]).to eq('FACUNDO_TEST')
+      expect(impressions[0][:treatment][:treatment]).to eq('on')
+      expect(impressions[0][:treatment][:label]).to eq('whitelisted')
+      expect(impressions[0][:treatment][:change_number]).to eq(1_506_703_262_916)
     end
 
     it 'returns CONTROL when server return 500' do
@@ -581,35 +534,27 @@ describe SplitIoClient do
         config: nil
       )
 
-      impressions = client.instance_variable_get(:@impressions_repository).batch
+      sleep 0.5
+      impressions = custom_impression_listener.queue
 
       expect(impressions.size).to eq 3
-      expect(impressions[0][:m][:s]).to eq("ruby-#{config.version}")
-      expect(impressions[0][:m][:i]).to eq(config.machine_ip)
-      expect(impressions[0][:m][:n]).to eq(config.machine_name)
-      expect(impressions[0][:i][:k]).to eq('nico_test')
-      expect(impressions[0][:i][:f]).to eq(:FACUNDO_TEST)
-      expect(impressions[0][:i][:t]).to eq('control')
-      expect(impressions[0][:i][:r]).to eq('not ready')
-      expect(impressions[0][:i][:c]).to eq(nil)
+      expect(impressions[0][:matching_key]).to eq('nico_test')
+      expect(impressions[0][:split_name]).to eq('FACUNDO_TEST')
+      expect(impressions[0][:treatment][:treatment]).to eq('control')
+      expect(impressions[0][:treatment][:label]).to eq('not ready')
+      expect(impressions[0][:treatment][:change_number]).to eq(nil)
 
-      expect(impressions[1][:m][:s]).to eq("ruby-#{config.version}")
-      expect(impressions[1][:m][:i]).to eq(config.machine_ip)
-      expect(impressions[1][:m][:n]).to eq(config.machine_name)
-      expect(impressions[1][:i][:k]).to eq('nico_test')
-      expect(impressions[1][:i][:f]).to eq(:MAURO_TEST)
-      expect(impressions[1][:i][:t]).to eq('control')
-      expect(impressions[1][:i][:r]).to eq('not ready')
-      expect(impressions[1][:i][:c]).to eq(nil)
+      expect(impressions[1][:matching_key]).to eq('nico_test')
+      expect(impressions[1][:split_name]).to eq('MAURO_TEST')
+      expect(impressions[1][:treatment][:treatment]).to eq('control')
+      expect(impressions[1][:treatment][:label]).to eq('not ready')
+      expect(impressions[1][:treatment][:change_number]).to eq(nil)
 
-      expect(impressions[2][:m][:s]).to eq("ruby-#{config.version}")
-      expect(impressions[2][:m][:i]).to eq(config.machine_ip)
-      expect(impressions[2][:m][:n]).to eq(config.machine_name)
-      expect(impressions[2][:i][:k]).to eq('nico_test')
-      expect(impressions[2][:i][:f]).to eq(:Test_Save_1)
-      expect(impressions[2][:i][:t]).to eq('control')
-      expect(impressions[2][:i][:r]).to eq('not ready')
-      expect(impressions[2][:i][:c]).to eq(nil)
+      expect(impressions[2][:matching_key]).to eq('nico_test')
+      expect(impressions[2][:split_name]).to eq('Test_Save_1')
+      expect(impressions[2][:treatment][:treatment]).to eq('control')
+      expect(impressions[2][:treatment][:label]).to eq('not ready')
+      expect(impressions[2][:treatment][:change_number]).to eq(nil)
     end
 
     it 'with multiple factories returns on' do
@@ -624,9 +569,18 @@ describe SplitIoClient do
         .with("Factory instantiation: You already have 1 factories with this API Key. #{SINGLETON_WARN}")
         .once
 
-      factory1 = SplitIoClient::SplitFactory.new('api_key_other', logger: logger)
-      factory2 = SplitIoClient::SplitFactory.new('another_key_second', logger: logger)
-      factory3 = SplitIoClient::SplitFactory.new('api_key_other', logger: logger)
+      impression_listener1 = MyImpressionListener.new
+      impression_listener2 = MyImpressionListener.new
+      impression_listener3 = MyImpressionListener.new
+      factory1 = SplitIoClient::SplitFactory.new('api_key_other',
+                                                 logger: logger,
+                                                 impression_listener: impression_listener1)
+      factory2 = SplitIoClient::SplitFactory.new('another_key_second',
+                                                 logger: logger,
+                                                 impression_listener: impression_listener2)
+      factory3 = SplitIoClient::SplitFactory.new('api_key_other',
+                                                 logger: logger,
+                                                 impression_listener: impression_listener3)
 
       client1 = factory1.client
       client2 = factory2.client
@@ -649,9 +603,10 @@ describe SplitIoClient do
         config: '{"color":"green"}'
       )
 
-      impressions1 = client1.instance_variable_get(:@impressions_repository).batch
-      impressions2 = client2.instance_variable_get(:@impressions_repository).batch
-      impressions3 = client3.instance_variable_get(:@impressions_repository).batch
+      sleep 0.5
+      impressions1 = impression_listener1.queue
+      impressions2 = impression_listener2.queue
+      impressions3 = impression_listener3.queue
 
       expect(impressions1.size).to eq 1
       expect(impressions2.size).to eq 1
@@ -665,6 +620,7 @@ describe SplitIoClient do
         property_1: 1,
         property_2: 2
       }
+
       expect(client.track('key_1', 'traffic_type_1', 'event_type_1', 123, properties)).to be_truthy
       expect(client.track('key_2', 'traffic_type_2', 'event_type_2', 125)).to be_truthy
 
@@ -672,9 +628,6 @@ describe SplitIoClient do
 
       expect(events.size).to eq 2
 
-      expect(events[0][:m][:s]).to eq("ruby-#{config.version}")
-      expect(events[0][:m][:i]).to eq(config.machine_ip)
-      expect(events[0][:m][:n]).to eq(config.machine_name)
       expect(events[0][:e][:key]).to eq('key_1')
       expect(events[0][:e][:trafficTypeName]).to eq('traffic_type_1')
       expect(events[0][:e][:eventTypeId]).to eq('event_type_1')
@@ -682,9 +635,6 @@ describe SplitIoClient do
       expect(events[0][:e][:properties][:property_1]).to eq(1)
       expect(events[0][:e][:properties][:property_2]).to eq(2)
 
-      expect(events[1][:m][:s]).to eq("ruby-#{config.version}")
-      expect(events[1][:m][:i]).to eq(config.machine_ip)
-      expect(events[1][:m][:n]).to eq(config.machine_name)
       expect(events[1][:e][:key]).to eq('key_2')
       expect(events[1][:e][:trafficTypeName]).to eq('traffic_type_2')
       expect(events[1][:e][:eventTypeId]).to eq('event_type_2')

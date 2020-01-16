@@ -11,8 +11,6 @@ module SplitIoClient
         end
 
         def call
-          return if ENV['SPLITCLIENT_ENV'] == 'test'
-
           metrics_thread
 
           if defined?(PhusionPassenger)

@@ -20,6 +20,8 @@ describe SplitIoClient::Cache::Senders::EventsSender do
 
       sender.call
 
+      sleep 0.1
+
       expect(a_request(:post, 'https://events.split.io/api/events/bulk')
       .with(
         body: [

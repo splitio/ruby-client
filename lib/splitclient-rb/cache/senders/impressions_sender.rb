@@ -11,15 +11,11 @@ module SplitIoClient
         end
 
         def call
-          if ENV['SPLITCLIENT_ENV'] == 'test'
-            post_impressions
-          else
-            impressions_thread
+          impressions_thread
 
-            if defined?(PhusionPassenger)
-              PhusionPassenger.on_event(:starting_worker_process) do |forked|
-                impressions_thread if forked
-              end
+          if defined?(PhusionPassenger)
+            PhusionPassenger.on_event(:starting_worker_process) do |forked|
+              impressions_thread if forked
             end
           end
         end
