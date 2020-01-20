@@ -1,3 +1,5 @@
+require 'concurrent'
+
 module SplitIoClient
   module Cache
     module Repositories
@@ -6,9 +8,9 @@ module SplitIoClient
           OPERATIONS = %w(sdk.get_treatment sdk.get_treatments sdk.get_treatment_with_config sdk.get_treatments_with_config)
 
           def initialize(_ = nil, config)
-            @counts = []
-            @latencies = []
-            @gauges = []
+            @counts = Concurrent::Array.new
+            @latencies = Concurrent::Array.new
+            @gauges = Concurrent::Array.new
             @config = config
           end
 
@@ -64,15 +66,15 @@ module SplitIoClient
           end
 
           def clear_counts
-            @counts = []
+            @counts = Concurrent::Array.new
           end
 
           def clear_latencies
-            @latencies = []
+            @latencies = Concurrent::Array.new
           end
 
           def clear_gauges
-            @gauges = []
+            @gauges = Concurrent::Array.new
           end
 
           def clear
@@ -152,7 +154,7 @@ module SplitIoClient
           end
 
           def find_operation_latencies(operation)
-            @latencies.find { |l| l[:operation] == operation unless l.nil? }
+            @latencies.find { |l| l[:operation] == operation }
           end
         end
       end

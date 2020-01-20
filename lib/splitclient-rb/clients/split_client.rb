@@ -97,7 +97,11 @@ module SplitIoClient
         matching_key: matching_key,
         bucketing_key: bucketing_key,
         time: time,
-        treatment: treatment,
+        treatment: {
+          label: treatment[:label],
+          treatment: treatment[:treatment],
+          change_number: treatment[:change_number]
+        },
         attributes: attributes
       )
     end
@@ -247,12 +251,14 @@ module SplitIoClient
       # Measure
       @adapter.metrics.time('sdk.' + calling_method, latency)
 
+      treatments_for_impressions = get_treatment_for_impressions(treatments_labels_change_numbers)
+
       time = (Time.now.to_f * 1000.0).to_i
       @impressions_repository.add_bulk(
-        matching_key, bucketing_key, treatments_labels_change_numbers, time
-      )
+        matching_key, bucketing_key, treatments_for_impressions, time
+      ) unless treatments_for_impressions == {}
 
-      route_impressions(sanitized_split_names, matching_key, bucketing_key, time, treatments_labels_change_numbers, attributes)
+      route_impressions(sanitized_split_names, matching_key, bucketing_key, time, treatments_for_impressions, attributes)
 
       split_names_keys = treatments_labels_change_numbers.keys
       treatments = treatments_labels_change_numbers.values.map do |v|
@@ -282,14 +288,11 @@ module SplitIoClient
       )
       control_treatment = { treatment: Engine::Models::Treatment::CONTROL }
 
-      parsed_control_exception = parsed_treatment(multiple,
-        control_treatment.merge({ label: Engine::Models::Label::EXCEPTION }))
-
       bucketing_key, matching_key = keys_from_key(key)
 
       attributes = parsed_attributes(attributes)
 
-      return parsed_control_exception unless valid_client && @config.split_validator.valid_get_treatment_parameters(calling_method, key, split_name, matching_key, bucketing_key, attributes)
+      return parsed_treatment(multiple, control_treatment) unless valid_client && @config.split_validator.valid_get_treatment_parameters(calling_method, key, split_name, matching_key, bucketing_key, attributes)
 
       bucketing_key = bucketing_key ? bucketing_key.to_s : nil
       matching_key = matching_key.to_s
@@ -336,7 +339,7 @@ module SplitIoClient
 
         store_impression(split_name, matching_key, bucketing_key, control_treatment, attributes) if store_impressions
 
-        return parsed_control_exception
+        return parsed_treatment(multiple, control_treatment.merge({ label: Engine::Models::Label::EXCEPTION }))
       end
 
       parsed_treatment(multiple, treatment_data)
@@ -353,6 +356,13 @@ module SplitIoClient
 
     def parsed_attributes(attributes)
       return attributes || attributes.to_h
+    end
+
+    def get_treatment_for_impressions(treatments_labels_change_numbers)
+      return treatments_labels_change_numbers.select{|imp| 
+        treatments_labels_change_numbers[imp][:label] != Engine::Models::Label::NOT_FOUND && 
+        !treatments_labels_change_numbers[imp][:label].nil?
+      }
     end
   end
 end

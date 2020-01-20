@@ -1,3 +1,7 @@
+7.0.3 (Jan 20, 2020)
+- Added integration tests.
+- Fixed impressions labels.
+
 7.0.2 (Nov 11, 2019)
 - Fixed an issue about empty logs.
 - Fixed an issue about reducing scan commands in redis.
@@ -36,7 +40,7 @@
   define configurations for your treatments and also whitelisted keys. Read more in our docs!
 
 6.2.0 (Mar 7th, 2019)
-- Reworked SplitClient#destroy to ensure events, impressions and metrics are sent to Split backend when called
+- Reworked SplitClient#destroy to ensure events, impressions and metrics are sent to Split backend when called.
 - Ensured destroy is called when keyboard interrupts are sent to the application
 - Changed SDK blocker (and block_until_ready) to have no effect in consumer mode
 - Added support for applications tied to Faraday < 0.13 and net-http-persistent 3 using a patched Faraday adapter

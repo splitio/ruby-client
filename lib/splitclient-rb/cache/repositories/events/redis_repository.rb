@@ -24,6 +24,10 @@ module SplitIoClient
             @config.logger.error("Exception while clearing events cache: #{e}")
             []
           end
+
+          def batch
+            clear()
+          end
         end
       end
     end

@@ -2,6 +2,7 @@
 
 require 'spec_helper'
 require 'securerandom'
+require 'my_impression_listener'
 
 describe SplitIoClient, type: :client do
   RSpec.shared_examples 'SplitIoClient' do |cache_adapter|
@@ -10,8 +11,12 @@ describe SplitIoClient, type: :client do
                                       logger: Logger.new(log),
                                       cache_adapter: cache_adapter,
                                       redis_namespace: 'test',
-                                      mode: @mode).client
+                                      mode: @mode,
+                                      impressions_refresh_rate: 1,
+                                      impression_listener: customer_impression_listener).client
     end
+
+    let(:customer_impression_listener) { MyImpressionListener.new }
 
     let(:log) { StringIO.new }
 
@@ -201,7 +206,7 @@ describe SplitIoClient, type: :client do
       it 'returns CONTROL and label on nil key' do
         expect(subject.get_treatment(nil, 'test_feature', nil, nil, false, true)).to eq(
           treatment: SplitIoClient::Engine::Models::Treatment::CONTROL,
-          label: SplitIoClient::Engine::Models::Label::EXCEPTION,
+          label: nil,
           change_number: nil
         )
       end
@@ -252,7 +257,7 @@ describe SplitIoClient, type: :client do
       it 'returns CONTROL and label on nil split_name' do
         expect(subject.get_treatment('random_user_id', nil, nil, nil, false, true)).to eq(
           treatment: SplitIoClient::Engine::Models::Treatment::CONTROL,
-          label: SplitIoClient::Engine::Models::Label::EXCEPTION,
+          label: nil,
           change_number: nil
         )
       end
@@ -460,7 +465,7 @@ describe SplitIoClient, type: :client do
           new_feature: 'on', foo: SplitIoClient::Engine::Models::Treatment::CONTROL
         )
         impressions = subject.instance_variable_get(:@impressions_repository).batch
-        expect(impressions.map { |i| i[:i][:f] }).to match_array %i[foo new_feature]
+        expect(impressions.size).to eq(1)
       end
 
       it 'validates the feature is on for all ids multiple keys for integer key' do
@@ -643,15 +648,21 @@ describe SplitIoClient, type: :client do
     end
 
     describe 'impressions' do
-      let(:impressions) { subject.instance_variable_get(:@impressions_repository).batch }
-      let(:formatted_impressions) do
-        SplitIoClient::Cache::Senders::ImpressionsFormatter
-          .new(nil)
-          .send(:call, true, impressions)
-      end
-
       before do
         load_splits(impressions_test_json)
+      end
+
+      it 'returns correct impressions for get_treatments checking ' do
+        subject.get_treatments('26', %w[sample_feature beta_feature])
+        # Need this because we're storing impressions in the Set
+        # Without sleep we may have identical impressions (including time)
+        # In that case only one impression with key "26" would be stored
+        sleep 0.01
+        subject.get_treatments('26', %w[sample_feature beta_feature])
+
+        impressions = customer_impression_listener.queue
+
+        expect(impressions.size).to eq(2)
       end
 
       it 'returns correct impressions for get_treatments' do
@@ -661,16 +672,14 @@ describe SplitIoClient, type: :client do
         subject.get_treatments('24', %w[sample_feature beta_feature])
         subject.get_treatments('25', %w[sample_feature beta_feature])
         subject.get_treatments('26', %w[sample_feature beta_feature])
-        # Need this because we're storing impressions in the Set
-        # Without sleep we may have identical impressions (including time)
-        # In that case only one impression with key "26" would be stored
-        sleep 0.01
-        subject.get_treatments('26', %w[sample_feature beta_feature])
 
-        expect(impressions.size).to eq(14)
+        sleep 0.1
+        impressions = customer_impression_listener.queue
 
-        expect(formatted_impressions.find { |i| i[:testName] == :sample_feature }[:keyImpressions].size).to eq(6)
-        expect(formatted_impressions.find { |i| i[:testName] == :beta_feature }[:keyImpressions].size).to eq(6)
+        expect(impressions.size).to eq(12)
+
+        expect(impressions.select { |i| i[:split_name] == 'sample_feature' }.size).to eq(6)
+        expect(impressions.select { |i| i[:split_name] == 'beta_feature' }.size).to eq(6)
       end
 
       context 'traffic allocations' do
@@ -722,6 +731,15 @@ describe SplitIoClient, type: :client do
       end
 
       it 'returns control' do
+        stub_request(:post, 'https://events.split.io/api/testImpressions/bulk')
+          .to_return(status: 200, body: '', headers: {})
+
+        stub_request(:post, 'https://events.split.io/api/metrics/time')
+          .to_return(status: 200)
+
+        stub_request(:post, 'https://events.split.io/api/metrics/counter')
+          .to_return(status: 200)
+
         expect(subject.get_treatment('fake_user_id_1', 'test_feature')).to eq 'on'
         subject.destroy
         expect(subject.get_treatment('fake_user_id_1', 'test_feature')).to eq 'control'
