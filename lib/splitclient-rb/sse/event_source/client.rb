@@ -1,4 +1,4 @@
-# frozen_string_literal: true
+
 
 require 'concurrent/atomics'
 require 'socketry'
@@ -9,8 +9,8 @@ module SSE
     class Client
       DEFAULT_READ_TIMEOUT = 200
 
-      def initialize(channels, key, config, read_timeout: DEFAULT_READ_TIMEOUT)
-        @uri = URI("https://realtime.ably.io/event-stream?channels=#{channels}&v=1.1&key=#{key}")
+      def initialize(url, config, read_timeout: DEFAULT_READ_TIMEOUT)
+        @uri = URI(url)
         @config = config
         @read_timeout = read_timeout
         @connected = Concurrent::AtomicBoolean.new(false)
@@ -40,10 +40,10 @@ module SSE
       end
 
       def status
-        return SSE::EventSource::Status.CONNECTED if @connected.value
-        return SSE::EventSource::Status.CONNECTING if !@connected.value && @first_time.value
+        return Status::CONNECTED if @connected.value
+        return Status::CONNECTING if !@connected.value && @first_time.value
 
-        SSE::EventSource::Status.DISCONNECTED
+        Status::DISCONNECTED
       end
 
       private
@@ -51,20 +51,27 @@ module SSE
       def connect_stream
         @config.logger.info("Connecting to #{@uri.host}...")
 
-        @socket = Socketry::SSL::Socket.connect(@uri.host, @uri.port)
-        @socket.write(build_request(@uri))
+        begin
+          if @uri.scheme.downcase == 'https'
+            @socket = Socketry::SSL::Socket.connect(@uri.host, @uri.port)
+          else
+            @socket = Socketry::TCP::Socket.connect(@uri.host, @uri.port)
+          end
 
-        while @connected.value || @first_time.value
+          @socket.write(build_request(@uri))
+          @connected.make_true
+        rescue StandardError => e
+          dispatch_error(e.inspect)
+        end
+
+        while @connected.value
           begin
             partial_data = @socket.readpartial(1024, timeout: @read_timeout)
           rescue Socketry::TimeoutError
             @config.logger.error("Socket read time out in #{@read_timeout}")
-
-            sleep(50)
+            #sleep(50)
+            @connected.make_false
             connect_stream
-          rescue StandardError => e
-            @config.logger.error("Error reading socket request: #{e.inspect}")
-            partial_data = nil
           end
 
           proccess_data(partial_data)
@@ -76,14 +83,8 @@ module SSE
           @config.logger.debug("Event partial data: #{partial_data}")
           data = read_partial_data(partial_data)
 
-          if !@first_time.value
-            event = event_parser(data)
-
-            dispatch_event(event)
-          else
-            @first_time.make_false
-            @connected.make_true
-          end
+          event = event_parser(data)
+          dispatch_event(event)
         end
       rescue StandardError => e
         dispatch_error(e.inspect)
