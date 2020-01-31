@@ -1,4 +1,4 @@
-
+# frozen_string_literal: false
 
 require 'concurrent/atomics'
 require 'socketry'
@@ -52,11 +52,7 @@ module SSE
         @config.logger.info("Connecting to #{@uri.host}...")
 
         begin
-          if @uri.scheme.downcase == 'https'
-            @socket = Socketry::SSL::Socket.connect(@uri.host, @uri.port)
-          else
-            @socket = Socketry::TCP::Socket.connect(@uri.host, @uri.port)
-          end
+          @socket = socket_connect
 
           @socket.write(build_request(@uri))
           @connected.make_true
@@ -69,7 +65,6 @@ module SSE
             partial_data = @socket.readpartial(1024, timeout: @read_timeout)
           rescue Socketry::TimeoutError
             @config.logger.error("Socket read time out in #{@read_timeout}")
-            #sleep(50)
             @connected.make_false
             connect_stream
           end
@@ -78,12 +73,18 @@ module SSE
         end
       end
 
+      def socket_connect
+        return Socketry::SSL::Socket.connect(@uri.host, @uri.port) if @uri.scheme.casecmp('https').zero?
+
+        Socketry::TCP::Socket.connect(@uri.host, @uri.port)
+      end
+
       def proccess_data(partial_data)
         unless partial_data.nil?
           @config.logger.debug("Event partial data: #{partial_data}")
           data = read_partial_data(partial_data)
-
           event = event_parser(data)
+
           dispatch_event(event)
         end
       rescue StandardError => e
@@ -123,7 +124,7 @@ module SSE
         return nil if type == '' || event_data.nil?
 
         StreamData.new(event_data['id'],
-                       type,
+                       type.strip,
                        event_data['name'],
                        event_data['data'],
                        event_data['channel'])

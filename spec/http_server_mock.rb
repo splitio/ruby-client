@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-require "webrick"
-require "webrick/httpproxy"
-require "webrick/https"
+require 'webrick'
+require 'webrick/httpproxy'
+require 'webrick/https'
 
 class HTTPServerMock
   def initialize
-    @port = 60000
+    @port = 60_000
     begin
       @server = create_server(@port)
     rescue Errno::EADDRINUSE
@@ -18,8 +18,7 @@ class HTTPServerMock
   def create_server(port)
     WEBrick::HTTPServer.new(
       BindAddress: '127.0.0.1',
-      Port: port,
-      AccessLog: [],
+      Port: port
     )
   end
 
@@ -39,8 +38,8 @@ class HTTPServerMock
     @server.mount_proc(uri_path, action)
   end
 end
-  
-def with_server(server = nil)
+
+def mock_server(server = nil)
   server = HTTPServerMock.new if server.nil?
   begin
     server.start
