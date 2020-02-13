@@ -18,7 +18,8 @@ class HTTPServerMock
   def create_server(port)
     WEBrick::HTTPServer.new(
       BindAddress: '127.0.0.1',
-      Port: port
+      Port: port,
+      Logger: WEBrick::Log.new("/dev/null")
     )
   end
 
