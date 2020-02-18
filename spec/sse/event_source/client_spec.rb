@@ -8,50 +8,91 @@ describe SSE::EventSource::Client do
 
   let(:log) { StringIO.new }
   let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log)) }
-  let(:event_message) do
-    <<-ET
-    b0
-    id: 1
-    event: message
-    data: {\"id\":\"123\",\"connectionId\":\"1\",\"channel\":\"channel-test\",\"data\":\"data-test\",\"name\":\"name-test\"}
-    ET
-  end
-  let(:event_control) do
-    <<-ET
-    "b0\
-    id: 2
-    event: control
-    data: {\"id\":\"1243\",\"connectionId\":\"1\",\"channel\":\"channel-test\",\"data\":\"data-test\",\"name\":\"name-test\"}
-    ET
-  end
-  let(:event_fail) do
-    <<-ET
-    b0
-    id: 3
-    event: fail
-    info: {\"id\":\"1243\",\"connectionId\":\"1\",\"data\":\"data-test\"}
-    ET
-  end
+  let(:event_split_update) { "fb\r\nid: 123\nevent: message\ndata: {\"id\":\"1\",\"connectionId\":\"1\",\"timestamp\":1582045421733,\"channel\":\"mauroc\",\"data\":\"{\\\"type\\\" : \\\"SPLIT_UPDATE\\\",\\\"changeNumber\\\": 5564531221}\",\"name\":\"asdasd\"}\n\n\r\n" }
+  let(:event_split_kill) { "fb\r\nid: 123\nevent: message\ndata: {\"id\":\"1\",\"connectionId\":\"1\",\"timestamp\":1582045421733,\"channel\":\"mauroc\",\"data\":\"{\\\"type\\\" : \\\"SPLIT_KILL\\\",\\\"changeNumber\\\": 5564531221, \\\"defaultTreatment\\\" : \\\"off\\\", \\\"splitName\\\" : \\\"split-test\\\"}\",\"name\":\"asdasd\"}\n\n\r\n" }
+  let(:event_segment_update) { "fb\r\nid: 123\nevent: message\ndata: {\"id\":\"1\",\"connectionId\":\"1\",\"timestamp\":1582045421733,\"channel\":\"mauroc\",\"data\":\"{\\\"type\\\" : \\\"SEGMENT_UPDATE\\\",\\\"changeNumber\\\": 5564531221, \\\"segmentName\\\" : \\\"segment-test\\\"}\",\"name\":\"asdasd\"}\n\n\r\n" }
+  let(:event_control) { "fb\r\nid: 123\nevent: message\ndata: {\"id\":\"1\",\"connectionId\":\"1\",\"timestamp\":1582045421733,\"channel\":\"mauroc\",\"data\":\"{\\\"type\\\" : \\\"CONTROL\\\", \\\"controlType\\\" : \\\"control-type-example\\\"}\",\"name\":\"asdasd\"}\n\n\r\n" }
+  let(:event_invalid_format) { "fb\r\nid: 123\nevent: message\ndata: {\"id\":\"1\",\"connectionId\":\"1\",\"timestamp\":1582045421733,\"channel\":\"mauroc\",\"content\":\"{\\\"type\\\" : \\\"SPLIT_UPDATE\\\",\\\"changeNumber\\\": 5564531221}\",\"name\":\"asdasd\"}\n\n\r\n" }
 
-  it 'receive message event' do
+  it 'receive split update event' do
     mock_server do |server|
       server.setup_response('/') do |_, res|
-        send_stream_content(res, event_message, keep_open: false)
+        send_stream_content(res, event_split_update, keep_open: false)
       end
-
+      
       event_queue = Queue.new
+      error_queue = Queue.new
       sse_client = subject.new(server.base_uri, config) do |client|
         client.on_event do |event|
           event_queue << event
         end
+
+        client.on_error do |error|
+          error_queue << error
+        end
       end
 
+      expect(error_queue.empty?).to be_truthy
       event_result = event_queue.pop
-      expect(event_result.type).to eq('message')
-      expect(event_result.name).to eq('name-test')
-      expect(event_result.channel).to eq('channel-test')
-      expect(event_result.data).to eq('data-test')
-      expect(event_result.id).to eq('123')
+      expect(event_result['type']).to eq('SPLIT_UPDATE')
+      expect(event_result['changeNumber']).to eq(5564531221)
+
+      sse_client.close
+    end
+  end
+
+  it 'receive split kill event' do
+    mock_server do |server|
+      server.setup_response('/') do |_, res|
+        send_stream_content(res, event_split_kill, keep_open: false)
+      end
+      
+      event_queue = Queue.new
+      error_queue = Queue.new
+      sse_client = subject.new(server.base_uri, config) do |client|
+        client.on_event do |event|
+          event_queue << event
+        end
+
+        client.on_error do |error|
+          error_queue << error
+        end
+      end
+
+      expect(error_queue.empty?).to be_truthy
+      event_result = event_queue.pop
+      expect(event_result['type']).to eq('SPLIT_KILL')
+      expect(event_result['changeNumber']).to eq(5564531221)
+      expect(event_result['defaultTreatment']).to eq('off')
+      expect(event_result['splitName']).to eq('split-test')
+
+      sse_client.close
+    end
+  end
+
+  it 'receive segment update event' do
+    mock_server do |server|
+      server.setup_response('/') do |_, res|
+        send_stream_content(res, event_segment_update, keep_open: false)
+      end
+      
+      event_queue = Queue.new
+      error_queue = Queue.new
+      sse_client = subject.new(server.base_uri, config) do |client|
+        client.on_event do |event|
+          event_queue << event
+        end
+
+        client.on_error do |error|
+          error_queue << error
+        end
+      end
+
+      expect(error_queue.empty?).to be_truthy
+      event_result = event_queue.pop
+      expect(event_result['type']).to eq('SEGMENT_UPDATE')
+      expect(event_result['changeNumber']).to eq(5564531221)
+      expect(event_result['segmentName']).to eq('segment-test')
 
       sse_client.close
     end
@@ -64,37 +105,47 @@ describe SSE::EventSource::Client do
       end
 
       event_queue = Queue.new
+      error_queue = Queue.new
       sse_client = subject.new(server.base_uri, config) do |client|
         client.on_event do |event|
           event_queue << event
         end
+
+        client.on_error do |error|
+          error_queue << error
+        end
       end
 
+      expect(error_queue.empty?).to be_truthy
       event_result = event_queue.pop
-      expect(event_result.type).to eq('control')
-      expect(event_result.name).to eq('name-test')
-      expect(event_result.channel).to eq('channel-test')
-      expect(event_result.data).to eq('data-test')
-      expect(event_result.id).to eq('1243')
+      expect(event_result['type']).to eq('CONTROL')
+      expect(event_result['controlType']).to eq('control-type-example')
 
       sse_client.close
     end
   end
 
-  it 'receive incorrect event format' do
+  it 'receive invalid format' do
     mock_server do |server|
       server.setup_response('/') do |_, res|
-        send_stream_content(res, event_fail, keep_open: false)
+        send_stream_content(res, event_invalid_format, keep_open: false)
       end
 
       event_queue = Queue.new
+      error_queue = Queue.new
       sse_client = subject.new(server.base_uri, config) do |client|
         client.on_event do |event|
           event_queue << event
         end
-      end
 
-      expect(event_queue.length).to eq(0)
+        client.on_error do |error|
+          error_queue << error
+        end
+      end
+  
+      sleep 0.5
+      expect(error_queue.empty?).to be_falsy
+      expect(event_queue.empty?).to be_truthy
 
       sse_client.close
     end

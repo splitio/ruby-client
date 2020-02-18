@@ -8,13 +8,13 @@ module SSE
   module EventSource
     class Client
       DEFAULT_READ_TIMEOUT = 200
+      KEEP_ALIVE_RESPONSE = "c\r\n:keepalive\n\n\r\n".freeze
 
       def initialize(url, config, read_timeout: DEFAULT_READ_TIMEOUT)
         @uri = URI(url)
         @config = config
         @read_timeout = read_timeout
         @connected = Concurrent::AtomicBoolean.new(false)
-        @first_time = Concurrent::AtomicBoolean.new(true)
         @socket = nil
 
         @on = { event: ->(_) {}, error: ->(_) {} }
@@ -35,13 +35,13 @@ module SSE
       end
 
       def close
-        @socket&.close if @connected.make_false
-        @socket = nil if @connected.make_false
+        @connected.make_false
+        @socket&.close
+        @socket = nil
       end
 
       def status
         return Status::CONNECTED if @connected.value
-        return Status::CONNECTING if !@connected.value && @first_time.value
 
         Status::DISCONNECTED
       end
@@ -62,14 +62,14 @@ module SSE
 
         while @connected.value
           begin
-            partial_data = @socket.readpartial(1024, timeout: @read_timeout)
+            partial_data = @socket.readpartial(2048, timeout: @read_timeout)
           rescue Socketry::TimeoutError
             @config.logger.error("Socket read time out in #{@read_timeout}")
             @connected.make_false
             connect_stream
           end
-
-          proccess_data(partial_data)
+          
+          proccess_data(partial_data) unless partial_data == KEEP_ALIVE_RESPONSE
         end
       end
 
@@ -84,7 +84,7 @@ module SSE
           @config.logger.debug("Event partial data: #{partial_data}")
           data = read_partial_data(partial_data)
           event = event_parser(data)
-
+          
           dispatch_event(event)
         end
       rescue StandardError => e
@@ -109,27 +109,21 @@ module SSE
       end
 
       def event_parser(data)
-        type = ''
-        event_data = nil
-
         data.each do |d|
-          if d.include? 'event: '
-            type = d.sub('event: ', '')
-          elsif d.include? 'data: '
-            json_data = d.sub('data: ', '')
-            event_data = JSON.parse(json_data)
+          splited_data = d.split(':')
+          if splited_data[0].strip == 'data'
+            event_data = JSON.parse(d.sub('data: ', ''))
+            parsed_data = JSON.parse(event_data['data']) unless event_data.nil?
+
+            return parsed_data unless parsed_data.nil?
           end
         end
 
-        return nil if type == '' || event_data.nil?
-
-        StreamData.new(event_data['id'],
-                       type.strip,
-                       event_data['name'],
-                       event_data['data'],
-                       event_data['channel'])
+        dispatch_error("Event format is invalid.");
+        return nil
       rescue StandardError => e
         dispatch_error(e.inspect)
+        return nil
       end
 
       def dispatch_event(event)
@@ -138,7 +132,7 @@ module SSE
       end
 
       def dispatch_error(error)
-        @config.logger.debug("Dispatching event error: #{error}")
+        @config.logger.debug("Dispatching error: #{error}")
         @on[:error].call(error)
       end
     end

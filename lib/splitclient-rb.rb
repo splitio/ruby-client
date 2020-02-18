@@ -90,7 +90,6 @@ require 'splitclient-rb/redis_metrics_fixer'
 
 # SSE 
 require 'splitclient-rb/sse/event_source/client'
-require 'splitclient-rb/sse/event_source/stream_data'
 require 'splitclient-rb/sse/event_source/status'
 
 # C extension
