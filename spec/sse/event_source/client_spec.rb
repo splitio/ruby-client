@@ -19,7 +19,7 @@ describe SSE::EventSource::Client do
       server.setup_response('/') do |_, res|
         send_stream_content(res, event_split_update, keep_open: false)
       end
-      
+
       event_queue = Queue.new
       error_queue = Queue.new
       sse_client = subject.new(server.base_uri, config) do |client|
@@ -35,7 +35,7 @@ describe SSE::EventSource::Client do
       expect(error_queue.empty?).to be_truthy
       event_result = event_queue.pop
       expect(event_result['type']).to eq('SPLIT_UPDATE')
-      expect(event_result['changeNumber']).to eq(5564531221)
+      expect(event_result['changeNumber']).to eq(5_564_531_221)
 
       sse_client.close
     end
@@ -46,7 +46,7 @@ describe SSE::EventSource::Client do
       server.setup_response('/') do |_, res|
         send_stream_content(res, event_split_kill, keep_open: false)
       end
-      
+
       event_queue = Queue.new
       error_queue = Queue.new
       sse_client = subject.new(server.base_uri, config) do |client|
@@ -62,7 +62,7 @@ describe SSE::EventSource::Client do
       expect(error_queue.empty?).to be_truthy
       event_result = event_queue.pop
       expect(event_result['type']).to eq('SPLIT_KILL')
-      expect(event_result['changeNumber']).to eq(5564531221)
+      expect(event_result['changeNumber']).to eq(5_564_531_221)
       expect(event_result['defaultTreatment']).to eq('off')
       expect(event_result['splitName']).to eq('split-test')
 
@@ -75,7 +75,7 @@ describe SSE::EventSource::Client do
       server.setup_response('/') do |_, res|
         send_stream_content(res, event_segment_update, keep_open: false)
       end
-      
+
       event_queue = Queue.new
       error_queue = Queue.new
       sse_client = subject.new(server.base_uri, config) do |client|
@@ -91,7 +91,7 @@ describe SSE::EventSource::Client do
       expect(error_queue.empty?).to be_truthy
       event_result = event_queue.pop
       expect(event_result['type']).to eq('SEGMENT_UPDATE')
-      expect(event_result['changeNumber']).to eq(5564531221)
+      expect(event_result['changeNumber']).to eq(5_564_531_221)
       expect(event_result['segmentName']).to eq('segment-test')
 
       sse_client.close
@@ -142,7 +142,7 @@ describe SSE::EventSource::Client do
           error_queue << error
         end
       end
-  
+
       sleep 0.5
       expect(error_queue.empty?).to be_falsy
       expect(event_queue.empty?).to be_truthy

@@ -68,7 +68,7 @@ module SSE
             @connected.make_false
             connect_stream
           end
-          
+
           proccess_data(partial_data) unless partial_data == KEEP_ALIVE_RESPONSE
         end
       end
@@ -84,7 +84,7 @@ module SSE
           @config.logger.debug("Event partial data: #{partial_data}")
           data = read_partial_data(partial_data)
           event = event_parser(data)
-          
+
           dispatch_event(event)
         end
       rescue StandardError => e
@@ -111,19 +111,18 @@ module SSE
       def event_parser(data)
         data.each do |d|
           splited_data = d.split(':')
-          if splited_data[0].strip == 'data'
-            event_data = JSON.parse(d.sub('data: ', ''))
-            parsed_data = JSON.parse(event_data['data']) unless event_data.nil?
+          next unless splited_data[0].strip == 'data'
 
-            return parsed_data unless parsed_data.nil?
-          end
+          event_data = JSON.parse(d.sub('data: ', ''))
+          parsed_data = JSON.parse(event_data['data']) unless event_data.nil?
+
+          return parsed_data unless parsed_data.nil?
         end
 
-        dispatch_error("Event format is invalid.");
-        return nil
+        raise 'Invalid event format.'
       rescue StandardError => e
         dispatch_error(e.inspect)
-        return nil
+        nil
       end
 
       def dispatch_event(event)
