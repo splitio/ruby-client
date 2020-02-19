@@ -82,8 +82,8 @@ module SSE
       def proccess_data(partial_data)
         unless partial_data.nil?
           @config.logger.debug("Event partial data: #{partial_data}")
-          data = read_partial_data(partial_data)
-          event = event_parser(data)
+          buffer = read_partial_data(partial_data)
+          event = parse_event(buffer)
 
           dispatch_event(event)
         end
@@ -108,12 +108,12 @@ module SSE
         buffer.split("\n")
       end
 
-      def event_parser(data)
+      def parse_event(buffer)
         event_type = nil
         parsed_data = nil
         client_id = nil
 
-        data.each do |d|
+        buffer.each do |d|
           splited_data = d.split(':')
 
           if splited_data[0] == 'event'
