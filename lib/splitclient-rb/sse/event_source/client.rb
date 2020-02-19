@@ -109,15 +109,23 @@ module SSE
       end
 
       def event_parser(data)
+        event_type = nil
+        parsed_data = nil
+        client_id = nil
+
         data.each do |d|
           splited_data = d.split(':')
-          next unless splited_data[0].strip == 'data'
 
-          event_data = JSON.parse(d.sub('data: ', ''))
-          parsed_data = JSON.parse(event_data['data']) unless event_data.nil?
-
-          return parsed_data unless parsed_data.nil?
+          if splited_data[0] == 'event'
+            event_type = splited_data[1].strip
+          elsif splited_data[0] == 'data'
+            event_data = JSON.parse(d.sub('data: ', ''))
+            client_id = event_data['clientId'].strip
+            parsed_data = JSON.parse(event_data['data'])
+          end
         end
+
+        return StreamData.new(event_type, client_id, parsed_data) unless event_type.nil? || parsed_data.nil?
 
         raise 'Invalid event format.'
       rescue StandardError => e
@@ -135,5 +143,7 @@ module SSE
         @on[:error].call(error)
       end
     end
+
+    StreamData = Struct.new(:event_type, :client_id, :data)
   end
 end
