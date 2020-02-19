@@ -29,7 +29,7 @@ module SplitIoClient
         private
 
         def segments_thread
-          @config.threads[:segment_store] = Thread.new do
+          @config.threads[:segment_fetcher] = Thread.new do
             @config.logger.info('Starting segments fetcher service')
 
             loop do

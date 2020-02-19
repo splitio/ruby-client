@@ -29,7 +29,7 @@ module SplitIoClient
         private
 
         def splits_thread
-          @config.threads[:split_store] = Thread.new do
+          @config.threads[:split_fetcher] = Thread.new do
             @config.logger.info('Starting splits fetcher service')
             loop do
               fetch_splits

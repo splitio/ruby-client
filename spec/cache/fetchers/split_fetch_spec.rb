@@ -58,7 +58,7 @@ describe SplitIoClient::Cache::Fetchers::SplitFetcher do
       expect(archived_split).to be_nil
     end
 
-    it 'rescues from error when split_store#splits_since raises an exception' do
+    it 'rescues from error when split_fetcher#splits_since raises an exception' do
       allow_any_instance_of(SplitFetcher).to receive(:splits_since).and_throw(RuntimeError)
 
       expect { store.send(:fetch_splits) }.to_not raise_error

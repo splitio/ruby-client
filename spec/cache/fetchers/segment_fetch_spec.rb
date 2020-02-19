@@ -38,22 +38,22 @@ describe SplitIoClient::Cache::Fetchers::SegmentFetcher do
     let(:config) { SplitIoClient::SplitConfig.new }
     let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config) }
-    let(:segment_store) { described_class.new(segments_repository, '', metrics, config) }
-    let(:split_store) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, '', metrics, config) }
+    let(:segment_fetcher) { described_class.new(segments_repository, '', metrics, config) }
+    let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, '', metrics, config) }
 
     it 'fetch segments' do
-      split_store.send(:fetch_splits)
-      segment_store.send(:fetch_segments)
+      split_fetcher.send(:fetch_splits)
+      segment_fetcher.send(:fetch_segments)
 
-      expect(segment_store.segments_repository.used_segment_names).to eq(['employees'])
+      expect(segment_fetcher.segments_repository.used_segment_names).to eq(['employees'])
     end
 
     it 'updates added/removed' do
-      segments = segment_store.send(:segments_api).send(:fetch_segment_changes, 'employees', -1)
+      segments = segment_fetcher.send(:segments_api).send(:fetch_segment_changes, 'employees', -1)
       expect(segments[:added]).to eq(%w[max dan])
       expect(segments[:removed]).to eq([])
 
-      segments = segment_store.send(:segments_api).send(:fetch_segment_changes, 'employees', 1_473_863_075_059)
+      segments = segment_fetcher.send(:segments_api).send(:fetch_segment_changes, 'employees', 1_473_863_075_059)
       expect(segments[:added]).to eq([])
       expect(segments[:removed]).to eq([])
     end
@@ -67,22 +67,22 @@ describe SplitIoClient::Cache::Fetchers::SegmentFetcher do
     let(:adapter) { SplitIoClient::Cache::Adapters::RedisAdapter.new(config.redis_url) }
     let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config) }
-    let(:segment_store) { described_class.new(segments_repository, '', metrics, config) }
-    let(:split_store) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, '', metrics, config) }
+    let(:segment_fetcher) { described_class.new(segments_repository, '', metrics, config) }
+    let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, '', metrics, config) }
 
     it 'fetch segments' do
-      split_store.send(:fetch_splits)
-      segment_store.send(:fetch_segments)
+      split_fetcher.send(:fetch_splits)
+      segment_fetcher.send(:fetch_segments)
 
-      expect(segment_store.segments_repository.used_segment_names).to eq(['employees'])
+      expect(segment_fetcher.segments_repository.used_segment_names).to eq(['employees'])
     end
 
     it 'updates added/removed' do
-      segments = segment_store.send(:segments_api).send(:fetch_segment_changes, 'employees', -1)
+      segments = segment_fetcher.send(:segments_api).send(:fetch_segment_changes, 'employees', -1)
       expect(segments[:added]).to eq(%w[max dan])
       expect(segments[:removed]).to eq([])
 
-      segments = segment_store.send(:segments_api).send(:fetch_segment_changes, 'employees', 1_473_863_075_059)
+      segments = segment_fetcher.send(:segments_api).send(:fetch_segment_changes, 'employees', 1_473_863_075_059)
       expect(segments[:added]).to eq([])
       expect(segments[:removed]).to eq([])
     end
