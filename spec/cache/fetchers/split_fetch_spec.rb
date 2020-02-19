@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe SplitIoClient::Cache::Stores::SplitStore do
+describe SplitIoClient::Cache::Fetchers::SplitFetcher do
   let(:metrics_repository) do
     SplitIoClient::Cache::Repositories::MetricsRepository.new(config)
   end
@@ -38,14 +38,14 @@ describe SplitIoClient::Cache::Stores::SplitStore do
     end
 
     it 'stores data in the cache' do
-      store.send(:store_splits)
+      store.send(:fetch_splits)
 
       expect(store.splits_repository.splits.size).to eq(2)
       expect(store.splits_repository.get_change_number).to eq(store.send(:splits_since, -1)[:till])
     end
 
     it 'refreshes splits' do
-      store.send(:store_splits)
+      store.send(:fetch_splits)
 
       active_split = store.splits_repository.splits['test_1_ruby']
       expect(active_split[:status]).to eq('ACTIVE')
@@ -53,17 +53,17 @@ describe SplitIoClient::Cache::Stores::SplitStore do
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1473413807667')
         .to_return(status: 200, body: archived_splits_json)
 
-      store.send(:store_splits)
+      store.send(:fetch_splits)
 
       archived_split = store.splits_repository.splits['test_1_ruby']
       expect(archived_split).to be_nil
     end
 
     it 'rescues from error when split_store#splits_since raises an exception' do
-      allow_any_instance_of(SplitStore).to receive(:splits_since).and_throw(RuntimeError)
+      allow_any_instance_of(SplitFetcher).to receive(:splits_since).and_throw(RuntimeError)
 
-      expect { store.send(:store_splits) }.to_not raise_error
-      expect(log.string).to include('Unexpected exception in store_splits')
+      expect { store.send(:fetch_splits) }.to_not raise_error
+      expect(log.string).to include('Unexpected exception in fetch_splits')
     end
   end
 
@@ -86,14 +86,14 @@ describe SplitIoClient::Cache::Stores::SplitStore do
     end
 
     it 'stores data in the cache' do
-      store.send(:store_splits)
+      store.send(:fetch_splits)
 
       expect(store.splits_repository.splits.size).to eq(2)
       expect(store.splits_repository.get_change_number).to eq(store.send(:splits_since, -1)[:till].to_s)
     end
 
     it 'refreshes splits' do
-      store.send(:store_splits)
+      store.send(:fetch_splits)
 
       active_split = store.splits_repository.splits['test_1_ruby']
       expect(active_split[:status]).to eq('ACTIVE')
@@ -101,7 +101,7 @@ describe SplitIoClient::Cache::Stores::SplitStore do
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1473413807667')
         .to_return(status: 200, body: archived_splits_json)
 
-      store.send(:store_splits)
+      store.send(:fetch_splits)
 
       archived_split = store.splits_repository.splits['test_1_ruby']
       expect(archived_split).to be_nil

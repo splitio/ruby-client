@@ -1,7 +1,7 @@
 module SplitIoClient
   module Cache
-    module Stores
-      class SplitStore
+    module Fetchers
+      class SplitFetcher
         attr_reader :splits_repository
 
         def initialize(splits_repository, api_key, metrics, config, sdk_blocker = nil)
@@ -14,7 +14,7 @@ module SplitIoClient
 
         def call
           if ENV['SPLITCLIENT_ENV'] == 'test'
-            store_splits
+            fetch_splits
           else
             splits_thread
 
@@ -32,14 +32,14 @@ module SplitIoClient
           @config.threads[:split_store] = Thread.new do
             @config.logger.info('Starting splits fetcher service')
             loop do
-              store_splits
+              fetch_splits
 
               sleep(StoreUtils.random_interval(@config.features_refresh_rate))
             end
           end
         end
 
-        def store_splits
+        def fetch_splits
           data = splits_since(@splits_repository.get_change_number)
 
           data[:splits] && data[:splits].each do |split|

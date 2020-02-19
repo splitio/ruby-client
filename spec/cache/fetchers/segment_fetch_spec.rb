@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe SplitIoClient::Cache::Stores::SegmentStore do
+describe SplitIoClient::Cache::Fetchers::SegmentFetcher do
   let(:metrics_repository) do
     SplitIoClient::Cache::Repositories::MetricsRepository.new(@default_config)
   end
@@ -39,10 +39,10 @@ describe SplitIoClient::Cache::Stores::SegmentStore do
     let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config) }
     let(:segment_store) { described_class.new(segments_repository, '', metrics, config) }
-    let(:split_store) { SplitIoClient::Cache::Stores::SplitStore.new(splits_repository, '', metrics, config) }
+    let(:split_store) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, '', metrics, config) }
 
     it 'stores segments' do
-      split_store.send(:store_splits)
+      split_store.send(:fetch_splits)
       segment_store.send(:store_segments)
 
       expect(segment_store.segments_repository.used_segment_names).to eq(['employees'])
@@ -68,10 +68,10 @@ describe SplitIoClient::Cache::Stores::SegmentStore do
     let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config) }
     let(:segment_store) { described_class.new(segments_repository, '', metrics, config) }
-    let(:split_store) { SplitIoClient::Cache::Stores::SplitStore.new(splits_repository, '', metrics, config) }
+    let(:split_store) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, '', metrics, config) }
 
     it 'stores segments' do
-      split_store.send(:store_splits)
+      split_store.send(:fetch_splits)
       segment_store.send(:store_segments)
 
       expect(segment_store.segments_repository.used_segment_names).to eq(['employees'])

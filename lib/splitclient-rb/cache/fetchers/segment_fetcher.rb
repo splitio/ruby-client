@@ -1,7 +1,7 @@
 module SplitIoClient
   module Cache
-    module Stores
-      class SegmentStore
+    module Fetchers
+      class SegmentFetcher
         attr_reader :segments_repository
 
         def initialize(segments_repository, api_key, metrics, config, sdk_blocker = nil)
