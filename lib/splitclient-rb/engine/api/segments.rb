@@ -13,7 +13,7 @@ module SplitIoClient
         @segments_repository = segments_repository
       end
 
-      def store_segments_by_names(names)
+      def fetch_segments_by_names(names)
         start = Time.now
 
         return if names.nil? || names.empty?

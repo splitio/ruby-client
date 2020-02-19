@@ -30,7 +30,7 @@ describe SplitIoClient::Cache::Stores::LocalhostSplitStore do
 
     let(:store) { described_class.new(splits_repository, config) }
 
-    it 'stores data in the cache' do
+    it 'fetch data in the cache' do
       store.send(:store_splits)
 
       expect(store.splits_repository.splits.size).to eq(1)

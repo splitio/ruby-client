@@ -14,7 +14,7 @@ module SplitIoClient
 
         def call
           if ENV['SPLITCLIENT_ENV'] == 'test'
-            store_segments
+            fetch_segments
           else
             segments_thread
 
@@ -35,7 +35,7 @@ module SplitIoClient
             loop do
               next unless @sdk_blocker.splits_repository.ready?
 
-              store_segments
+              fetch_segments
               @config.logger.debug("Segment names: #{@segments_repository.used_segment_names.to_a}") if @config.debug_enabled
 
               sleep_for = StoreUtils.random_interval(@config.segments_refresh_rate)
@@ -45,8 +45,8 @@ module SplitIoClient
           end
         end
 
-        def store_segments
-          segments_api.store_segments_by_names(@segments_repository.used_segment_names)
+        def fetch_segments
+          segments_api.fetch_segments_by_names(@segments_repository.used_segment_names)
 
           @sdk_blocker.segments_ready!
         rescue StandardError => error

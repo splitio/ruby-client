@@ -982,7 +982,7 @@ describe SplitIoClient, type: :client do
                                         mode: :standalone).client
       end
 
-      it 'stores splits' do
+      it 'fetch splits' do
         expect(subject.instance_variable_get(:@adapter).splits_repository.splits.size).to eq(1)
       end
     end

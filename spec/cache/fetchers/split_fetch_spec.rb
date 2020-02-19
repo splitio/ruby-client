@@ -27,7 +27,6 @@ describe SplitIoClient::Cache::Fetchers::SplitFetcher do
         cache_adapter: :memory
       )
     end
-    # let(:adapter) { SplitIoClient::Cache::Adapters::MemoryAdapters::MapAdapter.new }
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config) }
     let(:store) { described_class.new(splits_repository, '', metrics, config) }
 
@@ -37,7 +36,7 @@ describe SplitIoClient::Cache::Fetchers::SplitFetcher do
       expect(splits[:splits].count).to eq(2)
     end
 
-    it 'stores data in the cache' do
+    it 'fetch data in the cache' do
       store.send(:fetch_splits)
 
       expect(store.splits_repository.splits.size).to eq(2)
@@ -85,7 +84,7 @@ describe SplitIoClient::Cache::Fetchers::SplitFetcher do
       expect(splits[:splits].count).to eq(2)
     end
 
-    it 'stores data in the cache' do
+    it 'fetch data in the cache' do
       store.send(:fetch_splits)
 
       expect(store.splits_repository.splits.size).to eq(2)

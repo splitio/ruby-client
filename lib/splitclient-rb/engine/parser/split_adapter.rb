@@ -1,8 +1,8 @@
 require 'json'
 require 'thread'
 
-include SplitIoClient::Cache::Stores
 include SplitIoClient::Cache::Fetchers
+include SplitIoClient::Cache::Stores
 include SplitIoClient::Cache::Senders
 
 module SplitIoClient
