@@ -1,11 +1,19 @@
 Documentation:
     Enabled: false
 
+Metrics/AbcSize:
+  Max: 25
+
 Metrics/MethodLength:
-  Max: 15
+  Max: 20
+
+Metrics/ClassLength:
+  Max: 110
 
 Metrics/LineLength:
   Max: 121
+  Exclude:
+    - spec/sse/**/*
 
 Metrics/BlockLength:
   Exclude:

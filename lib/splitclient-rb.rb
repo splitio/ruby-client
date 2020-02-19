@@ -88,6 +88,10 @@ require 'splitclient-rb/utilitites'
 # redis metrics fixer
 require 'splitclient-rb/redis_metrics_fixer'
 
+# SSE 
+require 'splitclient-rb/sse/event_source/client'
+require 'splitclient-rb/sse/event_source/status'
+
 # C extension
 require 'murmurhash/murmurhash_mri'
 

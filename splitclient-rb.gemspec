@@ -54,5 +54,6 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'lru_redux'
   spec.add_runtime_dependency 'net-http-persistent', '>= 2.9'
   spec.add_runtime_dependency 'redis', '>= 3.2'
+  spec.add_runtime_dependency 'socketry', '~> 0.5.1'
   spec.add_runtime_dependency 'thread_safe', '>= 0.3'
 end
