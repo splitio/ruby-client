@@ -21,8 +21,12 @@ module SSE
 
         yield self if block_given?
 
-        Thread.new do
-          connect_stream
+        connect_thread
+
+        if defined?(PhusionPassenger)
+          PhusionPassenger.on_event(:starting_worker_process) do |forked|
+            connect_thread if forked
+          end
         end
       end
 
@@ -47,6 +51,12 @@ module SSE
       end
 
       private
+
+      def connect_thread
+        @config.threads[:connect_stream] = Thread.new do
+          connect_stream
+        end
+      end
 
       def connect_stream
         @config.logger.info("Connecting to #{@uri.host}...")
@@ -120,7 +130,7 @@ module SSE
             event_type = splited_data[1].strip
           elsif splited_data[0] == 'data'
             event_data = JSON.parse(d.sub('data: ', ''))
-            client_id = event_data['clientId'].strip
+            client_id = event_data['clientId']&.strip
             parsed_data = JSON.parse(event_data['data'])
           end
         end

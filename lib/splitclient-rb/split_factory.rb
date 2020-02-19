@@ -36,6 +36,8 @@ module SplitIoClient
 
       @adapter = start!
 
+      @sse_handler = SSEHandler.new(@config, @adapter)
+
       @client = SplitClient.new(@api_key, @adapter, @splits_repository, @segments_repository, @impressions_repository, @metrics_repository, @events_repository, @sdk_blocker, @config)
       @manager = SplitManager.new(@splits_repository, @sdk_blocker, @config)
 

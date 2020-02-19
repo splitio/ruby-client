@@ -26,20 +26,8 @@ module SplitIoClient
           end
         end
 
-        private
-
-        def splits_thread
-          @config.threads[:split_fetcher] = Thread.new do
-            @config.logger.info('Starting splits fetcher service')
-            loop do
-              fetch_splits
-
-              sleep(StoreUtils.random_interval(@config.features_refresh_rate))
-            end
-          end
-        end
-
         def fetch_splits
+          p '#################### fetch_splits'
           data = splits_since(@splits_repository.get_change_number)
 
           data[:splits] && data[:splits].each do |split|
@@ -55,6 +43,19 @@ module SplitIoClient
 
         rescue StandardError => error
           @config.log_found_exception(__method__.to_s, error)
+        end
+
+        private
+
+        def splits_thread
+          @config.threads[:split_fetcher] = Thread.new do
+            @config.logger.info('Starting splits fetcher service')
+            loop do
+              fetch_splits
+
+              sleep(StoreUtils.random_interval(@config.features_refresh_rate))
+            end
+          end
         end
 
         def splits_since(since)
@@ -82,8 +83,6 @@ module SplitIoClient
 
           @splits_repository.add_split(split)
         end
-
-        private
 
         def splits_api
           @splits_api ||= SplitIoClient::Api::Splits.new(@api_key, @metrics, @config)

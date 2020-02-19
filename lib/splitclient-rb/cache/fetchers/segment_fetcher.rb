@@ -26,6 +26,14 @@ module SplitIoClient
           end
         end
 
+        def fetch_segments
+          segments_api.fetch_segments_by_names(@segments_repository.used_segment_names)
+
+          @sdk_blocker.segments_ready!
+        rescue StandardError => error
+          @config.log_found_exception(__method__.to_s, error)
+        end
+
         private
 
         def segments_thread
@@ -43,15 +51,7 @@ module SplitIoClient
               sleep(sleep_for)
             end
           end
-        end
-
-        def fetch_segments
-          segments_api.fetch_segments_by_names(@segments_repository.used_segment_names)
-
-          @sdk_blocker.segments_ready!
-        rescue StandardError => error
-          @config.log_found_exception(__method__.to_s, error)
-        end
+        end        
 
         def segments_api
           @segments_api ||= SplitIoClient::Api::Segments.new(@api_key, @metrics, @segments_repository, @config)
