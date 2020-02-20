@@ -23,11 +23,7 @@ module SSE
 
         connect_thread
 
-        if defined?(PhusionPassenger)
-          PhusionPassenger.on_event(:starting_worker_process) do |forked|
-            connect_thread if forked
-          end
-        end
+        connect_passenger_forked if defined?(PhusionPassenger)
       end
 
       def on_event(&action)
@@ -55,6 +51,12 @@ module SSE
       def connect_thread
         @config.threads[:connect_stream] = Thread.new do
           connect_stream
+        end
+      end
+
+      def connect_passenger_forked
+        PhusionPassenger.on_event(:starting_worker_process) do |forked|
+          connect_thread if forked
         end
       end
 

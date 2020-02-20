@@ -21,7 +21,7 @@ module SplitIoClient
       @sse_client = SSE::EventSource::Client.new(url, @config) do |client|
         client.on_event do |event|
           puts event
-          proccess_event(event)          
+          proccess_event(event)
         end
 
         client.on_error do |error|
@@ -31,8 +31,18 @@ module SplitIoClient
     end
 
     def proccess_event(event)
-      if event.data['type'] == 'SPLIT_UPDATE'
-        @adapter.split_fetcher.fetch_splits
+      case event.data['type']
+      when EventTypes::SPLIT_UPDATE
+        puts 'split update'
+        # @adapter.split_fetcher.fetch_splits
+      when EventTypes::SPLIT_KILL
+        puts 'split kill'
+      when EventTypes::SEGMENT_UPDATE
+        puts 'segment update'
+      when EventTypes::CONTROL
+        puts 'control'
+      else
+        puts 'ERROR'
       end
     end
   end

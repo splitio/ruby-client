@@ -27,7 +27,6 @@ module SplitIoClient
         end
 
         def fetch_splits
-          p '#################### fetch_splits'
           data = splits_since(@splits_repository.get_change_number)
 
           data[:splits] && data[:splits].each do |split|
