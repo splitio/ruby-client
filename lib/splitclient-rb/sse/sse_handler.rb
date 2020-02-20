@@ -4,33 +4,37 @@ module SplitIoClient
   class SSEHandler
     attr_reader :sse_client
 
-    def initialize(config, adapter)
+    def initialize(config, adapter, channels, key, url_host)
       @config = config
       @adapter = adapter
+      @channels = channels
+      @key = key
+      @url_host = url_host
 
-      start_sse_client unless ENV['SPLITCLIENT_ENV'] == 'test'
+      # TODO: remove environment condition
+      @sse_client = start_sse_client unless ENV['SPLITCLIENT_ENV'] == 'test'
     end
 
     private
 
     def start_sse_client
-      channels = 'mauro-c'
-      key = 'SRFfSQ.kY96dQ:A7whBp7b33NkV_gi'
-      url = "https://realtime.ably.io/event-stream?channels=#{channels}&v=1.1&key=#{key}"
+      url = "#{@url_host}/event-stream?channels=#{@channels}&v=1.1&key=#{@key}"
 
-      @sse_client = SSE::EventSource::Client.new(url, @config) do |client|
+      sse_client = SSE::EventSource::Client.new(url, @config) do |client|
         client.on_event do |event|
           puts event
-          proccess_event(event)
+          process_event(event)
         end
 
         client.on_error do |error|
           puts error
         end
       end
+
+      sse_client
     end
 
-    def proccess_event(event)
+    def process_event(event)
       case event.data['type']
       when EventTypes::SPLIT_UPDATE
         puts 'split update'

@@ -62,7 +62,8 @@ module SplitIoClient
         thread.join
       end
 
-      @sse_handler.sse_client.close
+      # TODO: remove environment condition
+      @sse_handler.sse_client.close unless ENV['SPLITCLIENT_ENV'] == 'test'
 
       @config.threads.values.each { |thread| Thread.kill(thread) }
 
