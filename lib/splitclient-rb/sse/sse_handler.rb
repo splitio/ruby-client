@@ -4,12 +4,12 @@ module SplitIoClient
   class SSEHandler
     attr_reader :sse_client
 
-    def initialize(config, adapter, channels, key, url_host)
+    def initialize(config, split_update_worker, channels, key, url_host)
       @config = config
-      @adapter = adapter
       @channels = channels
       @key = key
       @url_host = url_host
+      @split_update_worker = split_update_worker
 
       # TODO: remove environment condition
       @sse_client = start_sse_client unless ENV['SPLITCLIENT_ENV'] == 'test'
@@ -22,12 +22,11 @@ module SplitIoClient
 
       sse_client = SSE::EventSource::Client.new(url, @config) do |client|
         client.on_event do |event|
-          puts event
           process_event(event)
         end
 
         client.on_error do |error|
-          puts error
+          process_error(error)
         end
       end
 
@@ -35,19 +34,28 @@ module SplitIoClient
     end
 
     def process_event(event)
+      puts 'process_event'
+      puts event
+      puts event.data['type']
+      puts EventTypes::SPLIT_UPDATE
+
       case event.data['type']
       when EventTypes::SPLIT_UPDATE
-        puts 'split update'
-        # @adapter.split_fetcher.fetch_splits
+        @config.logger.debug("SPLIT UPDATE notification received: #{event}")
+        @split_update_worker.add_to_adapter(event.data['changeNumber'])
       when EventTypes::SPLIT_KILL
-        puts 'split kill'
+        @config.logger.debug("SPLIT KILL notification received: #{event}")
       when EventTypes::SEGMENT_UPDATE
-        puts 'segment update'
+        @config.logger.debug("SEGMENT UPDATE notification received: #{event}")
       when EventTypes::CONTROL
-        puts 'control'
+        @config.logger.debug("CONTROL notification received: #{event}")
       else
-        puts 'ERROR'
+        puts 'NO LE GUSTO NINGUN TIPO'
       end
+    end
+
+    def process_error(error)
+      puts error
     end
   end
 end

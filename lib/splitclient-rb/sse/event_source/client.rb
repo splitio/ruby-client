@@ -55,9 +55,7 @@ module SSE
       end
 
       def connect_passenger_forked
-        PhusionPassenger.on_event(:starting_worker_process) do |forked|
-          connect_thread if forked
-        end
+        PhusionPassenger.on_event(:starting_worker_process) { |forked| connect_thread if forked }
       end
 
       def connect_stream
