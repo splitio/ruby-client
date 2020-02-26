@@ -26,6 +26,14 @@ module SplitIoClient
           end
         end
 
+        def fetch_segment(name)
+          segments_api.fetch_segments_by_names([name])
+
+          @sdk_blocker.segments_ready!
+        rescue StandardError => error
+          @config.log_found_exception(__method__.to_s, error)
+        end
+
         def fetch_segments
           segments_api.fetch_segments_by_names(@segments_repository.used_segment_names)
 

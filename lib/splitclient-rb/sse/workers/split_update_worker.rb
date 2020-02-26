@@ -20,15 +20,10 @@ module SplitIoClient
     private
 
     def perform
-      p '1-perform'
       while (change_number = @queue.pop)
-        p '2-perform'
-        current_change_number = @splits_repository.get_change_number
-        p current_change_number
-        p change_number
-        @adapter.split_fetcher.fetch_splits unless current_change_number >= change_number
+        since = @splits_repository.get_change_number
+        @adapter.split_fetcher.fetch_splits unless since >= change_number
       end
-      p '3-perform'
     end
 
     def perform_thread
