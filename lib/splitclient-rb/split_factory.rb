@@ -40,7 +40,7 @@ module SplitIoClient
       @segments_worker = SSE::Workers::SegmentsWorker.new(@adapter, @config, @segments_repository)
       @control_worker = SSE::Workers::ControlWorker.new(@adapter, @config)
 
-      options = { channels:  'mauro-c', key: 'SRFfSQ.kY96dQ:A7whBp7b33NkV_gi', url_host: 'https://realtime.ably.io' }
+      options = { channels:  'mauro-c', key: 'fake_key', url_host: 'fake-url' }
       @sse_handler = SSE::SSEHandler.new(@config, options, @splits_worker, @segments_worker, @control_worker)
 
       @client = SplitClient.new(@api_key, @adapter, @splits_repository, @segments_repository, @impressions_repository, @metrics_repository, @events_repository, @sdk_blocker, @config, @sse_handler)
