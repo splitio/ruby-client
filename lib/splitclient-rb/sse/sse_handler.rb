@@ -35,7 +35,7 @@ module SplitIoClient
     end
 
     def process_event(event)
-      case event.data['type']
+      case event.data['type'].downcase
       when EventTypes::SPLIT_UPDATE
         puts 'split update'
         # @adapter.split_fetcher.fetch_splits

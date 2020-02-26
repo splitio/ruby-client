@@ -2,9 +2,9 @@
 
 module SplitIoClient
   class EventTypes
-    SPLIT_UPDATE = 'SPLIT_UPDATE'
-    SPLIT_KILL = 'SPLIT_KILL'
-    SEGMENT_UPDATE = 'SEGMENT_UPDATE'
-    CONTROL = 'CONTROL'
+    SPLIT_UPDATE = 'split_update'
+    SPLIT_KILL = 'split_kill'
+    SEGMENT_UPDATE = 'segment_update'
+    CONTROL = 'control'
   end
 end
