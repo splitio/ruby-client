@@ -60,6 +60,7 @@ module SplitIoClient
 
       def split_kill_notification(event)
         @config.logger.debug("SPLIT KILL notification received: #{event}")
+
         change_number = event.data['changeNumber']
         default_treatment = event.data['defaultTreatment']
         split_name = event.data['splitName']
