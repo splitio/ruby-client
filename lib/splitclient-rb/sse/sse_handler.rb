@@ -5,11 +5,12 @@ module SplitIoClient
     class SSEHandler
       attr_reader :sse_client
 
-      def initialize(config, options, splits_worker, segment_update_worker)
+      def initialize(config, options, splits_worker, segments_worker, control_worker)
         @config = config
         @options = options
         @splits_worker = splits_worker
-        @segment_update_worker = segment_update_worker
+        @segments_worker = segments_worker
+        @control_worker = control_worker
 
         # TODO: remove environment condition
         @sse_client = start_sse_client unless ENV['SPLITCLIENT_ENV'] == 'test'
@@ -71,7 +72,7 @@ module SplitIoClient
         change_number = event.data['changeNumber']
         segment_name = event.data['segmentName']
 
-        @segment_update_worker.add_to_adapter(change_number, segment_name)
+        @segments_worker.add_to_adapter(change_number, segment_name)
       end
 
       def control_notification(event)
