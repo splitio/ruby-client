@@ -36,9 +36,11 @@ module SplitIoClient
 
       @adapter = start!
 
-      @split_update_worker = SplitUpdateWorker.new(@adapter, @config, @splits_repository)
-      @segment_update_worker = SegmentUpdateWorker.new(@adapter, @config, @segments_repository)
-      @sse_handler = SSEHandler.new(@config, 'mauro-c', 'SRFfSQ.kY96dQ:A7whBp7b33NkV_gi', 'https://realtime.ably.io', @segment_update_worker, @split_update_worker)
+      @splits_worker = SSE::Workers::SplitsWorker.new(@adapter, @config, @splits_repository)
+      @segments_worker = SSE::Workers::SegmentsWorker.new(@adapter, @config, @segments_repository)
+
+      options = { channels:  'mauro-c', key: 'SRFfSQ.kY96dQ:A7whBp7b33NkV_gi', url_host: 'https://realtime.ably.io' }
+      @sse_handler = SSE::SSEHandler.new(@config, options, @splits_worker, @segments_worker)
 
       @client = SplitClient.new(@api_key, @adapter, @splits_repository, @segments_repository, @impressions_repository, @metrics_repository, @events_repository, @sdk_blocker, @config, @sse_handler)
       @manager = SplitManager.new(@splits_repository, @sdk_blocker, @config)
