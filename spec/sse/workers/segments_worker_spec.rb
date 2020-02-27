@@ -3,8 +3,8 @@
 require 'spec_helper'
 require 'http_server_mock'
 
-describe SplitIoClient::SSE::Workers::SplitsWorker do
-  subject { SplitIoClient::SSE::Workers::SplitsWorker }
+describe SplitIoClient::SSE::Workers::SegmentsWorker do
+  subject { SplitIoClient::SSE::Workers::SegmentsWorker }
 
   let(:splits) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/splits.json')) }
   let(:segment1) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/segment1.json')) }
@@ -32,53 +32,25 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
     mock_segment_changes('segment3', segment3, '1470947453879')
   end
 
-  context 'add change number to queue' do
+  context 'add segment name to queue' do
     it 'must trigger fetch' do
-      worker = subject.new(adapter, config, splits_repository)
+      worker = subject.new(adapter, config, segments_repository)
 
-      worker.add_to_queue(1_506_703_262_918)
+      worker.add_to_queue(1_506_703_262_918, 'segment1')
 
       sleep(0.1)
 
-      expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262916')).to have_been_made.once
+      expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=1470947453877')).to have_been_made.times(2)
     end
 
     it 'must not trigger fetch' do
-      worker = subject.new(adapter, config, splits_repository)
+      worker = subject.new(adapter, config, segments_repository)
 
-      worker.add_to_queue(1_506_703_262_916)
-
-      sleep(0.1)
-
-      expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262916')).to have_been_made.times(0)
-    end
-  end
-
-  context 'kill split notification' do
-    it 'must update split and trigger fetch' do
-      worker = subject.new(adapter, config, splits_repository)
-
-      worker.kill_split(1_506_703_262_918, 'FACUNDO_TEST', 'on')
+      worker.add_to_queue(1_470_947_453_877, 'segment1')
 
       sleep(0.1)
 
-      split = splits_repository.get_split('FACUNDO_TEST')
-      expect(split[:label]).to eq(SplitIoClient::Engine::Models::Label::KILLED)
-      expect(split[:default_treatment]).to eq('on')
-      expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262916')).to have_been_made.once
-    end
-
-    it 'must update split and must not trigger fetch' do
-      worker = subject.new(adapter, config, splits_repository)
-
-      worker.kill_split(1_506_703_262_916, 'FACUNDO_TEST', 'on')
-
-      sleep(0.1)
-
-      split = splits_repository.get_split('FACUNDO_TEST')
-      expect(split[:label]).to eq(SplitIoClient::Engine::Models::Label::KILLED)
-      expect(split[:default_treatment]).to eq('on')
-      expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262916')).to have_been_made.times(0)
+      expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=1470947453877')).to have_been_made.times(1)
     end
   end
 end
