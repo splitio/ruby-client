@@ -12,8 +12,7 @@ module SplitIoClient
         @segments_worker = segments_worker
         @control_worker = control_worker
 
-        # TODO: remove environment condition
-        @sse_client = start_sse_client unless ENV['SPLITCLIENT_ENV'] == 'test'
+        @sse_client = start_sse_client
       end
 
       private
@@ -35,14 +34,14 @@ module SplitIoClient
       end
 
       def process_event(event)
-        case event.data['type']
-        when EventTypes::SPLIT_UPDATE
+        case event.data['type'].downcase
+        when SSE::EventSource::EventTypes::SPLIT_UPDATE
           split_update_notification(event)
-        when EventTypes::SPLIT_KILL
+        when SSE::EventSource::EventTypes::SPLIT_KILL
           split_kill_notification(event)
-        when EventTypes::SEGMENT_UPDATE
+        when SSE::EventSource::EventTypes::SEGMENT_UPDATE
           segment_update_notification(event)
-        when EventTypes::CONTROL
+        when SSE::EventSource::EventTypes::CONTROL
           control_notification(event)
         else
           @config.logger.error("Incorrect event type: #{event}")

@@ -24,8 +24,8 @@ module SplitIoClient
 
         def perform
           while (item = @queue.pop)
-            segment_name = item['segment_name']
-            change_number = item['change_number']
+            segment_name = item[:segment_name]
+            change_number = item[:change_number]
             since = @segments_repository.get_change_number(segment_name)
 
             @adapter.segment_fetcher.fetch_segment(segment_name) unless since >= change_number

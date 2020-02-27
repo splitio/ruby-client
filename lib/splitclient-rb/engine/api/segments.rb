@@ -40,6 +40,7 @@ module SplitIoClient
       private
 
       def fetch_segment_changes(name, since)
+
         response = get_api("#{@config.base_uri}/segmentChanges/#{name}", @api_key, since: since)
         if response.success?
           segment = JSON.parse(response.body, symbolize_names: true)
