@@ -15,7 +15,7 @@ module SplitIoClient
           perform_passenger_forked if defined?(PhusionPassenger)
         end
 
-        def add_to_adapter(change_number, segment_name)
+        def add_to_queue(change_number, segment_name)
           item = { change_number: change_number, segment_name: segment_name }
           @queue.push(item)
         end

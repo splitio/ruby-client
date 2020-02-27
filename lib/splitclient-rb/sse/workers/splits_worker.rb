@@ -15,13 +15,13 @@ module SplitIoClient
           perform_passenger_forked if defined?(PhusionPassenger)
         end
 
-        def add_to_adapter(change_number)
+        def add_to_queue(change_number)
           @queue.push(change_number)
         end
 
         def kill_split(change_number, split_name, default_treatment)
           @splits_repository.kill(split_name, default_treatment)
-          add_to_adapter(change_number)
+          add_to_queue(change_number)
         end
 
         private

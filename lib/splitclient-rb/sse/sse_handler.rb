@@ -54,7 +54,7 @@ module SplitIoClient
 
       def split_update_notification(event)
         @config.logger.debug("SPLIT UPDATE notification received: #{event}")
-        @splits_worker.add_to_adapter(event.data['changeNumber'])
+        @splits_worker.add_to_queue(event.data['changeNumber'])
       end
 
       def split_kill_notification(event)
@@ -72,7 +72,7 @@ module SplitIoClient
         change_number = event.data['changeNumber']
         segment_name = event.data['segmentName']
 
-        @segments_worker.add_to_adapter(change_number, segment_name)
+        @segments_worker.add_to_queue(change_number, segment_name)
       end
 
       def control_notification(event)
