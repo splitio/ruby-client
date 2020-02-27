@@ -46,9 +46,9 @@ describe SplitIoClient::SSE::SSEHandler do
     it 'must trigger a fetch' do
       mock_server do |server|
         options = {
-            channels: 'channel-test',
-            url_host: server.base_uri,
-            key: 'key-test'
+          channels: 'channel-test',
+          url_host: server.base_uri,
+          key: 'key-test'
         }
 
         server.setup_response('/') do |_, res|
@@ -70,9 +70,9 @@ describe SplitIoClient::SSE::SSEHandler do
     it 'must not trigger a fetch' do
       mock_server do |server|
         options = {
-            channels: 'channel-test',
-            url_host: server.base_uri,
-            key: 'key-test'
+          channels: 'channel-test',
+          url_host: server.base_uri,
+          key: 'key-test'
         }
 
         server.setup_response('/') do |_, res|
@@ -96,9 +96,9 @@ describe SplitIoClient::SSE::SSEHandler do
     it 'must trigger a fetch' do
       mock_server do |server|
         options = {
-            channels: 'channel-test',
-            url_host: server.base_uri,
-            key: 'key-test'
+          channels: 'channel-test',
+          url_host: server.base_uri,
+          key: 'key-test'
         }
 
         server.setup_response('/') do |_, res|
@@ -123,9 +123,9 @@ describe SplitIoClient::SSE::SSEHandler do
     it 'must not trigger a fetch' do
       mock_server do |server|
         options = {
-            channels: 'channel-test',
-            url_host: server.base_uri,
-            key: 'key-test'
+          channels: 'channel-test',
+          url_host: server.base_uri,
+          key: 'key-test'
         }
 
         server.setup_response('/') do |_, res|
@@ -152,9 +152,9 @@ describe SplitIoClient::SSE::SSEHandler do
     it 'must trigger fetch' do
       mock_server do |server|
         options = {
-            channels: 'channel-test',
-            url_host: server.base_uri,
-            key: 'key-test'
+          channels: 'channel-test',
+          url_host: server.base_uri,
+          key: 'key-test'
         }
 
         server.setup_response('/') do |_, res|
@@ -176,9 +176,9 @@ describe SplitIoClient::SSE::SSEHandler do
     it 'must not trigger fetch' do
       mock_server do |server|
         options = {
-            channels: 'channel-test',
-            url_host: server.base_uri,
-            key: 'key-test'
+          channels: 'channel-test',
+          url_host: server.base_uri,
+          key: 'key-test'
         }
 
         server.setup_response('/') do |_, res|
