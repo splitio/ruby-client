@@ -34,7 +34,7 @@ module SplitIoClient
       end
 
       def process_event(event)
-        case event.data['type'].downcase
+        case event.data['type']
         when SSE::EventSource::EventTypes::SPLIT_UPDATE
           split_update_notification(event)
         when SSE::EventSource::EventTypes::SPLIT_KILL

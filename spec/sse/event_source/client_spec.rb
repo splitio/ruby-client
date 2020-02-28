@@ -34,7 +34,7 @@ describe SplitIoClient::SSE::EventSource::Client do
 
       expect(error_queue.empty?).to be_truthy
       event_result = event_queue.pop
-      expect(event_result.data['type'].downcase).to eq(SplitIoClient::SSE::EventSource::EventTypes::SPLIT_UPDATE)
+      expect(event_result.data['type']).to eq(SplitIoClient::SSE::EventSource::EventTypes::SPLIT_UPDATE)
       expect(event_result.data['changeNumber']).to eq(5_564_531_221)
       expect(event_result.client_id).to eq('emptyClientId')
       expect(event_result.event_type).to eq('message')
@@ -63,7 +63,7 @@ describe SplitIoClient::SSE::EventSource::Client do
 
       expect(error_queue.empty?).to be_truthy
       event_result = event_queue.pop
-      expect(event_result.data['type'].downcase).to eq(SplitIoClient::SSE::EventSource::EventTypes::SPLIT_KILL)
+      expect(event_result.data['type']).to eq(SplitIoClient::SSE::EventSource::EventTypes::SPLIT_KILL)
       expect(event_result.data['changeNumber']).to eq(5_564_531_221)
       expect(event_result.data['defaultTreatment']).to eq('off')
       expect(event_result.data['splitName']).to eq('split-test')
@@ -94,7 +94,7 @@ describe SplitIoClient::SSE::EventSource::Client do
 
       expect(error_queue.empty?).to be_truthy
       event_result = event_queue.pop
-      expect(event_result.data['type'].downcase).to eq(SplitIoClient::SSE::EventSource::EventTypes::SEGMENT_UPDATE)
+      expect(event_result.data['type']).to eq(SplitIoClient::SSE::EventSource::EventTypes::SEGMENT_UPDATE)
       expect(event_result.data['changeNumber']).to eq(5_564_531_221)
       expect(event_result.data['segmentName']).to eq('segment-test')
       expect(event_result.client_id).to eq('emptyClientId')
@@ -124,7 +124,7 @@ describe SplitIoClient::SSE::EventSource::Client do
 
       expect(error_queue.empty?).to be_truthy
       event_result = event_queue.pop
-      expect(event_result.data['type'].downcase).to eq(SplitIoClient::SSE::EventSource::EventTypes::CONTROL)
+      expect(event_result.data['type']).to eq(SplitIoClient::SSE::EventSource::EventTypes::CONTROL)
       expect(event_result.data['controlType']).to eq('control-type-example')
       expect(event_result.client_id).to eq('emptyClientId')
       expect(event_result.event_type).to eq('message')
