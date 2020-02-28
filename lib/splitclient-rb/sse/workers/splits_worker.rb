@@ -20,7 +20,7 @@ module SplitIoClient
         end
 
         def kill_split(change_number, split_name, default_treatment)
-          @splits_repository.kill(split_name, default_treatment)
+          @splits_repository.kill(change_number, split_name, default_treatment)
           add_to_queue(change_number)
         end
 

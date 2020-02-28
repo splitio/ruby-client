@@ -127,9 +127,10 @@ module SplitIoClient
           buffer.each do |d|
             splited_data = d.split(':')
 
-            if splited_data[0] == 'event'
+            case splited_data[0]
+            when 'event'
               event_type = splited_data[1].strip
-            elsif splited_data[0] == 'data'
+            when 'data'
               event_data = JSON.parse(d.sub('data: ', ''))
               client_id = event_data['clientId']&.strip
               parsed_data = JSON.parse(event_data['data'])

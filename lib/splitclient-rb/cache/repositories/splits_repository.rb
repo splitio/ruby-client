@@ -128,15 +128,16 @@ module SplitIoClient
           @adapter.clear(namespace_key)
         end
 
-        def kill(split_name, default_treatment)
+        def kill(change_number, split_name, default_treatment)
           split = get_split(split_name)
 
           return if split.nil?
 
           split[:label] = Engine::Models::Label::KILLED
-          split[:default_treatment] = default_treatment
+          split[:defaultTreatment] = default_treatment
+          split[:changeNumber] = change_number
 
-          @adapter.set_string(namespace_key(".split.#{split[:name]}"), split.to_json)
+          @adapter.set_string(namespace_key(".split.#{split_name}"), split.to_json)
         end
 
         private

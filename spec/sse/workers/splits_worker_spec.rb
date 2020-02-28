@@ -64,7 +64,8 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
 
       split = splits_repository.get_split('FACUNDO_TEST')
       expect(split[:label]).to eq(SplitIoClient::Engine::Models::Label::KILLED)
-      expect(split[:default_treatment]).to eq('on')
+      expect(split[:defaultTreatment]).to eq('on')
+      expect(split[:changeNumber]).to eq(1_506_703_262_918)
       expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262916')).to have_been_made.once
     end
 
@@ -77,7 +78,8 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
 
       split = splits_repository.get_split('FACUNDO_TEST')
       expect(split[:label]).to eq(SplitIoClient::Engine::Models::Label::KILLED)
-      expect(split[:default_treatment]).to eq('on')
+      expect(split[:defaultTreatment]).to eq('on')
+      expect(split[:changeNumber]).to eq(1_506_703_262_916)
       expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262916')).to have_been_made.times(0)
     end
   end

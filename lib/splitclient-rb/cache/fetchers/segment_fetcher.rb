@@ -28,8 +28,6 @@ module SplitIoClient
 
         def fetch_segment(name)
           segments_api.fetch_segments_by_names([name])
-
-          @sdk_blocker.segments_ready!
         rescue StandardError => error
           @config.log_found_exception(__method__.to_s, error)
         end
