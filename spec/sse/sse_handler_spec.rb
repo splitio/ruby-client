@@ -121,7 +121,7 @@ describe SplitIoClient::SSE::SSEHandler do
       end
     end
 
-    it 'must not trigger a fetch' do
+    it 'must not trigger a fetch.' do
       mock_server do |server|
         options = {
           channels: 'channel-test',
