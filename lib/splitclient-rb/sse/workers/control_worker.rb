@@ -16,7 +16,7 @@ module SplitIoClient
         private
 
         def perform
-          # TODO: IMPLEMENT THIS METHOD
+          # TODO: IMPLEMENT THIS METHOD.
         end
 
         def perform_thread
