@@ -172,7 +172,6 @@ module SplitIoClient
     # @return [SplitLogger] The configured logger
     attr_accessor :split_logger
 
-
     #
     # The split validator. The client library uses the split validator
     # to validate inputs accross the sdk

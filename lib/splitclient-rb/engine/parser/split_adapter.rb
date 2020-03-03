@@ -1,6 +1,7 @@
 require 'json'
 require 'thread'
 
+include SplitIoClient::Cache::Fetchers
 include SplitIoClient::Cache::Stores
 include SplitIoClient::Cache::Senders
 
@@ -11,7 +12,7 @@ module SplitIoClient
   # also, uses safe threads to execute fetches and post give the time execution values from the config
   #
   class SplitAdapter < NoMethodError
-    attr_reader :splits_repository, :segments_repository, :impressions_repository, :metrics
+    attr_reader :splits_repository, :segments_repository, :impressions_repository, :metrics, :split_fetcher, :segment_fetcher
 
     #
     # Creates a new split api adapter instance that consumes split api endpoints
@@ -50,8 +51,8 @@ module SplitIoClient
     end
 
     def start_standalone_components
-      split_store
-      segment_store
+      split_fetch
+      segment_fetch
       metrics_sender
       impressions_sender
       events_sender
@@ -73,13 +74,15 @@ module SplitIoClient
     end
 
     # Starts thread which loops constantly and stores splits in the splits_repository of choice
-    def split_store
-      SplitStore.new(@splits_repository, @api_key, @metrics, @config, @sdk_blocker).call
+    def split_fetch
+      @split_fetcher = SplitFetcher.new(@splits_repository, @api_key, @metrics, @config, @sdk_blocker)
+      @split_fetcher.fetch_splits
     end
 
     # Starts thread which loops constantly and stores segments in the segments_repository of choice
-    def segment_store
-      SegmentStore.new(@segments_repository, @api_key, @metrics, @config, @sdk_blocker).call
+    def segment_fetch
+      @segment_fetcher = SegmentFetcher.new(@segments_repository, @api_key, @metrics, @config, @sdk_blocker)
+      @segment_fetcher.fetch_segments
     end
 
     # Starts thread which loops constantly and sends impressions to the Split API
