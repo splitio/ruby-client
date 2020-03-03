@@ -12,7 +12,7 @@ describe SplitIoClient::SplitClient do
 
   let(:client) do
     SplitIoClient::SplitClient.new('', splits_repository, segments_repository,
-                                   impressions_repository, metrics_repository, nil, nil, config)
+                                   impressions_repository, metrics_repository, nil, nil, config, nil)
   end
 
   context 'control' do
