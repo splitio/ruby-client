@@ -92,6 +92,9 @@ require 'splitclient-rb/redis_metrics_fixer'
 require 'splitclient-rb/sse/event_source/client'
 require 'splitclient-rb/sse/event_source/event_types'
 require 'splitclient-rb/sse/event_source/status'
+require 'splitclient-rb/sse/workers/control_worker'
+require 'splitclient-rb/sse/workers/segments_worker'
+require 'splitclient-rb/sse/workers/splits_worker'
 require 'splitclient-rb/sse/sse_handler'
 
 # C extension

@@ -36,7 +36,12 @@ module SplitIoClient
 
       @adapter = start!
 
-      @sse_handler = SSEHandler.new(@config, @adapter, 'mauro-c', 'fake-key', 'fake-url-host')
+      @splits_worker = SSE::Workers::SplitsWorker.new(@adapter, @config, @splits_repository)
+      @segments_worker = SSE::Workers::SegmentsWorker.new(@adapter, @config, @segments_repository)
+      @control_worker = SSE::Workers::ControlWorker.new(@adapter, @config)
+
+      options = { channels:  'mauro-c', key: 'fake_key', url_host: 'fake-url' }
+      @sse_handler = SSE::SSEHandler.new(@config, options, @splits_worker, @segments_worker, @control_worker)
 
       @client = SplitClient.new(@api_key, @adapter, @splits_repository, @segments_repository, @impressions_repository, @metrics_repository, @events_repository, @sdk_blocker, @config, @sse_handler)
       @manager = SplitManager.new(@splits_repository, @sdk_blocker, @config)
