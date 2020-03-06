@@ -7,27 +7,22 @@ module SplitIoClient
       include SplitIoClient::Cache::Senders
 
       def initialize(
-          splits_repository,
-          segments_repository,
-          impressions_repository,
-          metrics_repository,
-          events_repository,
-          api_key,
-          config,
-          sdk_blocker,
-          split_fetcher,
-          segment_fetcher
+        repositories,
+        api_key,
+        config,
+        sdk_blocker,
+        fetchers
       )
-        @splits_repository = splits_repository
-        @segments_repository = segments_repository
-        @impressions_repository = impressions_repository
-        @metrics_repository = metrics_repository
-        @events_repository = events_repository
+        @splits_repository = repositories[:splits_repository]
+        @segments_repository = repositories[:segments_repository]
+        @impressions_repository = repositories[:impressions_repository]
+        @metrics_repository = repositories[:metrics_repository]
+        @events_repository = repositories[:events_repository]
         @api_key = api_key
         @config = config
         @sdk_blocker = sdk_blocker
-        @split_fetcher = split_fetcher
-        @segment_fetcher = segment_fetcher
+        @split_fetcher = fetchers[:split_fetcher]
+        @segment_fetcher = fetchers[:segment_fetcher]
       end
 
       def sync_all
