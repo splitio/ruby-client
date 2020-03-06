@@ -84,6 +84,7 @@ require 'splitclient-rb/engine/models/split'
 require 'splitclient-rb/engine/models/label'
 require 'splitclient-rb/engine/models/treatment'
 require 'splitclient-rb/engine/auth_api_client'
+require 'splitclient-rb/engine/push_manager'
 require 'splitclient-rb/utilitites'
 
 # redis metrics fixer
