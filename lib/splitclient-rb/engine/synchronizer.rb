@@ -13,16 +13,16 @@ module SplitIoClient
         sdk_blocker,
         fetchers
       )
-        @splits_repository = repositories[:splits_repository]
-        @segments_repository = repositories[:segments_repository]
-        @impressions_repository = repositories[:impressions_repository]
-        @metrics_repository = repositories[:metrics_repository]
-        @events_repository = repositories[:events_repository]
+        @splits_repository = repositories[:splits]
+        @segments_repository = repositories[:segments]
+        @impressions_repository = repositories[:impressions]
+        @metrics_repository = repositories[:metrics]
+        @events_repository = repositories[:events]
         @api_key = api_key
         @config = config
         @sdk_blocker = sdk_blocker
-        @split_fetcher = fetchers[:split_fetcher]
-        @segment_fetcher = fetchers[:segment_fetcher]
+        @split_fetcher = fetchers[:split]
+        @segment_fetcher = fetchers[:segment]
       end
 
       def sync_all
