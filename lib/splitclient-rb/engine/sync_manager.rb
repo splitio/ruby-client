@@ -11,14 +11,13 @@ module SplitIoClient
         config,
         sdk_blocker
       )
-        fetchers = {}
         @config = config
         @api_key = api_key
         @metrics = Metrics.new(100, repositories[:metrics])
-        fetchers[:split] = SplitFetcher.new(repositories[:splits], api_key, @metrics, config, sdk_blocker)
-        fetchers[:segment] = SegmentFetcher.new(repositories[:segments], api_key, @metrics, config, sdk_blocker)
-        @splits_worker = SplitIoClient::SSE::Workers::SplitsWorker.new(fetchers[:split], config, repositories[:splits])
-        @segments_worker = SplitIoClient::SSE::Workers::SegmentsWorker.new(fetchers[:segment], config, repositories[:segments])
+        @split_fetcher = SplitFetcher.new(repositories[:splits], api_key, @metrics, config, sdk_blocker)
+        @segment_fetcher = SegmentFetcher.new(repositories[:segments], api_key, @metrics, config, sdk_blocker)
+        @splits_worker = SplitIoClient::SSE::Workers::SplitsWorker.new(@split_fetcher, config, repositories[:splits])
+        @segments_worker = SplitIoClient::SSE::Workers::SegmentsWorker.new(@segment_fetcher, config, repositories[:segments])
         @control_worker = SplitIoClient::SSE::Workers::ControlWorker.new(config)
         @synchronizer = Synchronizer.new(repositories, api_key, config, sdk_blocker, fetchers)
 
@@ -27,16 +26,20 @@ module SplitIoClient
       end
 
       def start
-        start_thread
-        start_thread_forked if defined?(PhusionPassenger)
-
-        start_sse_thread
-        start_sse_thread_forked if defined?(PhusionPassenger)
+        start_stream
       end
 
       private
 
-      def start_thread
+      def start_stream
+        stream_start_thread
+        stream_start_thread_forked if defined?(PhusionPassenger)
+
+        stream_start_sse_thread
+        stream_start_sse_thread_forked if defined?(PhusionPassenger)
+      end
+
+      def stream_start_thread
         @config.threads[:sync_manager_start] = Thread.new do
           begin
             @synchronizer.sync_all
@@ -47,7 +50,7 @@ module SplitIoClient
         end
       end
 
-      def start_sse_thread
+      def stream_start_sse_thread
         @config.threads[:sync_manager_start_sse] = Thread.new do
           begin
             @push_manager.start_sse(@api_key)
@@ -59,11 +62,11 @@ module SplitIoClient
         end
       end
 
-      def start_thread_forked
+      def stream_start_thread_forked
         PhusionPassenger.on_event(:starting_worker_process) { |forked| start_thread if forked }
       end
 
-      def start_sse_thread_forked
+      def stream_start_sse_thread_forked
         PhusionPassenger.on_event(:starting_worker_process) { |forked| start_sse_thread if forked }
       end
 
@@ -71,6 +74,11 @@ module SplitIoClient
         @splits_worker.start
         @segments_worker.start
         @control_worker.start
+      end
+
+      def fetchers
+        fetchers[:split] = @split_fetcher
+        fetchers[:segment] = @segment_fetcher
       end
     end
   end

@@ -29,7 +29,6 @@ module SplitIoClient
 
         def perform
           while (item = @queue.pop)
-            puts '1'
             segment_name = item[:segment_name]
             change_number = item[:change_number]
             since = @segments_repository.get_change_number(segment_name)
