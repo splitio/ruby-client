@@ -4,15 +4,20 @@ module SplitIoClient
   module SSE
     module Workers
       class SegmentsWorker
-        def initialize(adapter, config, segments_repository)
-          @adapter = adapter
+        def initialize(segment_fetcher, config, segments_repository)
+          @segment_fetcher = segment_fetcher
           @config = config
           @segments_repository = segments_repository
           @queue = Queue.new
+        end
 
+        def start
           perform_thread
-
           perform_passenger_forked if defined?(PhusionPassenger)
+        end
+
+        def stop
+          @config.threads[:segment_update_worker].exit
         end
 
         def add_to_queue(change_number, segment_name)
@@ -24,11 +29,12 @@ module SplitIoClient
 
         def perform
           while (item = @queue.pop)
+            puts '1'
             segment_name = item[:segment_name]
             change_number = item[:change_number]
             since = @segments_repository.get_change_number(segment_name)
 
-            @adapter.segment_fetcher.fetch_segment(segment_name) unless since >= change_number
+            @segment_fetcher.fetch_segment(segment_name) unless since >= change_number
           end
         end
 

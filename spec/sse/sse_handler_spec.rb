@@ -28,9 +28,9 @@ describe SplitIoClient::SSE::SSEHandler do
   let(:events_repository) { SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key) }
   let(:sdk_blocker) { SDKBlocker.new(splits_repository, segments_repository, config) }
   let(:adapter) { SplitIoClient::SplitAdapter.new(api_key, splits_repository, segments_repository, impressions_repository, metrics_repository, events_repository, sdk_blocker, config) }
-  let(:splits_worker) { SplitIoClient::SSE::Workers::SplitsWorker.new(adapter, config, splits_repository) }
-  let(:segments_worker) { SplitIoClient::SSE::Workers::SegmentsWorker.new(adapter, config, segments_repository) }
-  let(:control_worker) { SplitIoClient::SSE::Workers::ControlWorker.new(adapter, config) }
+  let(:splits_worker) { SplitIoClient::SSE::Workers::SplitsWorker.new(adapter.split_fetcher, config, splits_repository) }
+  let(:segments_worker) { SplitIoClient::SSE::Workers::SegmentsWorker.new(adapter.segment_fetcher, config, segments_repository) }
+  let(:control_worker) { SplitIoClient::SSE::Workers::ControlWorker.new(config) }
 
   before do
     mock_split_changes(splits)
@@ -40,22 +40,21 @@ describe SplitIoClient::SSE::SSEHandler do
     mock_segment_changes('segment2', segment2, '1470947453878')
     mock_segment_changes('segment3', segment3, '-1')
     mock_segment_changes('segment3', segment3, '1470947453879')
+
+    splits_worker.start
+    segments_worker.start
+    control_worker.start
   end
 
   context 'SPLIT UPDATE event' do
     it 'must trigger a fetch' do
       mock_server do |server|
-        options = {
-          channels: 'channel-test',
-          url_host: server.base_uri,
-          key: 'key-test'
-        }
-
         server.setup_response('/') do |_, res|
           send_content(res, event_split_update_must_fetch, keep_open: false)
         end
 
-        sse_handler = subject.new(config, options, splits_worker, segments_worker, control_worker)
+        sse_handler = subject.new(config, splits_worker, segments_worker, control_worker)
+        sse_handler.start(server.base_uri, 'token-test', 'channel-test')
         sleep(0.2)
 
         expect(sse_handler.sse_client.status).to eq(SplitIoClient::SSE::EventSource::Status::CONNECTED)
@@ -69,17 +68,12 @@ describe SplitIoClient::SSE::SSEHandler do
 
     it 'must not trigger a fetch' do
       mock_server do |server|
-        options = {
-          channels: 'channel-test',
-          url_host: server.base_uri,
-          key: 'key-test'
-        }
-
         server.setup_response('/') do |_, res|
           send_content(res, event_split_update_must_not_fetch, keep_open: false)
         end
 
-        sse_handler = subject.new(config, options, splits_worker, segments_worker, control_worker)
+        sse_handler = subject.new(config, splits_worker, segments_worker, control_worker)
+        sse_handler.start(server.base_uri, 'token-test', 'channel-test')
         sleep(0.2)
 
         expect(sse_handler.sse_client.status).to eq(SplitIoClient::SSE::EventSource::Status::CONNECTED)
@@ -95,21 +89,16 @@ describe SplitIoClient::SSE::SSEHandler do
   context 'SPLIT KILL event' do
     it 'must trigger a fetch' do
       mock_server do |server|
-        options = {
-          channels: 'channel-test',
-          url_host: server.base_uri,
-          key: 'key-test'
-        }
-
         server.setup_response('/') do |_, res|
           send_content(res, event_split_kill_must_fetch, keep_open: false)
         end
 
-        sse_handler = subject.new(config, options, splits_worker, segments_worker, control_worker)
+        sse_handler = subject.new(config, splits_worker, segments_worker, control_worker)
+        sse_handler.start(server.base_uri, 'token-test', 'channel-test')
         sleep(0.2)
 
         split = splits_repository.get_split('FACUNDO_TEST')
-        expect(split[:label]).to eq(SplitIoClient::Engine::Models::Label::KILLED)
+        expect(split[:killed]).to be_truthy
         expect(split[:defaultTreatment]).to eq('on')
         expect(split[:changeNumber]).to eq(1_506_703_262_918)
         expect(sse_handler.sse_client.status).to eq(SplitIoClient::SSE::EventSource::Status::CONNECTED)
@@ -123,21 +112,16 @@ describe SplitIoClient::SSE::SSEHandler do
 
     it 'must not trigger a fetch.' do
       mock_server do |server|
-        options = {
-          channels: 'channel-test',
-          url_host: server.base_uri,
-          key: 'key-test'
-        }
-
         server.setup_response('/') do |_, res|
           send_content(res, event_split_kill_must_not_fetch, keep_open: false)
         end
 
-        sse_handler = subject.new(config, options, splits_worker, segments_worker, control_worker)
+        sse_handler = subject.new(config, splits_worker, segments_worker, control_worker)
+        sse_handler.start(server.base_uri, 'token-test', 'channel-test')
         sleep(0.2)
 
         split = splits_repository.get_split('FACUNDO_TEST')
-        expect(split[:label]).to eq(SplitIoClient::Engine::Models::Label::KILLED)
+        expect(split[:killed]).to be_truthy
         expect(split[:defaultTreatment]).to eq('on')
         expect(split[:changeNumber]).to eq(1_506_703_262_916)
         expect(sse_handler.sse_client.status).to eq(SplitIoClient::SSE::EventSource::Status::CONNECTED)
@@ -153,17 +137,12 @@ describe SplitIoClient::SSE::SSEHandler do
   context 'SEGMENT UPDATE event' do
     it 'must trigger fetch' do
       mock_server do |server|
-        options = {
-          channels: 'channel-test',
-          url_host: server.base_uri,
-          key: 'key-test'
-        }
-
         server.setup_response('/') do |_, res|
           send_content(res, event_segment_update_must_fetch, keep_open: false)
         end
 
-        sse_handler = subject.new(config, options, splits_worker, segments_worker, control_worker)
+        sse_handler = subject.new(config, splits_worker, segments_worker, control_worker)
+        sse_handler.start(server.base_uri, 'token-test', 'channel-test')
         sleep(0.2)
 
         expect(sse_handler.sse_client.status).to eq(SplitIoClient::SSE::EventSource::Status::CONNECTED)
@@ -177,17 +156,12 @@ describe SplitIoClient::SSE::SSEHandler do
 
     it 'must not trigger fetch' do
       mock_server do |server|
-        options = {
-          channels: 'channel-test',
-          url_host: server.base_uri,
-          key: 'key-test'
-        }
-
         server.setup_response('/') do |_, res|
           send_content(res, event_segment_update_must_not_fetch, keep_open: false)
         end
 
-        sse_handler = subject.new(config, options, splits_worker, segments_worker, control_worker)
+        sse_handler = subject.new(config, splits_worker, segments_worker, control_worker)
+        sse_handler.start(server.base_uri, 'token-test', 'channel-test')
         sleep(0.2)
 
         expect(sse_handler.sse_client.status).to eq(SplitIoClient::SSE::EventSource::Status::CONNECTED)

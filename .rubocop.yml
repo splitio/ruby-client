@@ -11,7 +11,7 @@ Metrics/ClassLength:
   Max: 120
 
 Metrics/LineLength:
-  Max: 121
+  Max: 130
   Exclude:
     - spec/sse/**/*
 

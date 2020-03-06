@@ -85,6 +85,7 @@ require 'splitclient-rb/engine/models/label'
 require 'splitclient-rb/engine/models/treatment'
 require 'splitclient-rb/engine/auth_api_client'
 require 'splitclient-rb/engine/push_manager'
+require 'splitclient-rb/engine/sync_manager'
 require 'splitclient-rb/engine/synchronizer'
 require 'splitclient-rb/utilitites'
 

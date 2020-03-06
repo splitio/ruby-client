@@ -4,15 +4,20 @@ module SplitIoClient
   module SSE
     module Workers
       class SplitsWorker
-        def initialize(adapter, config, splits_repository)
-          @adapter = adapter
+        def initialize(split_fetch, config, splits_repository)
+          @split_fetch = split_fetch
           @config = config
           @splits_repository = splits_repository
           @queue = Queue.new
+        end
 
+        def start
           perform_thread
-
           perform_passenger_forked if defined?(PhusionPassenger)
+        end
+
+        def stop
+          @config.threads[:split_update_worker].exit
         end
 
         def add_to_queue(change_number)
@@ -29,7 +34,7 @@ module SplitIoClient
         def perform
           while (change_number = @queue.pop)
             since = @splits_repository.get_change_number
-            @adapter.split_fetcher.fetch_splits unless since >= change_number
+            @split_fetch.fetch_splits unless since >= change_number
           end
         end
 

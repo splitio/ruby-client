@@ -5,22 +5,17 @@ module SplitIoClient
     class SSEHandler
       attr_reader :sse_client
 
-      def initialize(config, options, splits_worker, segments_worker, control_worker)
+      def initialize(config, splits_worker, segments_worker, control_worker)
         @config = config
-        @options = options
         @splits_worker = splits_worker
         @segments_worker = segments_worker
         @control_worker = control_worker
-
-        @sse_client = start_sse_client
       end
 
-      private
+      def start(url_host, token_jwt, channels)
+        url = "#{url_host}/event-stream?channels=#{channels}&v=1.1&key=#{token_jwt}"
 
-      def start_sse_client
-        url = "#{@options[:url_host]}/event-stream?channels=#{@options[:channels]}&v=1.1&key=#{@options[:key]}"
-
-        sse_client = SSE::EventSource::Client.new(url, @config) do |client|
+        @sse_client = SSE::EventSource::Client.new(url, @config) do |client|
           client.on_event do |event|
             process_event(event)
           end
@@ -29,9 +24,9 @@ module SplitIoClient
             process_error(error)
           end
         end
-
-        sse_client
       end
+
+      private
 
       def process_event(event)
         case event.data['type']
