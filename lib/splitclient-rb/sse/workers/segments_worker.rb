@@ -16,10 +16,6 @@ module SplitIoClient
           perform_passenger_forked if defined?(PhusionPassenger)
         end
 
-        def stop
-          @config.threads[:segment_update_worker].exit
-        end
-
         def add_to_queue(change_number, segment_name)
           item = { change_number: change_number, segment_name: segment_name }
           @queue.push(item)

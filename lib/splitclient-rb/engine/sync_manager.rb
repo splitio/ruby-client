@@ -78,6 +78,7 @@ module SplitIoClient
               start_workers
             else
               start_fetching
+              stop_workers
             end
           rescue StandardError => error
             @config.logger.error(error)
@@ -98,6 +99,10 @@ module SplitIoClient
       def start_fetching
         @split_fetcher.call
         @segment_fetcher.call
+      end
+
+      def stop_workers
+        @config.threads.select { |name, _| name.to_s.end_with? 'worker' }.values.each { |thread| Thread.kill(thread) }
       end
 
       def fetchers

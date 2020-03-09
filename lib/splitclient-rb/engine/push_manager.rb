@@ -12,16 +12,18 @@ module SplitIoClient
       def start_sse(api_key)
         response = @auth_api_client.authenticate(api_key)
 
-        if response.pushEnabled
-          @sse_client = @sse_handler.start('www.ably.io', response.token, response.channels)
+        if response.push_enabled && response.status_code == 200
+          @sse_handler.start('www.crap.io', response.token, response.channels)
           schedule_next_token_refresh(token)
+        elsif response.status_code < 400 || response.status_code >= 500
+          stop_sse
         end
 
-        response.pushEnabled
+        response.push_enabled && @sse_handler.connected?
       end
 
       def stop_sse
-        @sse_client.close
+        @sse_handler.stop
       end
 
       private

@@ -13,10 +13,6 @@ module SplitIoClient
           perform_passenger_forked if defined?(PhusionPassenger)
         end
 
-        def stop
-          @config.threads[:segment_update_worker].exit
-        end
-
         private
 
         def perform

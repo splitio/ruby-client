@@ -26,6 +26,14 @@ module SplitIoClient
         end
       end
 
+      def stop
+        @sse_client.close if defined?(@sse_client)
+      end
+
+      def connected?
+        @sse_client&.connected?
+      end
+
       private
 
       def process_event(event)
