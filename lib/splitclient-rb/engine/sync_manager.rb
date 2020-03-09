@@ -31,6 +31,7 @@ module SplitIoClient
 
       private
 
+      # Starts tasks if stream is enabled.
       def start_stream
         stream_start_thread
         stream_start_thread_forked if defined?(PhusionPassenger)
@@ -39,6 +40,7 @@ module SplitIoClient
         stream_start_sse_thread_forked if defined?(PhusionPassenger)
       end
 
+      # Starts thread which fetch splits and segments once and trigger task to periodic data recording.
       def stream_start_thread
         @config.threads[:sync_manager_start] = Thread.new do
           begin
@@ -50,6 +52,11 @@ module SplitIoClient
         end
       end
 
+      def stream_start_thread_forked
+        PhusionPassenger.on_event(:starting_worker_process) { |forked| stream_start_thread if forked }
+      end
+
+      # Starts thread which connect to sse and after that fetch splits and segments once.
       def stream_start_sse_thread
         @config.threads[:sync_manager_start_sse] = Thread.new do
           begin
@@ -62,12 +69,8 @@ module SplitIoClient
         end
       end
 
-      def stream_start_thread_forked
-        PhusionPassenger.on_event(:starting_worker_process) { |forked| start_thread if forked }
-      end
-
       def stream_start_sse_thread_forked
-        PhusionPassenger.on_event(:starting_worker_process) { |forked| start_sse_thread if forked }
+        PhusionPassenger.on_event(:starting_worker_process) { |forked| stream_start_sse_thread if forked }
       end
 
       def start_workers
