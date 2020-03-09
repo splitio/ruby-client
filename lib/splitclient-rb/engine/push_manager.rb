@@ -10,9 +10,14 @@ module SplitIoClient
       end
 
       def start_sse(api_key)
-        token = @auth_api_client.authenticate(api_key)
-        @sse_client = @sse_handler.start('www.ably.io', token['jwt'], token['channels'])
-        schedule_next_token_refresh(token)
+        response = @auth_api_client.authenticate(api_key)
+
+        if response.pushEnabled
+          @sse_client = @sse_handler.start('www.ably.io', response.token, response.channels)
+          schedule_next_token_refresh(token)
+        end
+
+        response.pushEnabled
       end
 
       def stop_sse

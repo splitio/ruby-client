@@ -31,6 +31,17 @@ module SplitIoClient
 
       private
 
+      def start_poll
+        @config.threads[:sync_manager_start_poll] = Thread.new do
+          begin
+            start_fetching
+            @synchronizer.start_periodic_data_recording
+          rescue StandardError => error
+            @config.logger.error(error)
+          end
+        end
+      end
+
       # Starts tasks if stream is enabled.
       def start_stream
         stream_start_thread
@@ -42,7 +53,7 @@ module SplitIoClient
 
       # Starts thread which fetch splits and segments once and trigger task to periodic data recording.
       def stream_start_thread
-        @config.threads[:sync_manager_start] = Thread.new do
+        @config.threads[:sync_manager_start_stream] = Thread.new do
           begin
             @synchronizer.sync_all
             @synchronizer.start_periodic_data_recording
@@ -60,9 +71,14 @@ module SplitIoClient
       def stream_start_sse_thread
         @config.threads[:sync_manager_start_sse] = Thread.new do
           begin
-            @push_manager.start_sse(@api_key)
-            @synchronizer.sync_all
-            start_workers
+            connected = @push_manager.start_sse(@api_key)
+
+            if connected
+              @synchronizer.sync_all
+              start_workers
+            else
+              start_fetching
+            end
           rescue StandardError => error
             @config.logger.error(error)
           end
@@ -77,6 +93,11 @@ module SplitIoClient
         @splits_worker.start
         @segments_worker.start
         @control_worker.start
+      end
+
+      def start_fetching
+        @split_fetcher.call
+        @segment_fetcher.call
       end
 
       def fetchers
