@@ -31,14 +31,25 @@ module SplitIoClient
       end
 
       def start_periodic_data_recording
-        metrics_sender
-        impressions_sender
-        events_sender
+        @metrics_sender = metrics_sender
+        @impressions_sender = impressions_sender
+        @events_sender = events_sender
       end
 
       def start_periodic_fetch
         @split_fetcher.call
         @segment_fetcher.call
+      end
+
+      def stop_periodic_data_recording
+        @metrics_sender.stop_metrics_thread
+        @impressions_sender.stop_impressions_thread
+        @events_sender.stop_events_thread
+      end
+
+      def stop_periodic_fetch
+        @split_fetcher.stop_splits_thread
+        @segment_fetcher.stop_segments_thread
       end
 
       private

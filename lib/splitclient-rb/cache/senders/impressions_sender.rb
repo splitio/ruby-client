@@ -20,6 +20,12 @@ module SplitIoClient
           end
         end
 
+        def stop_impressions_thread
+          Thread.kill(@config.threads[:impressions_sender])
+        rescue StandardError => error
+          @config.logger.error(error.inspect)
+        end
+
         private
 
         def impressions_thread

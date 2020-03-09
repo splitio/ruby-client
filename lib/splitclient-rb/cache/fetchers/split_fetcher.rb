@@ -44,6 +44,12 @@ module SplitIoClient
           @config.log_found_exception(__method__.to_s, error)
         end
 
+        def stop_splits_thread
+          Thread.kill(@config.threads[:events_sender])
+        rescue StandardError => error
+          @config.logger.error(error.inspect)
+        end
+
         private
 
         def splits_thread
