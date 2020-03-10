@@ -20,7 +20,7 @@ module SplitIoClient
         end
 
         def perform_thread
-          @config.threads[:segment_update_worker] = Thread.new do
+          @config.threads[:control_worker] = Thread.new do
             perform
           end
         end

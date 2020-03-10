@@ -52,9 +52,9 @@ describe SplitIoClient::SSE::SSEHandler do
         server.setup_response('/') do |_, res|
           send_content(res, event_split_update_must_fetch, keep_open: false)
         end
-
+        config.sse_host_url = server.base_uri
         sse_handler = subject.new(config, splits_worker, segments_worker, control_worker)
-        sse_handler.start(server.base_uri, 'token-test', 'channel-test')
+        sse_handler.start('token-test', 'channel-test')
         sleep(0.2)
 
         expect(sse_handler.sse_client.status).to eq(SplitIoClient::SSE::EventSource::Status::CONNECTED)
@@ -72,8 +72,9 @@ describe SplitIoClient::SSE::SSEHandler do
           send_content(res, event_split_update_must_not_fetch, keep_open: false)
         end
 
+        config.sse_host_url = server.base_uri
         sse_handler = subject.new(config, splits_worker, segments_worker, control_worker)
-        sse_handler.start(server.base_uri, 'token-test', 'channel-test')
+        sse_handler.start('token-test', 'channel-test')
         sleep(0.2)
 
         expect(sse_handler.sse_client.status).to eq(SplitIoClient::SSE::EventSource::Status::CONNECTED)
@@ -93,8 +94,9 @@ describe SplitIoClient::SSE::SSEHandler do
           send_content(res, event_split_kill_must_fetch, keep_open: false)
         end
 
+        config.sse_host_url = server.base_uri
         sse_handler = subject.new(config, splits_worker, segments_worker, control_worker)
-        sse_handler.start(server.base_uri, 'token-test', 'channel-test')
+        sse_handler.start('token-test', 'channel-test')
         sleep(0.2)
 
         split = splits_repository.get_split('FACUNDO_TEST')
@@ -116,8 +118,9 @@ describe SplitIoClient::SSE::SSEHandler do
           send_content(res, event_split_kill_must_not_fetch, keep_open: false)
         end
 
+        config.sse_host_url = server.base_uri
         sse_handler = subject.new(config, splits_worker, segments_worker, control_worker)
-        sse_handler.start(server.base_uri, 'token-test', 'channel-test')
+        sse_handler.start('token-test', 'channel-test')
         sleep(0.2)
 
         split = splits_repository.get_split('FACUNDO_TEST')
@@ -141,8 +144,9 @@ describe SplitIoClient::SSE::SSEHandler do
           send_content(res, event_segment_update_must_fetch, keep_open: false)
         end
 
+        config.sse_host_url = server.base_uri
         sse_handler = subject.new(config, splits_worker, segments_worker, control_worker)
-        sse_handler.start(server.base_uri, 'token-test', 'channel-test')
+        sse_handler.start('token-test', 'channel-test')
         sleep(0.2)
 
         expect(sse_handler.sse_client.status).to eq(SplitIoClient::SSE::EventSource::Status::CONNECTED)
@@ -160,8 +164,9 @@ describe SplitIoClient::SSE::SSEHandler do
           send_content(res, event_segment_update_must_not_fetch, keep_open: false)
         end
 
+        config.sse_host_url = server.base_uri
         sse_handler = subject.new(config, splits_worker, segments_worker, control_worker)
-        sse_handler.start(server.base_uri, 'token-test', 'channel-test')
+        sse_handler.start('token-test', 'channel-test')
         sleep(0.2)
 
         expect(sse_handler.sse_client.status).to eq(SplitIoClient::SSE::EventSource::Status::CONNECTED)

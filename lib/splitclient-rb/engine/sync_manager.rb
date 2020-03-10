@@ -106,8 +106,11 @@ module SplitIoClient
       end
 
       def fetchers
-        fetchers[:split] = @split_fetcher
-        fetchers[:segment] = @segment_fetcher
+        fetch = {}
+        fetch[:split] = @split_fetcher
+        fetch[:segment] = @segment_fetcher
+
+        fetch
       end
     end
   end

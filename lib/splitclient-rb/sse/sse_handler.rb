@@ -12,8 +12,8 @@ module SplitIoClient
         @control_worker = control_worker
       end
 
-      def start(url_host, token_jwt, channels)
-        url = "#{url_host}/event-stream?channels=#{channels}&v=1.1&key=#{token_jwt}"
+      def start(token_jwt, channels)
+        url = "#{@config.sse_host_url}?channels=#{channels}&v=1.1&key=#{token_jwt}"
 
         @sse_client = SSE::EventSource::Client.new(url, @config) do |client|
           client.on_event do |event|
@@ -24,6 +24,8 @@ module SplitIoClient
             process_error(error)
           end
         end
+
+        block
       end
 
       def stop
@@ -80,6 +82,20 @@ module SplitIoClient
 
       def control_notification(event)
         @config.logger.debug("CONTROL notification received: #{event}")
+      end
+
+      def block
+        begin
+          timeout = @config.sse_block_until_ready
+          Timeout.timeout(timeout) do
+            sleep 0.1 until connected?
+          end
+        rescue Timeout::Error
+          @config.logger.error('SSE connection is not ready.')
+          @sse_client&.close
+        end
+
+        @config.logger.info('SSE connection is ready.')
       end
     end
   end

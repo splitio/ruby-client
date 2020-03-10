@@ -67,11 +67,11 @@ module SplitIoClient
 
           begin
             @socket = socket_connect
-
             @socket.write(build_request(@uri))
             @connected.make_true
           rescue StandardError => e
             dispatch_error(e.inspect)
+            close
           end
 
           while @connected.value
@@ -79,7 +79,7 @@ module SplitIoClient
               partial_data = @socket.readpartial(2048, timeout: @read_timeout)
             rescue Socketry::TimeoutError
               @config.logger.error("Socket read time out in #{@read_timeout}")
-              @connected.make_false
+              close
               connect_stream
             end
 

@@ -12,14 +12,14 @@ module SplitIoClient
       def start_sse(api_key)
         response = @auth_api_client.authenticate(api_key)
 
-        if response.push_enabled && response.status_code == 200
-          @sse_handler.start('www.crap.io', response.token, response.channels)
-          schedule_next_token_refresh(token)
-        elsif response.status_code < 400 || response.status_code >= 500
+        if response[:push_enabled] && response[:status_code] == 200
+          @sse_handler.start(response[:token], response[:channels])
+          schedule_next_token_refresh(response[:token])
+        elsif response[:status_code] < 400 || response[:status_code] >= 500
           stop_sse
         end
 
-        response.push_enabled && @sse_handler.connected?
+        response[:push_enabled] && @sse_handler&.connected?
       end
 
       def stop_sse
