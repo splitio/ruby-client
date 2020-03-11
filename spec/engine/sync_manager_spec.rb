@@ -32,7 +32,7 @@ describe SplitIoClient::Engine::SyncManager do
     mock_segment_changes('segment3', segment3, '1470947453879')
   end
 
-  it 'start sync manager with success sse connection' do
+  it 'start sync manager with success sse connection.' do
     mock_server do |server|
       server.setup_response('/') do |_, res|
         send_content(res, 'content', keep_open: false)
@@ -56,7 +56,7 @@ describe SplitIoClient::Engine::SyncManager do
     end
   end
 
-  it 'start sync manager without sse connection' do
+  it 'start sync manager with wrong sse host url and non connect to server, must start polling.' do
     mock_server do |server|
       server.setup_response('/') do |_, res|
         send_content(res, 'content', keep_open: false)
