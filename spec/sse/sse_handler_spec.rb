@@ -97,7 +97,7 @@ describe SplitIoClient::SSE::SSEHandler do
         config.sse_host_url = server.base_uri
         sse_handler = subject.new(config, splits_worker, segments_worker, control_worker)
         sse_handler.start('token-test', 'channel-test')
-        sleep(0.2)
+        sleep(1)
 
         split = splits_repository.get_split('FACUNDO_TEST')
         expect(split[:killed]).to be_truthy
