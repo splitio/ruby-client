@@ -14,14 +14,14 @@ module SplitIoClient
 
         if response[:push_enabled]
           @sse_handler.start(response[:token], response[:channels])
-          schedule_next_token_refresh(response[:token])
+          schedule_next_token_refresh(@config.auth_retry_back_off_base, response[:token])
         else
           stop_sse
         end
 
-        schedule_next_token_refresh(response[:token]) if response[:retry]
+        schedule_next_token_refresh(@config.auth_retry_back_off_base, response[:token]) if response[:retry]
 
-        @sse_handler&.connected?
+        @sse_handler&.connected? || false
       end
 
       def stop_sse
@@ -30,8 +30,13 @@ module SplitIoClient
 
       private
 
-      def schedule_next_token_refresh(token)
-        # TODO: implement this method
+      def schedule_next_token_refresh(back_off, token)
+        @config.threads[:schedule_next_token_refresh] = Thread.new do
+          sleep(back_off)
+
+          stop_sse
+          start_sse(token)
+        end
       end
     end
   end

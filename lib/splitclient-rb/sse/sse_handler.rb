@@ -29,11 +29,12 @@ module SplitIoClient
       end
 
       def stop
-        @sse_client.close if defined?(@sse_client)
+        @sse_client&.close
+        @sse_client = nil
       end
 
       def connected?
-        @sse_client&.connected?
+        @sse_client&.connected? || false
       end
 
       def start_workers

@@ -56,7 +56,7 @@ describe SplitIoClient::Engine::SyncManager do
       sleep(2)
       expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.once
       expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262916')).to have_been_made.once
-      expect(config.threads.size).to eq(9)
+      expect(config.threads.size).to eq(10)
     end
   end
 
@@ -82,7 +82,7 @@ describe SplitIoClient::Engine::SyncManager do
       sleep(2)
       expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.once
       expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262916')).to have_been_made.once
-      expect(config.threads.size).to eq(6)
+      expect(config.threads.size).to eq(7)
     end
   end
 end

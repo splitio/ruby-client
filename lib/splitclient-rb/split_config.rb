@@ -104,6 +104,8 @@ module SplitIoClient
 
       @sse_host_url = opts[:sse_host_url] || SplitConfig.default_sse_host_url
       @auth_service_url = opts[:auth_service_url] || SplitConfig.default_auth_service_url
+      @auth_retry_back_off_base = SplitConfig.init_auth_retry_back_off(opts[:auth_retry_back_off_base] || SplitConfig.default_auth_retry_back_off_base)
+      @streaming_reconnect_back_off_base = SplitConfig.init_streaming_reconnect_back_off(opts[:streaming_reconnect_back_off_base] || SplitConfig.default_streaming_reconnect_back_off_base)
 
       startup_log
     end
@@ -261,12 +263,32 @@ module SplitIoClient
 
     attr_accessor :auth_service_url
 
+    attr_accessor :auth_retry_back_off_base
+
+    attr_accessor :streaming_reconnect_back_off_base
+
     def self.default_sse_host_url
       'https://realtime.ably.io/event-stream'
     end
 
     def self.default_auth_service_url
       'https://auth.split-stage.io/api/auth'
+    end
+
+    def self.default_auth_retry_back_off_base
+      1
+    end
+
+    def self.default_streaming_reconnect_back_off_base
+      1
+    end
+
+    def self.init_auth_retry_back_off(auth_retry_back_off)
+      auth_retry_back_off < 1 ? SplitConfig.default_auth_retry_back_off_base : auth_retry_back_off
+    end
+
+    def self.init_streaming_reconnect_back_off(streaming_reconnect_back_off)
+      streaming_reconnect_back_off < 1 ? SplitConfig.default_streaming_reconnect_back_off_base : streaming_reconnect_back_off
     end
 
     #
