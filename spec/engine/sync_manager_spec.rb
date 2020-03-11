@@ -10,6 +10,9 @@ describe SplitIoClient::Engine::SyncManager do
   let(:segment1) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/segment1.json')) }
   let(:segment2) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/segment2.json')) }
   let(:segment3) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/segment3.json')) }
+  let(:body_response) do
+    File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/auth_body_response.json'))
+  end
 
   let(:api_key) { 'api-key-test' }
   let(:log) { StringIO.new }
@@ -30,6 +33,7 @@ describe SplitIoClient::Engine::SyncManager do
     mock_segment_changes('segment2', segment2, '1470947453878')
     mock_segment_changes('segment3', segment3, '-1')
     mock_segment_changes('segment3', segment3, '1470947453879')
+    stub_request(:get, config.auth_service_url).to_return(status: 200, body: body_response)
   end
 
   it 'start sync manager with success sse connection.' do
@@ -51,7 +55,7 @@ describe SplitIoClient::Engine::SyncManager do
 
       sleep(2)
       expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.once
-      expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262916')).to have_been_made.times(1)
+      expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262916')).to have_been_made.once
       expect(config.threads.size).to eq(9)
     end
   end

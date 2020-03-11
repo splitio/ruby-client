@@ -6,24 +6,26 @@ module SplitIoClient
       def initialize(config, sse_handler)
         @config = config
         @sse_handler = sse_handler
-        @auth_api_client = AuthApiClient.new
+        @auth_api_client = AuthApiClient.new(@config)
       end
 
       def start_sse(api_key)
         response = @auth_api_client.authenticate(api_key)
 
-        if response[:push_enabled] && response[:status_code] == 200
+        if response[:push_enabled]
           @sse_handler.start(response[:token], response[:channels])
           schedule_next_token_refresh(response[:token])
-        elsif response[:status_code] < 400 || response[:status_code] >= 500
+        else
           stop_sse
         end
 
-        response[:push_enabled] && @sse_handler&.connected?
+        schedule_next_token_refresh(response[:token]) if response[:retry]
+
+        @sse_handler&.connected?
       end
 
       def stop_sse
-        @sse_handler.stop
+        @sse_handler&.stop
       end
 
       private
