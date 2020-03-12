@@ -33,7 +33,6 @@ describe SplitIoClient::Engine::PushManager do
       expect(push_manager.start_sse(api_key)).to eq(true)
 
       sleep(2)
-
       expect(a_request(:get, config.auth_service_url)).to have_been_made.times(2)
     end
 
