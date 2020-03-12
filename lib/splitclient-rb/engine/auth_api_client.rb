@@ -5,6 +5,8 @@ require 'jwt'
 module SplitIoClient
   module Engine
     class AuthApiClient
+      EXPIRATION_RATE = 600
+
       def initialize(config)
         @config = config
         @api_client = SplitIoClient::Api::Client.new(@config)
@@ -19,11 +21,13 @@ module SplitIoClient
           body_json = JSON.parse(response.body, symbolize_names: true)
           push_enabled = body_json[:pushEnabled]
           token = body_json[:token]
+          decoded_token = decode_token(token)
 
           return {
             push_enabled: push_enabled,
             token: token,
-            channels: (channels(token) if push_enabled),
+            channels: (channels(decoded_token) if push_enabled),
+            exp: expiration(decoded_token),
             retry: false
           }
         elsif response.status >= 400 && response.status < 500
@@ -38,12 +42,20 @@ module SplitIoClient
 
       private
 
-      def channels(token)
-        token_decoded = JWT.decode token, nil, false
+      def expiration(token_decoded)
+        exp = token_decoded[0]['exp']
+        exp - EXPIRATION_RATE unless exp.nil?
+      end
+
+      def channels(token_decoded)
         capability = token_decoded[0]['x-ably-capability']
         channels_hash = JSON.parse(capability)
 
         channels_hash.keys.join(',')
+      end
+
+      def decode_token(token)
+        JWT.decode token, nil, false
       end
     end
   end
