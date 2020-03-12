@@ -20,7 +20,7 @@ describe SplitIoClient::Engine::AuthApiClient do
     response = auth_api_client.authenticate(api_key)
 
     expect(response[:push_enabled]).to eq(true)
-    expect(response[:channels]).to eq('NzM2MDI5Mzc0_MzQyODU4NDUyNg==_segments,NzM2MDI5Mzc0_MzQyODU4NDUyNg==_splits,control')
+    expect(response[:channels]).to eq('xxxx_xxxx_segments,xxxx_xxxx_splits,control')
     expect(response[:retry]).to eq(false)
   end
 
