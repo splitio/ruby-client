@@ -67,7 +67,8 @@ describe SplitIoClient::Engine::SyncManager do
       end
 
       config.sse_host_url = 'https://fake-sse.io'
-      config.sse_block_until_ready = 1
+      config.connection_timeout = 1
+
       repositories = {}
       repositories[:splits] = splits_repository
       repositories[:segments] = segments_repository
