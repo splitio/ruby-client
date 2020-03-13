@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'jwt'
+require 'uri'
 
 module SplitIoClient
   module Engine
@@ -50,8 +51,9 @@ module SplitIoClient
       def channels(token_decoded)
         capability = token_decoded[0]['x-ably-capability']
         channels_hash = JSON.parse(capability)
+        channels_string = channels_hash.keys.join(',')
 
-        channels_hash.keys.join(',')
+        URI.escape(channels_string)
       end
 
       def decode_token(token)
