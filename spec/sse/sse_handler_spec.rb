@@ -174,7 +174,7 @@ describe SplitIoClient::SSE::SSEHandler do
         sse_handler.start('token-test', 'channel-test')
         sse_handler.start_workers
 
-        sleep(0.2)
+        sleep(1)
 
         expect(sse_handler.sse_client.status).to eq(SplitIoClient::SSE::EventSource::Status::CONNECTED)
         expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=1470947453877')).to have_been_made.times(1)
