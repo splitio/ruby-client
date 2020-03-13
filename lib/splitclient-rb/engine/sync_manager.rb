@@ -9,9 +9,9 @@ module SplitIoClient
         repositories,
         api_key,
         config,
-        sdk_blocker
+        sdk_blocker,
+        metrics
       )
-        metrics = Metrics.new(100, repositories[:metrics])
         split_fetcher = SplitFetcher.new(repositories[:splits], api_key, metrics, config, sdk_blocker)
         segment_fetcher = SegmentFetcher.new(repositories[:segments], api_key, metrics, config, sdk_blocker)
         sync_params = synchronizer_params(split_fetcher, segment_fetcher)
@@ -24,7 +24,11 @@ module SplitIoClient
       end
 
       def start
-        start_stream
+        if @config.streaming_enabled
+          start_stream
+        else
+          start_poll
+        end
       end
 
       private

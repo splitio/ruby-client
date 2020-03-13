@@ -67,7 +67,7 @@ describe SplitIoClient::SSE::SSEHandler do
           send_content(res, event_split_update_must_fetch, keep_open: false)
         end
 
-        config.sse_host_url = server.base_uri
+        config.streaming_service_url = server.base_uri
         sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository)
         sse_handler.start('token-test', 'channel-test')
         sse_handler.start_workers
@@ -91,7 +91,7 @@ describe SplitIoClient::SSE::SSEHandler do
 
         splits_repository.set_change_number(1_506_703_262_916)
 
-        config.sse_host_url = server.base_uri
+        config.streaming_service_url = server.base_uri
         sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository)
         sse_handler.start('token-test', 'channel-test')
         sse_handler.start_workers
@@ -115,7 +115,7 @@ describe SplitIoClient::SSE::SSEHandler do
           send_content(res, event_split_kill_must_fetch, keep_open: false)
         end
 
-        config.sse_host_url = server.base_uri
+        config.streaming_service_url = server.base_uri
         sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository)
         sse_handler.start('token-test', 'channel-test')
         sse_handler.start_workers
@@ -141,7 +141,7 @@ describe SplitIoClient::SSE::SSEHandler do
           send_content(res, event_split_kill_must_not_fetch, keep_open: false)
         end
 
-        config.sse_host_url = server.base_uri
+        config.streaming_service_url = server.base_uri
         sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository)
         sse_handler.start('token-test', 'channel-test')
         sse_handler.start_workers
@@ -169,7 +169,7 @@ describe SplitIoClient::SSE::SSEHandler do
           send_content(res, event_segment_update_must_fetch, keep_open: false)
         end
 
-        config.sse_host_url = server.base_uri
+        config.streaming_service_url = server.base_uri
         sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository)
         sse_handler.start('token-test', 'channel-test')
         sse_handler.start_workers
@@ -191,7 +191,7 @@ describe SplitIoClient::SSE::SSEHandler do
           send_content(res, event_segment_update_must_not_fetch, keep_open: false)
         end
 
-        config.sse_host_url = server.base_uri
+        config.streaming_service_url = server.base_uri
         sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository)
         sse_handler.start('token-test', 'channel-test')
         sse_handler.start_workers

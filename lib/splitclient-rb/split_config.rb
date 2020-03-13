@@ -102,7 +102,8 @@ module SplitIoClient
       @split_validator = SplitIoClient::Validators.new(self)
       @localhost_mode = opts[:localhost_mode]
 
-      @sse_host_url = opts[:sse_host_url] || SplitConfig.default_sse_host_url
+      @streaming_enabled = opts[:streaming_enabled].nil? ? SplitConfig.default_streaming_enabled : opts[:streaming_enabled]
+      @streaming_service_url = opts[:streaming_service_url] || SplitConfig.default_streaming_service_url
       @auth_service_url = opts[:auth_service_url] || SplitConfig.default_auth_service_url
       @auth_retry_back_off_base = SplitConfig.init_auth_retry_back_off(opts[:auth_retry_back_off_base] || SplitConfig.default_auth_retry_back_off_base)
       @streaming_reconnect_back_off_base = SplitConfig.init_streaming_reconnect_back_off(opts[:streaming_reconnect_back_off_base] || SplitConfig.default_streaming_reconnect_back_off_base)
@@ -259,15 +260,21 @@ module SplitIoClient
 
     attr_accessor :ip_addresses_enabled
 
-    attr_accessor :sse_host_url
-
     attr_accessor :auth_service_url
 
     attr_accessor :auth_retry_back_off_base
 
+    attr_accessor :streaming_service_url
+
     attr_accessor :streaming_reconnect_back_off_base
 
-    def self.default_sse_host_url
+    attr_accessor :streaming_enabled
+
+    def self.default_streaming_enabled
+      true
+    end
+
+    def self.default_streaming_service_url
       'https://realtime.ably.io/event-stream'
     end
 

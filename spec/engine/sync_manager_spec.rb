@@ -42,7 +42,7 @@ describe SplitIoClient::Engine::SyncManager do
         send_content(res, 'content', keep_open: false)
       end
 
-      config.sse_host_url = server.base_uri
+      config.streaming_service_url = server.base_uri
       repositories = {}
       repositories[:splits] = splits_repository
       repositories[:segments] = segments_repository
@@ -66,7 +66,7 @@ describe SplitIoClient::Engine::SyncManager do
         send_content(res, 'content', keep_open: false)
       end
 
-      config.sse_host_url = 'https://fake-sse.io'
+      config.streaming_service_url = 'https://fake-sse.io'
       config.connection_timeout = 1
 
       repositories = {}
