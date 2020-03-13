@@ -14,6 +14,8 @@ module SplitIoClient
         response = @api_client.get_api(@config.auth_service_url, api_key)
 
         if response.success?
+          @config.logger.debug("Success connection to: #{@config.auth_service_url}")
+
           body_json = JSON.parse(response.body, symbolize_names: true)
           push_enabled = body_json[:pushEnabled]
           token = body_json[:token]
@@ -25,9 +27,12 @@ module SplitIoClient
             retry: false
           }
         elsif response.status >= 400 && response.status < 500
+          @config.logger.debug("Problem to connect to: #{@config.auth_service_url}. Response status: #{response.status}")
+
           return { push_enabled: false, retry: false }
         end
 
+        @config.logger.debug("Problem to connect to: #{@config.auth_service_url}. Response status: #{response.status}")
         { push_enabled: false, retry: true }
       end
 

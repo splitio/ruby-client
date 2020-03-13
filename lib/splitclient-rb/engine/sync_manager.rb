@@ -11,18 +11,16 @@ module SplitIoClient
         config,
         sdk_blocker
       )
+        metrics = Metrics.new(100, repositories[:metrics])
+        split_fetcher = SplitFetcher.new(repositories[:splits], api_key, metrics, config, sdk_blocker)
+        segment_fetcher = SegmentFetcher.new(repositories[:segments], api_key, metrics, config, sdk_blocker)
+        sync_params = synchronizer_params(split_fetcher, segment_fetcher)
+
+        @synchronizer = Synchronizer.new(repositories, api_key, config, sdk_blocker, sync_params)
+        @sse_handler = SplitIoClient::SSE::SSEHandler.new(config, @synchronizer, repositories[:splits], repositories[:segments])
+        @push_manager = PushManager.new(config, @sse_handler)
         @config = config
         @api_key = api_key
-        @metrics = Metrics.new(100, repositories[:metrics])
-        @split_fetcher = SplitFetcher.new(repositories[:splits], api_key, @metrics, config, sdk_blocker)
-        @segment_fetcher = SegmentFetcher.new(repositories[:segments], api_key, @metrics, config, sdk_blocker)
-        @splits_worker = SplitIoClient::SSE::Workers::SplitsWorker.new(@split_fetcher, config, repositories[:splits])
-        @segments_worker = SplitIoClient::SSE::Workers::SegmentsWorker.new(@segment_fetcher, config, repositories[:segments])
-        @control_worker = SplitIoClient::SSE::Workers::ControlWorker.new(config)
-        @synchronizer = Synchronizer.new(repositories, api_key, config, sdk_blocker, fetchers)
-
-        sse_handler = SplitIoClient::SSE::SSEHandler.new(@config, @splits_worker, @segments_worker, @control_worker)
-        @push_manager = PushManager.new(@config, sse_handler)
       end
 
       def start
@@ -34,7 +32,7 @@ module SplitIoClient
       def start_poll
         @config.threads[:sync_manager_start_poll] = Thread.new do
           begin
-            start_fetching
+            @synchronizer.start_periodic_fetch
             @synchronizer.start_periodic_data_recording
           rescue StandardError => error
             @config.logger.error(error)
@@ -75,10 +73,10 @@ module SplitIoClient
 
             if connected
               @synchronizer.sync_all
-              start_workers
+              @sse_handler.start_workers
             else
-              start_fetching
-              stop_workers
+              @synchronizer.start_periodic_fetch
+              @sse_handler.stop_workers
             end
           rescue StandardError => error
             @config.logger.error(error)
@@ -90,27 +88,12 @@ module SplitIoClient
         PhusionPassenger.on_event(:starting_worker_process) { |forked| stream_start_sse_thread if forked }
       end
 
-      def start_workers
-        @splits_worker.start
-        @segments_worker.start
-        @control_worker.start
-      end
+      def synchronizer_params(split_fetcher, segment_fetcher)
+        params = {}
+        params[:split_fetcher] = split_fetcher
+        params[:segment_fetcher] = segment_fetcher
 
-      def start_fetching
-        @split_fetcher.call
-        @segment_fetcher.call
-      end
-
-      def stop_workers
-        @config.threads.select { |name, _| name.to_s.end_with? 'worker' }.values.each { |thread| Thread.kill(thread) }
-      end
-
-      def fetchers
-        fetch = {}
-        fetch[:split] = @split_fetcher
-        fetch[:segment] = @segment_fetcher
-
-        fetch
+        params
       end
     end
   end

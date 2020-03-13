@@ -5,11 +5,11 @@ module SplitIoClient
     class SSEHandler
       attr_reader :sse_client
 
-      def initialize(config, splits_worker, segments_worker, control_worker)
+      def initialize(config, synchronizer, splits_repository, segments_repository)
         @config = config
-        @splits_worker = splits_worker
-        @segments_worker = segments_worker
-        @control_worker = control_worker
+        @splits_worker = SplitIoClient::SSE::Workers::SplitsWorker.new(synchronizer, config, splits_repository)
+        @segments_worker = SplitIoClient::SSE::Workers::SegmentsWorker.new(synchronizer, config, segments_repository)
+        @control_worker = SplitIoClient::SSE::Workers::ControlWorker.new(config)
       end
 
       def start(token_jwt, channels)
@@ -34,6 +34,16 @@ module SplitIoClient
 
       def connected?
         @sse_client&.connected?
+      end
+
+      def start_workers
+        @splits_worker.start
+        @segments_worker.start
+        @control_worker.start
+      end
+
+      def stop_workers
+        @config.threads.select { |name, _| name.to_s.end_with? 'worker' }.values.each { |thread| Thread.kill(thread) }
       end
 
       private
@@ -86,7 +96,7 @@ module SplitIoClient
 
       def block
         begin
-          timeout = @config.sse_block_until_ready
+          timeout = @config.connection_timeout
           Timeout.timeout(timeout) do
             sleep 0.1 until connected?
           end

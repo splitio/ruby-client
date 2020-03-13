@@ -4,8 +4,8 @@ module SplitIoClient
   module SSE
     module Workers
       class SplitsWorker
-        def initialize(split_fetch, config, splits_repository)
-          @split_fetch = split_fetch
+        def initialize(synchronizer, config, splits_repository)
+          @synchronizer = synchronizer
           @config = config
           @splits_repository = splits_repository
           @queue = Queue.new
@@ -30,7 +30,7 @@ module SplitIoClient
         def perform
           while (change_number = @queue.pop)
             since = @splits_repository.get_change_number
-            @split_fetch.fetch_splits unless since >= change_number
+            @synchronizer.fetch_splits unless since.to_i >= change_number
           end
         end
 

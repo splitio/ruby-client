@@ -4,8 +4,8 @@ module SplitIoClient
   module SSE
     module Workers
       class SegmentsWorker
-        def initialize(segment_fetcher, config, segments_repository)
-          @segment_fetcher = segment_fetcher
+        def initialize(synchronizer, config, segments_repository)
+          @synchronizer = synchronizer
           @config = config
           @segments_repository = segments_repository
           @queue = Queue.new
@@ -29,7 +29,7 @@ module SplitIoClient
             change_number = item[:change_number]
             since = @segments_repository.get_change_number(segment_name)
 
-            @segment_fetcher.fetch_segment(segment_name) unless since >= change_number
+            @synchronizer.fetch_segment(segment_name) unless since >= change_number
           end
         end
 

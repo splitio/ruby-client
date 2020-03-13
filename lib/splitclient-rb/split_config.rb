@@ -103,7 +103,6 @@ module SplitIoClient
       @localhost_mode = opts[:localhost_mode]
 
       @sse_host_url = opts[:sse_host_url] || SplitConfig.default_sse_host_url
-      @sse_block_until_ready = opts[:sse_block_until_ready] || SplitConfig.default_sse_block_until_ready
       @auth_service_url = opts[:auth_service_url] || SplitConfig.default_auth_service_url
 
       startup_log
@@ -260,16 +259,10 @@ module SplitIoClient
 
     attr_accessor :sse_host_url
 
-    attr_accessor :sse_block_until_ready
-
     attr_accessor :auth_service_url
 
     def self.default_sse_host_url
       'https://realtime.ably.io/event-stream'
-    end
-
-    def self.default_sse_block_until_ready
-      1
     end
 
     def self.default_auth_service_url
