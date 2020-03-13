@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'jwt'
-require 'uri'
+require 'cgi'
 
 module SplitIoClient
   module Engine
@@ -53,7 +53,7 @@ module SplitIoClient
         channels_hash = JSON.parse(capability)
         channels_string = channels_hash.keys.join(',')
 
-        URI.escape(channels_string)
+        CGI.escape(channels_string)
       end
 
       def decode_token(token)
