@@ -21,6 +21,7 @@ describe SplitIoClient::Engine::SyncManager do
   let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
   let(:impressions_repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
   let(:metrics_repository) { SplitIoClient::Cache::Repositories::MetricsRepository.new(config) }
+  let(:metrics) { SplitIoClient::Metrics.new(100, metrics_repository) }
   let(:events_repository) { SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key) }
   let(:sdk_blocker) { SDKBlocker.new(splits_repository, segments_repository, config) }
 
@@ -50,7 +51,7 @@ describe SplitIoClient::Engine::SyncManager do
       repositories[:metrics] = metrics_repository
       repositories[:events] = events_repository
 
-      sync_manager = subject.new(repositories, api_key, config, sdk_blocker)
+      sync_manager = subject.new(repositories, api_key, config, sdk_blocker, metrics)
       sync_manager.start
 
       sleep(2)
@@ -76,7 +77,7 @@ describe SplitIoClient::Engine::SyncManager do
       repositories[:metrics] = metrics_repository
       repositories[:events] = events_repository
 
-      sync_manager = subject.new(repositories, api_key, config, sdk_blocker)
+      sync_manager = subject.new(repositories, api_key, config, sdk_blocker, metrics)
       sync_manager.start
 
       sleep(2)

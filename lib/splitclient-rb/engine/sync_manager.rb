@@ -27,20 +27,18 @@ module SplitIoClient
         if @config.streaming_enabled
           start_stream
         else
-          start_poll
+          start_poll if @config.standalone?
         end
       end
 
       private
 
       def start_poll
-        @config.threads[:sync_manager_start_poll] = Thread.new do
-          begin
-            @synchronizer.start_periodic_fetch
-            @synchronizer.start_periodic_data_recording
-          rescue StandardError => error
-            @config.logger.error(error)
-          end
+        begin
+          @synchronizer.start_periodic_fetch
+          @synchronizer.start_periodic_data_recording
+        rescue StandardError => error
+          @config.logger.error(error)
         end
       end
 

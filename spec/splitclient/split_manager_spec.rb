@@ -4,7 +4,7 @@ require 'spec_helper'
 
 describe SplitIoClient do
   let(:factory) do
-    SplitIoClient::SplitFactory.new('test_api_key', logger: Logger.new(log))
+    SplitIoClient::SplitFactory.new('test_api_key', logger: Logger.new(log), streaming_enabled: false)
   end
 
   let(:log) { StringIO.new }

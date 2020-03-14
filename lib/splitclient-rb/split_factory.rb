@@ -32,12 +32,11 @@ module SplitIoClient
       @events_repository = EventsRepository.new(@config, @api_key)
       @metrics_repository = MetricsRepository.new(@config)
       @sdk_blocker = SDKBlocker.new(@splits_repository, @segments_repository, @config)
-
-      metrics = Metrics.new(100, @metrics_repository)
+      @metrics = Metrics.new(100, @metrics_repository)
 
       start!
 
-      @client = SplitClient.new(@api_key, metrics, @splits_repository, @segments_repository, @impressions_repository, @metrics_repository, @events_repository, @sdk_blocker, @config)
+      @client = SplitClient.new(@api_key, @metrics, @splits_repository, @segments_repository, @impressions_repository, @metrics_repository, @events_repository, @sdk_blocker, @config)
       @manager = SplitManager.new(@splits_repository, @sdk_blocker, @config)
 
       validate_api_key
@@ -48,7 +47,11 @@ module SplitIoClient
     end
 
     def start!
-      SplitIoClient::Engine::SyncManager.new(repositories, @api_key, @config, @sdk_blocker, metrics).start
+      if @config.localhost_mode
+        start_localhost_components
+      else
+        SplitIoClient::Engine::SyncManager.new(repositories, @api_key, @config, @sdk_blocker, @metrics).start
+      end
     end
 
     def stop!
@@ -119,13 +122,20 @@ module SplitIoClient
 
     def repositories
       repos = {}
-      repos[:splits_repository] = @splits_repository
-      repos[:segments_repository] = @segments_repository
-      repos[:impressions_repository] = @impressions_repository
-      repos[:events_repository] = @events_repository
-      repos[:metrics_repository] = @metrics_repository
+      repos[:splits] = @splits_repository
+      repos[:segments] = @segments_repository
+      repos[:impressions] = @impressions_repository
+      repos[:events] = @events_repository
+      repos[:metrics] = @metrics_repository
 
       repos
+    end
+
+    def start_localhost_components
+      LocalhostSplitStore.new(@splits_repository, @config, @sdk_blocker).call
+
+      # Starts thread which loops constantly and cleans up repositories to avoid memory issues in localhost mode
+      LocalhostRepoCleaner.new(@impressions_repository, @metrics_repository, @events_repository, @config).call
     end
   end
 end
