@@ -23,7 +23,7 @@ describe SplitIoClient::Engine::SyncManager do
   let(:metrics_repository) { SplitIoClient::Cache::Repositories::MetricsRepository.new(config) }
   let(:metrics) { SplitIoClient::Metrics.new(100, metrics_repository) }
   let(:events_repository) { SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key) }
-  let(:sdk_blocker) { SDKBlocker.new(splits_repository, segments_repository, config) }
+  let(:sdk_blocker) { SplitIoClient::Cache::Stores::SDKBlocker.new(splits_repository, segments_repository, config) }
 
   before do
     mock_split_changes_with_since(splits, '-1')
