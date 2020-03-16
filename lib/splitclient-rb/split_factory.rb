@@ -6,6 +6,7 @@ module SplitIoClient
 
     include SplitIoClient::Cache::Repositories
     include SplitIoClient::Cache::Stores
+    include SplitIoClient::Cache::Senders
 
     attr_reader :adapter, :client, :manager, :config
 

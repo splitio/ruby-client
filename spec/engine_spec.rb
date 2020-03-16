@@ -477,7 +477,7 @@ describe SplitIoClient, type: :client do
           new_feature: 'on', foo: SplitIoClient::Engine::Models::Treatment::CONTROL
         )
         impressions = subject.instance_variable_get(:@impressions_repository).batch
-        expect(ImpressionsFormatter
+        expect(SplitIoClient::Cache::Senders::ImpressionsFormatter
           .new(subject.instance_variable_get(:@impressions_repository))
           .call(true, impressions)
           .select { |im| im[:testName] == :new_feature }[0][:keyImpressions].size).to eq(2)
