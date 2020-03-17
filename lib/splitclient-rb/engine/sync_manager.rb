@@ -26,20 +26,18 @@ module SplitIoClient
       def start
         if @config.streaming_enabled
           start_stream
-        else
-          start_poll if @config.standalone?
+        elsif @config.standalone?
+          start_poll
         end
       end
 
       private
 
       def start_poll
-        begin
-          @synchronizer.start_periodic_fetch
-          @synchronizer.start_periodic_data_recording
-        rescue StandardError => error
-          @config.logger.error(error)
-        end
+        @synchronizer.start_periodic_fetch
+        @synchronizer.start_periodic_data_recording
+      rescue StandardError => error
+        @config.logger.error(error)
       end
 
       # Starts tasks if stream is enabled.
