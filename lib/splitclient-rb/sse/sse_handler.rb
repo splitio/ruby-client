@@ -59,6 +59,18 @@ module SplitIoClient
         @on[:disconnect].call
       end
 
+      def on_connected(&action)
+        @on[:connected] = action
+      end
+
+      def on_disconnect(&action)
+        @on[:disconnect] = action
+      end
+
+      def process_disconnect
+        @on[:disconnect].call
+      end
+
       private
 
       def process_connected

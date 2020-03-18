@@ -42,7 +42,9 @@ describe SplitIoClient::Engine::PushManager do
       push_manager.start_sse(api_key)
 
       expect(a_request(:get, config.auth_service_url)).to have_been_made.times(1)
+
       sleep(1.5)
+
       expect(sse_handler.connected?).to eq(true)
       expect(connected_event).to eq(true)
       expect(disconnect_event).to eq(false)
@@ -62,7 +64,9 @@ describe SplitIoClient::Engine::PushManager do
       push_manager.start_sse(api_key)
 
       expect(a_request(:get, config.auth_service_url)).to have_been_made.times(1)
+
       sleep(1.5)
+
       expect(sse_handler.connected?).to eq(false)
       expect(connected_event).to eq(false)
       expect(disconnect_event).to eq(true)
@@ -82,7 +86,9 @@ describe SplitIoClient::Engine::PushManager do
       push_manager.start_sse(api_key)
 
       expect(a_request(:get, config.auth_service_url)).to have_been_made.times(1)
+
       sleep(1.5)
+
       expect(sse_handler.connected?).to eq(false)
       expect(connected_event).to eq(false)
       expect(disconnect_event).to eq(true)
@@ -104,7 +110,9 @@ describe SplitIoClient::Engine::PushManager do
       push_manager.start_sse(api_key)
 
       expect(a_request(:get, config.auth_service_url)).to have_been_made.times(1)
+
       sleep(1.5)
+
       expect(sse_handler.connected?).to eq(true)
       expect(connected_event).to eq(true)
       expect(disconnect_event).to eq(false)
