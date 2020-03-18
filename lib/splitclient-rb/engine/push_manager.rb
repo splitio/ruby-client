@@ -20,12 +20,11 @@ module SplitIoClient
         end
 
         schedule_next_token_refresh(@config.auth_retry_back_off_base, response[:token]) if response[:retry]
-
-        @sse_handler&.connected? || false
       end
 
       def stop_sse
-        @sse_handler&.stop
+        @sse_handler.stop
+        @sse_handler.process_disconnect if @sse_handler.sse_client.nil?
       end
 
       private
