@@ -107,7 +107,8 @@ module SplitIoClient
           req = "GET #{uri.request_uri} HTTP/1.1\r\n"
           req << "Host: #{uri.host}\r\n"
           req << "Accept: text/event-stream\r\n"
-          req << "Cache-Control: no-cache\r\n\r\n"
+          req << "Cache-Control: no-cache\r\n"
+          req << "\r\n"
           @config.logger.debug("Request info: #{req}")
           req
         end
