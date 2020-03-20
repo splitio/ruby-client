@@ -17,6 +17,7 @@ module SplitIoClient
           @read_timeout = read_timeout
           @connected = Concurrent::AtomicBoolean.new(false)
           @socket = nil
+          @back_off = BackOff.new(@config)
 
           @on = { event: ->(_) {}, connected: ->(_) {}, disconnect: ->(_) {} }
 
@@ -60,12 +61,12 @@ module SplitIoClient
         end
 
         def connect_stream
+          @back_off.call
           @config.logger.info("Connecting to #{@uri.host}...")
 
           begin
             @socket = socket_connect
             @socket.write(build_request(@uri))
-            @connected.make_true
             dispatch_connected
           rescue StandardError => e
             @config.logger.error("Error during connecting to #{@uri.host}. Error: #{e.inspect}")
@@ -151,6 +152,8 @@ module SplitIoClient
         end
 
         def dispatch_connected
+          @connected.make_true
+          @back_off.reset
           @config.logger.debug('Dispatching connected')
           @on[:connected].call
         end
