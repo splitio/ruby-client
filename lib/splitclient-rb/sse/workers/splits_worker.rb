@@ -25,6 +25,10 @@ module SplitIoClient
           add_to_queue(change_number)
         end
 
+        def stop
+          SplitIoClient::Helpers::ThreadHelper.stop(:split_update_worker, @config)
+        end
+
         private
 
         def perform

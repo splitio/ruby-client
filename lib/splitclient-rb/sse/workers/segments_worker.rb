@@ -21,6 +21,10 @@ module SplitIoClient
           @queue.push(item)
         end
 
+        def stop
+          SplitIoClient::Helpers::ThreadHelper.stop(:segment_update_worker, @config)
+        end
+
         private
 
         def perform

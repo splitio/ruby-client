@@ -13,6 +13,10 @@ module SplitIoClient
           perform_passenger_forked if defined?(PhusionPassenger)
         end
 
+        def stop
+          SplitIoClient::Helpers::ThreadHelper.stop(:control_worker, @config)
+        end
+
         private
 
         def perform

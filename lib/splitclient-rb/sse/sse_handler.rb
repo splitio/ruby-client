@@ -44,7 +44,9 @@ module SplitIoClient
       end
 
       def stop_workers
-        @config.threads.select { |name, _| name.to_s.end_with? 'worker' }.values.each { |thread| Thread.kill(thread) }
+        @splits_worker.stop
+        @segments_worker.stop
+        @control_worker.stop
       end
 
       private
