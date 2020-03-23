@@ -11,7 +11,7 @@ module SplitIoClient
         api_key,
         config,
         sdk_blocker,
-        fetchers
+        params
       )
         @splits_repository = repositories[:splits]
         @segments_repository = repositories[:segments]
@@ -21,8 +21,8 @@ module SplitIoClient
         @api_key = api_key
         @config = config
         @sdk_blocker = sdk_blocker
-        @split_fetcher = fetchers[:split]
-        @segment_fetcher = fetchers[:segment]
+        @split_fetcher = params[:split_fetcher]
+        @segment_fetcher = params[:segment_fetcher]
       end
 
       def sync_all
@@ -46,11 +46,15 @@ module SplitIoClient
         @segment_fetcher.stop_segments_thread
       end
 
-      private
-
       def fetch_splits
         @split_fetcher.fetch_splits
       end
+
+      def fetch_segment(name)
+        @segment_fetcher.fetch_segment(name)
+      end
+
+      private
 
       def fetch_segments
         @segment_fetcher.fetch_segments

@@ -9,7 +9,7 @@ module SplitIoClient
     # @param api_key [String] the API key for your split account
     #
     # @return [SplitIoClient] split.io client instance
-    def initialize(api_key, adapter = nil, splits_repository, segments_repository, impressions_repository, metrics_repository, events_repository, sdk_blocker, config, sse_handler)
+    def initialize(api_key, adapter = nil, splits_repository, segments_repository, impressions_repository, metrics_repository, events_repository, sdk_blocker, config)
       @api_key = api_key
       @splits_repository = splits_repository
       @segments_repository = segments_repository
@@ -20,7 +20,6 @@ module SplitIoClient
       @destroyed = false
       @config = config
       @adapter = adapter
-      @sse_handler = sse_handler
     end
 
     def get_treatment(
@@ -61,8 +60,6 @@ module SplitIoClient
         thread.raise(SplitIoClient::SDKShutdownException)
         thread.join
       end
-
-      @sse_handler.sse_client.close
 
       @config.threads.values.each { |thread| Thread.kill(thread) }
 

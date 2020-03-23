@@ -23,7 +23,6 @@ module SplitIoClient
           yield self if block_given?
 
           connect_thread
-
           connect_passenger_forked if defined?(PhusionPassenger)
         end
 
@@ -47,6 +46,10 @@ module SplitIoClient
           Status::DISCONNECTED
         end
 
+        def connected?
+          @connected.value
+        end
+
         private
 
         def connect_thread
@@ -64,11 +67,11 @@ module SplitIoClient
 
           begin
             @socket = socket_connect
-
             @socket.write(build_request(@uri))
             @connected.make_true
           rescue StandardError => e
             dispatch_error(e.inspect)
+            close
           end
 
           while @connected.value
@@ -76,11 +79,11 @@ module SplitIoClient
               partial_data = @socket.readpartial(2048, timeout: @read_timeout)
             rescue Socketry::TimeoutError
               @config.logger.error("Socket read time out in #{@read_timeout}")
-              @connected.make_false
+              close
               connect_stream
             end
 
-            proccess_data(partial_data) unless partial_data == KEEP_ALIVE_RESPONSE
+            process_data(partial_data) unless partial_data == KEEP_ALIVE_RESPONSE
           end
         end
 
@@ -90,7 +93,7 @@ module SplitIoClient
           Socketry::TCP::Socket.connect(@uri.host, @uri.port)
         end
 
-        def proccess_data(partial_data)
+        def process_data(partial_data)
           unless partial_data.nil?
             @config.logger.debug("Event partial data: #{partial_data}")
             buffer = read_partial_data(partial_data)

@@ -16,7 +16,6 @@ module SplitIoClient
         start = Time.now
 
         response = get_api("#{@config.base_uri}/splitChanges", @api_key, since: since)
-
         if response.success?
           result = splits_with_segment_names(response.body)
 

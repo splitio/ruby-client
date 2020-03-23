@@ -4,12 +4,12 @@ module SplitIoClient
   module SSE
     module Workers
       class ControlWorker
-        def initialize(adapter, config)
-          @adapter = adapter
+        def initialize(config)
           @config = config
+        end
 
+        def start
           perform_thread
-
           perform_passenger_forked if defined?(PhusionPassenger)
         end
 
@@ -20,7 +20,7 @@ module SplitIoClient
         end
 
         def perform_thread
-          @config.threads[:segment_update_worker] = Thread.new do
+          @config.threads[:control_worker] = Thread.new do
             perform
           end
         end
