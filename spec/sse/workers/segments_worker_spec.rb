@@ -20,7 +20,9 @@ describe SplitIoClient::SSE::Workers::SegmentsWorker do
   let(:metrics_repository) { SplitIoClient::Cache::Repositories::MetricsRepository.new(config) }
   let(:events_repository) { SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key) }
   let(:sdk_blocker) { SDKBlocker.new(splits_repository, segments_repository, config) }
-  let(:adapter) { SplitIoClient::SplitAdapter.new(api_key, splits_repository, segments_repository, impressions_repository, metrics_repository, events_repository, sdk_blocker, config) }
+  let(:metrics) { SplitIoClient::Metrics.new(100, metrics_repository) }
+  let(:split_fetcher) { SplitFetcher.new(splits_repository, api_key, metrics, config, sdk_blocker) }
+  let(:segment_fetcher) { SegmentFetcher.new(segments_repository, api_key, metrics, config, sdk_blocker) }
 
   before do
     mock_split_changes(splits)
@@ -30,12 +32,16 @@ describe SplitIoClient::SSE::Workers::SegmentsWorker do
     mock_segment_changes('segment2', segment2, '1470947453878')
     mock_segment_changes('segment3', segment3, '-1')
     mock_segment_changes('segment3', segment3, '1470947453879')
+
+    split_fetcher.fetch_splits
+    segment_fetcher.fetch_segments
   end
 
   context 'add segment name to queue' do
     it 'must trigger fetch' do
-      worker = subject.new(adapter, config, segments_repository)
+      worker = subject.new(segment_fetcher, config, segments_repository)
 
+      worker.start
       worker.add_to_queue(1_506_703_262_918, 'segment1')
 
       sleep(0.1)
@@ -44,8 +50,9 @@ describe SplitIoClient::SSE::Workers::SegmentsWorker do
     end
 
     it 'must not trigger fetch' do
-      worker = subject.new(adapter, config, segments_repository)
+      worker = subject.new(segment_fetcher, config, segments_repository)
 
+      worker.start
       worker.add_to_queue(1_470_947_453_877, 'segment1')
 
       sleep(0.1)

@@ -5,22 +5,17 @@ module SplitIoClient
     class SSEHandler
       attr_reader :sse_client
 
-      def initialize(config, options, splits_worker, segments_worker, control_worker)
+      def initialize(config, synchronizer, splits_repository, segments_repository)
         @config = config
-        @options = options
-        @splits_worker = splits_worker
-        @segments_worker = segments_worker
-        @control_worker = control_worker
-
-        @sse_client = start_sse_client
+        @splits_worker = SplitIoClient::SSE::Workers::SplitsWorker.new(synchronizer, config, splits_repository)
+        @segments_worker = SplitIoClient::SSE::Workers::SegmentsWorker.new(synchronizer, config, segments_repository)
+        @control_worker = SplitIoClient::SSE::Workers::ControlWorker.new(config)
       end
 
-      private
+      def start(token_jwt, channels)
+        url = "#{@config.sse_host_url}?channels=#{channels}&v=1.1&key=#{token_jwt}"
 
-      def start_sse_client
-        url = "#{@options[:url_host]}/event-stream?channels=#{@options[:channels]}&v=1.1&key=#{@options[:key]}"
-
-        sse_client = SSE::EventSource::Client.new(url, @config) do |client|
+        @sse_client = SSE::EventSource::Client.new(url, @config) do |client|
           client.on_event do |event|
             process_event(event)
           end
@@ -30,8 +25,31 @@ module SplitIoClient
           end
         end
 
-        sse_client
+        block
       end
+
+      def stop
+        @sse_client&.close
+        @sse_client = nil
+      end
+
+      def connected?
+        @sse_client&.connected? || false
+      end
+
+      def start_workers
+        @splits_worker.start
+        @segments_worker.start
+        @control_worker.start
+      end
+
+      def stop_workers
+        @splits_worker.stop
+        @segments_worker.stop
+        @control_worker.stop
+      end
+
+      private
 
       def process_event(event)
         case event.data['type']
@@ -77,6 +95,20 @@ module SplitIoClient
 
       def control_notification(event)
         @config.logger.debug("CONTROL notification received: #{event}")
+      end
+
+      def block
+        begin
+          timeout = @config.connection_timeout
+          Timeout.timeout(timeout) do
+            sleep 0.1 until connected?
+          end
+        rescue Timeout::Error
+          @config.logger.error('SSE connection is not ready.')
+          @sse_client&.close
+        end
+
+        @config.logger.info('SSE connection is ready.')
       end
     end
   end
