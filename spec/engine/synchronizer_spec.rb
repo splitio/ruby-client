@@ -84,8 +84,7 @@ end
 private
 
 def mock_split_changes(splits_json)
-  stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
-    .to_return(status: 200, body: splits_json)
+  stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1').to_return(status: 200, body: splits_json)
 end
 
 def mock_segment_changes(segment_name, segment_json, since)
