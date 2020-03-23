@@ -5,14 +5,15 @@ module SplitIoClient
     module EventSource
       class BackOff
         def initialize(config)
+          @config = config
           @attempt = 0
-          @min_sleep_seconds = config.streaming_reconnect_back_off_base
         end
 
-        def call
-          sleep(2**@attempt) if @attempt.positive?
-
+        def interval
+          interval = (@config.streaming_reconnect_back_off_base * (2**@attempt)) if @attempt.positive?
           @attempt += 1
+
+          interval || 0
         end
 
         def reset

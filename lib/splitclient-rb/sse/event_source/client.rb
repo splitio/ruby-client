@@ -61,17 +61,12 @@ module SplitIoClient
         end
 
         def connect_stream
-          @back_off.call
+          interval = @back_off.interval
+          sleep(interval) if interval.positive?
+
           @config.logger.info("Connecting to #{@uri.host}...")
 
-          begin
-            @socket = socket_connect
-            @socket.write(build_request(@uri))
-            dispatch_connected
-          rescue StandardError => e
-            @config.logger.error("Error during connecting to #{@uri.host}. Error: #{e.inspect}")
-            close
-          end
+          socket_write
 
           while @connected.value
             begin
@@ -84,6 +79,15 @@ module SplitIoClient
 
             process_data(partial_data) unless partial_data == KEEP_ALIVE_RESPONSE
           end
+        end
+
+        def socket_write
+          @socket = socket_connect
+          @socket.write(build_request(@uri))
+          dispatch_connected
+        rescue StandardError => e
+          @config.logger.error("Error during connecting to #{@uri.host}. Error: #{e.inspect}")
+          close
         end
 
         def socket_connect
