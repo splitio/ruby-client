@@ -19,12 +19,6 @@ module SplitIoClient
           end
         end
 
-        def stop_events_thread
-          Thread.kill(@config.threads[:events_sender])
-        rescue StandardError => error
-          @config.logger.error(error.inspect)
-        end
-
         private
 
         def events_thread

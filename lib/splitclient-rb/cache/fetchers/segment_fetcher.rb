@@ -41,9 +41,7 @@ module SplitIoClient
         end
 
         def stop_segments_thread
-          Thread.kill(@config.threads[:segment_fetcher])
-        rescue StandardError => error
-          @config.logger.error(error.inspect)
+          SplitIoClient::Helpers::ThreadHelper.stop(:segment_fetcher, @config)
         end
 
         private

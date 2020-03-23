@@ -35,6 +35,7 @@ require 'splitclient-rb/cache/stores/localhost_split_store'
 
 require 'splitclient-rb/clients/split_client'
 require 'splitclient-rb/managers/split_manager'
+require 'splitclient-rb/helpers/thread_helper'
 require 'splitclient-rb/split_factory'
 require 'splitclient-rb/split_factory_builder'
 require 'splitclient-rb/split_config'
