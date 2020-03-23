@@ -76,13 +76,13 @@ module SplitIoClient
     # Starts thread which loops constantly and stores splits in the splits_repository of choice
     def split_fetch
       @split_fetcher = SplitFetcher.new(@splits_repository, @api_key, @metrics, @config, @sdk_blocker)
-      @split_fetcher.fetch_splits
+      @split_fetcher.call
     end
 
     # Starts thread which loops constantly and stores segments in the segments_repository of choice
     def segment_fetch
       @segment_fetcher = SegmentFetcher.new(@segments_repository, @api_key, @metrics, @config, @sdk_blocker)
-      @segment_fetcher.fetch_segments
+      @segment_fetcher.call
     end
 
     # Starts thread which loops constantly and sends impressions to the Split API

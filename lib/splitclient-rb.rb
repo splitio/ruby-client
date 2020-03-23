@@ -35,6 +35,7 @@ require 'splitclient-rb/cache/stores/localhost_split_store'
 
 require 'splitclient-rb/clients/split_client'
 require 'splitclient-rb/managers/split_manager'
+require 'splitclient-rb/helpers/thread_helper'
 require 'splitclient-rb/split_factory'
 require 'splitclient-rb/split_factory_builder'
 require 'splitclient-rb/split_config'
@@ -84,6 +85,9 @@ require 'splitclient-rb/engine/models/split'
 require 'splitclient-rb/engine/models/label'
 require 'splitclient-rb/engine/models/treatment'
 require 'splitclient-rb/engine/auth_api_client'
+require 'splitclient-rb/engine/push_manager'
+require 'splitclient-rb/engine/sync_manager'
+require 'splitclient-rb/engine/synchronizer'
 require 'splitclient-rb/utilitites'
 
 # redis metrics fixer

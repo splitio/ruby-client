@@ -133,7 +133,7 @@ module SplitIoClient
 
           return if split.nil?
 
-          split[:label] = Engine::Models::Label::KILLED
+          split[:killed] = true
           split[:defaultTreatment] = default_treatment
           split[:changeNumber] = change_number
 

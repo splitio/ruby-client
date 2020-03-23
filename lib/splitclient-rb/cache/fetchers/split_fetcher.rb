@@ -39,9 +39,12 @@ module SplitIoClient
           @config.logger.debug("segments seen(#{data[:segment_names].length}): #{data[:segment_names].to_a}") if @config.debug_enabled
 
           @sdk_blocker.splits_ready!
-
         rescue StandardError => error
           @config.log_found_exception(__method__.to_s, error)
+        end
+
+        def stop_splits_thread
+          SplitIoClient::Helpers::ThreadHelper.stop(:split_fetcher, @config)
         end
 
         private

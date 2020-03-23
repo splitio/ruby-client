@@ -40,6 +40,10 @@ module SplitIoClient
           @config.log_found_exception(__method__.to_s, error)
         end
 
+        def stop_segments_thread
+          SplitIoClient::Helpers::ThreadHelper.stop(:segment_fetcher, @config)
+        end
+
         private
 
         def segments_thread
