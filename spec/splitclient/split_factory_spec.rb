@@ -8,7 +8,8 @@ describe SplitIoClient::SplitFactory do
     {
       logger: Logger.new(log),
       cache_adapter: cache_adapter,
-      mode: mode
+      mode: mode,
+      streaming_enabled: false
     }
   end
 

@@ -13,7 +13,7 @@ module SplitIoClient
       end
 
       def start(token_jwt, channels)
-        url = "#{@config.sse_host_url}?channels=#{channels}&v=1.1&key=#{token_jwt}"
+        url = "#{@config.streaming_service_url}?channels=#{channels}&v=1.1&key=#{token_jwt}"
 
         @sse_client = SSE::EventSource::Client.new(url, @config) do |client|
           client.on_event do |event|

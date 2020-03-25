@@ -9,9 +9,10 @@ describe SplitIoClient::SplitClient do
   let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
   let(:impressions_repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
   let(:metrics_repository) { SplitIoClient::Cache::Repositories::MetricsRepository.new(config) }
+  let(:metrics) { SplitIoClient::Metrics.new(100, metrics_repository) }
 
   let(:client) do
-    SplitIoClient::SplitClient.new('', splits_repository, segments_repository,
+    SplitIoClient::SplitClient.new('', metrics, splits_repository, segments_repository,
                                    impressions_repository, metrics_repository, nil, nil, config)
   end
 

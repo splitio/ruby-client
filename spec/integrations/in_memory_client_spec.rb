@@ -8,7 +8,7 @@ describe SplitIoClient do
     '(Singleton pattern) and reusing it throughout your application'
 
   let(:factory) do
-    SplitIoClient::SplitFactory.new('test_api_key', impression_listener: custom_impression_listener)
+    SplitIoClient::SplitFactory.new('test_api_key', impression_listener: custom_impression_listener, streaming_enabled: false)
   end
 
   let(:log) { StringIO.new }
@@ -155,16 +155,20 @@ describe SplitIoClient do
       impression_listener4 = MyImpressionListener.new
       factory1 = SplitIoClient::SplitFactory.new('api_key',
                                                  logger: logger,
-                                                 impression_listener: impression_listener1)
+                                                 impression_listener: impression_listener1,
+                                                 streaming_enabled: false)
       factory2 = SplitIoClient::SplitFactory.new('another_key',
                                                  logger: logger,
-                                                 impression_listener: impression_listener2)
+                                                 impression_listener: impression_listener2,
+                                                 streaming_enabled: false)
       factory3 = SplitIoClient::SplitFactory.new('random_key',
                                                  logger: logger,
-                                                 impression_listener: impression_listener3)
+                                                 impression_listener: impression_listener3,
+                                                 streaming_enabled: false)
       factory4 = SplitIoClient::SplitFactory.new('api_key',
                                                  logger: logger,
-                                                 impression_listener: impression_listener4)
+                                                 impression_listener: impression_listener4,
+                                                 streaming_enabled: false)
 
       client1 = factory1.client
       client2 = factory2.client
@@ -574,13 +578,16 @@ describe SplitIoClient do
       impression_listener3 = MyImpressionListener.new
       factory1 = SplitIoClient::SplitFactory.new('api_key_other',
                                                  logger: logger,
-                                                 impression_listener: impression_listener1)
+                                                 impression_listener: impression_listener1,
+                                                 streaming_enabled: false)
       factory2 = SplitIoClient::SplitFactory.new('another_key_second',
                                                  logger: logger,
-                                                 impression_listener: impression_listener2)
+                                                 impression_listener: impression_listener2,
+                                                 streaming_enabled: false)
       factory3 = SplitIoClient::SplitFactory.new('api_key_other',
                                                  logger: logger,
-                                                 impression_listener: impression_listener3)
+                                                 impression_listener: impression_listener3,
+                                                 streaming_enabled: false)
 
       client1 = factory1.client
       client2 = factory2.client

@@ -59,7 +59,7 @@ describe SplitIoClient::Cache::Fetchers::SplitFetcher do
     end
 
     it 'rescues from error when split_fetcher#splits_since raises an exception' do
-      allow_any_instance_of(SplitFetcher).to receive(:splits_since).and_throw(RuntimeError)
+      allow_any_instance_of(SplitIoClient::Cache::Fetchers::SplitFetcher).to receive(:splits_since).and_throw(RuntimeError)
 
       expect { store.send(:fetch_splits) }.to_not raise_error
       expect(log.string).to include('Unexpected exception in fetch_splits')

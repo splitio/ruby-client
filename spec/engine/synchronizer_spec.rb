@@ -9,7 +9,6 @@ describe SplitIoClient::Engine::Synchronizer do
   let(:segment1) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/segment1.json')) }
   let(:segment2) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/segment2.json')) }
   let(:segment3) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/segment3.json')) }
-
   let(:api_key) { 'api-key-test' }
   let(:log) { StringIO.new }
   let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log)) }
@@ -18,10 +17,14 @@ describe SplitIoClient::Engine::Synchronizer do
   let(:impressions_repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
   let(:metrics_repository) { SplitIoClient::Cache::Repositories::MetricsRepository.new(config) }
   let(:events_repository) { SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key) }
-  let(:sdk_blocker) { SDKBlocker.new(splits_repository, segments_repository, config) }
+  let(:sdk_blocker) { SplitIoClient::Cache::Stores::SDKBlocker.new(splits_repository, segments_repository, config) }
   let(:metrics) { SplitIoClient::Metrics.new(100, metrics_repository) }
-  let(:split_fetcher) { SplitFetcher.new(splits_repository, api_key, metrics, config, sdk_blocker) }
-  let(:segment_fetcher) { SegmentFetcher.new(segments_repository, api_key, metrics, config, sdk_blocker) }
+  let(:split_fetcher) do
+    SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, metrics, config, sdk_blocker)
+  end
+  let(:segment_fetcher) do
+    SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, metrics, config, sdk_blocker)
+  end
   let(:repositories) do
     repos = {}
     repos[:splits] = splits_repository

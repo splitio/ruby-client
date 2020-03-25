@@ -9,8 +9,9 @@ module SplitIoClient
     # @param api_key [String] the API key for your split account
     #
     # @return [SplitIoClient] split.io client instance
-    def initialize(api_key, adapter = nil, splits_repository, segments_repository, impressions_repository, metrics_repository, events_repository, sdk_blocker, config)
+    def initialize(api_key, metrics, splits_repository, segments_repository, impressions_repository, metrics_repository, events_repository, sdk_blocker, config)
       @api_key = api_key
+      @metrics = metrics
       @splits_repository = splits_repository
       @segments_repository = segments_repository
       @impressions_repository = impressions_repository
@@ -19,7 +20,6 @@ module SplitIoClient
       @sdk_blocker = sdk_blocker
       @destroyed = false
       @config = config
-      @adapter = adapter
     end
 
     def get_treatment(
@@ -249,7 +249,7 @@ module SplitIoClient
         end
       latency = (Time.now - start) * 1000.0
       # Measure
-      @adapter.metrics.time('sdk.' + calling_method, latency)
+      @metrics.time('sdk.' + calling_method, latency)
 
       treatments_for_impressions = get_treatment_for_impressions(treatments_labels_change_numbers)
 
@@ -333,7 +333,7 @@ module SplitIoClient
         store_impression(split_name, matching_key, bucketing_key, treatment_data, attributes) if store_impressions
 
         # Measure
-        @adapter.metrics.time('sdk.' + calling_method, latency) unless multiple
+        @metrics.time('sdk.' + calling_method, latency) unless multiple
       rescue StandardError => error
         @config.log_found_exception(__method__.to_s, error)
 

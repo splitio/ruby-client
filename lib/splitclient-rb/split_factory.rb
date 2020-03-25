@@ -6,6 +6,7 @@ module SplitIoClient
 
     include SplitIoClient::Cache::Repositories
     include SplitIoClient::Cache::Stores
+    include SplitIoClient::Cache::Senders
 
     attr_reader :adapter, :client, :manager, :config
 
@@ -29,14 +30,14 @@ module SplitIoClient
       @splits_repository = SplitsRepository.new(@config)
       @segments_repository = SegmentsRepository.new(@config)
       @impressions_repository = ImpressionsRepository.new(@config)
-      @metrics_repository = MetricsRepository.new(@config)
       @events_repository = EventsRepository.new(@config, @api_key)
-
+      @metrics_repository = MetricsRepository.new(@config)
       @sdk_blocker = SDKBlocker.new(@splits_repository, @segments_repository, @config)
+      @metrics = Metrics.new(100, @metrics_repository)
 
-      @adapter = start!
+      start!
 
-      @client = SplitClient.new(@api_key, @adapter, @splits_repository, @segments_repository, @impressions_repository, @metrics_repository, @events_repository, @sdk_blocker, @config)
+      @client = SplitClient.new(@api_key, @metrics, @splits_repository, @segments_repository, @impressions_repository, @metrics_repository, @events_repository, @sdk_blocker, @config)
       @manager = SplitManager.new(@splits_repository, @sdk_blocker, @config)
 
       validate_api_key
@@ -47,7 +48,11 @@ module SplitIoClient
     end
 
     def start!
-      SplitAdapter.new(@api_key, @splits_repository, @segments_repository, @impressions_repository, @metrics_repository, @events_repository, @sdk_blocker, @config)
+      if @config.localhost_mode
+        start_localhost_components
+      else
+        SplitIoClient::Engine::SyncManager.new(repositories, @api_key, @config, @sdk_blocker, @metrics).start
+      end
     end
 
     def stop!
@@ -114,6 +119,24 @@ module SplitIoClient
         @config.logger.error('Factory Instantiation: you passed and empty api_key, api_key must be a non-empty String')
         @config.valid_mode =  false
       end
+    end
+
+    def repositories
+      repos = {}
+      repos[:splits] = @splits_repository
+      repos[:segments] = @segments_repository
+      repos[:impressions] = @impressions_repository
+      repos[:events] = @events_repository
+      repos[:metrics] = @metrics_repository
+
+      repos
+    end
+
+    def start_localhost_components
+      LocalhostSplitStore.new(@splits_repository, @config, @sdk_blocker).call
+
+      # Starts thread which loops constantly and cleans up repositories to avoid memory issues in localhost mode
+      LocalhostRepoCleaner.new(@impressions_repository, @metrics_repository, @events_repository, @config).call
     end
   end
 end
