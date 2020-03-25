@@ -1010,6 +1010,18 @@ describe SplitIoClient, type: :client do
       it 'does not store splits' do
         expect(subject.instance_variable_get(:@splits_repository).splits.size).to eq(0)
       end
+
+      # config.max_cache_size set to 1 forcing cache adapter to fallback to redis
+      it 'retrieves splits from redis adapter in a single mget call' do
+        load_splits(all_keys_matcher_json)
+
+        expect_any_instance_of(Redis)
+          .to receive(:mget).once.and_call_original
+        expect_any_instance_of(Redis)
+          .not_to receive(:get)
+
+        subject.get_treatments(222, %w[new_feature foo test_feature])
+      end
     end
   end
 end
