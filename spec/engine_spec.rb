@@ -1004,7 +1004,8 @@ describe SplitIoClient, type: :client do
                                         cache_adapter: :redis,
                                         redis_namespace: 'test',
                                         max_cache_size: 1,
-                                        mode: :consumer).client
+                                        mode: :consumer,
+                                        streaming_enabled: false).client
       end
 
       it 'does not store splits' do
