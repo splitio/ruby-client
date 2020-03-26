@@ -10,22 +10,20 @@ module SplitIoClient
         @splits_worker = SplitIoClient::SSE::Workers::SplitsWorker.new(synchronizer, config, splits_repository)
         @segments_worker = SplitIoClient::SSE::Workers::SegmentsWorker.new(synchronizer, config, segments_repository)
         @control_worker = SplitIoClient::SSE::Workers::ControlWorker.new(config)
+
+        @on = { connected: ->(_) {}, disconnect: ->(_) {} }
+
+        yield self if block_given?
       end
 
       def start(token_jwt, channels)
         url = "#{@config.streaming_service_url}?channels=#{channels}&v=1.1&key=#{token_jwt}"
 
         @sse_client = SSE::EventSource::Client.new(url, @config) do |client|
-          client.on_event do |event|
-            process_event(event)
-          end
-
-          client.on_error do |error|
-            process_error(error)
-          end
+          client.on_event { |event| process_event(event) }
+          client.on_connected { process_connected }
+          client.on_disconnect { process_disconnect }
         end
-
-        block
       end
 
       def stop
@@ -49,7 +47,23 @@ module SplitIoClient
         @control_worker.stop
       end
 
+      def on_connected(&action)
+        @on[:connected] = action
+      end
+
+      def on_disconnect(&action)
+        @on[:disconnect] = action
+      end
+
+      def process_disconnect
+        @on[:disconnect].call
+      end
+
       private
+
+      def process_connected
+        @on[:connected].call
+      end
 
       def process_event(event)
         case event.data['type']
@@ -64,10 +78,6 @@ module SplitIoClient
         else
           @config.logger.error("Incorrect event type: #{event}")
         end
-      end
-
-      def process_error(error)
-        @config.logger.error("SSE::EventSource::Client error: #{error}")
       end
 
       def split_update_notification(event)
@@ -95,20 +105,6 @@ module SplitIoClient
 
       def control_notification(event)
         @config.logger.debug("CONTROL notification received: #{event}")
-      end
-
-      def block
-        begin
-          timeout = @config.connection_timeout
-          Timeout.timeout(timeout) do
-            sleep 0.1 until connected?
-          end
-        rescue Timeout::Error
-          @config.logger.error('SSE connection is not ready.')
-          @sse_client&.close
-        end
-
-        @config.logger.info('SSE connection is ready.')
       end
     end
   end

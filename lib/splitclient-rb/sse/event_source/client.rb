@@ -18,7 +18,7 @@ module SplitIoClient
           @connected = Concurrent::AtomicBoolean.new(false)
           @socket = nil
 
-          @on = { event: ->(_) {}, error: ->(_) {} }
+          @on = { event: ->(_) {}, connected: ->(_) {}, disconnect: ->(_) {} }
 
           yield self if block_given?
 
@@ -30,20 +30,19 @@ module SplitIoClient
           @on[:event] = action
         end
 
-        def on_error(&action)
-          @on[:error] = action
+        def on_connected(&action)
+          @on[:connected] = action
+        end
+
+        def on_disconnect(&action)
+          @on[:disconnect] = action
         end
 
         def close
+          dispatch_disconnect
           @connected.make_false
           @socket&.close
           @socket = nil
-        end
-
-        def status
-          return Status::CONNECTED if @connected.value
-
-          Status::DISCONNECTED
         end
 
         def connected?
@@ -53,9 +52,7 @@ module SplitIoClient
         private
 
         def connect_thread
-          @config.threads[:connect_stream] = Thread.new do
-            connect_stream
-          end
+          @config.threads[:connect_stream] = Thread.new { connect_stream }
         end
 
         def connect_passenger_forked
@@ -69,8 +66,9 @@ module SplitIoClient
             @socket = socket_connect
             @socket.write(build_request(@uri))
             @connected.make_true
+            dispatch_connected
           rescue StandardError => e
-            dispatch_error(e.inspect)
+            @config.logger.error("Error during connecting to #{@uri.host}. Error: #{e.inspect}")
             close
           end
 
@@ -102,7 +100,7 @@ module SplitIoClient
             dispatch_event(event)
           end
         rescue StandardError => e
-          dispatch_error(e.inspect)
+          @config.logger.error("Error during processing data: #{e.inspect}")
         end
 
         def build_request(uri)
@@ -144,7 +142,7 @@ module SplitIoClient
 
           raise 'Invalid event format.'
         rescue StandardError => e
-          dispatch_error(e.inspect)
+          @config.logger.error("Error during parsing a event: #{e.inspect}")
           nil
         end
 
@@ -153,13 +151,16 @@ module SplitIoClient
           @on[:event].call(event) unless event.nil?
         end
 
-        def dispatch_error(error)
-          @config.logger.debug("Dispatching error: #{error}")
-          @on[:error].call(error)
+        def dispatch_connected
+          @config.logger.debug('Dispatching connected')
+          @on[:connected].call
+        end
+
+        def dispatch_disconnect
+          @config.logger.debug('Dispatching disconnect')
+          @on[:disconnect].call
         end
       end
-
-      StreamData = Struct.new(:event_type, :client_id, :data)
     end
   end
 end
