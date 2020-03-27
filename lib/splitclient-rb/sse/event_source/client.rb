@@ -72,7 +72,7 @@ module SplitIoClient
             begin
               partial_data = @socket.readpartial(2048, timeout: @read_timeout)
             rescue Socketry::TimeoutError
-              @config.logger.error("Socket read time out in #{@read_timeout}")
+              @config.logger.error("Socket read time out in #{@read_timeout} seconds")
               close
               connect_stream
             end
@@ -144,7 +144,7 @@ module SplitIoClient
 
           return StreamData.new(event_type, client_id, parsed_data) unless event_type.nil? || parsed_data.nil?
 
-          raise 'Invalid event format.'
+          nil
         rescue StandardError => e
           @config.logger.error("Error during parsing a event: #{e.inspect}")
           nil

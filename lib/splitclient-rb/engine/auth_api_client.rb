@@ -22,15 +22,14 @@ module SplitIoClient
           body_json = JSON.parse(response.body, symbolize_names: true)
           push_enabled = body_json[:pushEnabled]
           token = body_json[:token]
-          decoded_token = decode_token(token)
 
-          return {
-            push_enabled: push_enabled,
-            token: token,
-            channels: (channels(decoded_token) if push_enabled),
-            exp: expiration(decoded_token),
-            retry: false
-          }
+          if push_enabled
+            decoded_token = decode_token(token)
+            channels = channels(decoded_token)
+            exp = expiration(decoded_token)
+          end
+
+          return { push_enabled: push_enabled, token: token, channels: channels, exp: exp, retry: false }
         elsif response.status >= 400 && response.status < 500
           @config.logger.debug("Problem to connect to: #{@config.auth_service_url}. Response status: #{response.status}")
 
@@ -45,7 +44,10 @@ module SplitIoClient
 
       def expiration(token_decoded)
         exp = token_decoded[0]['exp']
-        exp - EXPIRATION_RATE unless exp.nil?
+
+        (exp - EXPIRATION_RATE) - Time.now.getutc.to_i unless exp.nil?
+      rescue StandardError => e
+        @config.logger.error("Error getting token expiration: #{e.inspect}")
       end
 
       def channels(token_decoded)

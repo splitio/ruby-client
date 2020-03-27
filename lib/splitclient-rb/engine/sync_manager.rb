@@ -14,7 +14,7 @@ module SplitIoClient
       )
         split_fetcher = SplitFetcher.new(repositories[:splits], api_key, metrics, config, sdk_blocker)
         segment_fetcher = SegmentFetcher.new(repositories[:segments], api_key, metrics, config, sdk_blocker)
-        sync_params = synchronizer_params(split_fetcher, segment_fetcher)
+        sync_params = { split_fetcher: split_fetcher, segment_fetcher: segment_fetcher }
 
         @synchronizer = Synchronizer.new(repositories, api_key, config, sdk_blocker, sync_params)
 
@@ -28,9 +28,8 @@ module SplitIoClient
           handler.on_disconnect { process_disconnect }
         end
 
-        @push_manager = PushManager.new(config, @sse_handler)
+        @push_manager = PushManager.new(config, @sse_handler, api_key)
         @config = config
-        @api_key = api_key
       end
 
       def start
@@ -75,7 +74,7 @@ module SplitIoClient
       def stream_start_sse_thread
         @config.threads[:sync_manager_start_sse] = Thread.new do
           begin
-            @push_manager.start_sse(@api_key)
+            @push_manager.start_sse
           rescue StandardError => error
             @config.logger.error(error)
           end
@@ -88,14 +87,6 @@ module SplitIoClient
 
       def stream_start_sse_thread_forked
         PhusionPassenger.on_event(:starting_worker_process) { |forked| stream_start_sse_thread if forked }
-      end
-
-      def synchronizer_params(split_fetcher, segment_fetcher)
-        params = {}
-        params[:split_fetcher] = split_fetcher
-        params[:segment_fetcher] = segment_fetcher
-
-        params
       end
 
       def process_connected

@@ -102,7 +102,7 @@ module SplitIoClient
       @split_validator = SplitIoClient::Validators.new(self)
       @localhost_mode = opts[:localhost_mode]
 
-      @streaming_enabled = opts[:streaming_enabled].nil? ? SplitConfig.default_streaming_enabled : opts[:streaming_enabled]
+      @streaming_enabled = consumer? ? false : (opts[:streaming_enabled].nil? ? SplitConfig.default_streaming_enabled : opts[:streaming_enabled])
       @streaming_service_url = opts[:streaming_service_url] || SplitConfig.default_streaming_service_url
       @auth_service_url = opts[:auth_service_url] || SplitConfig.default_auth_service_url
       @auth_retry_back_off_base = SplitConfig.init_auth_retry_back_off(opts[:auth_retry_back_off_base] || SplitConfig.default_auth_retry_back_off_base)

@@ -26,6 +26,7 @@ module SplitIoClient
       end
 
       def sync_all
+        @config.logger.debug('Synchronizing Splits and Segments ...')
         fetch_splits
         fetch_segments
       end

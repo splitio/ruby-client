@@ -25,6 +25,7 @@ module SplitIoClient
 
         def perform_thread
           @config.threads[:control_worker] = Thread.new do
+            @config.logger.debug('Starting control worker ...')
             perform
           end
         end
