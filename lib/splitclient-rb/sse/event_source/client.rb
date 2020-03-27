@@ -17,6 +17,7 @@ module SplitIoClient
           @read_timeout = read_timeout
           @connected = Concurrent::AtomicBoolean.new(false)
           @socket = nil
+          @back_off = BackOff.new(@config)
 
           @on = { event: ->(_) {}, connected: ->(_) {}, disconnect: ->(_) {} }
 
@@ -60,17 +61,12 @@ module SplitIoClient
         end
 
         def connect_stream
+          interval = @back_off.interval
+          sleep(interval) if interval.positive?
+
           @config.logger.info("Connecting to #{@uri.host}...")
 
-          begin
-            @socket = socket_connect
-            @socket.write(build_request(@uri))
-            @connected.make_true
-            dispatch_connected
-          rescue StandardError => e
-            @config.logger.error("Error during connecting to #{@uri.host}. Error: #{e.inspect}")
-            close
-          end
+          socket_write
 
           while @connected.value
             begin
@@ -83,6 +79,15 @@ module SplitIoClient
 
             process_data(partial_data) unless partial_data == KEEP_ALIVE_RESPONSE
           end
+        end
+
+        def socket_write
+          @socket = socket_connect
+          @socket.write(build_request(@uri))
+          dispatch_connected
+        rescue StandardError => e
+          @config.logger.error("Error during connecting to #{@uri.host}. Error: #{e.inspect}")
+          close
         end
 
         def socket_connect
@@ -107,8 +112,7 @@ module SplitIoClient
           req = "GET #{uri.request_uri} HTTP/1.1\r\n"
           req << "Host: #{uri.host}\r\n"
           req << "Accept: text/event-stream\r\n"
-          req << "Cache-Control: no-cache\r\n"
-          req << "\r\n"
+          req << "Cache-Control: no-cache\r\n\r\n"
           @config.logger.debug("Request info: #{req}")
           req
         end
@@ -152,6 +156,8 @@ module SplitIoClient
         end
 
         def dispatch_connected
+          @connected.make_true
+          @back_off.reset
           @config.logger.debug('Dispatching connected')
           @on[:connected].call
         end
