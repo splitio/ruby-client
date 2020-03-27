@@ -16,21 +16,9 @@ module SplitIoClient
       def authenticate(api_key)
         response = @api_client.get_api(@config.auth_service_url, api_key)
 
-        if response.success?
-          @config.logger.debug("Success connection to: #{@config.auth_service_url}")
+        return process_success(response) if response.success?
 
-          body_json = JSON.parse(response.body, symbolize_names: true)
-          push_enabled = body_json[:pushEnabled]
-          token = body_json[:token]
-
-          if push_enabled
-            decoded_token = decode_token(token)
-            channels = channels(decoded_token)
-            exp = expiration(decoded_token)
-          end
-
-          return { push_enabled: push_enabled, token: token, channels: channels, exp: exp, retry: false }
-        elsif response.status >= 400 && response.status < 500
+        if response.status >= 400 && response.status < 500
           @config.logger.debug("Problem to connect to: #{@config.auth_service_url}. Response status: #{response.status}")
 
           return { push_enabled: false, retry: false }
@@ -60,6 +48,22 @@ module SplitIoClient
 
       def decode_token(token)
         JWT.decode token, nil, false
+      end
+
+      def process_success(response)
+        @config.logger.debug("Success connection to: #{@config.auth_service_url}")
+
+        body_json = JSON.parse(response.body, symbolize_names: true)
+        push_enabled = body_json[:pushEnabled]
+        token = body_json[:token]
+
+        if push_enabled
+          decoded_token = decode_token(token)
+          channels = channels(decoded_token)
+          exp = expiration(decoded_token)
+        end
+
+        { push_enabled: push_enabled, token: token, channels: channels, exp: exp, retry: false }
       end
     end
   end

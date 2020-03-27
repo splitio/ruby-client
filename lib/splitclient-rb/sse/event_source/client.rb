@@ -8,7 +8,7 @@ module SplitIoClient
   module SSE
     module EventSource
       class Client
-        DEFAULT_READ_TIMEOUT = 200
+        DEFAULT_READ_TIMEOUT = 70
         KEEP_ALIVE_RESPONSE = "c\r\n:keepalive\n\n\r\n".freeze
 
         def initialize(url, config, read_timeout: DEFAULT_READ_TIMEOUT)
@@ -77,7 +77,7 @@ module SplitIoClient
               connect_stream
             end
 
-            process_data(partial_data) unless partial_data == KEEP_ALIVE_RESPONSE
+            process_data(partial_data)
           end
         end
 
@@ -97,7 +97,7 @@ module SplitIoClient
         end
 
         def process_data(partial_data)
-          unless partial_data.nil?
+          unless partial_data.nil? || partial_data == KEEP_ALIVE_RESPONSE
             @config.logger.debug("Event partial data: #{partial_data}")
             buffer = read_partial_data(partial_data)
             event = parse_event(buffer)
