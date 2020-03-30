@@ -40,6 +40,7 @@ module SplitIoClient
 
         def perform_thread
           @config.threads[:split_update_worker] = Thread.new do
+            @config.logger.debug('Starting splits worker ...')
             perform
           end
         end
