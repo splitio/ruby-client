@@ -100,6 +100,7 @@ require 'splitclient-rb/sse/event_source/stream_data'
 require 'splitclient-rb/sse/workers/control_worker'
 require 'splitclient-rb/sse/workers/segments_worker'
 require 'splitclient-rb/sse/workers/splits_worker'
+require 'splitclient-rb/sse/notification_processor'
 require 'splitclient-rb/sse/sse_handler'
 
 # C extension
