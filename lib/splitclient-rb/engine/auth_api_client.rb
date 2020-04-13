@@ -7,6 +7,9 @@ module SplitIoClient
   module Engine
     class AuthApiClient
       EXPIRATION_RATE = 600
+      CONTROL_PRI = 'control_pri'
+      CONTROL_SEC = 'control_sec'
+      OCCUPANCY_CHANNEL_PREFIX = '[?occupancy=metrics.publishers]'
 
       def initialize(config)
         @config = config
@@ -42,7 +45,7 @@ module SplitIoClient
         capability = token_decoded[0]['x-ably-capability']
         channels_hash = JSON.parse(capability)
         channels_string = channels_hash.keys.join(',')
-
+        channels_string = control_channels(channels_string)
         CGI.escape(channels_string)
       end
 
@@ -64,6 +67,12 @@ module SplitIoClient
         end
 
         { push_enabled: push_enabled, token: token, channels: channels, exp: exp, retry: false }
+      end
+
+      def control_channels(channels_string)
+        channels_string = channels_string.gsub(CONTROL_PRI, "#{OCCUPANCY_CHANNEL_PREFIX}#{CONTROL_PRI}")
+        channels_string = channels_string.gsub(CONTROL_SEC, "#{OCCUPANCY_CHANNEL_PREFIX}#{CONTROL_SEC}")
+        channels_string
       end
     end
   end
