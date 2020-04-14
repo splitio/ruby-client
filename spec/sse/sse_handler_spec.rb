@@ -12,6 +12,7 @@ describe SplitIoClient::SSE::SSEHandler do
   let(:event_split_kill_must_not_fetch) { "fb\r\nid: 123\nevent: message\ndata: {\"id\":\"1\",\"clientId\":\"emptyClientId\",\"connectionId\":\"1\",\"timestamp\":1582045421733,\"channel\":\"mauroc\",\"data\":\"{\\\"type\\\" : \\\"SPLIT_KILL\\\",\\\"changeNumber\\\": 1506703262916, \\\"defaultTreatment\\\" : \\\"on\\\", \\\"splitName\\\" : \\\"FACUNDO_TEST\\\"}\",\"name\":\"asdasd\"}\n\n\r\n" }
   let(:event_segment_update_must_fetch) { "fb\r\nid: 123\nevent: message\ndata: {\"id\":\"1\",\"clientId\":\"emptyClientId\",\"connectionId\":\"1\",\"timestamp\":1582045421733,\"channel\":\"mauroc\",\"data\":\"{\\\"type\\\" : \\\"SEGMENT_UPDATE\\\",\\\"changeNumber\\\": 1470947453879, \\\"segmentName\\\" : \\\"segment1\\\"}\",\"name\":\"asdasd\"}\n\n\r\n" }
   let(:event_segment_update_must_not_fetch) { "fb\r\nid: 123\nevent: message\ndata: {\"id\":\"1\",\"clientId\":\"emptyClientId\",\"connectionId\":\"1\",\"timestamp\":1582045421733,\"channel\":\"mauroc\",\"data\":\"{\\\"type\\\" : \\\"SEGMENT_UPDATE\\\",\\\"changeNumber\\\": 1470947453877, \\\"segmentName\\\" : \\\"segment1\\\"}\",\"name\":\"asdasd\"}\n\n\r\n" }
+  let(:event_occupancy) { "d4\r\nevent: message\ndata: {\"id\":\"123\",\"timestamp\":1586803930362,\"encoding\":\"json\",\"channel\":\"[?occupancy=metrics.publishers]control_pri\",\"data\":\"{\\\"metrics\\\":{\\\"publishers\\\":2}}\",\"name\":\"[meta]occupancy\"}\n\n\r\n" }
 
   let(:splits) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/splits.json')) }
   let(:segment1) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/segment1.json')) }
@@ -30,6 +31,7 @@ describe SplitIoClient::SSE::SSEHandler do
   let(:metrics) { SplitIoClient::Metrics.new(100, metrics_repository) }
   let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, metrics, config, sdk_blocker) }
   let(:segment_fetcher) { SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, metrics, config, sdk_blocker) }
+  let(:notification_manager_keeper) { SplitIoClient::SSE::NotificationManagerKeeper.new(config) }
   let(:repositories) do
     repos = {}
     repos[:splits] = splits_repository
@@ -64,13 +66,13 @@ describe SplitIoClient::SSE::SSEHandler do
     it 'must trigger a fetch' do
       mock_server do |server|
         server.setup_response('/') do |_, res|
-          send_content(res, event_split_update_must_fetch, keep_open: false)
+          send_content(res, event_split_update_must_fetch)
         end
 
         config.streaming_service_url = server.base_uri
         connected_event = false
         disconnect_event = false
-        sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository) do |handler|
+        sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository, notification_manager_keeper) do |handler|
           handler.on_connected { connected_event = true }
           handler.on_disconnect { disconnect_event = true }
         end
@@ -95,7 +97,7 @@ describe SplitIoClient::SSE::SSEHandler do
     it 'must not trigger a fetch' do
       mock_server do |server|
         server.setup_response('/') do |_, res|
-          send_content(res, event_split_update_must_not_fetch, keep_open: false)
+          send_content(res, event_split_update_must_not_fetch)
         end
 
         splits_repository.set_change_number(1_506_703_262_916)
@@ -103,7 +105,7 @@ describe SplitIoClient::SSE::SSEHandler do
         config.streaming_service_url = server.base_uri
         connected_event = false
         disconnect_event = false
-        sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository) do |handler|
+        sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository, notification_manager_keeper) do |handler|
           handler.on_connected { connected_event = true }
           handler.on_disconnect { disconnect_event = true }
         end
@@ -130,13 +132,13 @@ describe SplitIoClient::SSE::SSEHandler do
     it 'must trigger a fetch' do
       mock_server do |server|
         server.setup_response('/') do |_, res|
-          send_content(res, event_split_kill_must_fetch, keep_open: false)
+          send_content(res, event_split_kill_must_fetch)
         end
 
         config.streaming_service_url = server.base_uri
         connected_event = false
         disconnect_event = false
-        sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository) do |handler|
+        sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository, notification_manager_keeper) do |handler|
           handler.on_connected { connected_event = true }
           handler.on_disconnect { disconnect_event = true }
         end
@@ -165,13 +167,13 @@ describe SplitIoClient::SSE::SSEHandler do
     it 'must not trigger a fetch.' do
       mock_server do |server|
         server.setup_response('/') do |_, res|
-          send_content(res, event_split_kill_must_not_fetch, keep_open: false)
+          send_content(res, event_split_kill_must_not_fetch)
         end
 
         config.streaming_service_url = server.base_uri
         connected_event = false
         disconnect_event = false
-        sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository) do |handler|
+        sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository, notification_manager_keeper) do |handler|
           handler.on_connected { connected_event = true }
           handler.on_disconnect { disconnect_event = true }
         end
@@ -202,13 +204,13 @@ describe SplitIoClient::SSE::SSEHandler do
     it 'must trigger fetch' do
       mock_server do |server|
         server.setup_response('/') do |_, res|
-          send_content(res, event_segment_update_must_fetch, keep_open: false)
+          send_content(res, event_segment_update_must_fetch)
         end
 
         config.streaming_service_url = server.base_uri
         connected_event = false
         disconnect_event = false
-        sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository) do |handler|
+        sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository, notification_manager_keeper) do |handler|
           handler.on_connected { connected_event = true }
           handler.on_disconnect { disconnect_event = true }
         end
@@ -233,13 +235,13 @@ describe SplitIoClient::SSE::SSEHandler do
     it 'must not trigger fetch' do
       mock_server do |server|
         server.setup_response('/') do |_, res|
-          send_content(res, event_segment_update_must_not_fetch, keep_open: false)
+          send_content(res, event_segment_update_must_not_fetch)
         end
 
         config.streaming_service_url = server.base_uri
         connected_event = false
         disconnect_event = false
-        sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository) do |handler|
+        sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository, notification_manager_keeper) do |handler|
           handler.on_connected { connected_event = true }
           handler.on_disconnect { disconnect_event = true }
         end
@@ -250,6 +252,38 @@ describe SplitIoClient::SSE::SSEHandler do
 
         expect(sse_handler.sse_client.connected?).to eq(true)
         expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=1470947453877')).to have_been_made.once
+        expect(connected_event).to eq(true)
+        expect(disconnect_event).to eq(false)
+
+        sse_handler.sse_client.close
+
+        expect(sse_handler.sse_client.connected?).to eq(false)
+        expect(disconnect_event).to eq(true)
+      end
+    end
+  end
+
+  context 'OCCUPANCY event' do
+    it 'must trigger notification manager keeper' do
+      mock_server do |server|
+        server.setup_response('/') do |_, res|
+          send_content(res, event_occupancy)
+        end
+
+        config.streaming_service_url = server.base_uri
+        connected_event = false
+        disconnect_event = false
+        sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository, notification_manager_keeper) do |handler|
+          handler.on_connected { connected_event = true }
+          handler.on_disconnect { disconnect_event = true }
+        end
+
+        sse_handler.start('token-test', 'channel-test')
+        sse_handler.start_workers
+
+        sleep(1)
+
+        expect(sse_handler.sse_client.connected?).to eq(true)
         expect(connected_event).to eq(true)
         expect(disconnect_event).to eq(false)
 
@@ -274,13 +308,13 @@ def mock_segment_changes(segment_name, segment_json, since)
     .to_return(status: 200, body: segment_json)
 end
 
-def send_content(res, content, keep_open:)
+def send_content(res, content)
   res.content_type = 'text/event-stream'
   res.status = 200
   res.chunked = true
   rd, wr = IO.pipe
   wr.write(content)
   res.body = rd
-  wr.close unless keep_open
+  wr.close
   wr
 end

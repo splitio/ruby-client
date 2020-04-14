@@ -2,6 +2,7 @@ require 'forwardable'
 
 require 'splitclient-rb/version'
 
+require 'splitclient-rb/constants'
 require 'splitclient-rb/exceptions'
 require 'splitclient-rb/cache/routers/impression_router'
 require 'splitclient-rb/cache/adapters/memory_adapters/map_adapter'
@@ -100,6 +101,7 @@ require 'splitclient-rb/sse/event_source/stream_data'
 require 'splitclient-rb/sse/workers/control_worker'
 require 'splitclient-rb/sse/workers/segments_worker'
 require 'splitclient-rb/sse/workers/splits_worker'
+require 'splitclient-rb/sse/notification_manager_keeper'
 require 'splitclient-rb/sse/notification_processor'
 require 'splitclient-rb/sse/sse_handler'
 

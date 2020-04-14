@@ -126,8 +126,7 @@ module SplitIoClient
 
         def parse_event(buffer)
           event_type = nil
-          parsed_data = nil
-          client_id = nil
+          data = nil
 
           buffer.each do |d|
             splited_data = d.split(':')
@@ -136,18 +135,25 @@ module SplitIoClient
             when 'event'
               event_type = splited_data[1].strip
             when 'data'
-              event_data = JSON.parse(d.sub('data: ', ''))
-              client_id = event_data['clientId']&.strip
-              parsed_data = JSON.parse(event_data['data'])
+              data = parse_event_data(d)
             end
           end
 
-          return StreamData.new(event_type, client_id, parsed_data) unless event_type.nil? || parsed_data.nil?
+          return nil if event_type.nil? || data[:parsed_data].nil?
 
-          nil
+          StreamData.new(event_type, data[:client_id], data[:parsed_data], data[:channel])
         rescue StandardError => e
           @config.logger.error("Error during parsing a event: #{e.inspect}")
           nil
+        end
+
+        def parse_event_data(data)
+          event_data = JSON.parse(data.sub('data: ', ''))
+          client_id = event_data['clientId']&.strip
+          channel = event_data['channel']&.strip
+          parsed_data = JSON.parse(event_data['data'])
+
+          { client_id: client_id, channel: channel, parsed_data: parsed_data }
         end
 
         def dispatch_event(event)

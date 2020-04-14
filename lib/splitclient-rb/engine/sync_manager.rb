@@ -17,12 +17,15 @@ module SplitIoClient
         sync_params = { split_fetcher: split_fetcher, segment_fetcher: segment_fetcher }
 
         @synchronizer = Synchronizer.new(repositories, api_key, config, sdk_blocker, sync_params)
-
+        notification_manager_keeper = SplitIoClient::SSE::NotificationManagerKeeper.new(config) do |manager|
+          manager.on_occupancy { |publisher_available| process_occupancy(publisher_available) }
+        end
         @sse_handler = SplitIoClient::SSE::SSEHandler.new(
           config,
           @synchronizer,
           repositories[:splits],
-          repositories[:segments]
+          repositories[:segments],
+          notification_manager_keeper
         ) do |handler|
           handler.on_connected { process_connected }
           handler.on_disconnect { process_disconnect }
@@ -98,6 +101,11 @@ module SplitIoClient
       def process_disconnect
         @sse_handler.stop_workers
         @synchronizer.start_periodic_fetch
+      end
+
+      def process_occupancy(publisher_available)
+        process_disconnect unless publisher_available
+        process_connected if publisher_available
       end
     end
   end

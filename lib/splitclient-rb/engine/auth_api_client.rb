@@ -6,11 +6,6 @@ require 'cgi'
 module SplitIoClient
   module Engine
     class AuthApiClient
-      EXPIRATION_RATE = 600
-      CONTROL_PRI = 'control_pri'
-      CONTROL_SEC = 'control_sec'
-      OCCUPANCY_CHANNEL_PREFIX = '[?occupancy=metrics.publishers]'
-
       def initialize(config)
         @config = config
         @api_client = SplitIoClient::Api::Client.new(@config)
@@ -36,7 +31,7 @@ module SplitIoClient
       def expiration(token_decoded)
         exp = token_decoded[0]['exp']
 
-        (exp - EXPIRATION_RATE) - Time.now.getutc.to_i unless exp.nil?
+        (exp - SplitIoClient::Constants::EXPIRATION_RATE) - Time.now.getutc.to_i unless exp.nil?
       rescue StandardError => e
         @config.logger.error("Error getting token expiration: #{e.inspect}")
       end
@@ -70,8 +65,11 @@ module SplitIoClient
       end
 
       def control_channels(channels_string)
-        channels_string = channels_string.gsub(CONTROL_PRI, "#{OCCUPANCY_CHANNEL_PREFIX}#{CONTROL_PRI}")
-        channels_string = channels_string.gsub(CONTROL_SEC, "#{OCCUPANCY_CHANNEL_PREFIX}#{CONTROL_SEC}")
+        prefix = SplitIoClient::Constants::OCCUPANCY_CHANNEL_PREFIX
+        control_pri = SplitIoClient::Constants::CONTROL_PRI
+        control_sec = SplitIoClient::Constants::CONTROL_SEC
+        channels_string = channels_string.gsub(control_sec, "#{prefix}#{control_pri}")
+        channels_string = channels_string.gsub(control_sec, "#{prefix}#{control_sec}")
         channels_string
       end
     end
