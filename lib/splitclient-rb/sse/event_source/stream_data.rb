@@ -14,7 +14,7 @@ module SplitIoClient
         end
 
         def occupancy?
-          @channel.include? 'occupancy'
+          @channel.include? 'control'
         end
       end
     end

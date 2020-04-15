@@ -18,7 +18,7 @@ module SplitIoClient
         when SSE::EventSource::EventTypes::SEGMENT_UPDATE
           process_segment_update(incoming_notification)
         else
-          @config.logger.error("Incorrect event type: #{event}")
+          @config.logger.error("Incorrect event type: #{incoming_notification}")
         end
       end
 

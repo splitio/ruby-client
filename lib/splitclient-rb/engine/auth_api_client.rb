@@ -68,7 +68,7 @@ module SplitIoClient
         prefix = SplitIoClient::Constants::OCCUPANCY_CHANNEL_PREFIX
         control_pri = SplitIoClient::Constants::CONTROL_PRI
         control_sec = SplitIoClient::Constants::CONTROL_SEC
-        channels_string = channels_string.gsub(control_sec, "#{prefix}#{control_pri}")
+        channels_string = channels_string.gsub(control_pri, "#{prefix}#{control_pri}")
         channels_string = channels_string.gsub(control_sec, "#{prefix}#{control_sec}")
         channels_string
       end

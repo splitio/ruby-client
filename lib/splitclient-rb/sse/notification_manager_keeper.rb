@@ -14,7 +14,7 @@ module SplitIoClient
       end
 
       def handle_incoming_occupancy_event(event)
-        process_event(event.data['metrics']['publishers']) unless event.channel == 'control_pri'
+        process_event(event.data['metrics']['publishers']) if event.channel == SplitIoClient::Constants::CONTROL_PRI
       rescue StandardError => e
         @config.logger.error(e)
       end

@@ -100,9 +100,9 @@ module SplitIoClient
           unless partial_data.nil? || partial_data == KEEP_ALIVE_RESPONSE
             @config.logger.debug("Event partial data: #{partial_data}")
             buffer = read_partial_data(partial_data)
-            event = parse_event(buffer)
+            events = parse_event(buffer)
 
-            dispatch_event(event)
+            dispatch_event(events)
           end
         rescue StandardError => e
           @config.logger.error("Error during processing data: #{e.inspect}")
@@ -125,23 +125,22 @@ module SplitIoClient
         end
 
         def parse_event(buffer)
-          event_type = nil
-          data = nil
+          type = nil
+          events = []
 
           buffer.each do |d|
             splited_data = d.split(':')
 
             case splited_data[0]
             when 'event'
-              event_type = splited_data[1].strip
+              type = splited_data[1].strip
             when 'data'
               data = parse_event_data(d)
+              events << StreamData.new(type, data[:client_id], data[:data], data[:channel]) unless type.nil? || data[:data].nil?
             end
           end
 
-          return nil if event_type.nil? || data[:parsed_data].nil?
-
-          StreamData.new(event_type, data[:client_id], data[:parsed_data], data[:channel])
+          events
         rescue StandardError => e
           @config.logger.error("Error during parsing a event: #{e.inspect}")
           nil
@@ -153,12 +152,14 @@ module SplitIoClient
           channel = event_data['channel']&.strip
           parsed_data = JSON.parse(event_data['data'])
 
-          { client_id: client_id, channel: channel, parsed_data: parsed_data }
+          { client_id: client_id, channel: channel, data: parsed_data }
         end
 
-        def dispatch_event(event)
-          @config.logger.debug("Dispatching event: #{event}") unless event.nil?
-          @on[:event].call(event) unless event.nil?
+        def dispatch_event(events)
+          events.each do |event|
+            @config.logger.debug("Dispatching event: #{event.event_type}, #{event.channel}")
+            @on[:event].call(event)
+          end
         end
 
         def dispatch_connected

@@ -191,6 +191,7 @@ describe SplitIoClient::SSE::EventSource::Client do
       end
 
       event_result = event_queue.pop
+      puts event_result.data
       expect(event_result.data['metrics']['publishers']).to eq(2)
       expect(event_result.channel).to eq('control_pri')
       expect(event_result.client_id).to eq(nil)
