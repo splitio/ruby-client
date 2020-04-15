@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+require 'http_server_mock'
 
 describe SplitIoClient::Engine::PushManager do
   subject { SplitIoClient::Engine::PushManager }
@@ -30,31 +31,38 @@ describe SplitIoClient::Engine::PushManager do
 
   context 'start_sse' do
     it 'must connect to server' do
-      stub_request(:get, config.auth_service_url).to_return(status: 200, body: body_response)
+      mock_server do |server|
+        server.setup_response('/') do |_, res|
+          send_mock_content(res, 'content')
+        end
 
-      connected_event = false
-      disconnect_event = false
-      sse_handler = SplitIoClient::SSE::SSEHandler.new(
-        config,
-        splits_worker,
-        segments_worker,
-        control_worker,
-        notification_manager_keeper
-      ) do |handler|
-        handler.on_connected { connected_event = true }
-        handler.on_disconnect { disconnect_event = true }
+        stub_request(:get, config.auth_service_url).to_return(status: 200, body: body_response)
+        config.streaming_service_url = server.base_uri
+
+        connected_event = false
+        disconnect_event = false
+        sse_handler = SplitIoClient::SSE::SSEHandler.new(
+          config,
+          splits_worker,
+          segments_worker,
+          control_worker,
+          notification_manager_keeper
+        ) do |handler|
+          handler.on_connected { connected_event = true }
+          handler.on_disconnect { disconnect_event = true }
+        end
+
+        push_manager = subject.new(config, sse_handler, api_key)
+        push_manager.start_sse
+
+        expect(a_request(:get, config.auth_service_url)).to have_been_made.times(1)
+
+        sleep(1.5)
+
+        expect(sse_handler.connected?).to eq(true)
+        expect(connected_event).to eq(true)
+        expect(disconnect_event).to eq(false)
       end
-
-      push_manager = subject.new(config, sse_handler, api_key)
-      push_manager.start_sse
-
-      expect(a_request(:get, config.auth_service_url)).to have_been_made.times(1)
-
-      sleep(1.5)
-
-      expect(sse_handler.connected?).to eq(true)
-      expect(connected_event).to eq(true)
-      expect(disconnect_event).to eq(false)
     end
 
     it 'must not connect to server. Auth server return 500' do
@@ -116,35 +124,53 @@ describe SplitIoClient::Engine::PushManager do
 
   context 'stop_sse' do
     it 'must disconnect from the server' do
-      stub_request(:get, config.auth_service_url).to_return(status: 200, body: body_response)
+      mock_server do |server|
+        server.setup_response('/') do |_, res|
+          send_mock_content(res, 'content')
+        end
 
-      connected_event = false
-      disconnect_event = false
-      sse_handler = SplitIoClient::SSE::SSEHandler.new(
-        config,
-        splits_worker,
-        segments_worker,
-        control_worker,
-        notification_manager_keeper
-      ) do |handler|
-        handler.on_connected { connected_event = true }
-        handler.on_disconnect { disconnect_event = true }
+        stub_request(:get, config.auth_service_url).to_return(status: 200, body: body_response)
+        config.streaming_service_url = server.base_uri
+
+        connected_event = false
+        disconnect_event = false
+        sse_handler = SplitIoClient::SSE::SSEHandler.new(
+          config,
+          splits_worker,
+          segments_worker,
+          control_worker,
+          notification_manager_keeper
+        ) do |handler|
+          handler.on_connected { connected_event = true }
+          handler.on_disconnect { disconnect_event = true }
+        end
+
+        push_manager = subject.new(config, sse_handler, api_key)
+        push_manager.start_sse
+
+        expect(a_request(:get, config.auth_service_url)).to have_been_made.times(1)
+
+        sleep(1.5)
+
+        expect(sse_handler.connected?).to eq(true)
+        expect(connected_event).to eq(true)
+        expect(disconnect_event).to eq(false)
+
+        push_manager.stop_sse
+        expect(sse_handler.connected?).to eq(false)
+        expect(disconnect_event).to eq(true)
       end
-
-      push_manager = subject.new(config, sse_handler, api_key)
-      push_manager.start_sse
-
-      expect(a_request(:get, config.auth_service_url)).to have_been_made.times(1)
-
-      sleep(1.5)
-
-      expect(sse_handler.connected?).to eq(true)
-      expect(connected_event).to eq(true)
-      expect(disconnect_event).to eq(false)
-
-      push_manager.stop_sse
-      expect(sse_handler.connected?).to eq(false)
-      expect(disconnect_event).to eq(true)
     end
   end
+end
+
+def send_mock_content(res, content)
+  res.content_type = 'text/event-stream'
+  res.status = 200
+  res.chunked = true
+  rd, wr = IO.pipe
+  wr.write(content)
+  res.body = rd
+  wr.close
+  wr
 end
