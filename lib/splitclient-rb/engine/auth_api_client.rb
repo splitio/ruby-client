@@ -41,6 +41,7 @@ module SplitIoClient
         channels_hash = JSON.parse(capability)
         channels_string = channels_hash.keys.join(',')
         channels_string = control_channels(channels_string)
+        @config.logger.debug("Channels #{channels_string}")
         CGI.escape(channels_string)
       end
 
