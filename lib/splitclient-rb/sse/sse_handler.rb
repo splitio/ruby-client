@@ -5,8 +5,9 @@ module SplitIoClient
     class SSEHandler
       attr_reader :sse_client
 
-      def initialize(config, synchronizer, splits_repository, segments_repository)
+      def initialize(config, synchronizer, splits_repository, segments_repository, notification_manager_keeper)
         @config = config
+        @notification_manager_keeper = notification_manager_keeper
         @splits_worker = SplitIoClient::SSE::Workers::SplitsWorker.new(synchronizer, config, splits_repository)
         @segments_worker = SplitIoClient::SSE::Workers::SegmentsWorker.new(synchronizer, config, segments_repository)
         @control_worker = SplitIoClient::SSE::Workers::ControlWorker.new(config)
@@ -21,7 +22,7 @@ module SplitIoClient
         url = "#{@config.streaming_service_url}?channels=#{channels}&v=1.1&accessToken=#{token_jwt}"
 
         @sse_client = SSE::EventSource::Client.new(url, @config) do |client|
-          client.on_event { |event| @notification_processor.process(event) }
+          client.on_event { |event| handle_incoming_message(event) }
           client.on_connected { process_connected }
           client.on_disconnect { process_disconnect }
         end
@@ -64,6 +65,14 @@ module SplitIoClient
 
       def process_connected
         @on[:connected].call
+      end
+
+      def handle_incoming_message(notification)
+        if notification.occupancy?
+          @notification_manager_keeper.handle_incoming_occupancy_event(notification)
+        else
+          @notification_processor.process(notification)
+        end
       end
     end
   end

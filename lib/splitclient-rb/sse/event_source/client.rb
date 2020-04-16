@@ -100,9 +100,9 @@ module SplitIoClient
           unless partial_data.nil? || partial_data == KEEP_ALIVE_RESPONSE
             @config.logger.debug("Event partial data: #{partial_data}")
             buffer = read_partial_data(partial_data)
-            event = parse_event(buffer)
+            events = parse_event(buffer)
 
-            dispatch_event(event)
+            dispatch_event(events)
           end
         rescue StandardError => e
           @config.logger.error("Error during processing data: #{e.inspect}")
@@ -125,34 +125,41 @@ module SplitIoClient
         end
 
         def parse_event(buffer)
-          event_type = nil
-          parsed_data = nil
-          client_id = nil
+          type = nil
+          events = []
 
           buffer.each do |d|
             splited_data = d.split(':')
 
             case splited_data[0]
             when 'event'
-              event_type = splited_data[1].strip
+              type = splited_data[1].strip
             when 'data'
-              event_data = JSON.parse(d.sub('data: ', ''))
-              client_id = event_data['clientId']&.strip
-              parsed_data = JSON.parse(event_data['data'])
+              data = parse_event_data(d)
+              events << StreamData.new(type, data[:client_id], data[:data], data[:channel]) unless type.nil? || data[:data].nil?
             end
           end
 
-          return StreamData.new(event_type, client_id, parsed_data) unless event_type.nil? || parsed_data.nil?
-
-          nil
+          events
         rescue StandardError => e
           @config.logger.error("Error during parsing a event: #{e.inspect}")
           nil
         end
 
-        def dispatch_event(event)
-          @config.logger.debug("Dispatching event: #{event}") unless event.nil?
-          @on[:event].call(event) unless event.nil?
+        def parse_event_data(data)
+          event_data = JSON.parse(data.sub('data: ', ''))
+          client_id = event_data['clientId']&.strip
+          channel = event_data['channel']&.strip
+          parsed_data = JSON.parse(event_data['data'])
+
+          { client_id: client_id, channel: channel, data: parsed_data }
+        end
+
+        def dispatch_event(events)
+          events.each do |event|
+            @config.logger.debug("Dispatching event: #{event.event_type}, #{event.channel}")
+            @on[:event].call(event)
+          end
         end
 
         def dispatch_connected
