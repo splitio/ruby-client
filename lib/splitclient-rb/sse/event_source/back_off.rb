@@ -4,13 +4,13 @@ module SplitIoClient
   module SSE
     module EventSource
       class BackOff
-        def initialize(config)
-          @config = config
+        def initialize(back_off_base)
           @attempt = 0
+          @back_off_base = back_off_base
         end
 
         def interval
-          interval = (@config.streaming_reconnect_back_off_base * (2**@attempt)) if @attempt.positive?
+          interval = (@back_off_base * (2**@attempt)) if @attempt.positive?
           @attempt += 1
 
           interval || 0

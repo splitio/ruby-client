@@ -17,7 +17,7 @@ module SplitIoClient
           @read_timeout = read_timeout
           @connected = Concurrent::AtomicBoolean.new(false)
           @socket = nil
-          @back_off = BackOff.new(@config)
+          @back_off = BackOff.new(@config.streaming_reconnect_back_off_base)
 
           @on = { event: ->(_) {}, connected: ->(_) {}, disconnect: ->(_) {} }
 

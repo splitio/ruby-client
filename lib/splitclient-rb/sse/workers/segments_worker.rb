@@ -18,6 +18,7 @@ module SplitIoClient
 
         def add_to_queue(change_number, segment_name)
           item = { change_number: change_number, segment_name: segment_name }
+          @config.logger.debug("SegmentsWorker add to queue #{item}")
           @queue.push(item)
         end
 
@@ -33,7 +34,10 @@ module SplitIoClient
             change_number = item[:change_number]
             since = @segments_repository.get_change_number(segment_name)
 
-            @synchronizer.fetch_segment(segment_name) unless since >= change_number
+            unless since >= change_number
+              @config.logger.debug("SegmentsWorker fetch_segment with #{since}")
+              @synchronizer.fetch_segment(segment_name)
+            end
           end
         end
 

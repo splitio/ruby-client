@@ -26,7 +26,7 @@ module SplitIoClient
       private
 
       def process_event(publishers)
-        @config.logger.debug("Occupancy process event with #{publishers} and polling on: #{@polling_on.value}")
+        @config.logger.debug("Occupancy process event with #{publishers} publishers and polling on: #{@polling_on.value}")
         if publishers <= 0 && !@polling_on.value
           @polling_on.make_true
           dispatch_occupancy_event(false)

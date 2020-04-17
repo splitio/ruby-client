@@ -221,7 +221,7 @@ describe SplitIoClient::SSE::EventSource::Client do
         client.on_connected { connected_event = true }
         client.on_disconnect { disconnect_queue << true }
       end
-      
+
       result = disconnect_queue.pop
       expect(result).to eq(true)
       expect(sse_client.connected?).to eq(false)
