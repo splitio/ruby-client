@@ -55,7 +55,7 @@ module SplitIoClient
             loop do
               fetch_splits
 
-              sleep(StoreUtils.random_interval(@config.features_refresh_rate))
+              sleep(SplitIoClient::Cache::Stores::StoreUtils.random_interval(@config.features_refresh_rate))
             end
           end
         end
