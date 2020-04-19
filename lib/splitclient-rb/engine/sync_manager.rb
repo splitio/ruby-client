@@ -19,6 +19,7 @@ module SplitIoClient
         @synchronizer = Synchronizer.new(repositories, api_key, config, sdk_blocker, sync_params)
         notification_manager_keeper = SplitIoClient::SSE::NotificationManagerKeeper.new(config) do |manager|
           manager.on_occupancy { |publisher_available| process_occupancy(publisher_available) }
+          manager.on_push_shutdown { process_push_shutdown }
         end
         @sse_handler = SplitIoClient::SSE::SSEHandler.new(
           config,
@@ -57,8 +58,8 @@ module SplitIoClient
       def start_poll
         @synchronizer.start_periodic_fetch
         @synchronizer.start_periodic_data_recording
-      rescue StandardError => error
-        @config.logger.error(error)
+      rescue StandardError => e
+        @config.logger.error(e)
       end
 
       # Starts thread which fetch splits and segments once and trigger task to periodic data recording.
@@ -67,8 +68,8 @@ module SplitIoClient
           begin
             @synchronizer.sync_all
             @synchronizer.start_periodic_data_recording
-          rescue StandardError => error
-            @config.logger.error(error)
+          rescue StandardError => e
+            @config.logger.error(e)
           end
         end
       end
@@ -78,8 +79,8 @@ module SplitIoClient
         @config.threads[:sync_manager_start_sse] = Thread.new do
           begin
             @push_manager.start_sse
-          rescue StandardError => error
-            @config.logger.error(error)
+          rescue StandardError => e
+            @config.logger.error(e)
           end
         end
       end
@@ -103,9 +104,17 @@ module SplitIoClient
         @synchronizer.start_periodic_fetch
       end
 
-      def process_occupancy(publisher_available)
-        process_disconnect unless publisher_available
-        process_connected if publisher_available
+      def process_occupancy(push_enable)
+        process_disconnect unless push_enable
+        process_connected if push_enable
+      end
+
+      def process_push_shutdown
+        @sse_handler.stop_workers
+        @push_manager.stop_sse
+        start_poll
+      rescue StandardError => e
+        @config.logger.error(e)
       end
     end
   end
