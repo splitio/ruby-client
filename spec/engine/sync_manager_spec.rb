@@ -6,6 +6,8 @@ require 'http_server_mock'
 describe SplitIoClient::Engine::SyncManager do
   subject { SplitIoClient::Engine::SyncManager }
 
+  let(:event_control)   { "d4\r\nid: 123\nevent: message\ndata: {\"id\":\"1\",\"clientId\":\"emptyClientId\",\"timestamp\": 1582056812285,\"encoding\": \"json\",\"channel\": \"control_pri\",\"data\":\"{\\\"type\\\" : \\\"CONTROL\\\",\\\"controlType\\\":\\\"STREAMING_DISABLED\\\"}\"}\n\n\r\n" }
+
   let(:splits) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/splits.json')) }
   let(:segment1) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/segment1.json')) }
   let(:segment2) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/segment2.json')) }
@@ -40,7 +42,7 @@ describe SplitIoClient::Engine::SyncManager do
   it 'start sync manager with success sse connection.' do
     mock_server do |server|
       server.setup_response('/') do |_, res|
-        send_content(res, 'content', keep_open: false)
+        send_content(res, 'content')
       end
 
       config.streaming_service_url = server.base_uri
@@ -64,7 +66,7 @@ describe SplitIoClient::Engine::SyncManager do
   it 'start sync manager with wrong sse host url and non connect to server, must start polling.' do
     mock_server do |server|
       server.setup_response('/') do |_, res|
-        send_content(res, 'content', keep_open: false)
+        send_content(res, 'content')
       end
 
       config.streaming_service_url = 'https://fake-sse.io'
@@ -86,6 +88,34 @@ describe SplitIoClient::Engine::SyncManager do
       expect(config.threads.size).to eq(7)
     end
   end
+
+  it 'start sync manager receiving control message, must switch to pollingbundl' do
+    mock_server do |server|
+      server.setup_response('/') do |_, res|
+        send_content(res, event_control)
+      end
+
+      config.streaming_service_url = server.base_uri
+
+      repositories = {}
+      repositories[:splits] = splits_repository
+      repositories[:segments] = segments_repository
+      repositories[:impressions] = impressions_repository
+      repositories[:metrics] = metrics_repository
+      repositories[:events] = events_repository
+
+      sync_manager = subject.new(repositories, api_key, config, sdk_blocker, metrics)
+      sync_manager.start
+
+      sleep(2)
+      config.threads.select { |name, thread| name.to_s.end_with? 'worker' }.values.each do |thread|
+        expect(thread.status).to eq(false) # Status fasle: when this thread is terminated normally as expected
+      end
+      
+      sse_handler = sync_manager.instance_variable_get(:@sse_handler)
+      expect(sse_handler.connected?).to eq(false)
+    end
+  end
 end
 
 private
@@ -100,13 +130,13 @@ def mock_segment_changes(segment_name, segment_json, since)
     .to_return(status: 200, body: segment_json)
 end
 
-def send_content(res, content, keep_open:)
+def send_content(res, content)
   res.content_type = 'text/event-stream'
   res.status = 200
   res.chunked = true
   rd, wr = IO.pipe
   wr.write(content)
   res.body = rd
-  wr.close unless keep_open
+  wr.close
   wr
 end

@@ -59,7 +59,7 @@ module SplitIoClient
         @synchronizer.start_periodic_fetch
         @synchronizer.start_periodic_data_recording
       rescue StandardError => e
-        @config.logger.error(e)
+        @config.logger.error("start_poll error : #{e.inspect}")
       end
 
       # Starts thread which fetch splits and segments once and trigger task to periodic data recording.
@@ -69,7 +69,7 @@ module SplitIoClient
             @synchronizer.sync_all
             @synchronizer.start_periodic_data_recording
           rescue StandardError => e
-            @config.logger.error(e)
+            @config.logger.error("stream_start_thread error : #{e.inspect}")
           end
         end
       end
@@ -80,7 +80,7 @@ module SplitIoClient
           begin
             @push_manager.start_sse
           rescue StandardError => e
-            @config.logger.error(e)
+            @config.logger.error("stream_start_sse_thread error : #{e.inspect}")
           end
         end
       end
@@ -97,24 +97,29 @@ module SplitIoClient
         @synchronizer.stop_periodic_fetch
         @synchronizer.sync_all
         @sse_handler.start_workers
+      rescue StandardError => e
+        @config.logger.error("process_connected error: #{e.inspect}")
       end
 
       def process_disconnect
         @sse_handler.stop_workers
         @synchronizer.start_periodic_fetch
+      rescue StandardError => e
+        @config.logger.error("process_disconnect error: #{e.inspect}")
       end
 
       def process_occupancy(push_enable)
         process_disconnect unless push_enable
         process_connected if push_enable
+      rescue StandardError => e
+        @config.logger.error("process_occupancy error: #{e.inspect}")
       end
 
       def process_push_shutdown
-        @sse_handler.stop_workers
         @push_manager.stop_sse
-        start_poll
+        process_disconnect        
       rescue StandardError => e
-        @config.logger.error(e)
+        @config.logger.error("process_push_shutdown error: #{e.inspect}")
       end
     end
   end
