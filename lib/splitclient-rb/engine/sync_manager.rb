@@ -117,7 +117,7 @@ module SplitIoClient
 
       def process_push_shutdown
         @push_manager.stop_sse
-        process_disconnect        
+        process_disconnect
       rescue StandardError => e
         @config.logger.error("process_push_shutdown error: #{e.inspect}")
       end

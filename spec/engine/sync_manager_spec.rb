@@ -6,7 +6,7 @@ require 'http_server_mock'
 describe SplitIoClient::Engine::SyncManager do
   subject { SplitIoClient::Engine::SyncManager }
 
-  let(:event_control)   { "d4\r\nid: 123\nevent: message\ndata: {\"id\":\"1\",\"clientId\":\"emptyClientId\",\"timestamp\": 1582056812285,\"encoding\": \"json\",\"channel\": \"control_pri\",\"data\":\"{\\\"type\\\" : \\\"CONTROL\\\",\\\"controlType\\\":\\\"STREAMING_DISABLED\\\"}\"}\n\n\r\n" }
+  let(:event_control) { "d4\r\nid: 123\nevent: message\ndata: {\"id\":\"1\",\"clientId\":\"emptyClientId\",\"timestamp\": 1582056812285,\"encoding\": \"json\",\"channel\": \"control_pri\",\"data\":\"{\\\"type\\\" : \\\"CONTROL\\\",\\\"controlType\\\":\\\"STREAMING_DISABLED\\\"}\"}\n\n\r\n" }
 
   let(:splits) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/splits.json')) }
   let(:segment1) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/segment1.json')) }
@@ -108,10 +108,10 @@ describe SplitIoClient::Engine::SyncManager do
       sync_manager.start
 
       sleep(2)
-      config.threads.select { |name, thread| name.to_s.end_with? 'worker' }.values.each do |thread|
+      config.threads.select { |name, _| name.to_s.end_with? 'worker' }.values.each do |thread|
         expect(thread.status).to eq(false) # Status fasle: when this thread is terminated normally as expected
       end
-      
+
       sse_handler = sync_manager.instance_variable_get(:@sse_handler)
       expect(sse_handler.connected?).to eq(false)
     end
