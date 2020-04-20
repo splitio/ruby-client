@@ -39,7 +39,7 @@
           },
           "partitions": [
             {
-              "treatment": "after_push",
+              "treatment": "after_fetch",
               "size": 100
             }
           ],

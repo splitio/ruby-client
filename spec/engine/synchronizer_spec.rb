@@ -62,7 +62,6 @@ describe SplitIoClient::Engine::Synchronizer do
     expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment2?since=-1')).to have_been_made.once
     expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment2?since=1470947453878')).to have_been_made.once
     expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=-1')).to have_been_made.once
-    expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=1470947453879')).to have_been_made.once
   end
 
   it 'start_periodic_data_recording' do
@@ -80,7 +79,6 @@ describe SplitIoClient::Engine::Synchronizer do
     expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment2?since=-1')).to have_been_made.once
     expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment2?since=1470947453878')).to have_been_made.once
     expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=-1')).to have_been_made.once
-    expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=1470947453879')).to have_been_made.once
   end
 end
 
