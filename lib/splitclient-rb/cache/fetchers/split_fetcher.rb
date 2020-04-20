@@ -10,6 +10,7 @@ module SplitIoClient
           @metrics = metrics
           @config = config
           @sdk_blocker = sdk_blocker
+          @semaphore = Mutex.new
         end
 
         def call
@@ -27,18 +28,20 @@ module SplitIoClient
         end
 
         def fetch_splits
-          data = splits_since(@splits_repository.get_change_number)
+          @semaphore.synchronize do
+            data = splits_since(@splits_repository.get_change_number)
 
-          data[:splits] && data[:splits].each do |split|
-            add_split_unless_archived(split)
+            data[:splits] && data[:splits].each do |split|
+              add_split_unless_archived(split)
+            end
+
+            @splits_repository.set_segment_names(data[:segment_names])
+            @splits_repository.set_change_number(data[:till])
+
+            @config.logger.debug("segments seen(#{data[:segment_names].length}): #{data[:segment_names].to_a}") if @config.debug_enabled
+
+            @sdk_blocker.splits_ready!
           end
-
-          @splits_repository.set_segment_names(data[:segment_names])
-          @splits_repository.set_change_number(data[:till])
-
-          @config.logger.debug("segments seen(#{data[:segment_names].length}): #{data[:segment_names].to_a}") if @config.debug_enabled
-
-          @sdk_blocker.splits_ready!
         rescue StandardError => error
           @config.log_found_exception(__method__.to_s, error)
         end
