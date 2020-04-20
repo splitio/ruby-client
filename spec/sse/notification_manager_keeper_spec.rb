@@ -28,7 +28,6 @@ describe SplitIoClient::SSE::NotificationManagerKeeper do
     it 'STREAMING_RESUMED with publishers enabled' do
       result = nil
       shutdown = nil
-
       noti_manager_keeper = subject.new(config) do |manager|
         manager.on_occupancy { |push_enable| result = push_enable }
         manager.on_push_shutdown { shutdown = true }
