@@ -15,6 +15,7 @@ describe SplitIoClient::SSE::EventSource::Client do
   let(:event_control) { "fb\r\nid: 123\nevent: message\ndata: {\"id\":\"1\",\"clientId\":\"emptyClientId\",\"connectionId\":\"1\",\"timestamp\":1582045421733,\"channel\":\"channel-test\",\"data\":\"{\\\"type\\\" : \\\"CONTROL\\\", \\\"controlType\\\" : \\\"control-type-example\\\"}\",\"name\":\"asdasd\"}\n\n\r\n" }
   let(:event_invalid_format) { "fb\r\nid: 123\nevent: message\ndata: {\"id\":\"1\",\"clientId\":\"emptyClientId\",\"connectionId\":\"1\",\"timestamp\":1582045421733,\"channel\":\"channel-test\",\"content\":\"{\\\"type\\\" : \\\"SPLIT_UPDATE\\\",\\\"changeNumber\\\": 5564531221}\",\"name\":\"asdasd\"}\n\n\r\n" }
   let(:event_occupancy) { "d4\r\nevent: message\ndata: {\"id\":\"123\",\"timestamp\":1586803930362,\"encoding\":\"json\",\"channel\":\"[?occupancy=metrics.publishers]control_pri\",\"data\":\"{\\\"metrics\\\":{\\\"publishers\\\":2}}\",\"name\":\"[meta]occupancy\"}\n\n\r\n" }
+  let(:event_error) { "d4\r\nevent: error\ndata: {\"message\":\"Token expired\",\"code\":40142,\"statusCode\":401,\"href\":\"https://help.ably.io/error/40142\"}" }
 
   it 'receive split update event' do
     mock_server do |server|
@@ -191,7 +192,6 @@ describe SplitIoClient::SSE::EventSource::Client do
       end
 
       event_result = event_queue.pop
-      puts event_result.data
       expect(event_result.data['metrics']['publishers']).to eq(2)
       expect(event_result.channel).to eq('control_pri')
       expect(event_result.client_id).to eq(nil)
@@ -204,6 +204,29 @@ describe SplitIoClient::SSE::EventSource::Client do
 
       expect(sse_client.connected?).to eq(false)
       expect(disconnect_event).to eq(true)
+    end
+  end
+
+  it 'receive error event' do
+    mock_server do |server|
+      server.setup_response('/') do |_, res|
+        send_stream_content(res, event_error)
+      end
+
+      event_queue = Queue.new
+      connected_event = false
+      disconnect_queue = Queue.new
+      sse_client = subject.new(server.base_uri, config) do |client|
+        client.on_event { |event| event_queue << event }
+        client.on_connected { connected_event = true }
+        client.on_disconnect { disconnect_queue << true }
+      end
+
+      result = disconnect_queue.pop
+      expect(result).to eq(true)
+      expect(sse_client.connected?).to eq(false)
+      expect(connected_event).to eq(true)
+      expect(event_queue.empty?).to eq(true)
     end
   end
 

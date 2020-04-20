@@ -56,7 +56,7 @@ module SplitIoClient
               fetch_segments
               @config.logger.debug("Segment names: #{@segments_repository.used_segment_names.to_a}") if @config.debug_enabled
 
-              sleep_for = StoreUtils.random_interval(@config.segments_refresh_rate)
+              sleep_for = SplitIoClient::Cache::Stores::StoreUtils.random_interval(@config.segments_refresh_rate)
               @config.logger.debug("Segments store is sleeping for: #{sleep_for} seconds") if @config.debug_enabled
               sleep(sleep_for)
             end

@@ -17,7 +17,7 @@ module SplitIoClient
           @read_timeout = read_timeout
           @connected = Concurrent::AtomicBoolean.new(false)
           @socket = nil
-          @back_off = BackOff.new(@config)
+          @back_off = BackOff.new(@config.streaming_reconnect_back_off_base)
 
           @on = { event: ->(_) {}, connected: ->(_) {}, disconnect: ->(_) {} }
 
@@ -135,7 +135,7 @@ module SplitIoClient
             when 'event'
               type = splited_data[1].strip
             when 'data'
-              data = parse_event_data(d)
+              data = parse_event_data(d, type)
               events << StreamData.new(type, data[:client_id], data[:data], data[:channel]) unless type.nil? || data[:data].nil?
             end
           end
@@ -143,23 +143,29 @@ module SplitIoClient
           events
         rescue StandardError => e
           @config.logger.error("Error during parsing a event: #{e.inspect}")
-          nil
+          []
         end
 
-        def parse_event_data(data)
+        def parse_event_data(data, type)
           event_data = JSON.parse(data.sub('data: ', ''))
           client_id = event_data['clientId']&.strip
           channel = event_data['channel']&.strip
-          parsed_data = JSON.parse(event_data['data'])
+          parsed_data = JSON.parse(event_data['data']) unless type == 'error'
+          parsed_data = event_data if type == 'error'
 
           { client_id: client_id, channel: channel, data: parsed_data }
         end
 
         def dispatch_event(events)
           events.each do |event|
+            raise SSEClientException.new(event), 'Error event' if event.event_type == 'error'
+
             @config.logger.debug("Dispatching event: #{event.event_type}, #{event.channel}")
             @on[:event].call(event)
           end
+        rescue SSEClientException => e
+          @config.logger.error("Event error: #{e.event.event_type}, #{e.event.data}")
+          close
         end
 
         def dispatch_connected

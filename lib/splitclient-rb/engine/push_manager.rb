@@ -8,6 +8,7 @@ module SplitIoClient
         @sse_handler = sse_handler
         @auth_api_client = AuthApiClient.new(@config)
         @api_key = api_key
+        @back_off = SplitIoClient::SSE::EventSource::BackOff.new(@config.auth_retry_back_off_base)
       end
 
       def start_sse
@@ -16,13 +17,14 @@ module SplitIoClient
         if response[:push_enabled]
           @sse_handler.start(response[:token], response[:channels])
           schedule_next_token_refresh(response[:exp])
+          @back_off.reset
         else
           stop_sse
         end
 
-        schedule_next_token_refresh(@config.auth_retry_back_off_base) if response[:retry]
+        schedule_next_token_refresh(@back_off.interval) if response[:retry]
       rescue StandardError => e
-        puts e.inspect
+        @config.logger.error("start_sse: #{e.inspect}")
       end
 
       def stop_sse

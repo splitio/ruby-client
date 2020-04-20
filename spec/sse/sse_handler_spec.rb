@@ -80,7 +80,7 @@ describe SplitIoClient::SSE::SSEHandler do
         sse_handler.start('token-test', 'channel-test')
         sse_handler.start_workers
 
-        sleep(0.2)
+        sleep(2)
 
         expect(sse_handler.sse_client.connected?).to eq(true)
         expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.once
@@ -113,7 +113,7 @@ describe SplitIoClient::SSE::SSEHandler do
         sse_handler.start('token-test', 'channel-test')
         sse_handler.start_workers
 
-        sleep(0.2)
+        sleep(2)
 
         expect(sse_handler.sse_client.connected?).to eq(true)
         expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262916')).to have_been_made.times(0)
@@ -146,7 +146,7 @@ describe SplitIoClient::SSE::SSEHandler do
         sse_handler.start('token-test', 'channel-test')
         sse_handler.start_workers
 
-        sleep(1)
+        sleep(2)
 
         split = splits_repository.get_split('FACUNDO_TEST')
         expect(split[:killed]).to be_truthy
@@ -181,7 +181,7 @@ describe SplitIoClient::SSE::SSEHandler do
         sse_handler.start('token-test', 'channel-test')
         sse_handler.start_workers
 
-        sleep(0.2)
+        sleep(2)
 
         split = splits_repository.get_split('FACUNDO_TEST')
         expect(split[:killed]).to be_truthy
@@ -218,7 +218,7 @@ describe SplitIoClient::SSE::SSEHandler do
         sse_handler.start('token-test', 'channel-test')
         sse_handler.start_workers
 
-        sleep(1)
+        sleep(2)
 
         expect(sse_handler.sse_client.connected?).to eq(true)
         expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=1470947453877')).to have_been_made.times(1)
@@ -248,7 +248,7 @@ describe SplitIoClient::SSE::SSEHandler do
         sse_handler.start('token-test', 'channel-test')
         sse_handler.start_workers
 
-        sleep(0.2)
+        sleep(2)
 
         expect(sse_handler.sse_client.connected?).to eq(true)
         expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=1470947453877')).to have_been_made.once
@@ -281,7 +281,7 @@ describe SplitIoClient::SSE::SSEHandler do
         sse_handler.start('token-test', 'channel-test')
         sse_handler.start_workers
 
-        sleep(1)
+        sleep(2)
 
         expect(sse_handler.sse_client.connected?).to eq(true)
         expect(connected_event).to eq(true)

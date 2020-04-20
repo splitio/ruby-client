@@ -9,8 +9,7 @@ describe SplitIoClient::SSE::EventSource::BackOff do
   let(:log) { StringIO.new }
 
   it 'get intervals and reset attemps' do
-    config = SplitIoClient::SplitConfig.new(logger: Logger.new(log))
-    back_off = subject.new(config)
+    back_off = subject.new(1)
 
     firts_interval = back_off.interval
     expect(firts_interval).to eq(0)
@@ -27,8 +26,8 @@ describe SplitIoClient::SSE::EventSource::BackOff do
   end
 
   it 'with custom config' do
-    config = SplitIoClient::SplitConfig.new(logger: Logger.new(log), streaming_reconnect_back_off_base: 5)
-    back_off = subject.new(config)
+    streaming_reconnect_back_off_base = 5
+    back_off = subject.new(streaming_reconnect_back_off_base)
 
     firts_interval = back_off.interval
     expect(firts_interval).to eq(0)
@@ -38,24 +37,6 @@ describe SplitIoClient::SSE::EventSource::BackOff do
 
     third_interval = back_off.interval
     expect(third_interval).to eq(20)
-
-    back_off.reset
-    reset_interval = back_off.interval
-    expect(reset_interval).to eq(0)
-  end
-
-  it 'setting config less than 1. Minimum allowed is 1.' do
-    config = SplitIoClient::SplitConfig.new(logger: Logger.new(log), streaming_reconnect_back_off_base: 0.5)
-    back_off = subject.new(config)
-
-    firts_interval = back_off.interval
-    expect(firts_interval).to eq(0)
-
-    second_interval = back_off.interval
-    expect(second_interval).to eq(2)
-
-    third_interval = back_off.interval
-    expect(third_interval).to eq(4)
 
     back_off.reset
     reset_interval = back_off.interval

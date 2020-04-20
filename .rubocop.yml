@@ -14,6 +14,8 @@ Metrics/LineLength:
   Max: 130
   Exclude:
     - spec/sse/**/*
+    - spec/integrations/**/*
+    - spec/engine/sync_manager_spec.rb
 
 Metrics/BlockLength:
   Exclude:
