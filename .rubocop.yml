@@ -17,6 +17,10 @@ Metrics/LineLength:
     - spec/integrations/**/*
     - spec/engine/sync_manager_spec.rb
 
+Style/BracesAroundHashParameters:
+  Exclude:
+    - spec/integrations/push_client_spec.rb
+
 Metrics/BlockLength:
   Exclude:
     - spec/**/*

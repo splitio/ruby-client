@@ -10,6 +10,7 @@ module SplitIoClient
           @metrics = metrics
           @config = config
           @sdk_blocker = sdk_blocker
+          @semaphore = Mutex.new
         end
 
         def call
@@ -27,15 +28,17 @@ module SplitIoClient
         end
 
         def fetch_segment(name)
-          segments_api.fetch_segments_by_names([name])
+          @semaphore.synchronize { segments_api.fetch_segments_by_names([name]) }
         rescue StandardError => error
           @config.log_found_exception(__method__.to_s, error)
         end
 
         def fetch_segments
-          segments_api.fetch_segments_by_names(@segments_repository.used_segment_names)
+          @semaphore.synchronize do
+            segments_api.fetch_segments_by_names(@segments_repository.used_segment_names)
 
-          @sdk_blocker.segments_ready!
+            @sdk_blocker.segments_ready!
+          end
         rescue StandardError => error
           @config.log_found_exception(__method__.to_s, error)
         end

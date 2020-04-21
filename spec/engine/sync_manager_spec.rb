@@ -35,7 +35,6 @@ describe SplitIoClient::Engine::SyncManager do
     mock_segment_changes('segment2', segment2, '-1')
     mock_segment_changes('segment2', segment2, '1470947453878')
     mock_segment_changes('segment3', segment3, '-1')
-    mock_segment_changes('segment3', segment3, '1470947453879')
     stub_request(:get, config.auth_service_url).to_return(status: 200, body: body_response)
   end
 
