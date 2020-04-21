@@ -8,7 +8,7 @@ module SplitIoClient
         @sse_handler = sse_handler
         @auth_api_client = AuthApiClient.new(@config)
         @api_key = api_key
-        @back_off = SplitIoClient::SSE::EventSource::BackOff.new(@config.auth_retry_back_off_base)
+        @back_off = SplitIoClient::SSE::EventSource::BackOff.new(@config.auth_retry_back_off_base, 1)
       end
 
       def start_sse

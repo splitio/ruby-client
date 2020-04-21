@@ -4,8 +4,8 @@ module SplitIoClient
   module SSE
     module EventSource
       class BackOff
-        def initialize(back_off_base)
-          @attempt = 0
+        def initialize(back_off_base, attempt = 0)
+          @attempt = attempt
           @back_off_base = back_off_base
         end
 

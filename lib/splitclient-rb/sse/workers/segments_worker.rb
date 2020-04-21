@@ -8,15 +8,18 @@ module SplitIoClient
           @synchronizer = synchronizer
           @config = config
           @segments_repository = segments_repository
-          @queue = Queue.new
+          @queue = nil
         end
 
         def start
+          @queue = Queue.new
           perform_thread
           perform_passenger_forked if defined?(PhusionPassenger)
         end
 
         def add_to_queue(change_number, segment_name)
+          return if @queue.nil?
+
           item = { change_number: change_number, segment_name: segment_name }
           @config.logger.debug("SegmentsWorker add to queue #{item}")
           @queue.push(item)
@@ -24,6 +27,7 @@ module SplitIoClient
 
         def stop
           SplitIoClient::Helpers::ThreadHelper.stop(:segment_update_worker, @config)
+          @queue = nil
         end
 
         private
