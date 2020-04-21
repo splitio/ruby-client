@@ -28,13 +28,9 @@ module SplitIoClient
         end
 
         def fetch_segment(name)
-          @semaphore.synchronize do
-            segments_api.fetch_segments_by_names([name])
-            true
-          end
+          @semaphore.synchronize { segments_api.fetch_segments_by_names([name]) }
         rescue StandardError => error
           @config.log_found_exception(__method__.to_s, error)
-          false
         end
 
         def fetch_segments
