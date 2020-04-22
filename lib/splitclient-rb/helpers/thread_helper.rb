@@ -11,8 +11,8 @@ module SplitIoClient
           sleep(0.1) while thread.status == 'run'
           Thread.kill(thread)
         end
-      rescue StandardError => error
-        config.logger.error(error.inspect)
+      rescue StandardError => e
+        config.logger.error(e.inspect)
       end
     end
   end
