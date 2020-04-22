@@ -41,7 +41,7 @@ module SplitIoClient
         channels_hash = JSON.parse(capability)
         channels_string = channels_hash.keys.join(',')
         channels_string = control_channels(channels_string)
-        @config.logger.debug("Channels #{channels_string}")
+        @config.logger.debug("Channels #{channels_string}") if @config.debug_enabled
         CGI.escape(channels_string)
       end
 
@@ -50,7 +50,7 @@ module SplitIoClient
       end
 
       def process_success(response)
-        @config.logger.debug("Success connection to: #{@config.auth_service_url}")
+        @config.logger.debug("Success connection to: #{@config.auth_service_url}") if @config.debug_enabled
 
         body_json = JSON.parse(response.body, symbolize_names: true)
         push_enabled = body_json[:pushEnabled]

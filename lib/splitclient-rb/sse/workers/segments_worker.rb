@@ -47,7 +47,7 @@ module SplitIoClient
 
         def perform_thread
           @config.threads[:segment_update_worker] = Thread.new do
-            @config.logger.debug('Starting segments worker ...')
+            @config.logger.debug('Starting segments worker ...') if @config.debug_enabled
             perform
           end
         end
