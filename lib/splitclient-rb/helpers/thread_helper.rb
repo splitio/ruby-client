@@ -14,6 +14,12 @@ module SplitIoClient
       rescue StandardError => e
         config.logger.error(e.inspect)
       end
+
+      def self.alive?(thread_sym, config)
+        thread = config.threads[thread_sym]
+
+        thread.nil? ? false : thread.status.alive?
+      end
     end
   end
 end

@@ -56,7 +56,7 @@ module SplitIoClient
 
         def splits_thread
           @config.threads[:split_fetcher] = Thread.new do
-            @config.logger.info('Starting splits fetcher service')
+            @config.logger.info('Starting splits fetcher service') if @config.debug_enabled
             loop do
               fetch_splits
 

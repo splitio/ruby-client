@@ -11,6 +11,8 @@ module SplitIoClient
         end
 
         def start
+          return if SplitIoClient::Helpers::ThreadHelper.alive?(:split_update_worker, @config)
+
           @queue = Queue.new
           perform_thread
           perform_passenger_forked if defined?(PhusionPassenger)

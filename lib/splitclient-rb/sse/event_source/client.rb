@@ -64,7 +64,7 @@ module SplitIoClient
           interval = @back_off.interval
           sleep(interval) if interval.positive?
 
-          @config.logger.info("Connecting to #{@uri.host}...")  if @config.debug_enabled
+          @config.logger.info("Connecting to #{@uri.host}...") if @config.debug_enabled
 
           socket_write
 
@@ -72,8 +72,10 @@ module SplitIoClient
             begin
               partial_data = @socket.readpartial(2048, timeout: @read_timeout)
             rescue Socketry::TimeoutError
-              @config.logger.error("Socket read time out in #{@read_timeout} seconds")  if @config.debug_enabled
-              close
+              @config.logger.error("Socket read time out in #{@read_timeout} seconds") if @config.debug_enabled
+              @connected.make_false
+              @socket&.close
+              @socket = nil
               connect_stream
             end
 

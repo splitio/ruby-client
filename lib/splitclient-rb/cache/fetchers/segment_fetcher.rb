@@ -55,7 +55,7 @@ module SplitIoClient
 
         def segments_thread
           @config.threads[:segment_fetcher] = Thread.new do
-            @config.logger.info('Starting segments fetcher service')
+            @config.logger.info('Starting segments fetcher service') if @config.debug_enabled
 
             loop do
               next unless @sdk_blocker.splits_repository.ready?
