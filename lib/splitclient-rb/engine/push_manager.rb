@@ -17,7 +17,7 @@ module SplitIoClient
         @config.logger.debug("Auth service response push_enabled: #{response[:push_enabled]}") if @config.debug_enabled
         if response[:push_enabled]
           @sse_handler.start(response[:token], response[:channels])
-          schedule_next_token_refresh(response[:exp])
+          schedule_next_token_refresh(120)
           @back_off.reset
         else
           stop_sse
@@ -37,9 +37,16 @@ module SplitIoClient
 
       def schedule_next_token_refresh(time)
         @config.threads[:schedule_next_token_refresh] = Thread.new do
-          sleep(time)
-          stop_sse
-          start_sse
+          begin
+            @config.logger.debug("schedule_next_token_refresh refresh in #{time} seconds.") if @config.debug_enabled
+            sleep(time)
+            @config.logger.debug('schedule_next_token_refresh starting ...') if @config.debug_enabled
+            stop_sse
+            sleep(1)
+            start_sse
+          rescue StandardError => e
+            @config.logger.debug("schedule_next_token_refresh error: #{e.inspect}") if @config.debug_enabled
+          end
         end
       end
     end

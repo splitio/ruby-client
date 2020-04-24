@@ -11,6 +11,11 @@ module SplitIoClient
         @splits_worker = SplitIoClient::SSE::Workers::SplitsWorker.new(synchronizer, config, splits_repository)
         @segments_worker = SplitIoClient::SSE::Workers::SegmentsWorker.new(synchronizer, config, segments_repository)
         @notification_processor = SplitIoClient::SSE::NotificationProcessor.new(config, @splits_worker, @segments_worker)
+        @sse_client = SSE::EventSource::Client.new(@config) do |client|
+          client.on_event { |event| handle_incoming_message(event) }
+          client.on_connected { process_connected }
+          client.on_disconnect { process_disconnect }
+        end
 
         @on = { connected: ->(_) {}, disconnect: ->(_) {} }
 
@@ -19,17 +24,14 @@ module SplitIoClient
 
       def start(token_jwt, channels)
         url = "#{@config.streaming_service_url}?channels=#{channels}&v=1.1&accessToken=#{token_jwt}"
-
-        @sse_client = SSE::EventSource::Client.new(url, @config) do |client|
-          client.on_event { |event| handle_incoming_message(event) }
-          client.on_connected { process_connected }
-          client.on_disconnect { process_disconnect }
-        end
+        @sse_client.start(url)
       end
 
       def stop
-        @sse_client&.close
-        @sse_client = nil
+        @sse_client.close
+        stop_workers
+      rescue StandardError => e
+        @config.logger.debug("SSEHandler stop error: #{e.inspect}") if @config.debug_enabled
       end
 
       def connected?

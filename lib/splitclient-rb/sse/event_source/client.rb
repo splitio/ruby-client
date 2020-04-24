@@ -11,8 +11,7 @@ module SplitIoClient
         DEFAULT_READ_TIMEOUT = 70
         KEEP_ALIVE_RESPONSE = "c\r\n:keepalive\n\n\r\n".freeze
 
-        def initialize(url, config, read_timeout: DEFAULT_READ_TIMEOUT)
-          @uri = URI(url)
+        def initialize(config, read_timeout: DEFAULT_READ_TIMEOUT)
           @config = config
           @read_timeout = read_timeout
           @connected = Concurrent::AtomicBoolean.new(false)
@@ -22,9 +21,6 @@ module SplitIoClient
           @on = { event: ->(_) {}, connected: ->(_) {}, disconnect: ->(_) {} }
 
           yield self if block_given?
-
-          connect_thread
-          connect_passenger_forked if defined?(PhusionPassenger)
         end
 
         def on_event(&action)
@@ -42,8 +38,20 @@ module SplitIoClient
         def close
           dispatch_disconnect
           @connected.make_false
+          SplitIoClient::Helpers::ThreadHelper.stop(:connect_stream, @config)
           @socket&.close
           @socket = nil
+        rescue StandardError => e
+          @config.logger.error("SSEClient close Error: #{e.inspect}")
+        end
+
+        def start(url)
+          @uri = URI(url)
+
+          connect_thread
+          connect_passenger_forked if defined?(PhusionPassenger)
+        rescue StandardError => e
+          @config.logger.error("SSEClient start Error: #{e.inspect}")
         end
 
         def connected?
@@ -53,7 +61,10 @@ module SplitIoClient
         private
 
         def connect_thread
-          @config.threads[:connect_stream] = Thread.new { connect_stream }
+          @config.threads[:connect_stream] = Thread.new do
+            @config.logger.info('Starting connect_stream thread ...') if @config.debug_enabled
+            connect_stream
+          end
         end
 
         def connect_passenger_forked
@@ -64,15 +75,15 @@ module SplitIoClient
           interval = @back_off.interval
           sleep(interval) if interval.positive?
 
-          @config.logger.info("Connecting to #{@uri.host}...") if @config.debug_enabled
-
           socket_write
 
           while @connected.value
             begin
-              partial_data = @socket.readpartial(2048, timeout: @read_timeout)
-            rescue Socketry::TimeoutError
-              @config.logger.error("Socket read time out in #{@read_timeout} seconds") if @config.debug_enabled
+              partial_data = @socket.readpartial(10_000, timeout: @read_timeout)
+
+              raise 'eof exception' if partial_data == :eof
+            rescue StandardError => e
+              @config.logger.error(e.inspect) if @config.debug_enabled
               @connected.make_false
               @socket&.close
               @socket = nil
@@ -107,7 +118,7 @@ module SplitIoClient
             dispatch_event(events)
           end
         rescue StandardError => e
-          @config.logger.error("Error during processing data: #{e.inspect}")
+          @config.logger.error("process_data error: #{e.inspect}")
         end
 
         def build_request(uri)
@@ -144,6 +155,7 @@ module SplitIoClient
 
           events
         rescue StandardError => e
+          @config.logger.error(buffer)
           @config.logger.error("Error during parsing a event: #{e.inspect}")
           []
         end
