@@ -10,7 +10,6 @@ module SplitIoClient
         @notification_manager_keeper = notification_manager_keeper
         @splits_worker = SplitIoClient::SSE::Workers::SplitsWorker.new(synchronizer, config, splits_repository)
         @segments_worker = SplitIoClient::SSE::Workers::SegmentsWorker.new(synchronizer, config, segments_repository)
-        @control_worker = SplitIoClient::SSE::Workers::ControlWorker.new(config)
         @notification_processor = SplitIoClient::SSE::NotificationProcessor.new(config, @splits_worker, @segments_worker)
 
         @on = { connected: ->(_) {}, disconnect: ->(_) {} }
@@ -40,13 +39,11 @@ module SplitIoClient
       def start_workers
         @splits_worker.start
         @segments_worker.start
-        @control_worker.start
       end
 
       def stop_workers
         @splits_worker.stop
         @segments_worker.stop
-        @control_worker.stop
       end
 
       def on_connected(&action)

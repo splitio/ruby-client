@@ -22,6 +22,20 @@ describe SplitIoClient::SSE::Workers::SegmentsWorker do
   let(:metrics) { SplitIoClient::Metrics.new(100, metrics_repository) }
   let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, metrics, config, sdk_blocker) }
   let(:segment_fetcher) { SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, metrics, config, sdk_blocker) }
+  let(:repositories) do
+    repos = {}
+    repos[:splits] = splits_repository
+    repos[:segments] = segments_repository
+    repos[:metrics] = metrics_repository
+    repos
+  end
+  let(:fetchers) do
+    params = {}
+    params[:split_fetcher] = split_fetcher
+    params[:segment_fetcher] = segment_fetcher
+    params
+  end
+  let(:synchronizer) { SplitIoClient::Engine::Synchronizer.new(repositories, api_key, config, sdk_blocker, fetchers) }
 
   before do
     mock_split_changes(splits)
@@ -37,23 +51,33 @@ describe SplitIoClient::SSE::Workers::SegmentsWorker do
 
   context 'add segment name to queue' do
     it 'must trigger fetch' do
-      worker = subject.new(segment_fetcher, config, segments_repository)
+      worker = subject.new(synchronizer, config, segments_repository)
 
       worker.start
       worker.add_to_queue(1_506_703_262_918, 'segment1')
 
-      sleep(0.1)
+      sleep(1)
 
       expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=1470947453877')).to have_been_made.times(2)
     end
 
     it 'must not trigger fetch' do
-      worker = subject.new(segment_fetcher, config, segments_repository)
+      worker = subject.new(synchronizer, config, segments_repository)
 
       worker.start
       worker.add_to_queue(1_470_947_453_877, 'segment1')
 
-      sleep(0.1)
+      sleep(1)
+
+      expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=1470947453877')).to have_been_made.times(1)
+    end
+
+    it 'try to add without start woker, must not adde to queue' do
+      worker = subject.new(synchronizer, config, segments_repository)
+
+      worker.add_to_queue(1_470_947_453_877, 'segment1')
+
+      sleep(1)
 
       expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=1470947453877')).to have_been_made.times(1)
     end

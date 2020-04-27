@@ -8,13 +8,13 @@ module SplitIoClient
         @sse_handler = sse_handler
         @auth_api_client = AuthApiClient.new(@config)
         @api_key = api_key
-        @back_off = SplitIoClient::SSE::EventSource::BackOff.new(@config.auth_retry_back_off_base)
+        @back_off = SplitIoClient::SSE::EventSource::BackOff.new(@config.auth_retry_back_off_base, 1)
       end
 
       def start_sse
         response = @auth_api_client.authenticate(@api_key)
 
-        @config.logger.debug("Auth service response push_enabled: #{response[:push_enabled]}")
+        @config.logger.debug("Auth service response push_enabled: #{response[:push_enabled]}") if @config.debug_enabled
         if response[:push_enabled]
           @sse_handler.start(response[:token], response[:channels])
           schedule_next_token_refresh(response[:exp])

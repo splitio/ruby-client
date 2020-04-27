@@ -26,8 +26,21 @@ describe SplitIoClient::Engine::PushManager do
   end
   let(:splits_worker) { SplitIoClient::SSE::Workers::SplitsWorker.new(split_fetcher, config, splits_repository) }
   let(:segments_worker) { SplitIoClient::SSE::Workers::SegmentsWorker.new(segment_fetcher, config, segments_repository) }
-  let(:control_worker) { SplitIoClient::SSE::Workers::ControlWorker.new(config) }
   let(:notification_manager_keeper) { SplitIoClient::SSE::NotificationManagerKeeper.new(config) }
+  let(:repositories) do
+    repos = {}
+    repos[:splits] = splits_repository
+    repos[:segments] = segments_repository
+    repos[:metrics] = metrics_repository
+    repos
+  end
+  let(:fetchers) do
+    params = {}
+    params[:split_fetcher] = split_fetcher
+    params[:segment_fetcher] = segment_fetcher
+    params
+  end
+  let(:synchronizer) { SplitIoClient::Engine::Synchronizer.new(repositories, api_key, config, sdk_blocker, fetchers) }
 
   context 'start_sse' do
     it 'must connect to server' do
@@ -43,9 +56,9 @@ describe SplitIoClient::Engine::PushManager do
         disconnect_event = false
         sse_handler = SplitIoClient::SSE::SSEHandler.new(
           config,
-          splits_worker,
-          segments_worker,
-          control_worker,
+          synchronizer,
+          splits_repository,
+          segments_repository,
           notification_manager_keeper
         ) do |handler|
           handler.on_connected { connected_event = true }
@@ -72,9 +85,9 @@ describe SplitIoClient::Engine::PushManager do
       disconnect_event = false
       sse_handler = SplitIoClient::SSE::SSEHandler.new(
         config,
-        splits_worker,
-        segments_worker,
-        control_worker,
+        synchronizer,
+        splits_repository,
+        segments_repository,
         notification_manager_keeper
       ) do |handler|
         handler.on_connected { connected_event = true }
@@ -100,9 +113,9 @@ describe SplitIoClient::Engine::PushManager do
       disconnect_event = false
       sse_handler = SplitIoClient::SSE::SSEHandler.new(
         config,
-        splits_worker,
-        segments_worker,
-        control_worker,
+        synchronizer,
+        splits_repository,
+        segments_repository,
         notification_manager_keeper
       ) do |handler|
         handler.on_connected { connected_event = true }
@@ -136,9 +149,9 @@ describe SplitIoClient::Engine::PushManager do
         disconnect_event = false
         sse_handler = SplitIoClient::SSE::SSEHandler.new(
           config,
-          splits_worker,
-          segments_worker,
-          control_worker,
+          synchronizer,
+          splits_repository,
+          segments_repository,
           notification_manager_keeper
         ) do |handler|
           handler.on_connected { connected_event = true }

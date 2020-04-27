@@ -5,5 +5,6 @@ class SplitIoClient::Constants
   CONTROL_PRI = 'control_pri'
   CONTROL_SEC = 'control_sec'
   OCCUPANCY_CHANNEL_PREFIX = '[?occupancy=metrics.publishers]'
+  FETCH_BACK_OFF_BASE_RETRIES = 1
 end
   

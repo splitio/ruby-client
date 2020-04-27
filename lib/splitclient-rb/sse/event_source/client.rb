@@ -64,7 +64,7 @@ module SplitIoClient
           interval = @back_off.interval
           sleep(interval) if interval.positive?
 
-          @config.logger.info("Connecting to #{@uri.host}...")
+          @config.logger.info("Connecting to #{@uri.host}...") if @config.debug_enabled
 
           socket_write
 
@@ -72,8 +72,10 @@ module SplitIoClient
             begin
               partial_data = @socket.readpartial(2048, timeout: @read_timeout)
             rescue Socketry::TimeoutError
-              @config.logger.error("Socket read time out in #{@read_timeout} seconds")
-              close
+              @config.logger.error("Socket read time out in #{@read_timeout} seconds") if @config.debug_enabled
+              @connected.make_false
+              @socket&.close
+              @socket = nil
               connect_stream
             end
 
@@ -98,7 +100,7 @@ module SplitIoClient
 
         def process_data(partial_data)
           unless partial_data.nil? || partial_data == KEEP_ALIVE_RESPONSE
-            @config.logger.debug("Event partial data: #{partial_data}")
+            @config.logger.debug("Event partial data: #{partial_data}") if @config.debug_enabled
             buffer = read_partial_data(partial_data)
             events = parse_event(buffer)
 
@@ -113,7 +115,7 @@ module SplitIoClient
           req << "Host: #{uri.host}\r\n"
           req << "Accept: text/event-stream\r\n"
           req << "Cache-Control: no-cache\r\n\r\n"
-          @config.logger.debug("Request info: #{req}")
+          @config.logger.debug("Request info: #{req}") if @config.debug_enabled
           req
         end
 
@@ -160,7 +162,7 @@ module SplitIoClient
           events.each do |event|
             raise SSEClientException.new(event), 'Error event' if event.event_type == 'error'
 
-            @config.logger.debug("Dispatching event: #{event.event_type}, #{event.channel}")
+            @config.logger.debug("Dispatching event: #{event.event_type}, #{event.channel}") if @config.debug_enabled
             @on[:event].call(event)
           end
         rescue SSEClientException => e
@@ -171,12 +173,12 @@ module SplitIoClient
         def dispatch_connected
           @connected.make_true
           @back_off.reset
-          @config.logger.debug('Dispatching connected')
+          @config.logger.debug('Dispatching connected') if @config.debug_enabled
           @on[:connected].call
         end
 
         def dispatch_disconnect
-          @config.logger.debug('Dispatching disconnect')
+          @config.logger.debug('Dispatching disconnect') if @config.debug_enabled
           @on[:disconnect].call
         end
       end
