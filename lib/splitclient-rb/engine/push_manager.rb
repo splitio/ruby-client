@@ -17,7 +17,7 @@ module SplitIoClient
         @config.logger.debug("Auth service response push_enabled: #{response[:push_enabled]}") if @config.debug_enabled
         if response[:push_enabled]
           @sse_handler.start(response[:token], response[:channels])
-          schedule_next_token_refresh(120)
+          schedule_next_token_refresh(response[:exp])
           @back_off.reset
         else
           stop_sse

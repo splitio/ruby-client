@@ -40,7 +40,6 @@ module SplitIoClient
           @connected.make_false
           SplitIoClient::Helpers::ThreadHelper.stop(:connect_stream, @config)
           @socket&.close
-          @socket = nil
         rescue StandardError => e
           @config.logger.error("SSEClient close Error: #{e.inspect}")
         end
@@ -48,7 +47,7 @@ module SplitIoClient
         def start(url)
           @uri = URI(url)
 
-          connect_thread
+          connect_thread unless defined?(PhusionPassenger)
           connect_passenger_forked if defined?(PhusionPassenger)
         rescue StandardError => e
           @config.logger.error("SSEClient start Error: #{e.inspect}")

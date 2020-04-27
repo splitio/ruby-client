@@ -48,14 +48,15 @@ module SplitIoClient
 
       # Starts tasks if stream is enabled.
       def start_stream
+        @config.logger.debug("Starting push mode ...")
         stream_start_thread
-        stream_start_thread_forked if defined?(PhusionPassenger)
+        @synchronizer.start_periodic_data_recording
 
         stream_start_sse_thread
-        stream_start_sse_thread_forked if defined?(PhusionPassenger)
       end
 
       def start_poll
+        @config.logger.debug("Starting polling mode ...")
         @synchronizer.start_periodic_fetch
         @synchronizer.start_periodic_data_recording
       rescue StandardError => e
@@ -66,8 +67,7 @@ module SplitIoClient
       def stream_start_thread
         @config.threads[:sync_manager_start_stream] = Thread.new do
           begin
-            @synchronizer.sync_all
-            @synchronizer.start_periodic_data_recording
+            @synchronizer.sync_all            
           rescue StandardError => e
             @config.logger.error("stream_start_thread error : #{e.inspect}")
           end
