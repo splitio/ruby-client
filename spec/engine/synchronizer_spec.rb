@@ -43,42 +43,75 @@ describe SplitIoClient::Engine::Synchronizer do
   end
   let(:synchronizer) { subject.new(repositories, api_key, config, sdk_blocker, parameters) }
 
-  before do
+  context 'tests with mock data' do
+    before do
+      mock_split_changes(splits)
+      mock_segment_changes('segment1', segment1, '-1')
+      mock_segment_changes('segment1', segment1, '1470947453877')
+      mock_segment_changes('segment2', segment2, '-1')
+      mock_segment_changes('segment2', segment2, '1470947453878')
+      mock_segment_changes('segment3', segment3, '-1')
+      mock_segment_changes('segment3', segment3, '1470947453879')
+    end
+
+    it 'sync_all' do
+      synchronizer.sync_all
+
+      expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.once
+      expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=-1')).to have_been_made.once
+      expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=1470947453877')).to have_been_made.once
+      expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment2?since=-1')).to have_been_made.once
+      expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment2?since=1470947453878')).to have_been_made.once
+      expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=-1')).to have_been_made.once
+    end
+
+    it 'start_periodic_data_recording' do
+      synchronizer.start_periodic_data_recording
+
+      expect(config.threads.size).to eq(3)
+    end
+
+    it 'start_periodic_fetch' do
+      synchronizer.start_periodic_fetch
+
+      expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.once
+      expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=-1')).to have_been_made.once
+      expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=1470947453877')).to have_been_made.once
+      expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment2?since=-1')).to have_been_made.once
+      expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment2?since=1470947453878')).to have_been_made.once
+      expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=-1')).to have_been_made.once
+    end
+  end
+
+  it 'fetch_splits' do
     mock_split_changes(splits)
-    mock_segment_changes('segment1', segment1, '-1')
-    mock_segment_changes('segment1', segment1, '1470947453877')
-    mock_segment_changes('segment2', segment2, '-1')
-    mock_segment_changes('segment2', segment2, '1470947453878')
+
+    synchronizer.fetch_splits
+    expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.once
+  end
+
+  it 'fetch_splits with retries' do
+    stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+      .to_return({ status: 500 }, { status: 200, body: splits })
+
+    synchronizer.fetch_splits
+
+    expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.times(2)
+  end
+
+  it 'fetch_segment' do
     mock_segment_changes('segment3', segment3, '-1')
-    mock_segment_changes('segment3', segment3, '1470947453879')
-  end
 
-  it 'sync_all' do
-    synchronizer.sync_all
-
-    expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.once
-    expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=-1')).to have_been_made.once
-    expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=1470947453877')).to have_been_made.once
-    expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment2?since=-1')).to have_been_made.once
-    expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment2?since=1470947453878')).to have_been_made.once
+    synchronizer.fetch_segment('segment3')
     expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=-1')).to have_been_made.once
   end
 
-  it 'start_periodic_data_recording' do
-    synchronizer.start_periodic_data_recording
+  it 'fetch_segment with retries' do
+    stub_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=-1')
+      .to_return({ status: 500 }, { status: 200, body: segment3 })
 
-    expect(config.threads.size).to eq(3)
-  end
-
-  it 'start_periodic_fetch' do
-    synchronizer.start_periodic_fetch
-
-    expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.once
-    expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=-1')).to have_been_made.once
-    expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=1470947453877')).to have_been_made.once
-    expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment2?since=-1')).to have_been_made.once
-    expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment2?since=1470947453878')).to have_been_made.once
-    expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=-1')).to have_been_made.once
+    synchronizer.fetch_segment('segment3')
+    expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=-1')).to have_been_made.times(2)
   end
 end
 

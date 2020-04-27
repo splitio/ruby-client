@@ -20,6 +20,7 @@ Metrics/LineLength:
 Style/BracesAroundHashParameters:
   Exclude:
     - spec/integrations/push_client_spec.rb
+    - spec/engine/synchronizer_spec.rb
 
 Metrics/BlockLength:
   Exclude:

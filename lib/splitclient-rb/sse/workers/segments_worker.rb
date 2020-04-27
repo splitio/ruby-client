@@ -12,6 +12,8 @@ module SplitIoClient
         end
 
         def start
+          return if SplitIoClient::Helpers::ThreadHelper.alive?(:segment_update_worker, @config)
+
           @queue = Queue.new
           perform_thread
           perform_passenger_forked if defined?(PhusionPassenger)
@@ -47,7 +49,7 @@ module SplitIoClient
 
         def perform_thread
           @config.threads[:segment_update_worker] = Thread.new do
-            @config.logger.debug('Starting segments worker ...')
+            @config.logger.debug('Starting segments worker ...') if @config.debug_enabled
             perform
           end
         end
