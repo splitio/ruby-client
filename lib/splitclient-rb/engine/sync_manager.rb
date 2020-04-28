@@ -39,6 +39,7 @@ module SplitIoClient
       def start
         if @config.streaming_enabled
           start_stream
+          start_stream_forked if defined?(PhusionPassenger)
         elsif @config.standalone?
           start_poll
         end
@@ -85,12 +86,8 @@ module SplitIoClient
         end
       end
 
-      def stream_start_thread_forked
-        PhusionPassenger.on_event(:starting_worker_process) { |forked| stream_start_thread if forked }
-      end
-
-      def stream_start_sse_thread_forked
-        PhusionPassenger.on_event(:starting_worker_process) { |forked| stream_start_sse_thread if forked }
+      def start_stream_forked
+        PhusionPassenger.on_event(:starting_worker_process) { |forked| start_stream if forked }
       end
 
       def process_connected

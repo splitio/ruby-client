@@ -47,8 +47,7 @@ module SplitIoClient
         def start(url)
           @uri = URI(url)
 
-          connect_thread unless defined?(PhusionPassenger)
-          connect_passenger_forked if defined?(PhusionPassenger)
+          connect_thread
         rescue StandardError => e
           @config.logger.error("SSEClient start Error: #{e.inspect}")
         end
@@ -64,10 +63,6 @@ module SplitIoClient
             @config.logger.info('Starting connect_stream thread ...') if @config.debug_enabled
             connect_stream
           end
-        end
-
-        def connect_passenger_forked
-          PhusionPassenger.on_event(:starting_worker_process) { |forked| connect_thread if forked }
         end
 
         def connect_stream
@@ -112,9 +107,7 @@ module SplitIoClient
           unless partial_data.nil? || partial_data == KEEP_ALIVE_RESPONSE
             @config.logger.debug("Event partial data: #{partial_data}") if @config.debug_enabled
             buffer = read_partial_data(partial_data)
-            events = parse_event(buffer)
-
-            dispatch_event(events)
+            parse_event(buffer)
           end
         rescue StandardError => e
           @config.logger.error("process_data error: #{e.inspect}")
@@ -138,7 +131,6 @@ module SplitIoClient
 
         def parse_event(buffer)
           type = nil
-          events = []
 
           buffer.each do |d|
             splited_data = d.split(':')
@@ -148,15 +140,14 @@ module SplitIoClient
               type = splited_data[1].strip
             when 'data'
               data = parse_event_data(d, type)
-              events << StreamData.new(type, data[:client_id], data[:data], data[:channel]) unless type.nil? || data[:data].nil?
+              unless type.nil? || data[:data].nil?
+                event = StreamData.new(type, data[:client_id], data[:data], data[:channel])
+                dispatch_event(event)
+              end
             end
           end
-
-          events
         rescue StandardError => e
-          @config.logger.error(buffer)
           @config.logger.error("Error during parsing a event: #{e.inspect}")
-          []
         end
 
         def parse_event_data(data, type)
@@ -169,13 +160,11 @@ module SplitIoClient
           { client_id: client_id, channel: channel, data: parsed_data }
         end
 
-        def dispatch_event(events)
-          events.each do |event|
-            raise SSEClientException.new(event), 'Error event' if event.event_type == 'error'
+        def dispatch_event(event)
+          raise SSEClientException.new(event), 'Error event' if event.event_type == 'error'
 
-            @config.logger.debug("Dispatching event: #{event.event_type}, #{event.channel}") if @config.debug_enabled
-            @on[:event].call(event)
-          end
+          @config.logger.debug("Dispatching event: #{event.event_type}, #{event.channel}") if @config.debug_enabled
+          @on[:event].call(event)
         rescue SSEClientException => e
           @config.logger.error("Event error: #{e.event.event_type}, #{e.event.data}")
           close

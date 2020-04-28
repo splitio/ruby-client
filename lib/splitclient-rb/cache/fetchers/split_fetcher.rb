@@ -60,7 +60,9 @@ module SplitIoClient
             loop do
               fetch_splits
 
-              sleep(SplitIoClient::Cache::Stores::StoreUtils.random_interval(@config.features_refresh_rate))
+              sleep_for = SplitIoClient::Cache::Stores::StoreUtils.random_interval(@config.features_refresh_rate)
+              @config.logger.debug("Splits fetcher is sleeping for: #{sleep_for} seconds") if @config.debug_enabled
+              sleep(sleep_for)
             end
           end
         end
