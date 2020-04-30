@@ -502,6 +502,7 @@ describe SplitIoClient, type: :client do
         key = { bucketing_key: 'bucketing_key', matching_key: 222 }
 
         expect(subject.get_treatment(key, 'new_feature')).to eq 'on'
+        sleep(1)
         impressions = subject.instance_variable_get(:@impressions_repository).batch
 
         expect(impressions.first[:i][:k]).to eq('222')
