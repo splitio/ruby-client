@@ -271,7 +271,7 @@ module SplitIoClient
     attr_accessor :streaming_enabled
 
     def self.default_streaming_enabled
-      true
+      false
     end
 
     def self.default_streaming_service_url
