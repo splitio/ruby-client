@@ -18,7 +18,7 @@ describe SplitIoClient::Engine::SyncManager do
 
   let(:api_key) { 'api-key-test' }
   let(:log) { StringIO.new }
-  let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log)) }
+  let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log), streaming_enabled: true) }
   let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config) }
   let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
   let(:impressions_repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
