@@ -12,7 +12,7 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
     end
     let(:repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
     let(:sender) { described_class.new(repository, nil, config) }
-    let(:formatted_impressions) { ImpressionsFormatter.new(repository).call(true) }
+    let(:formatted_impressions) { SplitIoClient::Cache::Senders::ImpressionsFormatter.new(repository).call(true) }
     let(:treatment1) { { treatment: 'on', label: 'custom_label1', change_number: 123_456 } }
     let(:treatment2) { { treatment: 'off', label: 'custom_label2', change_number: 123_499 } }
 

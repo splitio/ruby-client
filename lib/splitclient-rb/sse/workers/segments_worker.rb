@@ -4,20 +4,31 @@ module SplitIoClient
   module SSE
     module Workers
       class SegmentsWorker
-        def initialize(adapter, config, segments_repository)
-          @adapter = adapter
+        def initialize(synchronizer, config, segments_repository)
+          @synchronizer = synchronizer
           @config = config
           @segments_repository = segments_repository
+          @queue = nil
+        end
+
+        def start
+          return if SplitIoClient::Helpers::ThreadHelper.alive?(:segment_update_worker, @config)
+
           @queue = Queue.new
-
           perform_thread
-
-          perform_passenger_forked if defined?(PhusionPassenger)
         end
 
         def add_to_queue(change_number, segment_name)
+          return if @queue.nil?
+
           item = { change_number: change_number, segment_name: segment_name }
+          @config.logger.debug("SegmentsWorker add to queue #{item}")
           @queue.push(item)
+        end
+
+        def stop
+          SplitIoClient::Helpers::ThreadHelper.stop(:segment_update_worker, @config)
+          @queue = nil
         end
 
         private
@@ -28,12 +39,16 @@ module SplitIoClient
             change_number = item[:change_number]
             since = @segments_repository.get_change_number(segment_name)
 
-            @adapter.segment_fetcher.fetch_segment(segment_name) unless since >= change_number
+            unless since >= change_number
+              @config.logger.debug("SegmentsWorker fetch_segment with #{since}")
+              @synchronizer.fetch_segment(segment_name)
+            end
           end
         end
 
         def perform_thread
           @config.threads[:segment_update_worker] = Thread.new do
+            @config.logger.debug('Starting segments worker ...') if @config.debug_enabled
             perform
           end
         end

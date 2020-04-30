@@ -102,6 +102,12 @@ module SplitIoClient
       @split_validator = SplitIoClient::Validators.new(self)
       @localhost_mode = opts[:localhost_mode]
 
+      @streaming_enabled = consumer? ? false : (opts[:streaming_enabled].nil? ? SplitConfig.default_streaming_enabled : opts[:streaming_enabled])
+      @streaming_service_url = opts[:streaming_service_url] || SplitConfig.default_streaming_service_url
+      @auth_service_url = opts[:auth_service_url] || SplitConfig.default_auth_service_url
+      @auth_retry_back_off_base = SplitConfig.init_auth_retry_back_off(opts[:auth_retry_back_off_base] || SplitConfig.default_auth_retry_back_off_base)
+      @streaming_reconnect_back_off_base = SplitConfig.init_streaming_reconnect_back_off(opts[:streaming_reconnect_back_off_base] || SplitConfig.default_streaming_reconnect_back_off_base)
+
       startup_log
     end
 
@@ -254,6 +260,44 @@ module SplitIoClient
 
     attr_accessor :ip_addresses_enabled
 
+    attr_accessor :auth_service_url
+
+    attr_accessor :auth_retry_back_off_base
+
+    attr_accessor :streaming_service_url
+
+    attr_accessor :streaming_reconnect_back_off_base
+
+    attr_accessor :streaming_enabled
+
+    def self.default_streaming_enabled
+      false
+    end
+
+    def self.default_streaming_service_url
+      'https://split-realtime.ably.io/event-stream'
+    end
+
+    def self.default_auth_service_url
+      'https://auth.split.io/api/auth'
+    end
+
+    def self.default_auth_retry_back_off_base
+      1
+    end
+
+    def self.default_streaming_reconnect_back_off_base
+      1
+    end
+
+    def self.init_auth_retry_back_off(auth_retry_back_off)
+      auth_retry_back_off < 1 ? SplitConfig.default_auth_retry_back_off_base : auth_retry_back_off
+    end
+
+    def self.init_streaming_reconnect_back_off(streaming_reconnect_back_off)
+      streaming_reconnect_back_off < 1 ? SplitConfig.default_streaming_reconnect_back_off_base : streaming_reconnect_back_off
+    end
+
     #
     # The default split client configuration
     #
@@ -380,8 +424,6 @@ module SplitIoClient
        Logger.new($stdout)
        end
     end
-
-
 
     #
     # The default debug value

@@ -10,6 +10,7 @@ module SplitIoClient
           @metrics = metrics
           @config = config
           @sdk_blocker = sdk_blocker
+          @semaphore = Mutex.new
         end
 
         def call
@@ -27,24 +28,34 @@ module SplitIoClient
         end
 
         def fetch_segment(name)
-          segments_api.fetch_segments_by_names([name])
+          @semaphore.synchronize do
+            segments_api.fetch_segments_by_names([name])
+            true
+          end
+        rescue StandardError => error
+          @config.log_found_exception(__method__.to_s, error)
+          false
+        end
+
+        def fetch_segments
+          @semaphore.synchronize do
+            segments_api.fetch_segments_by_names(@segments_repository.used_segment_names)
+
+            @sdk_blocker.segments_ready!
+          end
         rescue StandardError => error
           @config.log_found_exception(__method__.to_s, error)
         end
 
-        def fetch_segments
-          segments_api.fetch_segments_by_names(@segments_repository.used_segment_names)
-
-          @sdk_blocker.segments_ready!
-        rescue StandardError => error
-          @config.log_found_exception(__method__.to_s, error)
+        def stop_segments_thread
+          SplitIoClient::Helpers::ThreadHelper.stop(:segment_fetcher, @config)
         end
 
         private
 
         def segments_thread
           @config.threads[:segment_fetcher] = Thread.new do
-            @config.logger.info('Starting segments fetcher service')
+            @config.logger.info('Starting segments fetcher service') if @config.debug_enabled
 
             loop do
               next unless @sdk_blocker.splits_repository.ready?
@@ -52,8 +63,8 @@ module SplitIoClient
               fetch_segments
               @config.logger.debug("Segment names: #{@segments_repository.used_segment_names.to_a}") if @config.debug_enabled
 
-              sleep_for = StoreUtils.random_interval(@config.segments_refresh_rate)
-              @config.logger.debug("Segments store is sleeping for: #{sleep_for} seconds") if @config.debug_enabled
+              sleep_for = SplitIoClient::Cache::Stores::StoreUtils.random_interval(@config.segments_refresh_rate)
+              @config.logger.debug("Segments fetcher is sleeping for: #{sleep_for} seconds") if @config.debug_enabled
               sleep(sleep_for)
             end
           end

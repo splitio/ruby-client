@@ -13,7 +13,8 @@ describe SplitIoClient, type: :client do
                                       redis_namespace: 'test',
                                       mode: @mode,
                                       impressions_refresh_rate: 1,
-                                      impression_listener: customer_impression_listener).client
+                                      impression_listener: customer_impression_listener,
+                                      streaming_enabled: false).client
     end
 
     let(:customer_impression_listener) { MyImpressionListener.new }
@@ -118,7 +119,7 @@ describe SplitIoClient, type: :client do
       end
 
       it 'saves just one metric to Redis' do
-        expect(subject.instance_variable_get(:@adapter).metrics).to receive(:time)
+        expect(subject.instance_variable_get(:@metrics)).to receive(:time)
           .with('sdk.get_treatment', anything).once.and_call_original
         subject.get_treatment('fake_user_id_1', 'test_feature')
       end
@@ -350,7 +351,7 @@ describe SplitIoClient, type: :client do
       end
 
       it 'saves get_treatment_with_config metric' do
-        expect(subject.instance_variable_get(:@adapter).metrics).to receive(:time)
+        expect(subject.instance_variable_get(:@metrics)).to receive(:time)
           .with('sdk.get_treatment_with_config', anything).once.and_call_original
         subject.get_treatment_with_config('fake_user_id_1', 'test_feature')
       end
@@ -362,7 +363,7 @@ describe SplitIoClient, type: :client do
       end
 
       it 'saves just one metric to Redis' do
-        expect(subject.instance_variable_get(:@adapter).metrics).to receive(:time)
+        expect(subject.instance_variable_get(:@metrics)).to receive(:time)
           .with('sdk.get_treatments', anything).once.and_call_original
         subject.get_treatments(222, %w[new_feature foo test_feature])
       end
@@ -417,7 +418,7 @@ describe SplitIoClient, type: :client do
       end
 
       it 'saves just one metric' do
-        expect(subject.instance_variable_get(:@adapter).metrics).to receive(:time)
+        expect(subject.instance_variable_get(:@metrics)).to receive(:time)
           .with('sdk.get_treatments_with_config', anything).once.and_call_original
         subject.get_treatments_with_config('fake_user_id_1', split_names)
       end
@@ -476,7 +477,7 @@ describe SplitIoClient, type: :client do
           new_feature: 'on', foo: SplitIoClient::Engine::Models::Treatment::CONTROL
         )
         impressions = subject.instance_variable_get(:@impressions_repository).batch
-        expect(ImpressionsFormatter
+        expect(SplitIoClient::Cache::Senders::ImpressionsFormatter
           .new(subject.instance_variable_get(:@impressions_repository))
           .call(true, impressions)
           .select { |im| im[:testName] == :new_feature }[0][:keyImpressions].size).to eq(2)
@@ -538,7 +539,7 @@ describe SplitIoClient, type: :client do
           new_feature: 'on',
           new_feature2: 'on'
         )
-        impressions = subject.instance_variable_get(:@adapter).impressions_repository.batch
+        impressions = subject.instance_variable_get(:@impressions_repository).batch
 
         expect(impressions.first[:i][:k]).to eq('fake_user_id_1')
       end
@@ -657,7 +658,8 @@ describe SplitIoClient, type: :client do
         # Need this because we're storing impressions in the Set
         # Without sleep we may have identical impressions (including time)
         # In that case only one impression with key "26" would be stored
-        sleep 0.01
+        sleep 1
+
         subject.get_treatments('26', %w[sample_feature beta_feature])
 
         impressions = customer_impression_listener.queue
@@ -979,11 +981,12 @@ describe SplitIoClient, type: :client do
         SplitIoClient::SplitFactory.new('test_api_key',
                                         logger: Logger.new('/dev/null'),
                                         cache_adapter: :memory,
-                                        mode: :standalone).client
+                                        mode: :standalone,
+                                        streaming_enabled: false).client
       end
 
       it 'fetch splits' do
-        expect(subject.instance_variable_get(:@adapter).splits_repository.splits.size).to eq(1)
+        expect(subject.instance_variable_get(:@splits_repository).splits.size).to eq(1)
       end
     end
 
@@ -1002,11 +1005,12 @@ describe SplitIoClient, type: :client do
                                         cache_adapter: :redis,
                                         redis_namespace: 'test',
                                         max_cache_size: 1,
-                                        mode: :consumer).client
+                                        mode: :consumer,
+                                        streaming_enabled: false).client
       end
 
       it 'does not store splits' do
-        expect(subject.instance_variable_get(:@adapter).splits_repository.splits.size).to eq(0)
+        expect(subject.instance_variable_get(:@splits_repository).splits.size).to eq(0)
       end
 
       # config.max_cache_size set to 1 forcing cache adapter to fallback to redis

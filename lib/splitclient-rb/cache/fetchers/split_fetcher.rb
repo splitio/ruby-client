@@ -10,6 +10,7 @@ module SplitIoClient
           @metrics = metrics
           @config = config
           @sdk_blocker = sdk_blocker
+          @semaphore = Mutex.new
         end
 
         def call
@@ -27,32 +28,41 @@ module SplitIoClient
         end
 
         def fetch_splits
-          data = splits_since(@splits_repository.get_change_number)
+          @semaphore.synchronize do
+            data = splits_since(@splits_repository.get_change_number)
 
-          data[:splits] && data[:splits].each do |split|
-            add_split_unless_archived(split)
+            data[:splits] && data[:splits].each do |split|
+              add_split_unless_archived(split)
+            end
+
+            @splits_repository.set_segment_names(data[:segment_names])
+            @splits_repository.set_change_number(data[:till])
+
+            @config.logger.debug("segments seen(#{data[:segment_names].length}): #{data[:segment_names].to_a}") if @config.debug_enabled
+
+            @sdk_blocker.splits_ready!
+            true
           end
-
-          @splits_repository.set_segment_names(data[:segment_names])
-          @splits_repository.set_change_number(data[:till])
-
-          @config.logger.debug("segments seen(#{data[:segment_names].length}): #{data[:segment_names].to_a}") if @config.debug_enabled
-
-          @sdk_blocker.splits_ready!
-
         rescue StandardError => error
           @config.log_found_exception(__method__.to_s, error)
+          false
+        end
+
+        def stop_splits_thread
+          SplitIoClient::Helpers::ThreadHelper.stop(:split_fetcher, @config)
         end
 
         private
 
         def splits_thread
           @config.threads[:split_fetcher] = Thread.new do
-            @config.logger.info('Starting splits fetcher service')
+            @config.logger.info('Starting splits fetcher service') if @config.debug_enabled
             loop do
               fetch_splits
 
-              sleep(StoreUtils.random_interval(@config.features_refresh_rate))
+              sleep_for = SplitIoClient::Cache::Stores::StoreUtils.random_interval(@config.features_refresh_rate)
+              @config.logger.debug("Splits fetcher is sleeping for: #{sleep_for} seconds") if @config.debug_enabled
+              sleep(sleep_for)
             end
           end
         end
