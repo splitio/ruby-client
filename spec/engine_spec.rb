@@ -658,8 +658,9 @@ describe SplitIoClient, type: :client do
         # Need this because we're storing impressions in the Set
         # Without sleep we may have identical impressions (including time)
         # In that case only one impression with key "26" would be stored
-        sleep 0.1
+        sleep 1
         subject.get_treatments('26', %w[sample_feature beta_feature])
+        
         impressions = customer_impression_listener.queue
 
         expect(impressions.size).to eq(2)
