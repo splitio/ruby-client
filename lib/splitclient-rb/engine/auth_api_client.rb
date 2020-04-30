@@ -17,12 +17,12 @@ module SplitIoClient
         return process_success(response) if response.success?
 
         if response.status >= 400 && response.status < 500
-          @config.logger.debug("Problem to connect to: #{@config.auth_service_url}. Response status: #{response.status}")
+          @config.logger.debug("Error connecting to: #{@config.auth_service_url}. Response status: #{response.status}")
 
           return { push_enabled: false, retry: false }
         end
 
-        @config.logger.debug("Problem to connect to: #{@config.auth_service_url}. Response status: #{response.status}")
+        @config.logger.debug("Error connecting to: #{@config.auth_service_url}. Response status: #{response.status}")
         { push_enabled: false, retry: true }
       end
 

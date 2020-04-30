@@ -275,11 +275,11 @@ module SplitIoClient
     end
 
     def self.default_streaming_service_url
-      'https://realtime.ably.io/event-stream'
+      'https://split-realtime.ably.io/event-stream'
     end
 
     def self.default_auth_service_url
-      'https://auth.split-stage.io/api/auth'
+      'https://auth.split.io/api/auth'
     end
 
     def self.default_auth_retry_back_off_base
