@@ -660,7 +660,6 @@ describe SplitIoClient, type: :client do
         # In that case only one impression with key "26" would be stored
         sleep 0.1
         subject.get_treatments('26', %w[sample_feature beta_feature])
-        sleep(1)
         impressions = customer_impression_listener.queue
 
         expect(impressions.size).to eq(2)
