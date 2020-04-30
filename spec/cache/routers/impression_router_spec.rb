@@ -10,7 +10,7 @@ describe SplitIoClient::ImpressionRouter do
       matching_key: 'dan',
       bucketing_key: nil,
       treatments_labels_change_numbers: {
-        ruby:   { treatment: 'default', label: 'explicitly included', change_number: 1_489_788_351_672 },
+        ruby: { treatment: 'default', label: 'explicitly included', change_number: 1_489_788_351_672 },
         ruby_1: { treatment: 'off', label: 'in segment all', change_number: 1_488_927_857_775 }
       },
       attributes: {}
