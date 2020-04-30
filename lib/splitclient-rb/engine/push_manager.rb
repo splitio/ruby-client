@@ -42,7 +42,6 @@ module SplitIoClient
             sleep(time)
             @config.logger.debug('schedule_next_token_refresh starting ...') if @config.debug_enabled
             stop_sse
-            sleep(1)
             start_sse
           rescue StandardError => e
             @config.logger.debug("schedule_next_token_refresh error: #{e.inspect}") if @config.debug_enabled
