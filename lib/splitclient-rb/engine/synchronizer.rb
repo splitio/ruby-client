@@ -32,9 +32,9 @@ module SplitIoClient
       end
 
       def start_periodic_data_recording
-        @metrics_sender = metrics_sender
-        @impressions_sender = impressions_sender
-        @events_sender = events_sender
+        impressions_sender
+        metrics_sender
+        events_sender
       end
 
       def start_periodic_fetch

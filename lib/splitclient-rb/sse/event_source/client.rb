@@ -11,8 +11,7 @@ module SplitIoClient
         DEFAULT_READ_TIMEOUT = 70
         KEEP_ALIVE_RESPONSE = "c\r\n:keepalive\n\n\r\n".freeze
 
-        def initialize(url, config, read_timeout: DEFAULT_READ_TIMEOUT)
-          @uri = URI(url)
+        def initialize(config, read_timeout: DEFAULT_READ_TIMEOUT)
           @config = config
           @read_timeout = read_timeout
           @connected = Concurrent::AtomicBoolean.new(false)
@@ -22,9 +21,6 @@ module SplitIoClient
           @on = { event: ->(_) {}, connected: ->(_) {}, disconnect: ->(_) {} }
 
           yield self if block_given?
-
-          connect_thread
-          connect_passenger_forked if defined?(PhusionPassenger)
         end
 
         def on_event(&action)
@@ -42,8 +38,18 @@ module SplitIoClient
         def close
           dispatch_disconnect
           @connected.make_false
+          SplitIoClient::Helpers::ThreadHelper.stop(:connect_stream, @config)
           @socket&.close
-          @socket = nil
+        rescue StandardError => e
+          @config.logger.error("SSEClient close Error: #{e.inspect}")
+        end
+
+        def start(url)
+          @uri = URI(url)
+
+          connect_thread
+        rescue StandardError => e
+          @config.logger.error("SSEClient start Error: #{e.inspect}")
         end
 
         def connected?
@@ -53,26 +59,25 @@ module SplitIoClient
         private
 
         def connect_thread
-          @config.threads[:connect_stream] = Thread.new { connect_stream }
-        end
-
-        def connect_passenger_forked
-          PhusionPassenger.on_event(:starting_worker_process) { |forked| connect_thread if forked }
+          @config.threads[:connect_stream] = Thread.new do
+            @config.logger.info('Starting connect_stream thread ...') if @config.debug_enabled
+            connect_stream
+          end
         end
 
         def connect_stream
           interval = @back_off.interval
           sleep(interval) if interval.positive?
 
-          @config.logger.info("Connecting to #{@uri.host}...") if @config.debug_enabled
-
           socket_write
 
           while @connected.value
             begin
-              partial_data = @socket.readpartial(2048, timeout: @read_timeout)
-            rescue Socketry::TimeoutError
-              @config.logger.error("Socket read time out in #{@read_timeout} seconds") if @config.debug_enabled
+              partial_data = @socket.readpartial(10_000, timeout: @read_timeout)
+
+              raise 'eof exception' if partial_data == :eof
+            rescue StandardError => e
+              @config.logger.error(e.inspect) if @config.debug_enabled
               @connected.make_false
               @socket&.close
               @socket = nil
@@ -102,12 +107,10 @@ module SplitIoClient
           unless partial_data.nil? || partial_data == KEEP_ALIVE_RESPONSE
             @config.logger.debug("Event partial data: #{partial_data}") if @config.debug_enabled
             buffer = read_partial_data(partial_data)
-            events = parse_event(buffer)
-
-            dispatch_event(events)
+            parse_event(buffer)
           end
         rescue StandardError => e
-          @config.logger.error("Error during processing data: #{e.inspect}")
+          @config.logger.error("process_data error: #{e.inspect}")
         end
 
         def build_request(uri)
@@ -128,7 +131,6 @@ module SplitIoClient
 
         def parse_event(buffer)
           type = nil
-          events = []
 
           buffer.each do |d|
             splited_data = d.split(':')
@@ -138,14 +140,14 @@ module SplitIoClient
               type = splited_data[1].strip
             when 'data'
               data = parse_event_data(d, type)
-              events << StreamData.new(type, data[:client_id], data[:data], data[:channel]) unless type.nil? || data[:data].nil?
+              unless type.nil? || data[:data].nil?
+                event = StreamData.new(type, data[:client_id], data[:data], data[:channel])
+                dispatch_event(event)
+              end
             end
           end
-
-          events
         rescue StandardError => e
           @config.logger.error("Error during parsing a event: #{e.inspect}")
-          []
         end
 
         def parse_event_data(data, type)
@@ -158,13 +160,11 @@ module SplitIoClient
           { client_id: client_id, channel: channel, data: parsed_data }
         end
 
-        def dispatch_event(events)
-          events.each do |event|
-            raise SSEClientException.new(event), 'Error event' if event.event_type == 'error'
+        def dispatch_event(event)
+          raise SSEClientException.new(event), 'Error event' if event.event_type == 'error'
 
-            @config.logger.debug("Dispatching event: #{event.event_type}, #{event.channel}") if @config.debug_enabled
-            @on[:event].call(event)
-          end
+          @config.logger.debug("Dispatching event: #{event.event_type}, #{event.channel}") if @config.debug_enabled
+          @on[:event].call(event)
         rescue SSEClientException => e
           @config.logger.error("Event error: #{e.event.event_type}, #{e.event.data}")
           close

@@ -15,7 +15,6 @@ module SplitIoClient
 
           @queue = Queue.new
           perform_thread
-          perform_passenger_forked if defined?(PhusionPassenger)
         end
 
         def add_to_queue(change_number)

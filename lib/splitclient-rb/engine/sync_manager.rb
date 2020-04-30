@@ -39,6 +39,7 @@ module SplitIoClient
       def start
         if @config.streaming_enabled
           start_stream
+          start_stream_forked if defined?(PhusionPassenger)
         elsif @config.standalone?
           start_poll
         end
@@ -48,14 +49,15 @@ module SplitIoClient
 
       # Starts tasks if stream is enabled.
       def start_stream
+        @config.logger.debug('Starting push mode ...')
         stream_start_thread
-        stream_start_thread_forked if defined?(PhusionPassenger)
+        @synchronizer.start_periodic_data_recording
 
         stream_start_sse_thread
-        stream_start_sse_thread_forked if defined?(PhusionPassenger)
       end
 
       def start_poll
+        @config.logger.debug('Starting polling mode ...')
         @synchronizer.start_periodic_fetch
         @synchronizer.start_periodic_data_recording
       rescue StandardError => e
@@ -67,7 +69,6 @@ module SplitIoClient
         @config.threads[:sync_manager_start_stream] = Thread.new do
           begin
             @synchronizer.sync_all
-            @synchronizer.start_periodic_data_recording
           rescue StandardError => e
             @config.logger.error("stream_start_thread error : #{e.inspect}")
           end
@@ -85,12 +86,8 @@ module SplitIoClient
         end
       end
 
-      def stream_start_thread_forked
-        PhusionPassenger.on_event(:starting_worker_process) { |forked| stream_start_thread if forked }
-      end
-
-      def stream_start_sse_thread_forked
-        PhusionPassenger.on_event(:starting_worker_process) { |forked| stream_start_sse_thread if forked }
+      def start_stream_forked
+        PhusionPassenger.on_event(:starting_worker_process) { |forked| start_stream if forked }
       end
 
       def process_connected
