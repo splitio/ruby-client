@@ -1,11 +1,26 @@
 Documentation:
     Enabled: false
 
+Metrics/AbcSize:
+  Max: 26
+
 Metrics/MethodLength:
-  Max: 15
+  Max: 20
+
+Metrics/ClassLength:
+  Max: 150
 
 Metrics/LineLength:
-  Max: 121
+  Max: 130
+  Exclude:
+    - spec/sse/**/*
+    - spec/integrations/**/*
+    - spec/engine/sync_manager_spec.rb
+
+Style/BracesAroundHashParameters:
+  Exclude:
+    - spec/integrations/push_client_spec.rb
+    - spec/engine/synchronizer_spec.rb
 
 Metrics/BlockLength:
   Exclude:

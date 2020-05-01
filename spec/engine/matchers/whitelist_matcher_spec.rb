@@ -4,7 +4,7 @@ require 'spec_helper'
 
 describe SplitIoClient::WhitelistMatcher do
   subject do
-    SplitIoClient::SplitFactory.new('test_api_key', logger: Logger.new('/dev/null')).client
+    SplitIoClient::SplitFactory.new('test_api_key', logger: Logger.new('/dev/null'), streaming_enabled: false).client
   end
 
   let(:splits_json) do

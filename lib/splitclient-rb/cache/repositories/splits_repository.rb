@@ -128,6 +128,18 @@ module SplitIoClient
           @adapter.clear(namespace_key)
         end
 
+        def kill(change_number, split_name, default_treatment)
+          split = get_split(split_name)
+
+          return if split.nil?
+
+          split[:killed] = true
+          split[:defaultTreatment] = default_treatment
+          split[:changeNumber] = change_number
+
+          @adapter.set_string(namespace_key(".split.#{split_name}"), split.to_json)
+        end
+
         private
 
         def increase_tt_name_count(tt_name)
