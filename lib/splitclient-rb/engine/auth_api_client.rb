@@ -30,8 +30,9 @@ module SplitIoClient
 
       def expiration(token_decoded)
         exp = token_decoded[0]['exp']
+        issued_at = token_decoded[0]['iat']
 
-        (exp - SplitIoClient::Constants::EXPIRATION_RATE) - Time.now.getutc.to_i unless exp.nil?
+        exp - issued_at - SplitIoClient::Constants::EXPIRATION_RATE unless exp.nil?
       rescue StandardError => e
         @config.logger.error("Error getting token expiration: #{e.inspect}")
       end
