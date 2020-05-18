@@ -25,7 +25,7 @@ module SplitIoClient
         @config.logger.debug("Error connecting to: #{@config.auth_service_url}. Response status: #{response.status}")
         { push_enabled: false, retry: true }
       rescue StandardError => e
-        @config.logger.debug("AuthApiClient error: #{e.inspect}")
+        @config.logger.debug("AuthApiClient error: #{e.inspect}.")
         { push_enabled: false, retry: false }
       end
 
