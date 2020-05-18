@@ -275,7 +275,7 @@ module SplitIoClient
     end
 
     def self.default_streaming_service_url
-      'https://split-realtime.ably.io/event-stream'
+      'https://streaming.split.io/event-stream'
     end
 
     def self.default_auth_service_url
