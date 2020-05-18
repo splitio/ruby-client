@@ -24,6 +24,9 @@ module SplitIoClient
 
         @config.logger.debug("Error connecting to: #{@config.auth_service_url}. Response status: #{response.status}")
         { push_enabled: false, retry: true }
+      rescue StandardError => e
+        @config.logger.debug("AuthApiClient error: #{e.inspect}")
+        { push_enabled: false, retry: false }
       end
 
       private
@@ -32,9 +35,7 @@ module SplitIoClient
         exp = token_decoded[0]['exp']
         issued_at = token_decoded[0]['iat']
 
-        exp - issued_at - SplitIoClient::Constants::EXPIRATION_RATE unless exp.nil?
-      rescue StandardError => e
-        @config.logger.error("Error getting token expiration: #{e.inspect}")
+        exp - issued_at - SplitIoClient::Constants::EXPIRATION_RATE
       end
 
       def channels(token_decoded)
