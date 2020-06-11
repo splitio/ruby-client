@@ -4,6 +4,7 @@ module SplitIoClient
   module Cache
     module Stores
       class LocalhostSplitStore
+        require 'yaml'
         attr_reader :splits_repository
 
         def initialize(splits_repository, config, sdk_blocker = nil)

@@ -1,3 +1,6 @@
+7.1.2 (Jun 11, 2020)
+- Fixed uninitialized constant LocalhostSplitStore::YAML.
+
 7.1.1 (May 19, 2020)
 - Updated streaming domain.
 
