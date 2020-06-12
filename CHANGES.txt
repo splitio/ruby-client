@@ -1,4 +1,4 @@
-7.1.2 (Jun 11, 2020)
+7.1.2 (Jun 12, 2020)
 - Fixed uninitialized constant LocalhostSplitStore::YAML.
 - Updated default_streaming_enabled to true.
 
