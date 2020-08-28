@@ -10,23 +10,23 @@ describe SplitIoClient::Hashers::ImpressionHasher do
     impression_hasher = subject.new
 
     impression1 = {
-      k: "some_matching_key",
-      b: "some_bucketing_key",
-      f: "some_feature",
-      t: "some_treatment",
-      r: "some_label",
-      c: 123,
+      k: 'some_matching_key',
+      b: 'some_bucketing_key',
+      f: 'some_feature',
+      t: 'some_treatment',
+      r: 'some_label',
+      c: 123
     }
 
     impression2 = {
-      k: "some_matching_key",
-      b: "some_bucketing_key",
-      f: "some_feature",
-      t: "other_treatment",
-      r: "some_label",
-      c: 123,
+      k: 'some_matching_key',
+      b: 'some_bucketing_key',
+      f: 'some_feature',
+      t: 'other_treatment',
+      r: 'some_label',
+      c: 123
     }
-    
+
     expect(impression_hasher.process(impression1)).not_to eq(impression_hasher.process(impression2))
   end
 
@@ -34,12 +34,12 @@ describe SplitIoClient::Hashers::ImpressionHasher do
     impression_hasher = subject.new
 
     impression = {
-      k: "some_matching_key",
-      b: "some_bucketing_key",
+      k: 'some_matching_key',
+      b: 'some_bucketing_key',
       f: nil,
-      t: "some_treatment",
-      r: "some_label",
-      c: 123,
+      t: 'some_treatment',
+      r: 'some_label',
+      c: 123
     }
 
     expect(impression_hasher.process(impression)).to be
@@ -64,7 +64,7 @@ describe SplitIoClient::Hashers::ImpressionHasher do
       expected = row[2]
 
       result = Digest::MurmurHashMRI3_x64_128.rawdigest(key, [seed.to_i].pack('L'))
-      
+
       expect(expected.to_i).to eq(result[0])
     end
   end
