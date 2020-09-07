@@ -27,7 +27,15 @@ describe SplitIoClient::Hashers::ImpressionHasher do
       c: 123
     }
 
-    expect(impression_hasher.process(impression1)).not_to eq(impression_hasher.process(impression2))
+    result1 = impression_hasher.process(impression1)
+    result2 = impression_hasher.process(impression2)
+
+    expect(result1).not_to eq(result2)
+
+    impression2[:k] = 'other_matching_key'
+    result3 = impression_hasher.process(impression2)
+
+    expect(result2).not_to eq(result3)
   end
 
   it 'does not crash' do
