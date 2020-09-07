@@ -11,7 +11,6 @@ describe SplitIoClient::Hashers::ImpressionHasher do
 
     impression1 = {
       k: 'some_matching_key',
-      b: 'some_bucketing_key',
       f: 'some_feature',
       t: 'some_treatment',
       r: 'some_label',
@@ -20,7 +19,6 @@ describe SplitIoClient::Hashers::ImpressionHasher do
 
     impression2 = {
       k: 'some_matching_key',
-      b: 'some_bucketing_key',
       f: 'some_feature',
       t: 'other_treatment',
       r: 'some_label',
@@ -34,8 +32,23 @@ describe SplitIoClient::Hashers::ImpressionHasher do
 
     impression2[:k] = 'other_matching_key'
     result3 = impression_hasher.process(impression2)
-
     expect(result2).not_to eq(result3)
+
+    impression2[:f] = 'other_feature'
+    result4 = impression_hasher.process(impression2)
+    expect(result3).not_to eq(result4)
+
+    impression2[:t] = 'other_treatment_2'
+    result5 = impression_hasher.process(impression2)
+    expect(result4).not_to eq(result5)
+
+    impression2[:r] = 'other_label'
+    result6 = impression_hasher.process(impression2)
+    expect(result5).not_to eq(result6)
+
+    impression2[:c] = 333
+    result7 = impression_hasher.process(impression2)
+    expect(result6).not_to eq(result7)
   end
 
   it 'does not crash' do
