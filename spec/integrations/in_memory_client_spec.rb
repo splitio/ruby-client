@@ -338,19 +338,19 @@ describe SplitIoClient do
       expect(impressions.size).to eq 3
 
       expect(impressions[0][:matching_key]).to eq('nico_test')
-      expect(impressions[0][:split_name]).to eq('FACUNDO_TEST')
+      expect(impressions[0][:split_name]).to eq(:FACUNDO_TEST)
       expect(impressions[0][:treatment][:treatment]).to eq('on')
       expect(impressions[0][:treatment][:label]).to eq('whitelisted')
       expect(impressions[0][:treatment][:change_number]).to eq(1_506_703_262_916)
 
       expect(impressions[1][:matching_key]).to eq('nico_test')
-      expect(impressions[1][:split_name]).to eq('MAURO_TEST')
+      expect(impressions[1][:split_name]).to eq(:MAURO_TEST)
       expect(impressions[1][:treatment][:treatment]).to eq('off')
       expect(impressions[1][:treatment][:label]).to eq('not in split')
       expect(impressions[1][:treatment][:change_number]).to eq(1_506_703_262_966)
 
       expect(impressions[2][:matching_key]).to eq('nico_test')
-      expect(impressions[2][:split_name]).to eq('Test_Save_1')
+      expect(impressions[2][:split_name]).to eq(:Test_Save_1)
       expect(impressions[2][:treatment][:treatment]).to eq('off')
       expect(impressions[2][:treatment][:label]).to eq('in segment all')
       expect(impressions[2][:treatment][:change_number]).to eq(1_503_956_389_520)
@@ -372,7 +372,7 @@ describe SplitIoClient do
 
       expect(impressions.size).to eq 1
       expect(impressions[0][:matching_key]).to eq('nico_test')
-      expect(impressions[0][:split_name]).to eq('FACUNDO_TEST')
+      expect(impressions[0][:split_name]).to eq(:FACUNDO_TEST)
       expect(impressions[0][:treatment][:treatment]).to eq('on')
       expect(impressions[0][:treatment][:label]).to eq('whitelisted')
       expect(impressions[0][:treatment][:change_number]).to eq(1_506_703_262_916)
@@ -389,7 +389,7 @@ describe SplitIoClient do
 
       expect(impressions.size).to eq 1
       expect(impressions[0][:matching_key]).to eq('nico_test')
-      expect(impressions[0][:split_name]).to eq('FACUNDO_TEST')
+      expect(impressions[0][:split_name]).to eq(:FACUNDO_TEST)
       expect(impressions[0][:treatment][:treatment]).to eq('on')
       expect(impressions[0][:treatment][:label]).to eq('whitelisted')
       expect(impressions[0][:treatment][:change_number]).to eq(1_506_703_262_916)
@@ -408,13 +408,13 @@ describe SplitIoClient do
 
       expect(impressions.size).to eq 2
       expect(impressions[0][:matching_key]).to eq('nico_test')
-      expect(impressions[0][:split_name]).to eq('FACUNDO_TEST')
+      expect(impressions[0][:split_name]).to eq(:FACUNDO_TEST)
       expect(impressions[0][:treatment][:treatment]).to eq('control')
       expect(impressions[0][:treatment][:label]).to eq('not ready')
       expect(impressions[0][:treatment][:change_number]).to eq(nil)
 
       expect(impressions[1][:matching_key]).to eq('nico_test')
-      expect(impressions[1][:split_name]).to eq('random_treatment')
+      expect(impressions[1][:split_name]).to eq(:random_treatment)
       expect(impressions[1][:treatment][:treatment]).to eq('control')
       expect(impressions[1][:treatment][:label]).to eq('not ready')
       expect(impressions[1][:treatment][:change_number]).to eq(nil)
@@ -442,19 +442,19 @@ describe SplitIoClient do
 
       expect(impressions.size).to eq 3
       expect(impressions[0][:matching_key]).to eq('nico_test')
-      expect(impressions[0][:split_name]).to eq('FACUNDO_TEST')
+      expect(impressions[0][:split_name]).to eq(:FACUNDO_TEST)
       expect(impressions[0][:treatment][:treatment]).to eq('on')
       expect(impressions[0][:treatment][:label]).to eq('whitelisted')
       expect(impressions[0][:treatment][:change_number]).to eq(1_506_703_262_916)
 
       expect(impressions[1][:matching_key]).to eq('nico_test')
-      expect(impressions[1][:split_name]).to eq('MAURO_TEST')
+      expect(impressions[1][:split_name]).to eq(:MAURO_TEST)
       expect(impressions[1][:treatment][:treatment]).to eq('off')
       expect(impressions[1][:treatment][:label]).to eq('not in split')
       expect(impressions[1][:treatment][:change_number]).to eq(1_506_703_262_966)
 
       expect(impressions[2][:matching_key]).to eq('nico_test')
-      expect(impressions[2][:split_name]).to eq('Test_Save_1')
+      expect(impressions[2][:split_name]).to eq(:Test_Save_1)
       expect(impressions[2][:treatment][:treatment]).to eq('off')
       expect(impressions[2][:treatment][:label]).to eq('in segment all')
       expect(impressions[2][:treatment][:change_number]).to eq(1_503_956_389_520)
@@ -491,7 +491,7 @@ describe SplitIoClient do
 
       expect(impressions.size).to eq 1
       expect(impressions[0][:matching_key]).to eq('nico_test')
-      expect(impressions[0][:split_name]).to eq('FACUNDO_TEST')
+      expect(impressions[0][:split_name]).to eq(:FACUNDO_TEST)
       expect(impressions[0][:treatment][:treatment]).to eq('on')
       expect(impressions[0][:treatment][:label]).to eq('whitelisted')
       expect(impressions[0][:treatment][:change_number]).to eq(1_506_703_262_916)
@@ -514,7 +514,7 @@ describe SplitIoClient do
 
       expect(impressions.size).to eq 1
       expect(impressions[0][:matching_key]).to eq('nico_test')
-      expect(impressions[0][:split_name]).to eq('FACUNDO_TEST')
+      expect(impressions[0][:split_name]).to eq(:FACUNDO_TEST)
       expect(impressions[0][:treatment][:treatment]).to eq('on')
       expect(impressions[0][:treatment][:label]).to eq('whitelisted')
       expect(impressions[0][:treatment][:change_number]).to eq(1_506_703_262_916)
@@ -542,19 +542,19 @@ describe SplitIoClient do
 
       expect(impressions.size).to eq 3
       expect(impressions[0][:matching_key]).to eq('nico_test')
-      expect(impressions[0][:split_name]).to eq('FACUNDO_TEST')
+      expect(impressions[0][:split_name]).to eq(:FACUNDO_TEST)
       expect(impressions[0][:treatment][:treatment]).to eq('control')
       expect(impressions[0][:treatment][:label]).to eq('not ready')
       expect(impressions[0][:treatment][:change_number]).to eq(nil)
 
       expect(impressions[1][:matching_key]).to eq('nico_test')
-      expect(impressions[1][:split_name]).to eq('MAURO_TEST')
+      expect(impressions[1][:split_name]).to eq(:MAURO_TEST)
       expect(impressions[1][:treatment][:treatment]).to eq('control')
       expect(impressions[1][:treatment][:label]).to eq('not ready')
       expect(impressions[1][:treatment][:change_number]).to eq(nil)
 
       expect(impressions[2][:matching_key]).to eq('nico_test')
-      expect(impressions[2][:split_name]).to eq('Test_Save_1')
+      expect(impressions[2][:split_name]).to eq(:Test_Save_1)
       expect(impressions[2][:treatment][:treatment]).to eq('control')
       expect(impressions[2][:treatment][:label]).to eq('not ready')
       expect(impressions[2][:treatment][:change_number]).to eq(nil)

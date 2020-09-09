@@ -462,6 +462,7 @@ describe SplitIoClient, type: :client do
           new_feature: 'on', foo: SplitIoClient::Engine::Models::Treatment::CONTROL
         )
         impressions = subject.instance_variable_get(:@impressions_repository).batch
+
         expect(impressions.size).to eq(1)
       end
 
@@ -676,8 +677,8 @@ describe SplitIoClient, type: :client do
 
         expect(impressions.size).to eq(12)
 
-        expect(impressions.select { |i| i[:split_name] == 'sample_feature' }.size).to eq(6)
-        expect(impressions.select { |i| i[:split_name] == 'beta_feature' }.size).to eq(6)
+        expect(impressions.select { |i| i[:split_name] == :sample_feature }.size).to eq(6)
+        expect(impressions.select { |i| i[:split_name] == :beta_feature }.size).to eq(6)
       end
 
       context 'traffic allocations' do
@@ -706,10 +707,7 @@ describe SplitIoClient, type: :client do
         it 'returns "not in split" label' do
           subject.get_treatment('test', 'Traffic_Allocation_UI2')
           impressions_repository = subject.instance_variable_get(:@impressions_repository)
-          puts '####'
-          imp = impressions_repository.batch[0]
-          puts imp
-          expect(imp[:i][:r]).to eq(SplitIoClient::Engine::Models::Label::NOT_IN_SPLIT)
+          expect(impressions_repository.batch[0][:i][:r]).to eq(SplitIoClient::Engine::Models::Label::NOT_IN_SPLIT)
         end
       end
     end

@@ -44,7 +44,6 @@ module SplitIoClient
       )
       impressions = []
       result = treatment(key, split_name, attributes, split_data, store_impressions, multiple, evaluator, 'get_treatment_with_config', impressions)
-      
       @impressions_manager.track(impressions)
 
       result
@@ -204,11 +203,11 @@ module SplitIoClient
       matching_key = matching_key ? matching_key.to_s : nil     
 
       evaluator = Engine::Parser::Evaluator.new(@segments_repository, @splits_repository, @config, true)
-      impressions = []
       start = Time.now
+      impressions = []
       treatments_labels_change_numbers =
         @splits_repository.get_splits(sanitized_split_names).each_with_object({}) do |(name, data), memo|
-          memo.merge!(name => treatment(key, name, attributes, data, false, true, evaluator, impressions))
+          memo.merge!(name => treatment(key, name, attributes, data, false, true, evaluator, calling_method, impressions))
         end
       latency = (Time.now - start) * 1000.0
       # Measure
@@ -286,14 +285,15 @@ module SplitIoClient
 
         latency = (Time.now - start) * 1000.0
         
-        @impressions_manager.add_to_queue(impressions, matching_key, bucketing_key, split_name, treatment_data, attributes)
+        impressions << @impressions_manager.build_impression(matching_key, bucketing_key, split_name, treatment_data, attributes)
 
         # Measure
         @metrics.time('sdk.' + calling_method, latency) unless multiple
       rescue StandardError => error
+        p error
         @config.log_found_exception(__method__.to_s, error)
 
-        @impressions_manager.add_to_queue(impressions, matching_key, bucketing_key, split_name, control_treatment, attributes)
+        impressions << @impressions_manager.build_impression(matching_key, bucketing_key, split_name, control_treatment, attributes)
 
         return parsed_treatment(multiple, control_treatment.merge({ label: Engine::Models::Label::EXCEPTION }))
       end

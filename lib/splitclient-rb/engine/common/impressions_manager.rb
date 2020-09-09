@@ -11,10 +11,11 @@ module SplitIoClient
           # @impression_observer = impression_observer
         end
 
-        def add_to_queue(impressions, matching_key, bucketing_key, split_name, treatment, attributes)
-          imp = build_impression(matching_key, bucketing_key, split_name, treatment, attributes)
+        def build_impression(matching_key, bucketing_key, split_name, treatment, attributes)
+          impression_data = impression_data(matching_key, bucketing_key, split_name, treatment)
+          # impression_data[:pt] = @impression_observer.test_and_set(impression)
 
-          impressions << imp
+          { m: metadata, i: impression_data, attributes: attributes }
         rescue StandardError => error
           @config.log_found_exception(__method__.to_s, error)
         end
@@ -27,13 +28,6 @@ module SplitIoClient
         end
 
         private
-
-        def build_impression(matching_key, bucketing_key, split_name, treatment, attributes)
-          impression_data = impression_data(matching_key, bucketing_key, split_name, treatment)
-          # impression_data[:pt] = @impression_observer.test_and_set(impression)
-
-          { m: metadata, i: impression_data, attributes: attributes }
-        end
 
         def impression_data(matching_key, bucketing_key, split_name, treatment)
           {

@@ -39,7 +39,6 @@ module SplitIoClient
           end
 
           def add_bulk_v2(impressions)
-            puts 'add_bulk_v2'
             impressions.each do |impression|
               @adapter.add_to_queue(impression)
             end

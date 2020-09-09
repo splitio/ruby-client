@@ -39,10 +39,14 @@ module SplitIoClient
           end
 
           def add_bulk_v2(impressions)
-            impressions_list_size = @adapter.add_to_queue(key, impressions.to_json)
+            impressions_json = impressions.map do |impression|
+              impression.to_json
+            end
+
+            impressions_list_size = @adapter.add_to_queue(key, impressions_json)
 
             # Synchronizer might not be running
-            @adapter.expire(key, EXPIRE_SECONDS) if impressions.size == impressions_list_size
+            @adapter.expire(key, EXPIRE_SECONDS) if impressions_json.size == impressions_list_size
           rescue StandardError => e
             @config.logger.error("Exception while add_bulk_v2: #{e}")
           end
@@ -54,7 +58,6 @@ module SplitIoClient
               impression
             end
           rescue StandardError => e
-            puts e.inspect
             @config.logger.error("Exception while clearing impressions cache: #{e}")
             []
           end
