@@ -20,17 +20,21 @@ module SplitIoClient
       @sdk_blocker = sdk_blocker
       @destroyed = false
       @config = config
+      @impressions_manager = SplitIoClient::Engine::Common::ImpressionManager.new(config, impressions_repository)
     end
 
     def get_treatment(
         key, split_name, attributes = {}, split_data = nil, store_impressions = true,
         multiple = false, evaluator = nil
       )
-      treatment = treatment(key, split_name, attributes, split_data, store_impressions, multiple, evaluator)
+      impressions = []
+      result = treatment(key, split_name, attributes, split_data, store_impressions, multiple, evaluator, 'get_treatment', impressions)
+      @impressions_manager.track(impressions)
+
       if multiple
-         treatment.tap { |t| t.delete(:config) }
+        result.tap { |t| t.delete(:config) }
       else
-        treatment[:treatment]
+        result[:treatment]
       end
     end
 
@@ -38,7 +42,12 @@ module SplitIoClient
         key, split_name, attributes = {}, split_data = nil, store_impressions = true,
         multiple = false, evaluator = nil
       )
-      treatment(key, split_name, attributes, split_data, store_impressions, multiple, evaluator, 'get_treatment_with_config')
+      impressions = []
+      result = treatment(key, split_name, attributes, split_data, store_impressions, multiple, evaluator, 'get_treatment_with_config', impressions)
+      
+      @impressions_manager.track(impressions)
+
+      result
     end
 
     def get_treatments(key, split_names, attributes = {})
@@ -72,53 +81,6 @@ module SplitIoClient
       @config.logger.info('Split client shutdown complete') if @config.debug_enabled
       @config.valid_mode = false
       @destroyed = true
-    end
-
-    def store_impression(split_name, matching_key, bucketing_key, treatment, attributes)
-      time = (Time.now.to_f * 1000.0).to_i
-
-      @impressions_repository.add(
-        matching_key,
-        bucketing_key,
-        split_name,
-        treatment,
-        time
-      )
-
-      route_impression(split_name, matching_key, bucketing_key, time, treatment, attributes)
-
-    rescue StandardError => error
-      @config.log_found_exception(__method__.to_s, error)
-    end
-
-    def route_impression(split_name, matching_key, bucketing_key, time, treatment, attributes)
-      impression_router.add(
-        split_name: split_name,
-        matching_key: matching_key,
-        bucketing_key: bucketing_key,
-        time: time,
-        treatment: {
-          label: treatment[:label],
-          treatment: treatment[:treatment],
-          change_number: treatment[:change_number]
-        },
-        attributes: attributes
-      )
-    end
-
-    def route_impressions(split_names, matching_key, bucketing_key, time, treatments_labels_change_numbers, attributes)
-      impression_router.add_bulk(
-        split_names: split_names,
-        matching_key: matching_key,
-        bucketing_key: bucketing_key,
-        time: time,
-        treatments_labels_change_numbers: treatments_labels_change_numbers,
-        attributes: attributes
-      )
-    end
-
-    def impression_router
-      @impression_router ||= SplitIoClient::ImpressionRouter.new(@config)
     end
 
     def track(key, traffic_type_name, event_type, value = nil, properties = nil)
@@ -239,26 +201,20 @@ module SplitIoClient
 
       bucketing_key, matching_key = keys_from_key(key)
       bucketing_key = bucketing_key ? bucketing_key.to_s : nil
-      matching_key = matching_key ? matching_key.to_s : nil
+      matching_key = matching_key ? matching_key.to_s : nil     
 
       evaluator = Engine::Parser::Evaluator.new(@segments_repository, @splits_repository, @config, true)
+      impressions = []
       start = Time.now
       treatments_labels_change_numbers =
         @splits_repository.get_splits(sanitized_split_names).each_with_object({}) do |(name, data), memo|
-          memo.merge!(name => treatment(key, name, attributes, data, false, true, evaluator))
+          memo.merge!(name => treatment(key, name, attributes, data, false, true, evaluator, impressions))
         end
       latency = (Time.now - start) * 1000.0
       # Measure
       @metrics.time('sdk.' + calling_method, latency)
 
-      treatments_for_impressions = get_treatment_for_impressions(treatments_labels_change_numbers)
-
-      time = (Time.now.to_f * 1000.0).to_i
-      @impressions_repository.add_bulk(
-        matching_key, bucketing_key, treatments_for_impressions, time
-      ) unless treatments_for_impressions == {}
-
-      route_impressions(sanitized_split_names, matching_key, bucketing_key, time, treatments_for_impressions, attributes)
+      @impressions_manager.track(impressions)
 
       split_names_keys = treatments_labels_change_numbers.keys
       treatments = treatments_labels_change_numbers.values.map do |v|
@@ -284,7 +240,7 @@ module SplitIoClient
     # @return [String/Hash] Treatment as String or Hash of treatments in case of array of features
     def treatment(
         key, split_name, attributes = {}, split_data = nil, store_impressions = true,
-        multiple = false, evaluator = nil, calling_method = 'get_treatment'
+        multiple = false, evaluator = nil, calling_method = 'get_treatment', impressions = []
       )
       control_treatment = { treatment: Engine::Models::Treatment::CONTROL }
 
@@ -329,15 +285,15 @@ module SplitIoClient
         end
 
         latency = (Time.now - start) * 1000.0
-
-        store_impression(split_name, matching_key, bucketing_key, treatment_data, attributes) if store_impressions
+        
+        @impressions_manager.add_to_queue(impressions, matching_key, bucketing_key, split_name, treatment_data, attributes)
 
         # Measure
         @metrics.time('sdk.' + calling_method, latency) unless multiple
       rescue StandardError => error
         @config.log_found_exception(__method__.to_s, error)
 
-        store_impression(split_name, matching_key, bucketing_key, control_treatment, attributes) if store_impressions
+        @impressions_manager.add_to_queue(impressions, matching_key, bucketing_key, split_name, control_treatment, attributes)
 
         return parsed_treatment(multiple, control_treatment.merge({ label: Engine::Models::Label::EXCEPTION }))
       end
@@ -356,13 +312,6 @@ module SplitIoClient
 
     def parsed_attributes(attributes)
       return attributes || attributes.to_h
-    end
-
-    def get_treatment_for_impressions(treatments_labels_change_numbers)
-      return treatments_labels_change_numbers.select{|imp| 
-        treatments_labels_change_numbers[imp][:label] != Engine::Models::Label::NOT_FOUND && 
-        !treatments_labels_change_numbers[imp][:label].nil?
-      }
     end
   end
 end

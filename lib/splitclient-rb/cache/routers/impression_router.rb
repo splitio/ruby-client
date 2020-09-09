@@ -18,10 +18,12 @@ module SplitIoClient
       end
     end
 
+    # TODO: remove this
     def add(impression)
       enqueue(impression)
     end
 
+    # TODO: remove this
     def add_bulk(impressions)
       impressions[:split_names].each do |split_name|
         enqueue(
@@ -36,6 +38,26 @@ module SplitIoClient
           },
           attributes: impressions[:attributes]
         ) unless impressions[:treatments_labels_change_numbers][split_name.to_sym].nil?
+      end
+    end
+
+    def add_bulk_v2(impressions)
+      return unless @listener
+
+      impressions.each do |impression|
+        enqueue(
+          split_name: impression[:i][:f],
+          matching_key: impression[:i][:k],
+          bucketing_key: impression[:i][:b],
+          time: impression[:i][:m],
+          treatment: {
+            label: impression[:i][:r],
+            treatment: impression[:i][:t],
+            change_number: impression[:i][:c]
+          },
+          previous_time: impression[:i][:pt],
+          attributes: impression[:attributes]
+        ) unless impression.nil?
       end
     end
 

@@ -10,8 +10,8 @@ module SplitIoClient
         end
       end
 
-      def process(impression)        
-        impression_data = "#{unknown_if_null(impression[:k])}"
+      def process(impression)
+        impression_data = "#{unknown_if_null({ bucketing_key: impression[:b], matching_key: impression[:k] })}"
         impression_data << ":#{unknown_if_null(impression[:f])}"
         impression_data << ":#{unknown_if_null(impression[:t])}"
         impression_data << ":#{unknown_if_null(impression[:r])}"
