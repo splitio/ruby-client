@@ -50,7 +50,8 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
                 time: 1_478_113_516_002,
                 bucketingKey: 'foo1',
                 label: 'custom_label1',
-                changeNumber: 123_456
+                changeNumber: 123_456,
+                previousTime: nil
               }
             ],
             ip: config.machine_ip
@@ -64,7 +65,8 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
                 time: 1_478_113_518_285,
                 bucketingKey: 'foo2',
                 label: 'custom_label2',
-                changeNumber: 123_499
+                changeNumber: 123_499,
+                previousTime: nil
               }
             ],
             ip: config.machine_ip
