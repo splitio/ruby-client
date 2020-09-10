@@ -24,7 +24,7 @@ describe SplitIoClient::Engine::Common::ImpressionManager do
         r: 'default label',
         c: 1_478_113_516_002,
         m: 1_478_113_516_222,
-        pt: nil,
+        pt: nil
       },
       attributes: {}
     }
@@ -45,10 +45,9 @@ describe SplitIoClient::Engine::Common::ImpressionManager do
     impression_manager = subject.new(config, impression_repository)
 
     impression_manager.track(impressions)
-    impression_router = impression_manager.instance_variable_get(:@impression_router)
-    
+
     sleep(0.5)
     expect(impression_repository.batch.size).to eq(1)
-    expect(impression_listener.size()).to eq(1)    
+    expect(impression_listener.size).to eq(1)
   end
 end
