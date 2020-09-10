@@ -10,7 +10,7 @@ module SplitIoClient
             @adapter = @config.impressions_adapter
           end
 
-          def add_bulk_v2(impressions)
+          def add_bulk(impressions)
             impressions.each do |impression|
               @adapter.add_to_queue(impression)
             end

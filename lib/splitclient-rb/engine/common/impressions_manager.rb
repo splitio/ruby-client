@@ -22,8 +22,8 @@ module SplitIoClient
         end
 
         def track(impressions)
-          @impressions_repository.add_bulk_v2(impressions)
-          @impression_router.add_bulk_v2(impressions)
+          @impressions_repository.add_bulk(impressions)
+          @impression_router.add_bulk(impressions)
         rescue StandardError => error
           @config.log_found_exception(__method__.to_s, error)
         end

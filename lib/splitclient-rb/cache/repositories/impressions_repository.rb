@@ -6,7 +6,7 @@ module SplitIoClient
       # Repository which forwards impressions interface to the selected adapter
       class ImpressionsRepository < Repository
         extend Forwardable
-        def_delegators :@repository, :add, :add_bulk, :batch, :clear, :empty?, :add_bulk_v2
+        def_delegators :@repository, :add_bulk, :batch, :clear, :empty?
 
         def initialize(config)
           super(config)
