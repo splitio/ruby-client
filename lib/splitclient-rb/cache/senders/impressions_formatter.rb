@@ -15,17 +15,10 @@ module SplitIoClient
 
           return [] if impressions.empty? || filtered_impressions.empty?
 
-          puts 'filtered_impressions'
-          puts filtered_impressions
-
           formatted_impressions = unique_features(filtered_impressions).each_with_object([]) do |feature, memo|
             feature_impressions = feature_impressions(filtered_impressions, feature)
             ip = feature_impressions.first[:m][:i]
             current_impressions = current_impressions(feature_impressions)
-            
-            puts 'current_impressions'
-            puts current_impressions
-
             memo << {
               testName: feature.to_sym,
               keyImpressions: current_impressions,
