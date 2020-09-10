@@ -14,7 +14,7 @@ module SplitIoClient
         # added param time for test
         def build_impression(matching_key, bucketing_key, split_name, treatment, params = {})
           impression_data = impression_data(matching_key, bucketing_key, split_name, treatment, params[:time])
-          
+
           impression_data[:pt] = @impression_observer.test_and_set(impression_data) if should_add_pt
 
           { m: metadata, i: impression_data, attributes: params[:attributes] }
