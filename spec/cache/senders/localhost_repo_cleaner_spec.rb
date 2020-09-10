@@ -9,6 +9,7 @@ describe SplitIoClient::Cache::Senders::LocalhostRepoCleaner do
     let(:impressions_repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
     let(:metrics_repository) { SplitIoClient::Cache::Repositories::MetricsRepository.new(config) }
     let(:events_repository) { SplitIoClient::Cache::Repositories::EventsRepository.new(config, 'localhost') }
+    let(:impressions_manager) { SplitIoClient::Engine::Common::ImpressionManager.new(config, impressions_repository) }
 
     let(:cleaner) { described_class.new(impressions_repository, metrics_repository, events_repository, config) }
 
@@ -18,13 +19,16 @@ describe SplitIoClient::Cache::Senders::LocalhostRepoCleaner do
     end
 
     it 'clears repositories when called' do
-      impressions_repository.add(
-        'matching_key',
-        'foo1',
-        'foo1',
-        { treatment: 'on', label: 'sample_rule', change_number: 1_533_177_602_748 },
-        1_478_113_516_002
-      )
+      treatment_data = { treatment: 'on', label: 'sample_rule', change_number: 1_533_177_602_748 }
+      params = { attributes: {}, time: nil }
+      impressions = []
+      impressions << impressions_manager.build_impression('matching_key',
+                                                          'foo1',
+                                                          'foo1',
+                                                          treatment_data,
+                                                          params)
+
+      impressions_manager.track(impressions)
 
       metrics_repository.add_latency('foo', 0, SplitIoClient::BinarySearchLatencyTracker.new)
 

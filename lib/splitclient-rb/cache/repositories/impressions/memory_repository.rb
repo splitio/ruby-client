@@ -10,34 +10,6 @@ module SplitIoClient
             @adapter = @config.impressions_adapter
           end
 
-          # Store impression data in the selected adapter
-          # TODO: remove this
-          def add(matching_key, bucketing_key, split_name, treatment, time)
-            @adapter.add_to_queue(
-              m: metadata,
-              i: impression_data(
-                matching_key,
-                bucketing_key,
-                split_name,
-                treatment,
-                time
-              )
-            )
-          rescue ThreadError # queue is full
-            if random_sampler.rand(1..1000) <= 2 # log only 0.2 % of the time
-              @config.logger.warn("Dropping impressions. Current size is \
-                #{@config.impressions_queue_size}. " \
-                'Consider increasing impressions_queue_size')
-            end
-          end
-
-          # TODO: remove this
-          def add_bulk(key, bucketing_key, treatments, time)
-            treatments.each do |split_name, treatment|
-              add(key, bucketing_key, split_name, treatment, time)
-            end
-          end
-
           def add_bulk_v2(impressions)
             impressions.each do |impression|
               @adapter.add_to_queue(impression)

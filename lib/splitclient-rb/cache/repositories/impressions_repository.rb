@@ -17,34 +17,6 @@ module SplitIoClient
                        Repositories::Impressions::RedisRepository.new(@config)
                      end
         end
-
-        protected
-
-        # TODO: remove this
-        def impression_data(matching_key, bucketing_key, split_name, treatment, timestamp)
-          {
-            k: matching_key,
-            b: bucketing_key,
-            f: split_name,
-            t: treatment[:treatment],
-            r: applied_rule(treatment[:label]),
-            c: treatment[:change_number],
-            m: timestamp
-          }
-        end
-
-        # TODO: remove this
-        def metadata
-          {
-            s: "#{@config.language}-#{@config.version}",
-            i: @config.machine_ip,
-            n: @config.machine_name
-          }
-        end
-
-        def applied_rule(label)
-          @config.labels_enabled ? label : nil
-        end
       end
     end
   end

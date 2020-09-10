@@ -15,11 +15,16 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
     let(:formatted_impressions) { SplitIoClient::Cache::Senders::ImpressionsFormatter.new(repository).call(true) }
     let(:treatment1) { { treatment: 'on', label: 'custom_label1', change_number: 123_456 } }
     let(:treatment2) { { treatment: 'off', label: 'custom_label2', change_number: 123_499 } }
+    let(:impressions_manager) { SplitIoClient::Engine::Common::ImpressionManager.new(config, repository) }
 
     before :each do
       Redis.new.flushall
-      repository.add('matching_key', 'foo1', 'foo1', treatment1, 1_478_113_516_002)
-      repository.add('matching_key2', 'foo2', 'foo2', treatment2, 1_478_113_518_285)
+      params = { attributes: {}, time: 1_478_113_516_002 }
+      params2 = { attributes: {}, time: 1_478_113_518_285 }
+      impressions = []
+      impressions << impressions_manager.build_impression('matching_key', 'foo1', 'foo1', treatment1, params)
+      impressions << impressions_manager.build_impression('matching_key2', 'foo2', 'foo2', treatment2, params2)
+      impressions_manager.track(impressions)
     end
 
     it 'returns the total number of impressions' do

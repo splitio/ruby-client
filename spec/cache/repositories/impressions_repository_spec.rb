@@ -24,8 +24,10 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
             t: 'on',
             r: 'sample_rule',
             c: 1_533_177_602_748,
-            m: 1_478_113_516_002
-          }
+            m: 1_478_113_516_002,
+            pt: nil
+          },
+          attributes: {}
         },
         {
           m: { s: version, i: ip, n: machine_name },
@@ -36,8 +38,10 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
             t: 'off',
             r: 'sample_rule',
             c: 1_533_177_602_749,
-            m: 1_478_113_516_002
-          }
+            m: 1_478_113_516_002,
+            pt: nil
+          },
+          attributes: {}
         }
       ]
     end
@@ -49,8 +53,11 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
     end
 
     it 'adds impressions' do
-      repository.add('matching_key1', nil, :foo, treatment1, 1_478_113_516_002)
-      repository.add('matching_key1', nil, :bar, treatment2, 1_478_113_516_002)
+      params = { attributes: {}, time: 1_478_113_516_002 }
+      impressions = []
+      impressions << impressions_manager.build_impression('matching_key1', nil, :foo, treatment1, params)
+      impressions << impressions_manager.build_impression('matching_key1', nil, :bar, treatment2, params)
+      impressions_manager.track(impressions)
 
       expect(repository.batch).to match_array(result)
 
@@ -58,12 +65,12 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
     end
 
     it 'adds impressions in bulk' do
-      treatments = {
-        foo: treatment1,
-        bar: treatment2
-      }
+      params = { attributes: {}, time: 1_478_113_516_002 }
+      impressions = []
+      impressions << impressions_manager.build_impression('matching_key1', nil, :foo, treatment1, params)
+      impressions << impressions_manager.build_impression('matching_key1', nil, :bar, treatment2, params)
+      impressions_manager.track(impressions)
 
-      repository.add_bulk('matching_key1', nil, treatments, 1_478_113_516_002)
       expect(repository.batch).to match_array(result)
 
       expect(repository.batch).to eq([])
@@ -71,14 +78,21 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
 
     it 'omits label unless labels_enabled' do
       config.labels_enabled = false
+      params = { attributes: {}, time: 1_478_113_516_002 }
+      impressions = []
+      impressions << impressions_manager.build_impression('matching_key1', nil, :foo, treatment1, params)
+      impressions_manager.track(impressions)
 
-      repository.add('matching_key1', nil, :foo, treatment1, 1_478_113_516_002)
       expect(repository.batch.first[:i][:r]).to be_nil
     end
 
     it 'bulk size less than the actual queue' do
-      repository.add('matching_key1', nil, :foo, treatment1, 1_478_113_516_002)
-      repository.add('matching_key1', nil, :bar, treatment2, 1_478_113_516_002)
+      params = { attributes: {}, time: 1_478_113_516_002 }
+      impressions = []
+      impressions << impressions_manager.build_impression('matching_key1', nil, :foo, treatment1, params)
+      impressions << impressions_manager.build_impression('matching_key1', nil, :foo, treatment2, params)
+      impressions_manager.track(impressions)
+
       config.impressions_bulk_size = 1
 
       expect(repository.batch.size).to eq(1)
@@ -90,6 +104,7 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
     let(:config) { @default_config }
 
     let(:repository) { described_class.new(config) }
+    let(:impressions_manager) { SplitIoClient::Engine::Common::ImpressionManager.new(config, repository) }
 
     it_behaves_like 'Impressions Repository'
 
@@ -102,9 +117,11 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
 
       it 'memory adapter drops impressions' do
         treatment = { treatment: 'on', label: 'sample_rule', change_number: 1_533_177_602_748 }
-
-        repository.add('matching_key1', nil, :foo1, treatment, 1_478_113_516_002)
-        repository.add('matching_key2', nil, :foo1, treatment, 1_478_113_516_002)
+        params = { attributes: {}, time: 1_478_113_516_002 }
+        impressions = []
+        impressions << impressions_manager.build_impression('matching_key1', nil, :foo1, treatment, params)
+        impressions << impressions_manager.build_impression('matching_key2', nil, :foo1, treatment, params)
+        impressions_manager.track(impressions)
 
         expect(repository.batch.size).to eq(1)
       end
@@ -121,6 +138,7 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
     end
 
     let(:repository) { described_class.new(config) }
+    let(:impressions_manager) { SplitIoClient::Engine::Common::ImpressionManager.new(config, repository) }
 
     it_behaves_like 'Impressions Repository'
 
@@ -134,22 +152,32 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
 
     it 'expiration set when impressions size match number of elements added' do
       expect(config.impressions_adapter).to receive(:expire).once.with(anything, 3600)
-      repository.add('matching_key', nil, :foo1, treatment, 1_478_113_516_002)
-      repository.add('matching_key', nil, :foo1, treatment, 1_478_113_516_002)
+      params = { attributes: {}, time: 1_478_113_516_002 }
+      impressions = []
+      impressions << impressions_manager.build_impression('matching_key', nil, :foo1, treatment, params)
+      impressions << impressions_manager.build_impression('matching_key', nil, :foo1, treatment, params)
+      impressions_manager.track(impressions)
     end
 
     it 'returns empty array when adapter#get_from_queue raises an exception' do
       allow_any_instance_of(SplitIoClient::Cache::Adapters::RedisAdapter)
         .to receive(:get_from_queue).and_throw(RuntimeError)
 
-      repository.add('matching_key', nil, :foo1, treatment, 1_478_113_516_002)
+      params = { attributes: {}, time: 1_478_113_516_002 }
+      impressions = []
+      impressions << impressions_manager.build_impression('matching_key', nil, :foo1, treatment, params)
+      impressions_manager.track(impressions)
+
       expect(repository.batch).to eq([])
     end
 
     it 'with ip_addresses_enabled set true' do
       other_treatment = { treatment: 'on', label: 'sample_rule_2', change_number: 1_533_177_602_748 }
-      repository.add('matching_key', nil, :foo1, treatment, 1_478_113_516_002)
-      repository.add('matching_key', nil, :foo2, other_treatment, 1_478_113_516_002)
+      params = { attributes: {}, time: 1_478_113_516_002 }
+      impressions = []
+      impressions << impressions_manager.build_impression('matching_key', nil, :foo1, treatment, params)
+      impressions << impressions_manager.build_impression('matching_key', nil, :foo2, other_treatment, params)
+      impressions_manager.track(impressions)
 
       adapter.get_from_queue('SPLITIO.impressions', 0).map do |e|
         impression = JSON.parse(e, symbolize_names: true)
@@ -168,10 +196,14 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
 
       custom_repository = described_class.new(custom_config)
       custom_adapter = config.impressions_adapter
+      custom_impressions_manager = SplitIoClient::Engine::Common::ImpressionManager.new(custom_config, custom_repository)
       other_treatment = { treatment: 'on', label: 'sample_rule_2', change_number: 1_533_177_602_748 }
 
-      custom_repository.add('matching_key', nil, :foo1, treatment, 1_478_113_516_002)
-      custom_repository.add('matching_key', nil, :foo2, other_treatment, 1_478_113_516_002)
+      params = { attributes: {}, time: 1_478_113_516_002 }
+      impressions = []
+      impressions << custom_impressions_manager.build_impression('matching_key', nil, :foo1, treatment, params)
+      impressions << custom_impressions_manager.build_impression('matching_key', nil, :foo2, other_treatment, params)
+      custom_impressions_manager.track(impressions)
 
       custom_adapter.get_from_queue('SPLITIO.impressions', 0).map do |e|
         impression = JSON.parse(e, symbolize_names: true)

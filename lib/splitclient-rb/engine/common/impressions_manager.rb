@@ -11,11 +11,12 @@ module SplitIoClient
           # @impression_observer = impression_observer
         end
 
-        def build_impression(matching_key, bucketing_key, split_name, treatment, attributes)
-          impression_data = impression_data(matching_key, bucketing_key, split_name, treatment)
+        # added param time for test
+        def build_impression(matching_key, bucketing_key, split_name, treatment, params = {})
+          impression_data = impression_data(matching_key, bucketing_key, split_name, treatment, params[:time])
           # impression_data[:pt] = @impression_observer.test_and_set(impression)
 
-          { m: metadata, i: impression_data, attributes: attributes }
+          { m: metadata, i: impression_data, attributes: params[:attributes] }
         rescue StandardError => error
           @config.log_found_exception(__method__.to_s, error)
         end
@@ -29,7 +30,8 @@ module SplitIoClient
 
         private
 
-        def impression_data(matching_key, bucketing_key, split_name, treatment)
+        # added param time for test
+        def impression_data(matching_key, bucketing_key, split_name, treatment, time = nil)
           {
             k: matching_key,
             b: bucketing_key,
@@ -37,7 +39,7 @@ module SplitIoClient
             t: treatment[:treatment],
             r: applied_rule(treatment[:label]),
             c: treatment[:change_number],
-            m: (Time.now.to_f * 1000.0).to_i,
+            m: time || (Time.now.to_f * 1000.0).to_i,
             pt: nil
           }
         end
