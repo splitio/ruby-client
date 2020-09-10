@@ -60,6 +60,10 @@ module SplitIoClient
         def should_add_pt
           @config.impressions_adapter.class.to_s != 'SplitIoClient::Cache::Adapters::RedisAdapter'
         end
+
+        def is_optimized
+          @config.impressions_mode == :optimized
+        end
       end
     end
   end
