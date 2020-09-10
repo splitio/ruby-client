@@ -286,11 +286,6 @@ describe SplitIoClient, type: :client do
       it 'returns CONTROL with NOT_READY label when not ready' do
         allow(subject).to receive(:ready?).and_return(false)
 
-        treatment_data = {
-          label: SplitIoClient::Engine::Models::Label::NOT_READY,
-          treatment: SplitIoClient::Engine::Models::Treatment::CONTROL
-        }  
-
         expect(subject.get_treatment('random_user_id', 'test_feature'))
           .to eq SplitIoClient::Engine::Models::Treatment::CONTROL
         expect(log.string).to include 'get_treatment: the SDK is not ready, the operation cannot be executed'
