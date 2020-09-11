@@ -35,6 +35,8 @@ describe SplitIoClient::Engine::Common::ImpressionCounter do
     @counter.inc('feature1', make_timestamp('2020-09-02 10:50:11'))
 
     result = @counter.pop_all
+    puts 'result'
+    puts result
 
     expect(result['feature1::1599048000000']).to eq(3)
     expect(result['feature2::1599048000000']).to eq(2)
