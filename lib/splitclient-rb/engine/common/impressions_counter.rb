@@ -28,7 +28,7 @@ module SplitIoClient
             to_return[key] = value
           end
           @cache.clear
-          
+
           to_return
         end
 

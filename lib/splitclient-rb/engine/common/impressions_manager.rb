@@ -58,7 +58,7 @@ module SplitIoClient
 
         def applied_rule(label)
           @config.labels_enabled ? label : nil
-        end        
+        end
 
         def optimized?
           @config.impressions_mode == :optimized
