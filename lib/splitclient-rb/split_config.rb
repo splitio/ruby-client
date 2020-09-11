@@ -285,7 +285,7 @@ module SplitIoClient
       when :debug
         return :debug
       else
-        @logger.warn('You passed an invalid impressions_mode, impressions_mode should be one of the following values: :debug or :optimized. The sdk continues in :optimized mode.')
+        @logger.error('You passed an invalid impressions_mode, impressions_mode should be one of the following values: :debug or :optimized. Defaulting to :optimized mode')
         return :optimized
       end
     end
