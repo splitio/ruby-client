@@ -12,11 +12,16 @@ describe SplitIoClient::Cache::Senders::ImpressionsFormatter do
     let(:treatment1) { { treatment: 'on', label: 'custom_label1', change_number: 123_456 } }
     let(:treatment2) { { treatment: 'off', label: 'custom_label2', change_number: 123_499 } }
     let(:treatment3) { { treatment: 'off', label: nil, change_number: nil } }
+    let(:impressions_manager) { SplitIoClient::Engine::Common::ImpressionManager.new(config, repository) }
 
     before :each do
       Redis.new.flushall
-      repository.add('matching_key', 'foo1', 'foo1', treatment1, 1_478_113_516_002)
-      repository.add('matching_key2', 'foo2', 'foo2', treatment2, 1_478_113_518_285)
+      params = { attributes: {}, time: 1_478_113_516_002 }
+      params2 = { attributes: {}, time: 1_478_113_518_285 }
+      impressions = []
+      impressions << impressions_manager.build_impression('matching_key', 'foo1', 'foo1', treatment1, params)
+      impressions << impressions_manager.build_impression('matching_key2', 'foo2', 'foo2', treatment2, params2)
+      impressions_manager.track(impressions)
     end
 
     it 'formats impressions to be sent' do
@@ -43,7 +48,10 @@ describe SplitIoClient::Cache::Senders::ImpressionsFormatter do
     end
 
     it 'formats multiple impressions for one key' do
-      repository.add('matching_key3', nil, 'foo2', treatment3, 1_478_113_518_900)
+      params = { attributes: {}, time: 1_478_113_518_900 }
+      impressions = []
+      impressions << impressions_manager.build_impression('matching_key3', nil, 'foo2', treatment3, params)
+      impressions_manager.track(impressions)
 
       expect(formatted_impressions.find { |i| i[:testName] == :foo1 }[:keyImpressions]).to match_array(
         [
@@ -81,16 +89,24 @@ describe SplitIoClient::Cache::Senders::ImpressionsFormatter do
     end
 
     it 'filters out impressions with the same key/treatment' do
-      repository.add('matching_key', 'foo1', 'foo1', treatment1, 1_478_113_516_902)
-      repository.add('matching_key2', 'foo2', 'foo2', treatment2, 1_478_113_518_285)
+      params = { attributes: {}, time: 1_478_113_516_902 }
+      params2 = { attributes: {}, time: 1_478_113_518_285 }
+      impressions = []
+      impressions << impressions_manager.build_impression('matching_key', 'foo1', 'foo1', treatment1, params)
+      impressions << impressions_manager.build_impression('matching_key2', 'foo2', 'foo2', treatment2, params2)
+      impressions_manager.track(impressions)
 
       expect(formatted_impressions.find { |i| i[:testName] == :foo1 }[:keyImpressions].size).to eq(1)
       expect(formatted_impressions.find { |i| i[:testName] == :foo2 }[:keyImpressions].size).to eq(1)
     end
 
     it 'filters out impressions with the same key/treatment legacy' do
-      repository.add('matching_key', 'foo1', 'foo1', treatment1, 1_478_113_516_902)
-      repository.add('matching_key2', 'foo2', 'foo2', treatment2, 1_478_113_518_285)
+      params = { attributes: {}, time: 1_478_113_516_902 }
+      params2 = { attributes: {}, time: 1_478_113_518_285 }
+      impressions = []
+      impressions << impressions_manager.build_impression('matching_key', 'foo1', 'foo1', treatment1, params)
+      impressions << impressions_manager.build_impression('matching_key2', 'foo2', 'foo2', treatment2, params2)
+      impressions_manager.track(impressions)
 
       expect(formatted_impressions.find { |i| i[:testName] == :foo1 }[:keyImpressions].size).to eq(1)
       expect(formatted_impressions.find { |i| i[:testName] == :foo2 }[:keyImpressions].size).to eq(1)
