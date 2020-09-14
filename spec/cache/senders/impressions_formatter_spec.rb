@@ -28,25 +28,24 @@ describe SplitIoClient::Cache::Senders::ImpressionsFormatter do
     it 'formats impressions to be sent' do
       expect(formatted_impressions)
         .to match_array([{
-                          testName: :foo1,
-                          keyImpressions: [{ keyName: 'matching_key',
-                                             treatment: 'on',
-                                             time: 1_478_113_516_002,
-                                             bucketingKey: 'foo1', label: 'custom_label1',
-                                             changeNumber: 123_456,
-                                             previousTime: nil }],
-                          ip: ip
+                          f: :foo1,
+                          i: [{ k: 'matching_key',
+                                t: 'on',
+                                m: 1_478_113_516_002,
+                                b: 'foo1',
+                                r: 'custom_label1',
+                                c: 123_456,
+                                pt: nil }]
                         },
                          {
-                           testName: :foo2,
-                           keyImpressions: [{ keyName: 'matching_key2',
-                                              treatment: 'off',
-                                              time: 1_478_113_518_285,
-                                              bucketingKey: 'foo2',
-                                              label: 'custom_label2',
-                                              changeNumber: 123_499,
-                                              previousTime: nil }],
-                           ip: ip
+                           f: :foo2,
+                           i: [{ k: 'matching_key2',
+                                 t: 'off',
+                                 m: 1_478_113_518_285,
+                                 b: 'foo2',
+                                 r: 'custom_label2',
+                                 c: 123_499,
+                                 pt: nil }]
                          }])
     end
 
@@ -56,39 +55,39 @@ describe SplitIoClient::Cache::Senders::ImpressionsFormatter do
       impressions << impressions_manager.build_impression('matching_key3', nil, 'foo2', treatment3, params)
       impressions_manager.track(impressions)
 
-      expect(formatted_impressions.find { |i| i[:testName] == :foo1 }[:keyImpressions]).to match_array(
+      expect(formatted_impressions.find { |i| i[:f] == :foo1 }[:i]).to match_array(
         [
           {
-            keyName: 'matching_key',
-            treatment: 'on',
-            time: 1_478_113_516_002,
-            bucketingKey: 'foo1',
-            label: 'custom_label1',
-            changeNumber: 123_456,
-            previousTime: nil
+            k: 'matching_key',
+            t: 'on',
+            m: 1_478_113_516_002,
+            b: 'foo1',
+            r: 'custom_label1',
+            c: 123_456,
+            pt: nil
           }
         ]
       )
 
-      expect(formatted_impressions.find { |i| i[:testName] == :foo2 }[:keyImpressions]).to match_array(
+      expect(formatted_impressions.find { |i| i[:f] == :foo2 }[:i]).to match_array(
         [
           {
-            keyName: 'matching_key2',
-            treatment: 'off',
-            time: 1_478_113_518_285,
-            bucketingKey: 'foo2',
-            label: 'custom_label2',
-            changeNumber: 123_499,
-            previousTime: nil
+            k: 'matching_key2',
+            t: 'off',
+            m: 1_478_113_518_285,
+            b: 'foo2',
+            r: 'custom_label2',
+            c: 123_499,
+            pt: nil
           },
           {
-            keyName: 'matching_key3',
-            treatment: 'off',
-            time: 1_478_113_518_900,
-            bucketingKey: nil,
-            label: nil,
-            changeNumber: nil,
-            previousTime: nil
+            k: 'matching_key3',
+            t: 'off',
+            m: 1_478_113_518_900,
+            b: nil,
+            r: nil,
+            c: nil,
+            pt: nil
           }
         ]
       )
@@ -97,15 +96,15 @@ describe SplitIoClient::Cache::Senders::ImpressionsFormatter do
     it 'filters out impressions with the same key/treatment' do
       impressions_manager.track(@impressions)
 
-      expect(formatted_impressions.find { |i| i[:testName] == :foo1 }[:keyImpressions].size).to eq(1)
-      expect(formatted_impressions.find { |i| i[:testName] == :foo2 }[:keyImpressions].size).to eq(1)
+      expect(formatted_impressions.find { |i| i[:f] == :foo1 }[:i].size).to eq(1)
+      expect(formatted_impressions.find { |i| i[:f] == :foo2 }[:i].size).to eq(1)
     end
 
     it 'filters out impressions with the same key/treatment legacy' do
       impressions_manager.track(@impressions)
 
-      expect(formatted_impressions.find { |i| i[:testName] == :foo1 }[:keyImpressions].size).to eq(1)
-      expect(formatted_impressions.find { |i| i[:testName] == :foo2 }[:keyImpressions].size).to eq(1)
+      expect(formatted_impressions.find { |i| i[:f] == :foo1 }[:i].size).to eq(1)
+      expect(formatted_impressions.find { |i| i[:f] == :foo2 }[:i].size).to eq(1)
     end
   end
 

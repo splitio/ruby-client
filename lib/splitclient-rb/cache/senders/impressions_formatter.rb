@@ -17,12 +17,10 @@ module SplitIoClient
 
           formatted_impressions = unique_features(filtered_impressions).each_with_object([]) do |feature, memo|
             feature_impressions = feature_impressions(filtered_impressions, feature)
-            ip = feature_impressions.first[:m][:i]
             current_impressions = current_impressions(feature_impressions)
             memo << {
-              testName: feature.to_sym,
-              keyImpressions: current_impressions,
-              ip: ip
+              f: feature.to_sym,
+              i: current_impressions
             }
           end
 
@@ -40,13 +38,13 @@ module SplitIoClient
         def current_impressions(feature_impressions)
           feature_impressions.map do |impression|
             {
-              keyName: impression[:i][:k],
-              treatment: impression[:i][:t],
-              time: impression[:i][:m],
-              bucketingKey: impression[:i][:b],
-              label: impression[:i][:r],
-              changeNumber: impression[:i][:c],
-              previousTime: impression[:i][:pt]
+              k: impression[:i][:k],
+              t: impression[:i][:t],
+              m: impression[:i][:m],
+              b: impression[:i][:b],
+              r: impression[:i][:r],
+              c: impression[:i][:c],
+              pt: impression[:i][:pt]
             }
           end
         end

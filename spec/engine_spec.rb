@@ -473,7 +473,7 @@ describe SplitIoClient, type: :client do
         expect(SplitIoClient::Cache::Senders::ImpressionsFormatter
           .new(subject.instance_variable_get(:@impressions_repository))
           .call(true, impressions)
-          .select { |im| im[:testName] == :new_feature }[0][:keyImpressions].size).to eq(2)
+          .select { |im| im[:f] == :new_feature }[0][:i].size).to eq(2)
       end
 
       it 'validates the feature by bucketing_key' do
