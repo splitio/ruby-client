@@ -42,31 +42,31 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
       .with(
         body: [
           {
-            testName: 'foo1',
-            keyImpressions: [
+            f: 'foo1',
+            i: [
               {
-                keyName: 'matching_key',
-                treatment: 'on',
-                time: 1_478_113_516_002,
-                bucketingKey: 'foo1',
-                label: 'custom_label1',
-                changeNumber: 123_456,
-                previousTime: nil
+                k: 'matching_key',
+                t: 'on',
+                m: 1_478_113_516_002,
+                b: 'foo1',
+                r: 'custom_label1',
+                c: 123_456,
+                pt: nil
               }
             ],
             ip: config.machine_ip
           },
           {
-            testName: 'foo2',
-            keyImpressions: [
+            f: 'foo2',
+            i: [
               {
-                keyName: 'matching_key2',
-                treatment: 'off',
-                time: 1_478_113_518_285,
-                bucketingKey: 'foo2',
-                label: 'custom_label2',
-                changeNumber: 123_499,
-                previousTime: nil
+                k: 'matching_key2',
+                t: 'off',
+                m: 1_478_113_518_285,
+                b: 'foo2',
+                r: 'custom_label2',
+                c: 123_499,
+                pt: nil
               }
             ],
             ip: config.machine_ip

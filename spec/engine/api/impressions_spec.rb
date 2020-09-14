@@ -16,7 +16,7 @@ describe SplitIoClient::Api::Impressions do
     [
       {
         ip: '192.168.1.1',
-        keyImpressions: ['test']
+        i: ['test']
       }
     ]
   end

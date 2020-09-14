@@ -31,7 +31,7 @@ module SplitIoClient
         return 0 if impressions.nil?
 
         impressions.reduce(0) do |impressions_count, impression|
-          impressions_count += impression[:keyImpressions].length
+          impressions_count += impression[:i].length
         end
       end
 
