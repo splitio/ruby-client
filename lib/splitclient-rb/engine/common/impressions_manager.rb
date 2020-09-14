@@ -15,7 +15,7 @@ module SplitIoClient
         def build_impression(matching_key, bucketing_key, split_name, treatment, params = {})
           impression_data = impression_data(matching_key, bucketing_key, split_name, treatment, params[:time])
 
-          impression_data[:pt] = @impression_observer.test_and_set(impression_data) if should_add_pt
+          impression_data[:pt] = @impression_observer.test_and_set(impression_data) if add_pt?
 
           { m: metadata, i: impression_data, attributes: params[:attributes] }
         rescue StandardError => error
@@ -57,8 +57,12 @@ module SplitIoClient
           @config.labels_enabled ? label : nil
         end
 
-        def should_add_pt
+        def add_pt?
           @config.impressions_adapter.class.to_s != 'SplitIoClient::Cache::Adapters::RedisAdapter'
+        end
+
+        def optimized?
+          @config.impressions_mode == :optimized
         end
       end
     end

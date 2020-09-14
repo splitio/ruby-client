@@ -108,6 +108,8 @@ module SplitIoClient
       @auth_retry_back_off_base = SplitConfig.init_auth_retry_back_off(opts[:auth_retry_back_off_base] || SplitConfig.default_auth_retry_back_off_base)
       @streaming_reconnect_back_off_base = SplitConfig.init_streaming_reconnect_back_off(opts[:streaming_reconnect_back_off_base] || SplitConfig.default_streaming_reconnect_back_off_base)
 
+      @impressions_mode = init_impressions_mode(opts[:impressions_mode] || SplitConfig.default_impressions_mode)
+
       startup_log
     end
 
@@ -269,6 +271,22 @@ module SplitIoClient
     attr_accessor :streaming_reconnect_back_off_base
 
     attr_accessor :streaming_enabled
+
+    attr_accessor :impressions_mode
+
+    def self.default_impressions_mode
+      :optimized
+    end
+
+    def init_impressions_mode(impressions_mode)     
+      case impressions_mode      
+      when :debug
+        return :debug
+      else
+        @logger.error('You passed an invalid impressions_mode, impressions_mode should be one of the following values: :debug or :optimized. Defaulting to :optimized mode') unless impressions_mode == :optimized
+        return :optimized
+      end
+    end
 
     def self.default_streaming_enabled
       true
