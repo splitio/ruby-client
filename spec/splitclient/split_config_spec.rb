@@ -90,20 +90,20 @@ describe SplitIoClient do
     end
 
     it 'se impression mode' do
-      options = { impressions_mode: :sarasa }
-      configs = SplitIoClient::SplitConfig.new(options)
+      options1 = { impressions_mode: :debug }
+      configs1 = SplitIoClient::SplitConfig.new(options1)
 
-      expect(configs.impressions_mode).to eq(:optimized)
+      expect(configs1.impressions_mode).to eq(:debug)
 
-      options = { impressions_mode: :debug }
-      configs = SplitIoClient::SplitConfig.new(options)
+      options2 = { impressions_mode: :optimized }
+      configs2 = SplitIoClient::SplitConfig.new(options2)
 
-      expect(configs.impressions_mode).to eq(:debug)
+      expect(configs2.impressions_mode).to eq(:optimized)
 
-      options = { impressions_mode: :optimized }
-      configs = SplitIoClient::SplitConfig.new(options)
+      options3 = { impressions_mode: :sarasa }
+      configs3 = SplitIoClient::SplitConfig.new(options3)
 
-      expect(configs.impressions_mode).to eq(:optimized)
+      expect(configs3.impressions_mode).to eq(:optimized)
     end
   end
 end

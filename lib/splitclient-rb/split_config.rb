@@ -278,14 +278,12 @@ module SplitIoClient
       :optimized
     end
 
-    def init_impressions_mode(impressions_mode)
-      case impressions_mode
-      when :optimized
-        return :optimized
+    def init_impressions_mode(impressions_mode)     
+      case impressions_mode      
       when :debug
         return :debug
       else
-        @logger.error('You passed an invalid impressions_mode, impressions_mode should be one of the following values: :debug or :optimized. Defaulting to :optimized mode')
+        @logger.error('You passed an invalid impressions_mode, impressions_mode should be one of the following values: :debug or :optimized. Defaulting to :optimized mode') unless impressions_mode == :optimized
         return :optimized
       end
     end
