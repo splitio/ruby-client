@@ -88,5 +88,22 @@ describe SplitIoClient do
       expect(configs.machine_name).to eq ''
       expect(configs.machine_ip).to eq ''
     end
+
+    it 'se impression mode' do
+      options = { impressions_mode: :sarasa }
+      configs = SplitIoClient::SplitConfig.new(options)
+
+      expect(configs.impressions_mode).to eq(:optimized)
+
+      options = { impressions_mode: :debug }
+      configs = SplitIoClient::SplitConfig.new(options)
+
+      expect(configs.impressions_mode).to eq(:debug)
+
+      options = { impressions_mode: :optimized }
+      configs = SplitIoClient::SplitConfig.new(options)
+
+      expect(configs.impressions_mode).to eq(:optimized)
+    end
   end
 end
