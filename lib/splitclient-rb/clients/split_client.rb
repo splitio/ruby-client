@@ -285,7 +285,8 @@ module SplitIoClient
 
         latency = (Time.now - start) * 1000.0
         
-        impressions << @impressions_manager.build_impression(matching_key, bucketing_key, split_name, treatment_data, { attributes: attributes, time: nil })
+        impression = @impressions_manager.build_impression(matching_key, bucketing_key, split_name, treatment_data, { attributes: attributes, time: nil })
+        impressions << impression unless impression.nil?
 
         # Measure
         @metrics.time('sdk.' + calling_method, latency) unless multiple
@@ -293,7 +294,8 @@ module SplitIoClient
         p error
         @config.log_found_exception(__method__.to_s, error)
 
-        impressions << @impressions_manager.build_impression(matching_key, bucketing_key, split_name, control_treatment, { attributes: attributes, time: nil })
+        impression = @impressions_manager.build_impression(matching_key, bucketing_key, split_name, control_treatment, { attributes: attributes, time: nil })
+        impressions << impression unless impression.nil?
 
         return parsed_treatment(multiple, control_treatment.merge({ label: Engine::Models::Label::EXCEPTION }))
       end

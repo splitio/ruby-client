@@ -14,7 +14,8 @@ describe SplitIoClient, type: :client do
                                       mode: @mode,
                                       impressions_refresh_rate: 1,
                                       impression_listener: customer_impression_listener,
-                                      streaming_enabled: false).client
+                                      streaming_enabled: false,
+                                      impressions_mode: :debug).client
     end
 
     let(:customer_impression_listener) { MyImpressionListener.new }
