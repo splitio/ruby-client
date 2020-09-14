@@ -8,13 +8,14 @@ module SplitIoClient
           @config = config
           @impressions_repository = impressions_repository
           @impression_router = SplitIoClient::ImpressionRouter.new(@config)
-          # @impression_observer = impression_observer
+          @impression_observer = SplitIoClient::Observers::ImpressionObserver.new
         end
 
         # added param time for test
         def build_impression(matching_key, bucketing_key, split_name, treatment, params = {})
           impression_data = impression_data(matching_key, bucketing_key, split_name, treatment, params[:time])
-          # impression_data[:pt] = @impression_observer.test_and_set(impression)
+
+          impression_data[:pt] = @impression_observer.test_and_set(impression_data) if should_add_pt
 
           { m: metadata, i: impression_data, attributes: params[:attributes] }
         rescue StandardError => error
@@ -54,6 +55,10 @@ module SplitIoClient
 
         def applied_rule(label)
           @config.labels_enabled ? label : nil
+        end
+
+        def should_add_pt
+          @config.impressions_adapter.class.to_s != 'SplitIoClient::Cache::Adapters::RedisAdapter'
         end
       end
     end

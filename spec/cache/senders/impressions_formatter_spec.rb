@@ -18,10 +18,11 @@ describe SplitIoClient::Cache::Senders::ImpressionsFormatter do
       Redis.new.flushall
       params = { attributes: {}, time: 1_478_113_516_002 }
       params2 = { attributes: {}, time: 1_478_113_518_285 }
-      impressions = []
-      impressions << impressions_manager.build_impression('matching_key', 'foo1', 'foo1', treatment1, params)
-      impressions << impressions_manager.build_impression('matching_key2', 'foo2', 'foo2', treatment2, params2)
-      impressions_manager.track(impressions)
+
+      @impressions = []
+      @impressions << impressions_manager.build_impression('matching_key', 'foo1', 'foo1', treatment1, params)
+      @impressions << impressions_manager.build_impression('matching_key2', 'foo2', 'foo2', treatment2, params2)
+      impressions_manager.track(@impressions)
     end
 
     it 'formats impressions to be sent' do
@@ -32,7 +33,8 @@ describe SplitIoClient::Cache::Senders::ImpressionsFormatter do
                                              treatment: 'on',
                                              time: 1_478_113_516_002,
                                              bucketingKey: 'foo1', label: 'custom_label1',
-                                             changeNumber: 123_456 }],
+                                             changeNumber: 123_456,
+                                             previousTime: nil }],
                           ip: ip
                         },
                          {
@@ -42,7 +44,8 @@ describe SplitIoClient::Cache::Senders::ImpressionsFormatter do
                                               time: 1_478_113_518_285,
                                               bucketingKey: 'foo2',
                                               label: 'custom_label2',
-                                              changeNumber: 123_499 }],
+                                              changeNumber: 123_499,
+                                              previousTime: nil }],
                            ip: ip
                          }])
     end
@@ -61,7 +64,8 @@ describe SplitIoClient::Cache::Senders::ImpressionsFormatter do
             time: 1_478_113_516_002,
             bucketingKey: 'foo1',
             label: 'custom_label1',
-            changeNumber: 123_456
+            changeNumber: 123_456,
+            previousTime: nil
           }
         ]
       )
@@ -74,7 +78,8 @@ describe SplitIoClient::Cache::Senders::ImpressionsFormatter do
             time: 1_478_113_518_285,
             bucketingKey: 'foo2',
             label: 'custom_label2',
-            changeNumber: 123_499
+            changeNumber: 123_499,
+            previousTime: nil
           },
           {
             keyName: 'matching_key3',
@@ -82,31 +87,22 @@ describe SplitIoClient::Cache::Senders::ImpressionsFormatter do
             time: 1_478_113_518_900,
             bucketingKey: nil,
             label: nil,
-            changeNumber: nil
+            changeNumber: nil,
+            previousTime: nil
           }
         ]
       )
     end
 
     it 'filters out impressions with the same key/treatment' do
-      params = { attributes: {}, time: 1_478_113_516_902 }
-      params2 = { attributes: {}, time: 1_478_113_518_285 }
-      impressions = []
-      impressions << impressions_manager.build_impression('matching_key', 'foo1', 'foo1', treatment1, params)
-      impressions << impressions_manager.build_impression('matching_key2', 'foo2', 'foo2', treatment2, params2)
-      impressions_manager.track(impressions)
+      impressions_manager.track(@impressions)
 
       expect(formatted_impressions.find { |i| i[:testName] == :foo1 }[:keyImpressions].size).to eq(1)
       expect(formatted_impressions.find { |i| i[:testName] == :foo2 }[:keyImpressions].size).to eq(1)
     end
 
     it 'filters out impressions with the same key/treatment legacy' do
-      params = { attributes: {}, time: 1_478_113_516_902 }
-      params2 = { attributes: {}, time: 1_478_113_518_285 }
-      impressions = []
-      impressions << impressions_manager.build_impression('matching_key', 'foo1', 'foo1', treatment1, params)
-      impressions << impressions_manager.build_impression('matching_key2', 'foo2', 'foo2', treatment2, params2)
-      impressions_manager.track(impressions)
+      impressions_manager.track(@impressions)
 
       expect(formatted_impressions.find { |i| i[:testName] == :foo1 }[:keyImpressions].size).to eq(1)
       expect(formatted_impressions.find { |i| i[:testName] == :foo2 }[:keyImpressions].size).to eq(1)

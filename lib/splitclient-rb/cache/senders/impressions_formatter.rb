@@ -45,7 +45,8 @@ module SplitIoClient
               time: impression[:i][:m],
               bucketingKey: impression[:i][:b],
               label: impression[:i][:r],
-              changeNumber: impression[:i][:c]
+              changeNumber: impression[:i][:c],
+              previousTime: impression[:i][:pt]
             }
           end
         end
@@ -73,7 +74,8 @@ module SplitIoClient
           "#{impression[:i][:k]}:" \
           "#{impression[:i][:b]}:" \
           "#{impression[:i][:c]}:" \
-          "#{impression[:i][:t]}"
+          "#{impression[:i][:t]}:" \
+          "#{impression[:i][:pt]}"
         end
       end
     end
