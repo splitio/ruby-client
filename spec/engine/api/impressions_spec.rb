@@ -29,7 +29,8 @@ describe SplitIoClient::Api::Impressions do
                 'SplitSDKVersion' => "#{config.language}-#{config.version}",
                 'Content-Type' => 'application/json',
                 'SplitSDKMachineIP' => config.machine_ip,
-                'SplitSDKMachineName' => config.machine_name
+                'SplitSDKMachineName' => config.machine_name,
+                'SplitImpressionsMode' => config.impressions_mode.to_s
               })
         .to_return(status: 200, body: 'ok')
 
@@ -82,7 +83,8 @@ describe SplitIoClient::Api::Impressions do
                 'SplitSDKVersion' => "#{config.language}-#{config.version}",
                 'Content-Type' => 'application/json',
                 'SplitSDKMachineIP' => config.machine_ip,
-                'SplitSDKMachineName' => config.machine_name
+                'SplitSDKMachineName' => config.machine_name,
+                'SplitImpressionsMode' => config.impressions_mode.to_s
               })
         .to_return(status: [500, 'Internal Server Error'])
 
@@ -90,7 +92,8 @@ describe SplitIoClient::Api::Impressions do
         .with(headers: {
                 'Authorization' => 'Bearer',
                 'SplitSDKVersion' => "#{config.language}-#{config.version}",
-                'Content-Type' => 'application/json'
+                'Content-Type' => 'application/json',
+                'SplitImpressionsMode' => config.impressions_mode.to_s
               })
         .to_return(status: 200, body: 'ok')
 

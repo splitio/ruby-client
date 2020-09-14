@@ -53,8 +53,7 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
                 c: 123_456,
                 pt: nil
               }
-            ],
-            ip: config.machine_ip
+            ]
           },
           {
             f: 'foo2',
@@ -68,8 +67,7 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
                 c: 123_499,
                 pt: nil
               }
-            ],
-            ip: config.machine_ip
+            ]
           }
         ].to_json
       )).to have_been_made

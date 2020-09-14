@@ -35,8 +35,7 @@ describe SplitIoClient::Cache::Senders::ImpressionsFormatter do
                                 b: 'foo1',
                                 r: 'custom_label1',
                                 c: 123_456,
-                                pt: nil }],
-                          ip: ip
+                                pt: nil }]
                         },
                          {
                            f: :foo2,
@@ -46,8 +45,7 @@ describe SplitIoClient::Cache::Senders::ImpressionsFormatter do
                                  b: 'foo2',
                                  r: 'custom_label2',
                                  c: 123_499,
-                                 pt: nil }],
-                           ip: ip
+                                 pt: nil }]
                          }])
     end
 

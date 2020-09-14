@@ -17,12 +17,10 @@ module SplitIoClient
 
           formatted_impressions = unique_features(filtered_impressions).each_with_object([]) do |feature, memo|
             feature_impressions = feature_impressions(filtered_impressions, feature)
-            ip = feature_impressions.first[:m][:i]
             current_impressions = current_impressions(feature_impressions)
             memo << {
               f: feature.to_sym,
-              i: current_impressions,
-              ip: ip
+              i: current_impressions
             }
           end
 
