@@ -9,7 +9,10 @@ describe SplitIoClient::Cache::Senders::LocalhostRepoCleaner do
     let(:impressions_repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
     let(:metrics_repository) { SplitIoClient::Cache::Repositories::MetricsRepository.new(config) }
     let(:events_repository) { SplitIoClient::Cache::Repositories::EventsRepository.new(config, 'localhost') }
-    let(:impressions_manager) { SplitIoClient::Engine::Common::ImpressionManager.new(config, impressions_repository) }
+    let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
+    let(:impressions_manager) do
+      SplitIoClient::Engine::Common::ImpressionManager.new(config, impressions_repository, impression_counter)
+    end
 
     let(:cleaner) { described_class.new(impressions_repository, metrics_repository, events_repository, config) }
 

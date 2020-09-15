@@ -4,12 +4,12 @@ module SplitIoClient
   module Engine
     module Common
       class ImpressionManager
-        def initialize(config, impressions_repository)
+        def initialize(config, impressions_repository, impression_counter)
           @config = config
           @impressions_repository = impressions_repository
+          @impression_counter = impression_counter
           @impression_router = SplitIoClient::ImpressionRouter.new(@config)
           @impression_observer = SplitIoClient::Observers::ImpressionObserver.new
-          @impression_counter = SplitIoClient::Engine::Common::ImpressionCounter.new
         end
 
         # added param time for test

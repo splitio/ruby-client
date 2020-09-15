@@ -26,6 +26,7 @@ describe SplitIoClient::Engine::SyncManager do
   let(:metrics) { SplitIoClient::Metrics.new(100, metrics_repository) }
   let(:events_repository) { SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key) }
   let(:sdk_blocker) { SplitIoClient::Cache::Stores::SDKBlocker.new(splits_repository, segments_repository, config) }
+  let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
 
   before do
     mock_split_changes_with_since(splits, '-1')
@@ -36,6 +37,20 @@ describe SplitIoClient::Engine::SyncManager do
     mock_segment_changes('segment2', segment2, '1470947453878')
     mock_segment_changes('segment3', segment3, '-1')
     stub_request(:get, config.auth_service_url).to_return(status: 200, body: body_response)
+
+    @repositories = {
+      splits: splits_repository,
+      segments: segments_repository,
+      impressions: impressions_repository,
+      metrics: metrics_repository,
+      events: events_repository
+    }
+
+    @params = {
+      sdk_blocker: sdk_blocker,
+      metrics: metrics,
+      imp_counter: impression_counter
+    }
   end
 
   it 'start sync manager with success sse connection.' do
@@ -45,20 +60,14 @@ describe SplitIoClient::Engine::SyncManager do
       end
 
       config.streaming_service_url = server.base_uri
-      repositories = {}
-      repositories[:splits] = splits_repository
-      repositories[:segments] = segments_repository
-      repositories[:impressions] = impressions_repository
-      repositories[:metrics] = metrics_repository
-      repositories[:events] = events_repository
 
-      sync_manager = subject.new(repositories, api_key, config, sdk_blocker, metrics)
+      sync_manager = subject.new(@repositories, api_key, config, @params)
       sync_manager.start
 
       sleep(2)
       expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.once
       expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262916')).to have_been_made.once
-      expect(config.threads.size).to eq(9)
+      expect(config.threads.size).to eq(10)
     end
   end
 
@@ -71,20 +80,13 @@ describe SplitIoClient::Engine::SyncManager do
       config.streaming_service_url = 'https://fake-sse.io'
       config.connection_timeout = 1
 
-      repositories = {}
-      repositories[:splits] = splits_repository
-      repositories[:segments] = segments_repository
-      repositories[:impressions] = impressions_repository
-      repositories[:metrics] = metrics_repository
-      repositories[:events] = events_repository
-
-      sync_manager = subject.new(repositories, api_key, config, sdk_blocker, metrics)
+      sync_manager = subject.new(@repositories, api_key, config, @params)
       sync_manager.start
 
       sleep(2)
       expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.once
       expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262916')).to have_been_made.at_least_times(1)
-      expect(config.threads.size).to eq(7)
+      expect(config.threads.size).to eq(8)
     end
   end
 
@@ -96,14 +98,7 @@ describe SplitIoClient::Engine::SyncManager do
 
       config.streaming_service_url = server.base_uri
 
-      repositories = {}
-      repositories[:splits] = splits_repository
-      repositories[:segments] = segments_repository
-      repositories[:impressions] = impressions_repository
-      repositories[:metrics] = metrics_repository
-      repositories[:events] = events_repository
-
-      sync_manager = subject.new(repositories, api_key, config, sdk_blocker, metrics)
+      sync_manager = subject.new(@repositories, api_key, config, @params)
       sync_manager.start
 
       sleep(2)

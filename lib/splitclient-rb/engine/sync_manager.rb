@@ -9,14 +9,13 @@ module SplitIoClient
         repositories,
         api_key,
         config,
-        sdk_blocker,
-        metrics
+        params
       )
-        split_fetcher = SplitFetcher.new(repositories[:splits], api_key, metrics, config, sdk_blocker)
-        segment_fetcher = SegmentFetcher.new(repositories[:segments], api_key, metrics, config, sdk_blocker)
-        sync_params = { split_fetcher: split_fetcher, segment_fetcher: segment_fetcher }
+        split_fetcher = SplitFetcher.new(repositories[:splits], api_key, params[:metrics], config, params[:sdk_blocker])
+        segment_fetcher = SegmentFetcher.new(repositories[:segments], api_key, params[:metrics], config, params[:sdk_blocker])
+        sync_params = { split_fetcher: split_fetcher, segment_fetcher: segment_fetcher, imp_counter: params[:impression_counter] }
 
-        @synchronizer = Synchronizer.new(repositories, api_key, config, sdk_blocker, sync_params)
+        @synchronizer = Synchronizer.new(repositories, api_key, config, params[:sdk_blocker], sync_params)
         notification_manager_keeper = SplitIoClient::SSE::NotificationManagerKeeper.new(config) do |manager|
           manager.on_occupancy { |publisher_available| process_occupancy(publisher_available) }
           manager.on_push_shutdown { process_push_shutdown }

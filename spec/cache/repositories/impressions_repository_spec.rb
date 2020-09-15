@@ -104,7 +104,8 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
     let(:config) { @default_config }
 
     let(:repository) { described_class.new(config) }
-    let(:impressions_manager) { SplitIoClient::Engine::Common::ImpressionManager.new(config, repository) }
+    let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
+    let(:impressions_manager) { SplitIoClient::Engine::Common::ImpressionManager.new(config, repository, impression_counter) }
 
     it_behaves_like 'Impressions Repository'
 
@@ -138,7 +139,8 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
     end
 
     let(:repository) { described_class.new(config) }
-    let(:impressions_manager) { SplitIoClient::Engine::Common::ImpressionManager.new(config, repository) }
+    let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
+    let(:impressions_manager) { SplitIoClient::Engine::Common::ImpressionManager.new(config, repository, impression_counter) }
 
     it_behaves_like 'Impressions Repository'
 
@@ -196,7 +198,9 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
 
       custom_repository = described_class.new(custom_config)
       custom_adapter = config.impressions_adapter
-      custom_impressions_manager = SplitIoClient::Engine::Common::ImpressionManager.new(custom_config, custom_repository)
+      custom_impressions_manager = SplitIoClient::Engine::Common::ImpressionManager.new(custom_config,
+                                                                                        custom_repository,
+                                                                                        impression_counter)
       other_treatment = { treatment: 'on', label: 'sample_rule_2', change_number: 1_533_177_602_748 }
 
       params = { attributes: {}, time: 1_478_113_516_002 }

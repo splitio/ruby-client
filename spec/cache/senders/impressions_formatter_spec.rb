@@ -12,7 +12,8 @@ describe SplitIoClient::Cache::Senders::ImpressionsFormatter do
     let(:treatment1) { { treatment: 'on', label: 'custom_label1', change_number: 123_456 } }
     let(:treatment2) { { treatment: 'off', label: 'custom_label2', change_number: 123_499 } }
     let(:treatment3) { { treatment: 'off', label: nil, change_number: nil } }
-    let(:impressions_manager) { SplitIoClient::Engine::Common::ImpressionManager.new(config, repository) }
+    let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
+    let(:impressions_manager) { SplitIoClient::Engine::Common::ImpressionManager.new(config, repository, impression_counter) }
 
     before :each do
       Redis.new.flushall

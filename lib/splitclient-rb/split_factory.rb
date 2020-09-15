@@ -34,10 +34,12 @@ module SplitIoClient
       @metrics_repository = MetricsRepository.new(@config)
       @sdk_blocker = SDKBlocker.new(@splits_repository, @segments_repository, @config)
       @metrics = Metrics.new(100, @metrics_repository)
+      @impression_counter = SplitIoClient::Engine::Common::ImpressionCounter.new
+      @impressions_manager = SplitIoClient::Engine::Common::ImpressionManager.new(@config, @impressions_repository, @impression_counter)
 
       start!
 
-      @client = SplitClient.new(@api_key, @metrics, @splits_repository, @segments_repository, @impressions_repository, @metrics_repository, @events_repository, @sdk_blocker, @config)
+      @client = SplitClient.new(@api_key, @metrics, @splits_repository, @segments_repository, @impressions_repository, @metrics_repository, @events_repository, @sdk_blocker, @config, @impressions_manager)
       @manager = SplitManager.new(@splits_repository, @sdk_blocker, @config)
 
       validate_api_key
@@ -51,7 +53,8 @@ module SplitIoClient
       if @config.localhost_mode
         start_localhost_components
       else
-        SplitIoClient::Engine::SyncManager.new(repositories, @api_key, @config, @sdk_blocker, @metrics).start
+        params = { sdk_blocker: @sdk_blocker, metrics: @metrics, impression_counter: @impression_counter }
+        SplitIoClient::Engine::SyncManager.new(repositories, @api_key, @config, params).start
       end
     end
 

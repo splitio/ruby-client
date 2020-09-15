@@ -13,6 +13,7 @@ describe SplitIoClient::Engine::Common::ImpressionManager do
   let(:machine_name) { config.machine_name }
   let(:version) { "#{config.language}-#{config.version}" }
   let(:impression_repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
+  let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
   let(:expected) do
     {
       m: { s: version, i: ip, n: machine_name },
@@ -31,7 +32,7 @@ describe SplitIoClient::Engine::Common::ImpressionManager do
   end
 
   it 'build impression' do
-    impression_manager = subject.new(config, impression_repository)
+    impression_manager = subject.new(config, impression_repository, impression_counter)
     treatment = { treatment: 'off', label: 'default label', change_number: 1_478_113_516_002 }
     params = { attributes: {}, time: 1_478_113_516_222 }
     result = impression_manager.build_impression('matching_key_test', 'bucketing_key_test', 'split_name_test', treatment, params)
@@ -42,7 +43,7 @@ describe SplitIoClient::Engine::Common::ImpressionManager do
   it 'track' do
     impressions = []
     impressions << expected
-    impression_manager = subject.new(config, impression_repository)
+    impression_manager = subject.new(config, impression_repository, impression_counter)
 
     impression_manager.track(impressions)
 
