@@ -42,13 +42,14 @@ module SplitIoClient
           end
 
           def post_impressions_count
-            @impressions_api.post_count(formatter)
+            @impressions_api.post_count(formatter(@impression_counter.pop_all))
           rescue StandardError => error
             @config.log_found_exception(__method__.to_s, error)
           end
 
-          def formatter
-            counts = @impression_counter.pop_all
+          def formatter(counts)
+            return if counts.empty?
+
             formated_counts = {pf: []}
 
             counts.each do |key, value|              
