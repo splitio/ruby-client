@@ -27,16 +27,16 @@ module SplitIoClient
 
       def post_count(impressions_count)
         if impressions_count.nil? || impressions_count[:pf].empty?
-          @config.split_logger.log_if_debug('No impressions count to report')
+          @config.split_logger.log_if_debug('No impressions count to send')
           return
         end
 
         response = post_api("#{@config.events_uri}/testImpressions/count", @api_key, impressions_count)
 
         if response.success?
-          @config.split_logger.log_if_debug("Impressions reported: #{impressions_count[:pf].length}")
+          @config.split_logger.log_if_debug("Impressions count sent: #{impressions_count[:pf].length}")
         else
-          @config.logger.error("Unexpected status code while posting impressions: #{response.status}." \
+          @config.logger.error("Unexpected status code while posting impressions count: #{response.status}." \
           ' - Check your API key and base URI')
           raise 'Split SDK failed to connect to backend to post impressions'
         end

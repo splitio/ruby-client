@@ -37,7 +37,7 @@ module SplitIoClient
             rescue SplitIoClient::SDKShutdownException
               post_impressions_count
 
-              @config.logger.info('Posting impressions due to shutdown')
+              @config.logger.info('Posting impressions count due to shutdown')
             end
           end
 
@@ -56,9 +56,9 @@ module SplitIoClient
               key_splited = key.split('::')
               
               formated_counts[:pf] << {
-                f: key_splited[0].to_s,
-                m: key_splited[1].to_i,
-                rc: value
+                f: key_splited[0].to_s, # feature name
+                m: key_splited[1].to_i, # time frame
+                rc: value # count
               }
             end
 
