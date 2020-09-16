@@ -36,17 +36,17 @@ describe SplitIoClient::Cache::Senders::ImpressionsCountSender do
           [
             {
               f: 'feature1',
-              m: 1_599_048_000_000,
+              m: make_timestamp('2020-09-02 09:00:00'),
               rc: 3
             },
             {
               f: 'feature2',
-              m: 1_599_048_000_000,
+              m: make_timestamp('2020-09-02 09:00:00'),
               rc: 2
             },
             {
               f: 'feature1',
-              m: 1_599_051_600_000,
+              m: make_timestamp('2020-09-02 10:00:00'),
               rc: 1
             }
           ]
