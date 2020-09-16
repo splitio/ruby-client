@@ -53,7 +53,9 @@ module SplitIoClient
       @segments_refresh_rate = opts[:segments_refresh_rate] || SplitConfig.default_segments_refresh_rate
       @metrics_refresh_rate = opts[:metrics_refresh_rate] || SplitConfig.default_metrics_refresh_rate
 
-      @impressions_refresh_rate = opts[:impressions_refresh_rate] || SplitConfig.default_impressions_refresh_rate
+      @impressions_mode = init_impressions_mode(opts[:impressions_mode] || SplitConfig.default_impressions_mode)
+
+      @impressions_refresh_rate = SplitConfig.init_impressions_refresh_rate(@impressions_mode, opts[:impressions_refresh_rate], SplitConfig.default_impressions_refresh_rate)
       @impressions_queue_size = opts[:impressions_queue_size] || SplitConfig.default_impressions_queue_size
       @impressions_adapter = SplitConfig.init_cache_adapter(
         opts[:cache_adapter] || SplitConfig.default_cache_adapter, :queue_adapter, @impressions_queue_size, @redis_url
@@ -107,8 +109,6 @@ module SplitIoClient
       @auth_service_url = opts[:auth_service_url] || SplitConfig.default_auth_service_url
       @auth_retry_back_off_base = SplitConfig.init_auth_retry_back_off(opts[:auth_retry_back_off_base] || SplitConfig.default_auth_retry_back_off_base)
       @streaming_reconnect_back_off_base = SplitConfig.init_streaming_reconnect_back_off(opts[:streaming_reconnect_back_off_base] || SplitConfig.default_streaming_reconnect_back_off_base)
-
-      @impressions_mode = init_impressions_mode(opts[:impressions_mode] || SplitConfig.default_impressions_mode)
 
       startup_log
     end
@@ -288,6 +288,15 @@ module SplitIoClient
       end
     end
 
+    def self.init_impressions_refresh_rate(impressions_mode, refresh_rate, default_rate)
+      case impressions_mode
+      when :optimized
+        return refresh_rate.nil? || refresh_rate <= 0 ? SplitConfig.default_impressions_refresh_rate_optimized : [default_rate, refresh_rate].max
+      when :debug
+        return refresh_rate.nil? || refresh_rate <= 0 ? default_rate : refresh_rate
+      end
+    end
+
     def self.default_streaming_enabled
       true
     end
@@ -403,6 +412,10 @@ module SplitIoClient
 
     def self.default_impressions_refresh_rate
       60
+    end
+
+    def self.default_impressions_refresh_rate_optimized
+      300
     end
 
     def self.default_impression_listener_refresh_rate

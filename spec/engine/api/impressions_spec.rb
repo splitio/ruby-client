@@ -30,13 +30,31 @@ describe SplitIoClient::Api::Impressions do
                 'Content-Type' => 'application/json',
                 'SplitSDKMachineIP' => config.machine_ip,
                 'SplitSDKMachineName' => config.machine_name,
-                'SplitImpressionsMode' => config.impressions_mode.to_s
+                'SplitImpressionsMode' => 'optimized'
               })
         .to_return(status: 200, body: 'ok')
 
       impressions_api.post(impressions)
       expect(log.string).to include 'Impressions reported: 1'
     end
+
+    it 'post impressions with impressions_mode in debug' do
+      custom_config = SplitIoClient::SplitConfig.new(logger: Logger.new(log), impressions_mode: :debug)
+      custom_api = described_class.new('', custom_config)
+
+      stub_request(:post, 'https://events.split.io/api/testImpressions/bulk')
+        .with(headers: {
+                'Authorization' => 'Bearer',
+                'SplitSDKVersion' => "#{config.language}-#{config.version}",
+                'Content-Type' => 'application/json',
+                'SplitSDKMachineIP' => config.machine_ip,
+                'SplitSDKMachineName' => config.machine_name,
+                'SplitImpressionsMode' => 'debug'
+              })
+        .to_return(status: 200, body: 'ok')
+
+      custom_api.post(impressions)
+    end    
 
     it 'throws exception if request to post latencies returns unexpected status code' do
       stub_request(:post, 'https://events.split.io/api/testImpressions/bulk')
