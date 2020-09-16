@@ -54,7 +54,7 @@ describe SplitIoClient::Api::Impressions do
         .to_return(status: 200, body: 'ok')
 
       custom_api.post(impressions)
-    end    
+    end
 
     it 'throws exception if request to post latencies returns unexpected status code' do
       stub_request(:post, 'https://events.split.io/api/testImpressions/bulk')
