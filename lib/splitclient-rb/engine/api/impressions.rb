@@ -54,7 +54,7 @@ module SplitIoClient
 
       def impressions_headers
         {
-          'SplitImpressionsMode' => @config.impressions_mode.to_s
+          'SplitSDKImpressionsMode' => @config.impressions_mode.to_s
         }
       end
     end

@@ -42,7 +42,7 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
       sleep 0.5
       expect(a_request(:post, 'https://events.split.io/api/testImpressions/bulk')
       .with(
-        headers: { 'SplitImpressionsMode' => config.impressions_mode.to_s },
+        headers: { 'SplitSDKImpressionsMode' => config.impressions_mode.to_s },
         body: [
           {
             f: 'foo1',
