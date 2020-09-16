@@ -743,7 +743,6 @@ describe SplitIoClient do
       stub_request(:post, 'https://events.split.io/api/metrics/counter')
         .to_return(status: 200, body: 'ok')
 
-      @counter = SplitIoClient::Engine::Common::ImpressionCounter.new
       custom_factory = SplitIoClient::SplitFactory.new('test_api_key', impressions_mode: :debug)
       @debug_client = custom_factory.client
 
@@ -756,8 +755,6 @@ describe SplitIoClient do
       expect(@debug_client.get_treatment('admin', 'FACUNDO_TEST')).to eq 'off'
       expect(@debug_client.get_treatment('24', 'Test_Save_1')).to eq 'off'
       expect(@debug_client.get_treatment('24', 'Test_Save_1')).to eq 'off'
-
-      time_frame = @counter.truncate_time_frame((Time.now.to_f * 1000.0).to_i)
 
       impressions = @debug_client.instance_variable_get(:@impressions_repository).batch
 
@@ -773,8 +770,6 @@ describe SplitIoClient do
       @debug_client.get_treatments('admin', %w[FACUNDO_TEST MAURO_TEST Test_Save_1])
       @debug_client.get_treatments('maldo', %w[FACUNDO_TEST Test_Save_1])
       @debug_client.get_treatments('nico_test', %w[FACUNDO_TEST MAURO_TEST Test_Save_1])
-
-      time_frame = @counter.truncate_time_frame((Time.now.to_f * 1000.0).to_i)
 
       impressions = @debug_client.instance_variable_get(:@impressions_repository).batch
 
