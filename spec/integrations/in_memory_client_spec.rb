@@ -665,7 +665,7 @@ describe SplitIoClient do
     end
   end
 
-  context 'checking logic impressions' do
+  context 'checking logic impressions - optimized mode' do
     before do
       stub_request(:post, 'https://events.split.io/api/testImpressions/bulk')
         .to_return(status: 200, body: 'ok')
@@ -731,6 +731,56 @@ describe SplitIoClient do
           ]
         }.to_json
       )).to have_been_made
+    end
+  end
+
+  context 'checking logic impressions - debug mode' do
+    before do
+      stub_request(:post, 'https://events.split.io/api/testImpressions/bulk')
+        .to_return(status: 200, body: 'ok')
+      stub_request(:post, 'https://events.split.io/api/metrics/time')
+        .to_return(status: 200, body: 'ok')
+      stub_request(:post, 'https://events.split.io/api/metrics/counter')
+        .to_return(status: 200, body: 'ok')
+
+      @counter = SplitIoClient::Engine::Common::ImpressionCounter.new
+      custom_factory = SplitIoClient::SplitFactory.new('test_api_key', impressions_mode: :debug)
+      @debug_client = custom_factory.client
+    end
+
+    it 'get_treament should post 6 impressions' do
+      expect(@debug_client.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
+      expect(@debug_client.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
+      expect(@debug_client.get_treatment('admin', 'FACUNDO_TEST')).to eq 'off'
+      expect(@debug_client.get_treatment('24', 'Test_Save_1')).to eq 'off'
+      expect(@debug_client.get_treatment('24', 'Test_Save_1')).to eq 'off'
+
+      time_frame = @counter.truncate_time_frame((Time.now.to_f * 1000.0).to_i)
+
+      impressions = @debug_client.instance_variable_get(:@impressions_repository).batch
+
+      @debug_client.destroy
+
+      sleep 0.5
+
+      expect(impressions.size).to eq 5
+    end
+
+    it 'get_treaments should post 11 impressions' do
+      @debug_client.get_treatments('nico_test', %w[FACUNDO_TEST MAURO_TEST Test_Save_1])
+      @debug_client.get_treatments('admin', %w[FACUNDO_TEST MAURO_TEST Test_Save_1])
+      @debug_client.get_treatments('maldo', %w[FACUNDO_TEST Test_Save_1])
+      @debug_client.get_treatments('nico_test', %w[FACUNDO_TEST MAURO_TEST Test_Save_1])
+
+      time_frame = @counter.truncate_time_frame((Time.now.to_f * 1000.0).to_i)
+
+      impressions = @debug_client.instance_variable_get(:@impressions_repository).batch
+
+      @debug_client.destroy
+
+      sleep 0.5
+
+      expect(impressions.size).to eq 11
     end
   end
 end
