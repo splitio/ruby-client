@@ -746,9 +746,11 @@ describe SplitIoClient do
       @counter = SplitIoClient::Engine::Common::ImpressionCounter.new
       custom_factory = SplitIoClient::SplitFactory.new('test_api_key', impressions_mode: :debug)
       @debug_client = custom_factory.client
+
+      @debug_client.block_until_ready
     end
 
-    it 'get_treament should post 6 impressions' do
+    it 'get_treament should post 5 impressions' do
       expect(@debug_client.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
       expect(@debug_client.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
       expect(@debug_client.get_treatment('admin', 'FACUNDO_TEST')).to eq 'off'
