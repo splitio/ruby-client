@@ -9,7 +9,7 @@ module SplitIoClient
     # @param api_key [String] the API key for your split account
     #
     # @return [SplitIoClient] split.io client instance
-    def initialize(api_key, metrics, splits_repository, segments_repository, impressions_repository, metrics_repository, events_repository, sdk_blocker, config)
+    def initialize(api_key, metrics, splits_repository, segments_repository, impressions_repository, metrics_repository, events_repository, sdk_blocker, config, impressions_manager)
       @api_key = api_key
       @metrics = metrics
       @splits_repository = splits_repository
@@ -20,7 +20,7 @@ module SplitIoClient
       @sdk_blocker = sdk_blocker
       @destroyed = false
       @config = config
-      @impressions_manager = SplitIoClient::Engine::Common::ImpressionManager.new(config, impressions_repository)
+      @impressions_manager = impressions_manager
     end
 
     def get_treatment(

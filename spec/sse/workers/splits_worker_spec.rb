@@ -22,20 +22,10 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
   let(:metrics) { SplitIoClient::Metrics.new(100, metrics_repository) }
   let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, metrics, config, sdk_blocker) }
   let(:segment_fetcher) { SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, metrics, config, sdk_blocker) }
-  let(:repositories) do
-    repos = {}
-    repos[:splits] = splits_repository
-    repos[:segments] = segments_repository
-    repos[:metrics] = metrics_repository
-    repos
-  end
-  let(:fetchers) do
-    params = {}
-    params[:split_fetcher] = split_fetcher
-    params[:segment_fetcher] = segment_fetcher
-    params
-  end
-  let(:synchronizer) { SplitIoClient::Engine::Synchronizer.new(repositories, api_key, config, sdk_blocker, fetchers) }
+  let(:repositories) { { splits: splits_repository, segments: segments_repository, metrics: metrics_repository } }
+  let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
+  let(:params) { { split_fetcher: split_fetcher, segment_fetcher: segment_fetcher, imp_counter: impression_counter } }
+  let(:synchronizer) { SplitIoClient::Engine::Synchronizer.new(repositories, api_key, config, sdk_blocker, params) }
 
   before do
     mock_split_changes(splits)
