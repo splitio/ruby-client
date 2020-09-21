@@ -19,7 +19,6 @@ module SplitIoClient
     end
 
     def add_bulk(impressions)
-      return unless @listener
       impressions.each do |impression|
         enqueue(
           split_name: impression[:i][:f],
@@ -35,23 +34,32 @@ module SplitIoClient
           attributes: impression[:attributes]
         ) unless impression.nil?
       end
+    rescue StandardError => error
+      @config.log_found_exception(__method__.to_s, error)
     end
 
     private
 
     def enqueue(impression)
       @queue.push(impression) if @listener
+    rescue StandardError => error
+      @config.log_found_exception(__method__.to_s, error)
     end
 
     def router_thread
       @config.threads[:impression_router] = Thread.new do
         loop do
           begin
-            @listener.log(@queue.pop)
+            @config.logger.warn("THREAD POP loop")
+            impression = @queue.pop
+            @config.logger.warn(impression.to_s)
+            @listener.log(impression)
           rescue StandardError => error
             @config.log_found_exception(__method__.to_s, error)
           end
         end
+
+        @config.logger.warn("final router loop thread..")
       end
     end
   end

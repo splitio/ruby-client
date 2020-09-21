@@ -26,6 +26,8 @@ module SplitIoClient
         end
 
         def track(impressions)
+          return if impressions.empty?
+
           @impressions_repository.add_bulk(impressions)
           @impression_router.add_bulk(impressions)
         rescue StandardError => error
