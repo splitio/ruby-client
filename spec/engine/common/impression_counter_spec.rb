@@ -4,17 +4,18 @@ require 'spec_helper'
 
 describe SplitIoClient::Engine::Common::ImpressionCounter do
   subject { SplitIoClient::Engine::Common::ImpressionCounter }
+  let(:imp_counter) { SplitIoClient::Engine::Common::ImpressionCounter }
 
   before do
     @counter = subject.new
   end
 
   it 'truncate time frame' do
-    expect(@counter.truncate_time_frame(make_timestamp('2020-09-02 10:53:12'))).to eq(make_timestamp('2020-09-02 10:00:00'))
-    expect(@counter.truncate_time_frame(make_timestamp('2020-09-02 10:00:00'))).to eq(make_timestamp('2020-09-02 10:00:00'))
-    expect(@counter.truncate_time_frame(make_timestamp('2020-09-02 10:53:00'))).to eq(make_timestamp('2020-09-02 10:00:00'))
-    expect(@counter.truncate_time_frame(make_timestamp('2020-09-02 10:00:12'))).to eq(make_timestamp('2020-09-02 10:00:00'))
-    expect(@counter.truncate_time_frame(make_timestamp('1970-01-01 00:00:00'))).to eq(make_timestamp('1970-01-01'))
+    expect(imp_counter.truncate_time_frame(make_timestamp('2020-09-02 10:53:12'))).to eq(make_timestamp('2020-09-02 10:00:00'))
+    expect(imp_counter.truncate_time_frame(make_timestamp('2020-09-02 10:00:00'))).to eq(make_timestamp('2020-09-02 10:00:00'))
+    expect(imp_counter.truncate_time_frame(make_timestamp('2020-09-02 10:53:00'))).to eq(make_timestamp('2020-09-02 10:00:00'))
+    expect(imp_counter.truncate_time_frame(make_timestamp('2020-09-02 10:00:12'))).to eq(make_timestamp('2020-09-02 10:00:00'))
+    expect(imp_counter.truncate_time_frame(make_timestamp('1970-01-01 00:00:00'))).to eq(make_timestamp('1970-01-01'))
   end
 
   it 'make key' do

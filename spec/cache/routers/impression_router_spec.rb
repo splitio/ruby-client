@@ -64,7 +64,9 @@ describe SplitIoClient::ImpressionRouter do
       it 'logs multiple impressions' do
         expect(listener).to receive(:log).twice
 
-        impression_router.add_bulk(impressions)
+        impressions.each do |imp|
+          impression_router.add(imp)
+        end
 
         wait_for_router_thread
         expect(config.threads[:impression_router]).not_to be_nil
@@ -78,7 +80,9 @@ describe SplitIoClient::ImpressionRouter do
       it 'ignores multiple impressions' do
         expect(config).not_to receive(:log_found_exception)
 
-        impression_router.add_bulk(impressions)
+        impressions.each do |imp|
+          impression_router.add(imp)
+        end
 
         expect(config.threads[:impression_router]).to be_nil
         expect(impression_router.instance_variable_get(:@queue)).to be_nil

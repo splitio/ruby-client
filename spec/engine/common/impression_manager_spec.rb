@@ -38,6 +38,7 @@ describe SplitIoClient::Engine::Common::ImpressionManager do
     result = impression_manager.build_impression('matching_key_test', 'bucketing_key_test', 'split_name_test', treatment, params)
 
     expect(result).to match(expected)
+    expect(impression_listener.size).to eq(1)
   end
 
   it 'track' do
@@ -49,6 +50,5 @@ describe SplitIoClient::Engine::Common::ImpressionManager do
 
     sleep(0.5)
     expect(impression_repository.batch.size).to eq(1)
-    expect(impression_listener.size).to eq(1)
   end
 end

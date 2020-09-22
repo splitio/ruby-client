@@ -32,12 +32,12 @@ module SplitIoClient
           to_return
         end
 
-        def truncate_time_frame(timestamp_ms)
-          timestamp_ms - (timestamp_ms % TIME_INTERVAL_MS)
+        def make_key(split_name, time_frame)
+          "#{split_name}::#{ImpressionCounter.truncate_time_frame(time_frame)}"
         end
 
-        def make_key(split_name, time_frame)
-          "#{split_name}::#{truncate_time_frame(time_frame)}"
+        def self.truncate_time_frame(timestamp_ms)
+          timestamp_ms - (timestamp_ms % TIME_INTERVAL_MS)
         end
       end
     end
