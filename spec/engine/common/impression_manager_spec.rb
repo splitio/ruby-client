@@ -35,10 +35,10 @@ describe SplitIoClient::Engine::Common::ImpressionManager do
     impression_manager = subject.new(config, impression_repository, impression_counter)
     treatment = { treatment: 'off', label: 'default label', change_number: 1_478_113_516_002 }
     params = { attributes: {}, time: 1_478_113_516_222 }
+
     result = impression_manager.build_impression('matching_key_test', 'bucketing_key_test', 'split_name_test', treatment, params)
 
     expect(result).to match(expected)
-    expect(impression_listener.size).to eq(1)
   end
 
   it 'track' do
@@ -50,5 +50,6 @@ describe SplitIoClient::Engine::Common::ImpressionManager do
 
     sleep(0.5)
     expect(impression_repository.batch.size).to eq(1)
+    expect(impression_listener.size).to eq(1)
   end
 end

@@ -18,8 +18,10 @@ module SplitIoClient
       end
     end
 
-    def add(impression)
-      enqueue(impression)
+    def add_bulk(impressions)
+      impressions.each do |impression|
+        enqueue(impression)
+      end
     end
 
     private
