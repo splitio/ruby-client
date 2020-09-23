@@ -52,4 +52,30 @@ describe SplitIoClient::Engine::Common::ImpressionManager do
     expect(impression_repository.batch.size).to eq(1)
     expect(impression_listener.size).to eq(1)
   end
+
+  it 'track optimized' do
+    impressions = []
+    impression_manager = subject.new(config, impression_repository, impression_counter)
+
+    treatment_data = { treatment: 'off', label: 'default label', change_number: 1_478_113_516_002 }
+    params = { attributes: {}, time: expected[:i][:m] }
+    imp = expected[:i]
+
+    impressions << impression_manager.build_impression(imp[:k], imp[:b], imp[:f], treatment_data, params)
+    impressions << impression_manager.build_impression(imp[:k], imp[:b], imp[:f], treatment_data, params)
+    impressions << impression_manager.build_impression(imp[:k], imp[:b], imp[:f], treatment_data, params)
+    impressions << impression_manager.build_impression(imp[:k], imp[:b], imp[:f], treatment_data, params)
+
+    impressions << impression_manager.build_impression('second_key', imp[:b], imp[:f], treatment_data, params)
+    impressions << impression_manager.build_impression('second_key', imp[:b], imp[:f], treatment_data, params)
+
+    impressions << impression_manager.build_impression('second_key', imp[:b], 'test_split', treatment_data, params)
+    impressions << impression_manager.build_impression('second_key', imp[:b], 'test_split', treatment_data, params)
+
+    impression_manager.track(impressions)
+
+    sleep(0.5)
+    expect(impression_repository.batch.size).to eq(3)
+    expect(impression_listener.size).to eq(8)
+  end
 end
