@@ -191,8 +191,9 @@ public final class MurmurHash3 {
                 (((long) data[index + 7] & 0xff) << 56);
     }
 
-    public static long[] hash128x64(final byte[] data) {
-        return hash128x64(data, 0, data.length, 0);
+    public static long[] hash128x64(final String data, final long seed) {
+        final byte[] dataBytes = data.getBytes();
+        return hash128x64(dataBytes, 0, dataBytes.length, seed);
     }
 
     /**

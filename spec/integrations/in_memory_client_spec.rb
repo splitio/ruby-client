@@ -676,7 +676,7 @@ describe SplitIoClient do
       stub_request(:post, 'https://events.split.io/api/testImpressions/count')
         .to_return(status: 200, body: 'ok')
 
-      @counter = SplitIoClient::Engine::Common::ImpressionCounter.new
+      @counter = SplitIoClient::Engine::Common::ImpressionCounter
     end
 
     it 'get_treament should post 3 impressions' do

@@ -8,7 +8,6 @@ module SplitIoClient
           @config = config
           @impressions_repository = impressions_repository
           @impression_counter = impression_counter
-          @impression_router = SplitIoClient::ImpressionRouter.new(@config)
           @impression_observer = SplitIoClient::Observers::ImpressionObserver.new
         end
 
@@ -18,7 +17,7 @@ module SplitIoClient
 
           impression_data[:pt] = @impression_observer.test_and_set(impression_data) unless redis?
 
-          return impression_optimized(split_name, impression_data, params[:attributes]) if optimized? && !redis?
+          @impression_counter.inc(split_name, impression_data[:m]) if optimized? && !redis?
 
           impression(impression_data, params[:attributes])
         rescue StandardError => error
@@ -26,8 +25,16 @@ module SplitIoClient
         end
 
         def track(impressions)
-          @impressions_repository.add_bulk(impressions)
-          @impression_router.add_bulk(impressions)
+          return if impressions.empty?
+
+          impression_router.add_bulk(impressions)
+
+          if optimized? && !redis?
+            optimized_impressions = impressions.select { |imp| should_queue_impression?(imp[:i]) }
+            @impressions_repository.add_bulk(optimized_impressions)
+          else
+            @impressions_repository.add_bulk(impressions)
+          end
         rescue StandardError => error
           @config.log_found_exception(__method__.to_s, error)
         end
@@ -64,14 +71,9 @@ module SplitIoClient
           @config.impressions_mode == :optimized
         end
 
-        def impression_optimized(split_name, impression_data, attributes)
-          @impression_counter.inc(split_name, impression_data[:m])
-
-          impression(impression_data, attributes) if should_queue_impression?(impression_data)
-        end
-
         def should_queue_impression?(impression)
-          impression[:pt].nil? || (impression[:pt] < ((Time.now.to_f * 1000.0).to_i - Common::TIME_INTERVAL_MS))
+          impression[:pt].nil? ||
+            (ImpressionCounter.truncate_time_frame(impression[:pt]) != ImpressionCounter.truncate_time_frame(impression[:m]))
         end
 
         def impression(impression_data, attributes)
@@ -80,6 +82,12 @@ module SplitIoClient
 
         def redis?
           @config.impressions_adapter.class.to_s == 'SplitIoClient::Cache::Adapters::RedisAdapter'
+        end
+
+        def impression_router
+          @impression_router ||= SplitIoClient::ImpressionRouter.new(@config)
+        rescue StandardError => error
+          @config.log_found_exception(__method__.to_s, error)
         end
       end
     end

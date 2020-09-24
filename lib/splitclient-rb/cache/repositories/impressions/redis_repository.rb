@@ -22,7 +22,7 @@ module SplitIoClient
             # Synchronizer might not be running
             @adapter.expire(key, EXPIRE_SECONDS) if impressions_json.size == impressions_list_size
           rescue StandardError => e
-            @config.logger.error("Exception while add_bulk_v2: #{e}")
+            @config.logger.error("Exception while add_bulk: #{e}")
           end
 
           def get_impressions(number_of_impressions = 0)

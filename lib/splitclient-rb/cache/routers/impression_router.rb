@@ -19,28 +19,30 @@ module SplitIoClient
     end
 
     def add_bulk(impressions)
-      return unless @listener
       impressions.each do |impression|
-        enqueue(
-          split_name: impression[:i][:f],
-          matching_key: impression[:i][:k],
-          bucketing_key: impression[:i][:b],
-          time: impression[:i][:m],
-          treatment: {
-            label: impression[:i][:r],
-            treatment: impression[:i][:t],
-            change_number: impression[:i][:c]
-          },
-          previous_time: impression[:i][:pt],
-          attributes: impression[:attributes]
-        ) unless impression.nil?
+        enqueue(impression)
       end
     end
 
     private
 
     def enqueue(impression)
-      @queue.push(impression) if @listener
+      imp = {
+        split_name: impression[:i][:f],
+        matching_key: impression[:i][:k],
+        bucketing_key: impression[:i][:b],
+        time: impression[:i][:m],
+        treatment: {
+          label: impression[:i][:r],
+          treatment: impression[:i][:t],
+          change_number: impression[:i][:c]
+        },
+        previous_time: impression[:i][:pt],
+        attributes: impression[:attributes]
+      }
+      @queue.push(imp) if @listener
+    rescue StandardError => error
+      @config.log_found_exception(__method__.to_s, error)
     end
 
     def router_thread
