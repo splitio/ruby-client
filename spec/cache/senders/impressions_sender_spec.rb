@@ -11,15 +11,22 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
       )
     end
     let(:repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
-    let(:sender) { described_class.new(repository, nil, config) }
+    let(:impression_api) { SplitIoClient::Api::Impressions.new(nil, config) }
+    let(:sender) { described_class.new(repository, config, impression_api) }
     let(:formatted_impressions) { SplitIoClient::Cache::Senders::ImpressionsFormatter.new(repository).call(true) }
     let(:treatment1) { { treatment: 'on', label: 'custom_label1', change_number: 123_456 } }
     let(:treatment2) { { treatment: 'off', label: 'custom_label2', change_number: 123_499 } }
+    let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
+    let(:impressions_manager) { SplitIoClient::Engine::Common::ImpressionManager.new(config, repository, impression_counter) }
 
     before :each do
       Redis.new.flushall
-      repository.add('matching_key', 'foo1', 'foo1', treatment1, 1_478_113_516_002)
-      repository.add('matching_key2', 'foo2', 'foo2', treatment2, 1_478_113_518_285)
+      params = { attributes: {}, time: 1_478_113_516_002 }
+      params2 = { attributes: {}, time: 1_478_113_518_285 }
+      impressions = []
+      impressions << impressions_manager.build_impression('matching_key', 'foo1', 'foo1', treatment1, params)
+      impressions << impressions_manager.build_impression('matching_key2', 'foo2', 'foo2', treatment2, params2)
+      impressions_manager.track(impressions)
     end
 
     it 'returns the total number of impressions' do
@@ -35,34 +42,35 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
       sleep 0.5
       expect(a_request(:post, 'https://events.split.io/api/testImpressions/bulk')
       .with(
+        headers: { 'SplitSDKImpressionsMode' => config.impressions_mode.to_s },
         body: [
           {
-            testName: 'foo1',
-            keyImpressions: [
+            f: 'foo1',
+            i: [
               {
-                keyName: 'matching_key',
-                treatment: 'on',
-                time: 1_478_113_516_002,
-                bucketingKey: 'foo1',
-                label: 'custom_label1',
-                changeNumber: 123_456
+                k: 'matching_key',
+                t: 'on',
+                m: 1_478_113_516_002,
+                b: 'foo1',
+                r: 'custom_label1',
+                c: 123_456,
+                pt: nil
               }
-            ],
-            ip: config.machine_ip
+            ]
           },
           {
-            testName: 'foo2',
-            keyImpressions: [
+            f: 'foo2',
+            i: [
               {
-                keyName: 'matching_key2',
-                treatment: 'off',
-                time: 1_478_113_518_285,
-                bucketingKey: 'foo2',
-                label: 'custom_label2',
-                changeNumber: 123_499
+                k: 'matching_key2',
+                t: 'off',
+                m: 1_478_113_518_285,
+                b: 'foo2',
+                r: 'custom_label2',
+                c: 123_499,
+                pt: nil
               }
-            ],
-            ip: config.machine_ip
+            ]
           }
         ].to_json
       )).to have_been_made

@@ -10,7 +10,7 @@ describe SplitIoClient do
       features_refresh_rate: 3,
       segments_refresh_rate: 4,
       metrics_refresh_rate: 5,
-      impressions_refresh_rate: 6,
+      impressions_refresh_rate: 65,
       impressions_queue_size: 20,
       logger: Logger.new('/dev/null'),
       debug_enabled: true }
@@ -27,7 +27,7 @@ describe SplitIoClient do
       expect(configs.features_refresh_rate).to eq SplitIoClient::SplitConfig.default_features_refresh_rate
       expect(configs.segments_refresh_rate).to eq SplitIoClient::SplitConfig.default_segments_refresh_rate
       expect(configs.metrics_refresh_rate).to eq SplitIoClient::SplitConfig.default_metrics_refresh_rate
-      expect(configs.impressions_refresh_rate).to eq SplitIoClient::SplitConfig.default_impressions_refresh_rate
+      expect(configs.impressions_refresh_rate).to eq SplitIoClient::SplitConfig.default_impressions_refresh_rate_optimized
       expect(configs.impressions_queue_size).to eq SplitIoClient::SplitConfig.default_impressions_queue_size
       expect(configs.debug_enabled).to eq SplitIoClient::SplitConfig.default_debug
       expect(configs.ip_addresses_enabled).to eq default_ip
@@ -50,8 +50,20 @@ describe SplitIoClient do
       expect(configs.debug_enabled).to eq custom_options[:debug_enabled]
     end
 
-    it 'has the current default values for timeouts and intervals' do
+    it 'has the current default values for timeouts and intervals, with impressions_mode in :optimized' do
       configs = SplitIoClient::SplitConfig.new
+
+      expect(configs.connection_timeout).to eq 5
+      expect(configs.read_timeout).to eq 5
+      expect(configs.features_refresh_rate).to eq 5
+      expect(configs.segments_refresh_rate).to eq 60
+      expect(configs.metrics_refresh_rate).to eq 60
+      expect(configs.impressions_refresh_rate).to eq 300
+      expect(configs.impressions_queue_size).to eq 5000
+    end
+
+    it 'has the current default values for timeouts and intervals, with impressions_mode in :debug' do
+      configs = SplitIoClient::SplitConfig.new(impressions_mode: :debug)
 
       expect(configs.connection_timeout).to eq 5
       expect(configs.read_timeout).to eq 5
@@ -87,6 +99,47 @@ describe SplitIoClient do
       expect(configs.ip_addresses_enabled).to eq false
       expect(configs.machine_name).to eq ''
       expect(configs.machine_ip).to eq ''
+    end
+
+    it 'set impression mode' do
+      options1 = { impressions_mode: :debug }
+      configs1 = SplitIoClient::SplitConfig.new(options1)
+
+      expect(configs1.impressions_mode).to eq(:debug)
+
+      options2 = { impressions_mode: :optimized }
+      configs2 = SplitIoClient::SplitConfig.new(options2)
+
+      expect(configs2.impressions_mode).to eq(:optimized)
+
+      options3 = { impressions_mode: :sarasa }
+      configs3 = SplitIoClient::SplitConfig.new(options3)
+
+      expect(configs3.impressions_mode).to eq(:optimized)
+    end
+
+    it 'set impressions refresh rate with impressions optimized mode' do
+      configs = SplitIoClient::SplitConfig.new(impressions_refresh_rate: 70)
+
+      expect(configs.impressions_refresh_rate).to eq 70
+
+      configs = SplitIoClient::SplitConfig.new(impressions_refresh_rate: 50)
+
+      expect(configs.impressions_refresh_rate).to eq 60
+    end
+
+    it 'set impressions refresh rate with impressions debug mode' do
+      configs = SplitIoClient::SplitConfig.new(impressions_mode: :debug, impressions_refresh_rate: 0)
+
+      expect(configs.impressions_refresh_rate).to eq 60
+
+      configs = SplitIoClient::SplitConfig.new(impressions_mode: :debug, impressions_refresh_rate: 1)
+
+      expect(configs.impressions_refresh_rate).to eq 1
+
+      configs = SplitIoClient::SplitConfig.new(impressions_mode: :debug, impressions_refresh_rate: 40)
+
+      expect(configs.impressions_refresh_rate).to eq 40
     end
   end
 end

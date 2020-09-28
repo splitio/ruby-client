@@ -12,28 +12,17 @@ module SplitIoClient
             @adapter = @config.impressions_adapter
           end
 
-          def add(matching_key, bucketing_key, split_name, treatment, time)
-            add_bulk(matching_key, bucketing_key, { split_name => treatment }, time)
-          end
-
-          def add_bulk(matching_key, bucketing_key, treatments, time)
-            impressions = treatments.map do |split_name, treatment|
-              {
-                m: metadata,
-                i: impression_data(
-                  matching_key,
-                  bucketing_key,
-                  split_name,
-                  treatment,
-                  time
-                )
-              }.to_json
+          def add_bulk(impressions)
+            impressions_json = impressions.map do |impression|
+              impression.to_json
             end
 
-            impressions_list_size = @adapter.add_to_queue(key, impressions)
+            impressions_list_size = @adapter.add_to_queue(key, impressions_json)
 
             # Synchronizer might not be running
-            @adapter.expire(key, EXPIRE_SECONDS) if impressions.size == impressions_list_size
+            @adapter.expire(key, EXPIRE_SECONDS) if impressions_json.size == impressions_list_size
+          rescue StandardError => e
+            @config.logger.error("Exception while add_bulk: #{e}")
           end
 
           def get_impressions(number_of_impressions = 0)

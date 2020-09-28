@@ -53,7 +53,9 @@ module SplitIoClient
       @segments_refresh_rate = opts[:segments_refresh_rate] || SplitConfig.default_segments_refresh_rate
       @metrics_refresh_rate = opts[:metrics_refresh_rate] || SplitConfig.default_metrics_refresh_rate
 
-      @impressions_refresh_rate = opts[:impressions_refresh_rate] || SplitConfig.default_impressions_refresh_rate
+      @impressions_mode = init_impressions_mode(opts[:impressions_mode])
+
+      @impressions_refresh_rate = SplitConfig.init_impressions_refresh_rate(@impressions_mode, opts[:impressions_refresh_rate], SplitConfig.default_impressions_refresh_rate)
       @impressions_queue_size = opts[:impressions_queue_size] || SplitConfig.default_impressions_queue_size
       @impressions_adapter = SplitConfig.init_cache_adapter(
         opts[:cache_adapter] || SplitConfig.default_cache_adapter, :queue_adapter, @impressions_queue_size, @redis_url
@@ -270,6 +272,30 @@ module SplitIoClient
 
     attr_accessor :streaming_enabled
 
+    attr_accessor :impressions_mode
+
+    def self.default_impressions_mode
+      :optimized
+    end
+
+    def init_impressions_mode(impressions_mode)
+      impressions_mode ||= SplitConfig.default_impressions_mode
+
+      case impressions_mode
+      when :debug
+        return :debug
+      else
+        @logger.error('You passed an invalid impressions_mode, impressions_mode should be one of the following values: :debug or :optimized. Defaulting to :optimized mode') unless impressions_mode == :optimized
+        return :optimized
+      end
+    end
+
+    def self.init_impressions_refresh_rate(impressions_mode, refresh_rate, default_rate)      
+      return (refresh_rate.nil? || refresh_rate <= 0 ? default_rate : refresh_rate) if impressions_mode == :debug
+      
+      return refresh_rate.nil? || refresh_rate <= 0 ? SplitConfig.default_impressions_refresh_rate_optimized : [default_rate, refresh_rate].max
+    end
+
     def self.default_streaming_enabled
       true
     end
@@ -385,6 +411,10 @@ module SplitIoClient
 
     def self.default_impressions_refresh_rate
       60
+    end
+
+    def self.default_impressions_refresh_rate_optimized
+      300
     end
 
     def self.default_impression_listener_refresh_rate

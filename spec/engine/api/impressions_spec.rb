@@ -16,7 +16,7 @@ describe SplitIoClient::Api::Impressions do
     [
       {
         ip: '192.168.1.1',
-        keyImpressions: ['test']
+        i: ['test']
       }
     ]
   end
@@ -29,12 +29,31 @@ describe SplitIoClient::Api::Impressions do
                 'SplitSDKVersion' => "#{config.language}-#{config.version}",
                 'Content-Type' => 'application/json',
                 'SplitSDKMachineIP' => config.machine_ip,
-                'SplitSDKMachineName' => config.machine_name
+                'SplitSDKMachineName' => config.machine_name,
+                'SplitSDKImpressionsMode' => 'optimized'
               })
         .to_return(status: 200, body: 'ok')
 
       impressions_api.post(impressions)
       expect(log.string).to include 'Impressions reported: 1'
+    end
+
+    it 'post impressions with impressions_mode in debug' do
+      custom_config = SplitIoClient::SplitConfig.new(logger: Logger.new(log), impressions_mode: :debug)
+      custom_api = described_class.new('', custom_config)
+
+      stub_request(:post, 'https://events.split.io/api/testImpressions/bulk')
+        .with(headers: {
+                'Authorization' => 'Bearer',
+                'SplitSDKVersion' => "#{config.language}-#{config.version}",
+                'Content-Type' => 'application/json',
+                'SplitSDKMachineIP' => config.machine_ip,
+                'SplitSDKMachineName' => config.machine_name,
+                'SplitSDKImpressionsMode' => 'debug'
+              })
+        .to_return(status: 200, body: 'ok')
+
+      custom_api.post(impressions)
     end
 
     it 'throws exception if request to post latencies returns unexpected status code' do
@@ -82,7 +101,8 @@ describe SplitIoClient::Api::Impressions do
                 'SplitSDKVersion' => "#{config.language}-#{config.version}",
                 'Content-Type' => 'application/json',
                 'SplitSDKMachineIP' => config.machine_ip,
-                'SplitSDKMachineName' => config.machine_name
+                'SplitSDKMachineName' => config.machine_name,
+                'SplitSDKImpressionsMode' => config.impressions_mode.to_s
               })
         .to_return(status: [500, 'Internal Server Error'])
 
@@ -90,7 +110,8 @@ describe SplitIoClient::Api::Impressions do
         .with(headers: {
                 'Authorization' => 'Bearer',
                 'SplitSDKVersion' => "#{config.language}-#{config.version}",
-                'Content-Type' => 'application/json'
+                'Content-Type' => 'application/json',
+                'SplitSDKImpressionsMode' => config.impressions_mode.to_s
               })
         .to_return(status: 200, body: 'ok')
 

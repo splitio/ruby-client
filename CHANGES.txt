@@ -1,5 +1,10 @@
 CHANGES
 
+7.2.0 (Sep 25, 2020)
+- Added deduplication logic for impressions data.
+  - Now there are two modes for Impressions when the SDK is in standalone mode, OPTIMIZED (default) that only ships unique impressions and DEBUG for times where you need to send ALL impressions to debug an integration.
+  - Impression listener remains unchanged and will still get all impressions.
+
 7.1.3 (Jul 31, 2020)
 - Updated rake development dependency to ~> 12.3.3.
 
