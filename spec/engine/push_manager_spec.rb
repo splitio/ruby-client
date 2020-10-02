@@ -27,20 +27,10 @@ describe SplitIoClient::Engine::PushManager do
   let(:splits_worker) { SplitIoClient::SSE::Workers::SplitsWorker.new(split_fetcher, config, splits_repository) }
   let(:segments_worker) { SplitIoClient::SSE::Workers::SegmentsWorker.new(segment_fetcher, config, segments_repository) }
   let(:notification_manager_keeper) { SplitIoClient::SSE::NotificationManagerKeeper.new(config) }
-  let(:repositories) do
-    repos = {}
-    repos[:splits] = splits_repository
-    repos[:segments] = segments_repository
-    repos[:metrics] = metrics_repository
-    repos
-  end
-  let(:fetchers) do
-    params = {}
-    params[:split_fetcher] = split_fetcher
-    params[:segment_fetcher] = segment_fetcher
-    params
-  end
-  let(:synchronizer) { SplitIoClient::Engine::Synchronizer.new(repositories, api_key, config, sdk_blocker, fetchers) }
+  let(:repositories) { { splits: splits_repository, segments: segments_repository, metrics: metrics_repository } }
+  let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
+  let(:params) { { split_fetcher: split_fetcher, segment_fetcher: segment_fetcher, imp_counter: impression_counter } }
+  let(:synchronizer) { SplitIoClient::Engine::Synchronizer.new(repositories, api_key, config, sdk_blocker, params) }
 
   context 'start_sse' do
     it 'must connect to server' do

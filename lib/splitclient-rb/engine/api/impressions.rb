@@ -14,16 +14,31 @@ module SplitIoClient
           return
         end
 
-        impressions_by_ip(impressions).each do |ip, impressions_ip|
-          response = post_api("#{@config.events_uri}/testImpressions/bulk", @api_key, impressions_ip)
+        response = post_api("#{@config.events_uri}/testImpressions/bulk", @api_key, impressions, impressions_headers)
 
-          if response.success?
-            @config.split_logger.log_if_debug("Impressions reported: #{total_impressions(impressions)}")
-          else
-            @config.logger.error("Unexpected status code while posting impressions: #{response.status}." \
-            ' - Check your API key and base URI')
-            raise 'Split SDK failed to connect to backend to post impressions'
-          end
+        if response.success?
+          @config.split_logger.log_if_debug("Impressions reported: #{total_impressions(impressions)}")
+        else
+          @config.logger.error("Unexpected status code while posting impressions: #{response.status}." \
+          ' - Check your API key and base URI')
+          raise 'Split SDK failed to connect to backend to post impressions'
+        end
+      end
+
+      def post_count(impressions_count)
+        if impressions_count.nil? || impressions_count[:pf].empty?
+          @config.split_logger.log_if_debug('No impressions count to send')
+          return
+        end
+
+        response = post_api("#{@config.events_uri}/testImpressions/count", @api_key, impressions_count)
+
+        if response.success?
+          @config.split_logger.log_if_debug("Impressions count sent: #{impressions_count[:pf].length}")
+        else
+          @config.logger.error("Unexpected status code while posting impressions count: #{response.status}." \
+          ' - Check your API key and base URI')
+          raise 'Split SDK failed to connect to backend to post impressions'
         end
       end
 
@@ -31,14 +46,16 @@ module SplitIoClient
         return 0 if impressions.nil?
 
         impressions.reduce(0) do |impressions_count, impression|
-          impressions_count += impression[:keyImpressions].length
+          impressions_count += impression[:i].length
         end
       end
 
       private
 
-      def impressions_by_ip(impressions)
-        impressions.group_by { |impression| impression[:ip] }
+      def impressions_headers
+        {
+          'SplitSDKImpressionsMode' => @config.impressions_mode.to_s
+        }
       end
     end
   end

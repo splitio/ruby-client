@@ -243,9 +243,13 @@ Init_murmurhash(void)
   iv_seed = rb_intern("@seed");
   iv_buffer = rb_intern("@buffer");
 
-
   cDigest_MurmurHash3_x86_32 = rb_path2class("Digest::MurmurHashMRI3_x86_32");
   rb_define_singleton_method(cDigest_MurmurHash3_x86_32, "digest", murmur3_x86_32_s_digest, -1);
   rb_define_singleton_method(cDigest_MurmurHash3_x86_32, "rawdigest", murmur3_x86_32_s_rawdigest, -1);
   rb_define_private_method(cDigest_MurmurHash3_x86_32, "finish", murmur3_x86_32_finish, 0);
+
+  cDigest_MurmurHash3_x64_128 = rb_path2class("Digest::MurmurHashMRI3_x64_128");
+  rb_define_singleton_method(cDigest_MurmurHash3_x64_128, "digest", murmur3_x64_128_s_digest, -1);
+  rb_define_singleton_method(cDigest_MurmurHash3_x64_128, "rawdigest", murmur3_x64_128_s_rawdigest, -1);
+  rb_define_private_method(cDigest_MurmurHash3_x64_128, "finish", murmur3_x64_128_finish, 0);
 }

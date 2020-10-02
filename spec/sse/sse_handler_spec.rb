@@ -33,21 +33,16 @@ describe SplitIoClient::SSE::SSEHandler do
   let(:segment_fetcher) { SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, metrics, config, sdk_blocker) }
   let(:notification_manager_keeper) { SplitIoClient::SSE::NotificationManagerKeeper.new(config) }
   let(:repositories) do
-    repos = {}
-    repos[:splits] = splits_repository
-    repos[:segments] = segments_repository
-    repos[:impressions] = impressions_repository
-    repos[:metrics] = metrics_repository
-    repos[:events] = events_repository
-    repos
+    {
+      splits: splits_repository,
+      segments: segments_repository,
+      impressions: impressions_repository,
+      metrics: metrics_repository,
+      events: events_repository
+    }
   end
-  let(:parameters) do
-    params = {}
-    params[:split_fetcher] = split_fetcher
-    params[:segment_fetcher] = segment_fetcher
-
-    params
-  end
+  let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
+  let(:parameters) { { split_fetcher: split_fetcher, segment_fetcher: segment_fetcher, imp_counter: impression_counter } }
   let(:synchronizer) { SplitIoClient::Engine::Synchronizer.new(repositories, api_key, config, sdk_blocker, parameters) }
 
   before do

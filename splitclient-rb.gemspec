@@ -28,6 +28,7 @@ Gem::Specification.new do |spec|
   else
     spec.files.concat(
       %w[ext/murmurhash/3_x86_32.c
+         ext/murmurhash/3_x64_128.c
          ext/murmurhash/extconf.rb
          ext/murmurhash/murmurhash.c
          ext/murmurhash/murmurhash.h]
