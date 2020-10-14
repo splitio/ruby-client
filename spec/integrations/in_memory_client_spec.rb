@@ -745,8 +745,6 @@ describe SplitIoClient do
 
       custom_factory = SplitIoClient::SplitFactory.new('test_api_key', streaming_enabled: false, impressions_mode: :debug)
       @debug_client = custom_factory.client
-
-      @debug_client.block_until_ready
     end
 
     it 'get_treament should post 5 impressions' do

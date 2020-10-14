@@ -23,7 +23,6 @@ module SplitIoClient
         @sdk_blocker = sdk_blocker
         @split_fetcher = params[:split_fetcher]
         @segment_fetcher = params[:segment_fetcher]
-        @impressions_api = SplitIoClient::Api::Impressions.new(@api_key, @config)
         @impression_counter = params[:imp_counter]
       end
 
@@ -78,7 +77,7 @@ module SplitIoClient
 
       # Starts thread which loops constantly and sends impressions to the Split API
       def impressions_sender
-        ImpressionsSender.new(@impressions_repository, @config, @impressions_api).call
+        ImpressionsSender.new(@impressions_repository, @config, @api_key).call
       end
 
       # Starts thread which loops constantly and sends metrics to the Split API
@@ -93,7 +92,7 @@ module SplitIoClient
 
       # Starts thread which loops constantly and sends impressions count to the Split API
       def impressions_count_sender
-        ImpressionsCountSender.new(@config, @impression_counter, @impressions_api).call
+        ImpressionsCountSender.new(@config, @impression_counter, @api_key).call
       end
     end
   end

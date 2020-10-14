@@ -6,10 +6,10 @@ module SplitIoClient
       class ImpressionsCountSender
         COUNTER_REFRESH_RATE_SECONDS = 1800
 
-        def initialize(config, impression_counter, impressions_api)
+        def initialize(config, impression_counter, api_key)
           @config = config
           @impression_counter = impression_counter
-          @impressions_api = impressions_api
+          @api_key = api_key
         end
 
         def call
@@ -42,7 +42,7 @@ module SplitIoClient
           end
 
           def post_impressions_count
-            @impressions_api.post_count(formatter(@impression_counter.pop_all))
+            impressions_api.post_count(formatter(@impression_counter.pop_all))
           rescue StandardError => error
             @config.log_found_exception(__method__.to_s, error)
           end
@@ -66,6 +66,10 @@ module SplitIoClient
           rescue StandardError => error
             @config.log_found_exception(__method__.to_s, error)
           end
+        end
+
+        def impressions_api
+          @impressions_api ||= SplitIoClient::Api::Impressions.new(@api_key, @config)
         end
       end
     end

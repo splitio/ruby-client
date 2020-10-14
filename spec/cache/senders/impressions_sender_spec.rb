@@ -11,8 +11,7 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
       )
     end
     let(:repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
-    let(:impression_api) { SplitIoClient::Api::Impressions.new(nil, config) }
-    let(:sender) { described_class.new(repository, config, impression_api) }
+    let(:sender) { described_class.new(repository, config, 'api-key') }
     let(:formatted_impressions) { SplitIoClient::Cache::Senders::ImpressionsFormatter.new(repository).call(true) }
     let(:treatment1) { { treatment: 'on', label: 'custom_label1', change_number: 123_456 } }
     let(:treatment2) { { treatment: 'off', label: 'custom_label2', change_number: 123_499 } }
