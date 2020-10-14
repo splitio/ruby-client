@@ -743,7 +743,7 @@ describe SplitIoClient do
       stub_request(:post, 'https://events.split.io/api/metrics/counter')
         .to_return(status: 200, body: 'ok')
 
-      custom_factory = SplitIoClient::SplitFactory.new('test_api_key', impressions_mode: :debug)
+      custom_factory = SplitIoClient::SplitFactory.new('test_api_key', streaming_enabled: false, impressions_mode: :debug)
       @debug_client = custom_factory.client
 
       @debug_client.block_until_ready
