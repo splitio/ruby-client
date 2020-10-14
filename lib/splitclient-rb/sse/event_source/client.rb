@@ -1,6 +1,5 @@
 # frozen_string_literal: false
 
-require 'concurrent/atomics'
 require 'socketry'
 require 'uri'
 
@@ -9,15 +8,16 @@ module SplitIoClient
     module EventSource
       class Client
         DEFAULT_READ_TIMEOUT = 70
+        CONNECT_TIMEOUT = 30_000
         KEEP_ALIVE_RESPONSE = "c\r\n:keepalive\n\n\r\n".freeze
+        ERROR_EVENT_TYPE = 'error'.freeze
 
         def initialize(config, read_timeout: DEFAULT_READ_TIMEOUT)
           @config = config
           @read_timeout = read_timeout
           @connected = Concurrent::AtomicBoolean.new(false)
           @socket = nil
-          @back_off = BackOff.new(@config.streaming_reconnect_back_off_base)
-
+          @event_parser = SSE::EventSource::EventParser.new(config)
           @on = { event: ->(_) {}, connected: ->(_) {}, disconnect: ->(_) {} }
 
           yield self if block_given?
@@ -35,8 +35,8 @@ module SplitIoClient
           @on[:disconnect] = action
         end
 
-        def close
-          dispatch_disconnect
+        def close(reconnect = false)
+          dispatch_disconnect(reconnect)
           @connected.make_false
           SplitIoClient::Helpers::ThreadHelper.stop(:connect_stream, @config)
           @socket&.close
@@ -46,10 +46,16 @@ module SplitIoClient
 
         def start(url)
           @uri = URI(url)
+          latch = Concurrent::CountDownLatch.new(1)
 
-          connect_thread
+          connect_thread(latch)
+
+          return false unless latch.wait(CONNECT_TIMEOUT)
+
+          connected?
         rescue StandardError => e
           @config.logger.error("SSEClient start Error: #{e.inspect}")
+          connected?
         end
 
         def connected?
@@ -58,18 +64,15 @@ module SplitIoClient
 
         private
 
-        def connect_thread
+        def connect_thread(latch)
           @config.threads[:connect_stream] = Thread.new do
             @config.logger.info('Starting connect_stream thread ...') if @config.debug_enabled
-            connect_stream
+            connect_stream(latch)
           end
         end
 
-        def connect_stream
-          interval = @back_off.interval
-          sleep(interval) if interval.positive?
-
-          socket_write
+        def connect_stream(latch)
+          socket_write(latch)
 
           while @connected.value
             begin
@@ -78,23 +81,23 @@ module SplitIoClient
               raise 'eof exception' if partial_data == :eof
             rescue StandardError => e
               @config.logger.error(e.inspect) if @config.debug_enabled
-              @connected.make_false
-              @socket&.close
-              @socket = nil
-              connect_stream
+              close(true) # close conexion & reconnect
+              return
             end
 
             process_data(partial_data)
           end
         end
 
-        def socket_write
+        def socket_write(latch)
           @socket = socket_connect
           @socket.write(build_request(@uri))
           dispatch_connected
         rescue StandardError => e
           @config.logger.error("Error during connecting to #{@uri.host}. Error: #{e.inspect}")
           close
+        ensure
+          latch.count_down
         end
 
         def socket_connect
@@ -104,11 +107,11 @@ module SplitIoClient
         end
 
         def process_data(partial_data)
-          unless partial_data.nil? || partial_data == KEEP_ALIVE_RESPONSE
-            @config.logger.debug("Event partial data: #{partial_data}") if @config.debug_enabled
-            buffer = read_partial_data(partial_data)
-            parse_event(buffer)
-          end
+          return if partial_data.nil? || partial_data == KEEP_ALIVE_RESPONSE
+
+          @config.logger.debug("Event partial data: #{partial_data}") if @config.debug_enabled
+          events = @event_parser.parse(partial_data)
+          events.each { |event| process_event(event) }
         rescue StandardError => e
           @config.logger.error("process_data error: #{e.inspect}")
         end
@@ -122,64 +125,38 @@ module SplitIoClient
           req
         end
 
-        def read_partial_data(data)
-          buffer = ''
-          buffer << data
-          buffer.chomp!
-          buffer.split("\n")
-        end
-
-        def parse_event(buffer)
-          type = nil
-
-          buffer.each do |d|
-            splited_data = d.split(':')
-
-            case splited_data[0]
-            when 'event'
-              type = splited_data[1].strip
-            when 'data'
-              data = parse_event_data(d, type)
-              unless type.nil? || data[:data].nil?
-                event = StreamData.new(type, data[:client_id], data[:data], data[:channel])
-                dispatch_event(event)
-              end
-            end
+        def process_event(event)
+          case event.event_type
+          when ERROR_EVENT_TYPE
+            dispatch_error(event)
+          else
+            dispatch_event(event)
           end
-        rescue StandardError => e
-          @config.logger.error("Error during parsing a event: #{e.inspect}")
         end
 
-        def parse_event_data(data, type)
-          event_data = JSON.parse(data.sub('data: ', ''))
-          client_id = event_data['clientId']&.strip
-          channel = event_data['channel']&.strip
-          parsed_data = JSON.parse(event_data['data']) unless type == 'error'
-          parsed_data = event_data if type == 'error'
-
-          { client_id: client_id, channel: channel, data: parsed_data }
+        def dispatch_error(event)
+          @config.logger.error("Event error: #{event.event_type}, #{event.data}")
+          if event.data['code'] >= 40_140 && event.data['code'] <= 40_149
+            close(true) # close conexion & reconnect
+          elsif event.data['code'] >= 40_000 && event.data['code'] <= 49_999
+            close # close conexion
+          end
         end
 
         def dispatch_event(event)
-          raise SSEClientException.new(event), 'Error event' if event.event_type == 'error'
-
           @config.logger.debug("Dispatching event: #{event.event_type}, #{event.channel}") if @config.debug_enabled
           @on[:event].call(event)
-        rescue SSEClientException => e
-          @config.logger.error("Event error: #{e.event.event_type}, #{e.event.data}")
-          close
         end
 
         def dispatch_connected
           @connected.make_true
-          @back_off.reset
           @config.logger.debug('Dispatching connected') if @config.debug_enabled
           @on[:connected].call
         end
 
-        def dispatch_disconnect
+        def dispatch_disconnect(reconnect)
           @config.logger.debug('Dispatching disconnect') if @config.debug_enabled
-          @on[:disconnect].call
+          @on[:disconnect].call(reconnect)
         end
       end
     end

@@ -154,7 +154,7 @@ describe SplitIoClient do
         client = factory.client
         client.block_until_ready
         sleep(2)
-        expect(client.get_treatment('admin', 'push_test')).to eq('off_kill')
+        expect(client.get_treatment('admin', 'push_test')).to eq('on')
         expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.times(1)
         expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1585948850109')).to have_been_made.times(1)
         expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1585948850110')).to have_been_made.times(0)

@@ -3,19 +3,13 @@
 module SplitIoClient
   module Engine
     class SyncManager
-      include SplitIoClient::Cache::Fetchers
-
       def initialize(
         repositories,
         api_key,
         config,
-        params
+        synchronizer
       )
-        split_fetcher = SplitFetcher.new(repositories[:splits], api_key, params[:metrics], config, params[:sdk_blocker])
-        segment_fetcher = SegmentFetcher.new(repositories[:segments], api_key, params[:metrics], config, params[:sdk_blocker])
-        sync_params = { split_fetcher: split_fetcher, segment_fetcher: segment_fetcher, imp_counter: params[:impression_counter] }
-
-        @synchronizer = Synchronizer.new(repositories, api_key, config, params[:sdk_blocker], sync_params)
+        @synchronizer = synchronizer
         notification_manager_keeper = SplitIoClient::SSE::NotificationManagerKeeper.new(config) do |manager|
           manager.on_occupancy { |publisher_available| process_occupancy(publisher_available) }
           manager.on_push_shutdown { process_push_shutdown }
@@ -28,10 +22,11 @@ module SplitIoClient
           notification_manager_keeper
         ) do |handler|
           handler.on_connected { process_connected }
-          handler.on_disconnect { process_disconnect }
+          handler.on_disconnect { |reconnect| process_disconnect(reconnect) }
         end
 
         @push_manager = PushManager.new(config, @sse_handler, api_key)
+        @sse_connected = Concurrent::AtomicBoolean.new(false)
         @config = config
       end
 
@@ -90,6 +85,12 @@ module SplitIoClient
       end
 
       def process_connected
+        if @sse_connected.value
+          @config.logger.debug('Streaming already connected.')
+          return
+        end
+
+        @sse_connected.make_true
         @synchronizer.stop_periodic_fetch
         @synchronizer.sync_all
         @sse_handler.start_workers
@@ -97,7 +98,19 @@ module SplitIoClient
         @config.logger.error("process_connected error: #{e.inspect}")
       end
 
-      def process_disconnect
+      def process_disconnect(reconnect)
+        unless @sse_connected.value
+          @config.logger.debug('Streaming already disconnected.')
+          return
+        end
+
+        @sse_connected.make_false
+        if reconnect
+          @synchronizer.sync_all
+          @push_manager.start_sse
+          return
+        end
+
         @sse_handler.stop_workers
         @synchronizer.start_periodic_fetch
       rescue StandardError => e
@@ -105,15 +118,23 @@ module SplitIoClient
       end
 
       def process_occupancy(push_enable)
-        process_disconnect unless push_enable
-        process_connected if push_enable
+        if push_enable
+          @synchronizer.stop_periodic_fetch
+          @synchronizer.sync_all
+          @sse_handler.start_workers
+          return
+        end
+
+        @sse_handler.stop_workers
+        @synchronizer.start_periodic_fetch
       rescue StandardError => e
         @config.logger.error("process_occupancy error: #{e.inspect}")
       end
 
       def process_push_shutdown
         @push_manager.stop_sse
-        process_disconnect
+        @sse_handler.stop_workers
+        @synchronizer.start_periodic_fetch
       rescue StandardError => e
         @config.logger.error("process_push_shutdown error: #{e.inspect}")
       end

@@ -8,33 +8,51 @@ module SplitIoClient
           @synchronizer = synchronizer
           @config = config
           @splits_repository = splits_repository
+          @queue = Queue.new
+          @running = Concurrent::AtomicBoolean.new(false)
         end
 
         def start
-          return if SplitIoClient::Helpers::ThreadHelper.alive?(:split_update_worker, @config)
+          if @running.value
+            @config.logger.debug('splits worker already running.')
+            return
+          end
 
-          @queue = Queue.new
+          @running.make_true
           perform_thread
         end
 
+        def stop
+          unless @running.value
+            @config.logger.debug('splits worker not running.')
+            return
+          end
+
+          @running.make_false
+          SplitIoClient::Helpers::ThreadHelper.stop(:split_update_worker, @config)
+        end
+
         def add_to_queue(change_number)
-          return if @queue.nil?
+          unless @running.value
+            @config.logger.debug('splits worker not running.')
+            return
+          end
 
           @config.logger.debug("SplitsWorker add to queue #{change_number}")
           @queue.push(change_number)
         end
 
         def kill_split(change_number, split_name, default_treatment)
-          return if @queue.nil?
+          unless @running.value
+            @config.logger.debug('splits worker not running.')
+            return
+          end
+
+          return if @splits_repository.get_change_number.to_i > change_number
 
           @config.logger.debug("SplitsWorker kill #{split_name}, #{change_number}")
           @splits_repository.kill(change_number, split_name, default_treatment)
           add_to_queue(change_number)
-        end
-
-        def stop
-          SplitIoClient::Helpers::ThreadHelper.stop(:split_update_worker, @config)
-          @queue = nil
         end
 
         private
