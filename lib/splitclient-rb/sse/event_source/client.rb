@@ -80,7 +80,7 @@ module SplitIoClient
 
               raise 'eof exception' if partial_data == :eof
             rescue StandardError => e
-              @config.logger.error(e.inspect) if @config.debug_enabled
+              @config.logger.error('Error reading partial data: ' + e.inspect) if @config.debug_enabled
               close(true) # close conexion & reconnect
               return
             end

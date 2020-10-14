@@ -105,14 +105,13 @@ module SplitIoClient
         end
 
         @sse_connected.make_false
+        @sse_handler.stop_workers
+        @synchronizer.start_periodic_fetch
+
         if reconnect
           @synchronizer.sync_all
           @push_manager.start_sse
-          return
         end
-
-        @sse_handler.stop_workers
-        @synchronizer.start_periodic_fetch
       rescue StandardError => e
         @config.logger.error("process_disconnect error: #{e.inspect}")
       end
