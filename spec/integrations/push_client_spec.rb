@@ -59,7 +59,7 @@ describe SplitIoClient do
         )
 
         client = factory.client
-        client.block_until_ready
+        client.block_until_ready(1)
         sleep(2)
         expect(client.get_treatment('admin', 'push_test')).to eq('after_fetch')
         expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.times(1)
@@ -89,7 +89,7 @@ describe SplitIoClient do
         )
 
         client = factory.client
-        client.block_until_ready
+        client.block_until_ready(1)
         sleep(2)
         expect(client.get_treatment('admin', 'push_test')).to eq('on')
         expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.times(1)
@@ -122,7 +122,7 @@ describe SplitIoClient do
         )
 
         client = factory.client
-        client.block_until_ready
+        client.block_until_ready(1)
         sleep(2)
         expect(client.get_treatment('admin', 'push_test')).to eq('after_fetch')
         expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.times(1)
@@ -152,7 +152,7 @@ describe SplitIoClient do
         )
 
         client = factory.client
-        client.block_until_ready
+        client.block_until_ready(1)
         sleep(2)
         expect(client.get_treatment('admin', 'push_test')).to eq('on')
         expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.times(1)
@@ -185,7 +185,7 @@ describe SplitIoClient do
         )
 
         client = factory.client
-        client.block_until_ready
+        client.block_until_ready(1)
         sleep(2)
         expect(client.get_treatment('test_in_segment', 'feature_segment')).to eq('def_test')
       end
@@ -213,7 +213,7 @@ describe SplitIoClient do
         )
 
         client = factory.client
-        client.block_until_ready
+        client.block_until_ready(1)
         sleep(2)
         expect(client.get_treatment('test_in_segment', 'feature_segment')).to eq('on')
       end
@@ -243,7 +243,7 @@ describe SplitIoClient do
         )
 
         client = factory.client
-        client.block_until_ready
+        client.block_until_ready(1)
         sleep(2)
         expect(client.get_treatment('admin', 'push_test')).to eq('after_fetch')
       end
@@ -271,7 +271,7 @@ describe SplitIoClient do
         )
 
         client = factory.client
-        client.block_until_ready
+        client.block_until_ready(1)
         sleep(2)
         expect(client.get_treatment('admin', 'push_test')).to eq('after_fetch')
       end
@@ -301,7 +301,7 @@ describe SplitIoClient do
         )
 
         client = factory.client
-        client.block_until_ready
+        client.block_until_ready(1)
         sleep(2)
         expect(client.get_treatment('admin', 'push_test')).to eq('after_fetch')
       end
@@ -329,7 +329,7 @@ describe SplitIoClient do
         )
 
         client = factory.client
-        client.block_until_ready
+        client.block_until_ready(1)
         sleep(2)
         expect(client.get_treatment('admin', 'push_test')).to eq('after_fetch')
       end
@@ -357,7 +357,7 @@ describe SplitIoClient do
         )
 
         client = factory.client
-        client.block_until_ready
+        client.block_until_ready(1)
         sleep(2)
         expect(client.get_treatment('admin', 'push_test')).to eq('after_fetch')
       end
