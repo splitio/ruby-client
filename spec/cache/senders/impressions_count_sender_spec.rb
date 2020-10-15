@@ -9,7 +9,8 @@ describe SplitIoClient::Cache::Senders::ImpressionsCountSender do
     SplitIoClient::SplitConfig.new
   end
   let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
-  let(:impressions_count_sender) { described_class.new(config, impression_counter, 'key-test') }
+  let(:impressions_api) { SplitIoClient::Api::Impressions.new('key-test', config) }
+  let(:impressions_count_sender) { described_class.new(config, impression_counter, impressions_api) }
 
   before :each do
     impression_counter.inc('feature1', make_timestamp('2020-09-02 09:15:11'))

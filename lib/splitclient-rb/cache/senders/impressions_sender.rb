@@ -4,10 +4,10 @@ module SplitIoClient
   module Cache
     module Senders
       class ImpressionsSender
-        def initialize(impressions_repository, config, api_key)
+        def initialize(impressions_repository, config, impressions_api)
           @impressions_repository = impressions_repository
           @config = config
-          @api_key = api_key
+          @impressions_api = impressions_api
         end
 
         def call
@@ -50,7 +50,7 @@ module SplitIoClient
         end
 
         def impressions_api
-          @impressions_api ||= SplitIoClient::Api::Impressions.new(@api_key, @config)
+          @impressions_api
         end
       end
     end
