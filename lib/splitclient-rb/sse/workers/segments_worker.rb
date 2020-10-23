@@ -8,27 +8,39 @@ module SplitIoClient
           @synchronizer = synchronizer
           @config = config
           @segments_repository = segments_repository
-          @queue = nil
-        end
-
-        def start
-          return if SplitIoClient::Helpers::ThreadHelper.alive?(:segment_update_worker, @config)
-
           @queue = Queue.new
-          perform_thread
+          @running = Concurrent::AtomicBoolean.new(false)
         end
 
         def add_to_queue(change_number, segment_name)
-          return if @queue.nil?
+          unless @running.value
+            @config.logger.debug('segments worker not running.')
+            return
+          end
 
           item = { change_number: change_number, segment_name: segment_name }
           @config.logger.debug("SegmentsWorker add to queue #{item}")
           @queue.push(item)
         end
 
+        def start
+          if @running.value
+            @config.logger.debug('segments worker already running.')
+            return
+          end
+
+          @running.make_true
+          perform_thread
+        end
+
         def stop
+          unless @running.value
+            @config.logger.debug('segments worker not running.')
+            return
+          end
+
+          @running.make_false
           SplitIoClient::Helpers::ThreadHelper.stop(:segment_update_worker, @config)
-          @queue = nil
         end
 
         private

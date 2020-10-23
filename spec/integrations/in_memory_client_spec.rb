@@ -40,6 +40,10 @@ describe SplitIoClient do
     mock_segment_changes('segment2', segment2, '-1')
     mock_segment_changes('segment2', segment2, '1470947453878')
     mock_segment_changes('segment3', segment3, '-1')
+    stub_request(:post, 'https://events.split.io/api/testImpressions/bulk').to_return(status: 200, body: 'ok')
+    stub_request(:post, 'https://events.split.io/api/metrics/time').to_return(status: 200, body: 'ok')
+    stub_request(:post, 'https://events.split.io/api/metrics/counter').to_return(status: 200, body: 'ok')
+    stub_request(:post, 'https://events.split.io/api/testImpressions/count').to_return(status: 200, body: 'ok')
   end
 
   context '#get_treatment' do
@@ -662,122 +666,6 @@ describe SplitIoClient do
       events = client.instance_variable_get(:@events_repository).batch
 
       expect(events.size).to eq 0
-    end
-  end
-
-  context 'checking logic impressions - optimized mode' do
-    before do
-      stub_request(:post, 'https://events.split.io/api/testImpressions/bulk')
-        .to_return(status: 200, body: 'ok')
-      stub_request(:post, 'https://events.split.io/api/metrics/time')
-        .to_return(status: 200, body: 'ok')
-      stub_request(:post, 'https://events.split.io/api/metrics/counter')
-        .to_return(status: 200, body: 'ok')
-      stub_request(:post, 'https://events.split.io/api/testImpressions/count')
-        .to_return(status: 200, body: 'ok')
-
-      @counter = SplitIoClient::Engine::Common::ImpressionCounter
-    end
-
-    it 'get_treament should post 3 impressions' do
-      expect(client.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
-      expect(client.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
-      expect(client.get_treatment('admin', 'FACUNDO_TEST')).to eq 'off'
-      expect(client.get_treatment('24', 'Test_Save_1')).to eq 'off'
-      expect(client.get_treatment('24', 'Test_Save_1')).to eq 'off'
-
-      time_frame = @counter.truncate_time_frame((Time.now.to_f * 1000.0).to_i)
-
-      impressions = client.instance_variable_get(:@impressions_repository).batch
-
-      client.destroy
-
-      sleep 0.5
-
-      expect(impressions.size).to eq 3
-      expect(a_request(:post, 'https://events.split.io/api/testImpressions/count')
-      .with(
-        body: {
-          pf: [
-            { f: 'FACUNDO_TEST', m: time_frame, rc: 3 },
-            { f: 'Test_Save_1', m: time_frame, rc: 2 }
-          ]
-        }.to_json
-      )).to have_been_made
-    end
-
-    it 'get_treaments should post 8 impressions' do
-      client.get_treatments('nico_test', %w[FACUNDO_TEST MAURO_TEST Test_Save_1])
-      client.get_treatments('admin', %w[FACUNDO_TEST MAURO_TEST Test_Save_1])
-      client.get_treatments('maldo', %w[FACUNDO_TEST Test_Save_1])
-      client.get_treatments('nico_test', %w[FACUNDO_TEST MAURO_TEST Test_Save_1])
-
-      time_frame = @counter.truncate_time_frame((Time.now.to_f * 1000.0).to_i)
-
-      impressions = client.instance_variable_get(:@impressions_repository).batch
-
-      client.destroy
-
-      sleep 0.5
-
-      expect(impressions.size).to eq 8
-      expect(a_request(:post, 'https://events.split.io/api/testImpressions/count')
-      .with(
-        body: {
-          pf: [
-            { f: 'FACUNDO_TEST', m: time_frame, rc: 4 },
-            { f: 'MAURO_TEST', m: time_frame, rc: 3 },
-            { f: 'Test_Save_1', m: time_frame, rc: 4 }
-          ]
-        }.to_json
-      )).to have_been_made
-    end
-  end
-
-  context 'checking logic impressions - debug mode' do
-    before do
-      stub_request(:post, 'https://events.split.io/api/testImpressions/bulk')
-        .to_return(status: 200, body: 'ok')
-      stub_request(:post, 'https://events.split.io/api/metrics/time')
-        .to_return(status: 200, body: 'ok')
-      stub_request(:post, 'https://events.split.io/api/metrics/counter')
-        .to_return(status: 200, body: 'ok')
-
-      custom_factory = SplitIoClient::SplitFactory.new('test_api_key', impressions_mode: :debug)
-      @debug_client = custom_factory.client
-
-      @debug_client.block_until_ready
-    end
-
-    it 'get_treament should post 5 impressions' do
-      expect(@debug_client.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
-      expect(@debug_client.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
-      expect(@debug_client.get_treatment('admin', 'FACUNDO_TEST')).to eq 'off'
-      expect(@debug_client.get_treatment('24', 'Test_Save_1')).to eq 'off'
-      expect(@debug_client.get_treatment('24', 'Test_Save_1')).to eq 'off'
-
-      impressions = @debug_client.instance_variable_get(:@impressions_repository).batch
-
-      @debug_client.destroy
-
-      sleep 0.5
-
-      expect(impressions.size).to eq 5
-    end
-
-    it 'get_treaments should post 11 impressions' do
-      @debug_client.get_treatments('nico_test', %w[FACUNDO_TEST MAURO_TEST Test_Save_1])
-      @debug_client.get_treatments('admin', %w[FACUNDO_TEST MAURO_TEST Test_Save_1])
-      @debug_client.get_treatments('maldo', %w[FACUNDO_TEST Test_Save_1])
-      @debug_client.get_treatments('nico_test', %w[FACUNDO_TEST MAURO_TEST Test_Save_1])
-
-      impressions = @debug_client.instance_variable_get(:@impressions_repository).batch
-
-      @debug_client.destroy
-
-      sleep 0.5
-
-      expect(impressions.size).to eq 11
     end
   end
 end

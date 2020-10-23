@@ -7,6 +7,7 @@ module SplitIoClient
     include SplitIoClient::Cache::Repositories
     include SplitIoClient::Cache::Stores
     include SplitIoClient::Cache::Senders
+    include SplitIoClient::Cache::Fetchers
 
     attr_reader :adapter, :client, :manager, :config
 
@@ -53,8 +54,12 @@ module SplitIoClient
       if @config.localhost_mode
         start_localhost_components
       else
-        params = { sdk_blocker: @sdk_blocker, metrics: @metrics, impression_counter: @impression_counter }
-        SplitIoClient::Engine::SyncManager.new(repositories, @api_key, @config, params).start
+        split_fetcher = SplitFetcher.new(@splits_repository, @api_key, @metrics, config, @sdk_blocker)
+        segment_fetcher = SegmentFetcher.new(@segments_repository, @api_key, @metrics, config, @sdk_blocker)
+        params = { split_fetcher: split_fetcher, segment_fetcher: segment_fetcher, imp_counter: @impression_counter }
+
+        synchronizer = SplitIoClient::Engine::Synchronizer.new(repositories, @api_key, @config, @sdk_blocker, params)
+        SplitIoClient::Engine::SyncManager.new(repositories, @api_key, @config, synchronizer).start
       end
     end
 
@@ -125,14 +130,13 @@ module SplitIoClient
     end
 
     def repositories
-      repos = {}
-      repos[:splits] = @splits_repository
-      repos[:segments] = @segments_repository
-      repos[:impressions] = @impressions_repository
-      repos[:events] = @events_repository
-      repos[:metrics] = @metrics_repository
-
-      repos
+      { 
+        splits: @splits_repository,
+        segments: @segments_repository,
+        impressions: @impressions_repository,
+        events: @events_repository,
+        metrics: @metrics_repository
+      }
     end
 
     def start_localhost_components

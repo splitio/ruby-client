@@ -101,6 +101,7 @@ require 'splitclient-rb/redis_metrics_fixer'
 # SSE 
 require 'splitclient-rb/sse/event_source/back_off'
 require 'splitclient-rb/sse/event_source/client'
+require 'splitclient-rb/sse/event_source/event_parser'
 require 'splitclient-rb/sse/event_source/event_types'
 require 'splitclient-rb/sse/event_source/stream_data'
 require 'splitclient-rb/sse/workers/segments_worker'

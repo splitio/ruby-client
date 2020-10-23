@@ -14,7 +14,7 @@ module SplitIoClient
         @sse_client = SSE::EventSource::Client.new(@config) do |client|
           client.on_event { |event| handle_incoming_message(event) }
           client.on_connected { process_connected }
-          client.on_disconnect { process_disconnect }
+          client.on_disconnect { |reconnect| process_disconnect(reconnect) }
         end
 
         @on = { connected: ->(_) {}, disconnect: ->(_) {} }
@@ -56,8 +56,8 @@ module SplitIoClient
         @on[:disconnect] = action
       end
 
-      def process_disconnect
-        @on[:disconnect].call
+      def process_disconnect(reconnect)
+        @on[:disconnect].call(reconnect)
       end
 
       private
