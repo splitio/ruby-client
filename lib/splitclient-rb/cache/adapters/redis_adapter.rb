@@ -142,7 +142,7 @@ module SplitIoClient
 
         # General
         def exists?(key)
-          @redis.exists(key)
+          @redis.exists?(key)
         end
 
         def delete(key)

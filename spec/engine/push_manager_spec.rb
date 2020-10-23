@@ -160,6 +160,7 @@ describe SplitIoClient::Engine::PushManager do
         expect(disconnect_event).to eq(false)
 
         push_manager.stop_sse
+
         expect(sse_handler.connected?).to eq(false)
         expect(disconnect_event).to eq(true)
       end
