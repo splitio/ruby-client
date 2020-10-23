@@ -1,5 +1,9 @@
 CHANGES
 
+7.2.1 (Oct 23, 2020)
+- Updated redis dependency to >= 4.2.2.
+- Updated ably error handling. 
+
 7.2.0 (Sep 25, 2020)
 - Added deduplication logic for impressions data.
   - Now there are two modes for Impressions when the SDK is in standalone mode, OPTIMIZED (default) that only ships unique impressions and DEBUG for times where you need to send ALL impressions to debug an integration.
