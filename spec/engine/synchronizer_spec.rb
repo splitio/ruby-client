@@ -57,6 +57,8 @@ describe SplitIoClient::Engine::Synchronizer do
     it 'sync_all' do
       synchronizer.sync_all
 
+      sleep(2)
+
       expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.once
       expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=-1')).to have_been_made.once
       expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=1470947453877')).to have_been_made.once

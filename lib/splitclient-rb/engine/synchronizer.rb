@@ -28,9 +28,11 @@ module SplitIoClient
       end
 
       def sync_all
-        @config.logger.debug('Synchronizing Splits and Segments ...') if @config.debug_enabled
-        fetch_splits
-        fetch_segments
+        @config.threads[:sync_all_thread] = Thread.new do
+          @config.logger.debug('Synchronizing Splits and Segments ...') if @config.debug_enabled
+          fetch_splits
+          fetch_segments
+        end
       end
 
       def start_periodic_data_recording
