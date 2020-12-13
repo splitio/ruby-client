@@ -200,7 +200,7 @@ module SplitIoClient
 
       bucketing_key, matching_key = keys_from_key(key)
       bucketing_key = bucketing_key ? bucketing_key.to_s : nil
-      matching_key = matching_key ? matching_key.to_s : nil     
+      matching_key = matching_key ? matching_key.to_s : nil
 
       evaluator = Engine::Parser::Evaluator.new(@segments_repository, @splits_repository, @config, true)
       start = Time.now
