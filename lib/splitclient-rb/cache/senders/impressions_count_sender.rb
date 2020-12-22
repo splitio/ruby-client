@@ -40,32 +40,32 @@ module SplitIoClient
               @config.logger.info('Posting impressions count due to shutdown')
             end
           end
+        end
 
-          def post_impressions_count
-            @impressions_api.post_count(formatter(@impression_counter.pop_all))
-          rescue StandardError => error
-            @config.log_found_exception(__method__.to_s, error)
+        def post_impressions_count
+          @impressions_api.post_count(formatter(@impression_counter.pop_all))
+        rescue StandardError => error
+          @config.log_found_exception(__method__.to_s, error)
+        end
+
+        def formatter(counts)
+          return if counts.empty?
+
+          formated_counts = {pf: []}
+
+          counts.each do |key, value|              
+            key_splited = key.split('::')
+            
+            formated_counts[:pf] << {
+              f: key_splited[0].to_s, # feature name
+              m: key_splited[1].to_i, # time frame
+              rc: value # count
+            }
           end
 
-          def formatter(counts)
-            return if counts.empty?
-
-            formated_counts = {pf: []}
-
-            counts.each do |key, value|              
-              key_splited = key.split('::')
-              
-              formated_counts[:pf] << {
-                f: key_splited[0].to_s, # feature name
-                m: key_splited[1].to_i, # time frame
-                rc: value # count
-              }
-            end
-
-            formated_counts
-          rescue StandardError => error
-            @config.log_found_exception(__method__.to_s, error)
-          end
+          formated_counts
+        rescue StandardError => error
+          @config.log_found_exception(__method__.to_s, error)
         end
       end
     end
