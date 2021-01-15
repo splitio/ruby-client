@@ -7,7 +7,7 @@ module SplitIoClient
     class NotificationManagerKeeper
       def initialize(config)
         @config = config
-        @streaming_available = Concurrent::AtomicBoolean.new(true)
+        @publisher_available = Concurrent::AtomicBoolean.new(true)
         @publishers_pri = Concurrent::AtomicFixnum.new
         @publishers_sec = Concurrent::AtomicFixnum.new
         @on = { occupancy: ->(_) {}, push_shutdown: ->(_) {} }
@@ -40,7 +40,7 @@ module SplitIoClient
         when 'STREAMING_PAUSED'
           dispatch_occupancy_event(false)
         when 'STREAMING_RESUMED'
-          dispatch_occupancy_event(true) if @streaming_available.value
+          dispatch_occupancy_event(true) if @publisher_available.value
         when 'STREAMING_DISABLED'
           dispatch_push_shutdown
         else
@@ -49,25 +49,25 @@ module SplitIoClient
       end
 
       def process_event_occupancy(channel, publishers)
-        @config.logger.debug("Occupancy process event with #{publishers} publishers. Channel: #{channel}")
+        @config.logger.debug("Processed occupancy event with #{publishers} publishers. Channel: #{channel}")
 
         update_publishers(channel, publishers)
 
-        if !are_publishers_avaliable? && @streaming_available.value
-          @streaming_available.make_false
+        if !are_publishers_available? && @publisher_available.value
+          @publisher_available.make_false
           dispatch_occupancy_event(false)
-        elsif are_publishers_avaliable? && !@streaming_available.value
-          @streaming_available.make_true
+        elsif are_publishers_available? && !@publisher_available.value
+          @publisher_available.make_true
           dispatch_occupancy_event(true)
         end
       end
 
       def update_publishers(channel, publishers)
-        @publishers_pri.compare_and_set(@publishers_pri.value, publishers) if channel == SplitIoClient::Constants::CONTROL_PRI
-        @publishers_sec.compare_and_set(@publishers_sec.value, publishers) if channel == SplitIoClient::Constants::CONTROL_SEC
+        @publishers_pri.value = publishers if channel == SplitIoClient::Constants::CONTROL_PRI
+        @publishers_sec.value = publishers if channel == SplitIoClient::Constants::CONTROL_SEC
       end
 
-      def are_publishers_avaliable?
+      def are_publishers_available?
         @publishers_pri.value.positive? || @publishers_sec.value.positive?
       end
 
