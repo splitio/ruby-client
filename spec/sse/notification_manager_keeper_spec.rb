@@ -140,6 +140,54 @@ describe SplitIoClient::SSE::NotificationManagerKeeper do
       event = SplitIoClient::SSE::EventSource::StreamData.new('message', 'test-client-id', data, 'control_pri')
       noti_manager_keeper.handle_incoming_occupancy_event(event)
       expect(result).to eq(true)
+
+      result = nil
+      data = { 'metrics' => { 'publishers' => 0 } }
+      event = SplitIoClient::SSE::EventSource::StreamData.new('message', 'test-client-id', data, 'control_pri')
+      noti_manager_keeper.handle_incoming_occupancy_event(event)
+      expect(result).to eq(false)
+
+      result = nil
+      data = { 'metrics' => { 'publishers' => 1 } }
+      event = SplitIoClient::SSE::EventSource::StreamData.new('message', 'test-client-id', data, 'control_sec')
+      noti_manager_keeper.handle_incoming_occupancy_event(event)
+      expect(result).to eq(true)
+
+      result = nil
+      data = { 'metrics' => { 'publishers' => 2 } }
+      event = SplitIoClient::SSE::EventSource::StreamData.new('message', 'test-client-id', data, 'control_sec')
+      noti_manager_keeper.handle_incoming_occupancy_event(event)
+      expect(result).to eq(nil)
+
+      result = nil
+      data = { 'metrics' => { 'publishers' => 3 } }
+      event = SplitIoClient::SSE::EventSource::StreamData.new('message', 'test-client-id', data, 'control_pri')
+      noti_manager_keeper.handle_incoming_occupancy_event(event)
+      expect(result).to eq(nil)
+
+      result = nil
+      data = { 'metrics' => { 'publishers' => 0 } }
+      event = SplitIoClient::SSE::EventSource::StreamData.new('message', 'test-client-id', data, 'control_sec')
+      noti_manager_keeper.handle_incoming_occupancy_event(event)
+      expect(result).to eq(nil)
+
+      result = nil
+      data = { 'metrics' => { 'publishers' => 0 } }
+      event = SplitIoClient::SSE::EventSource::StreamData.new('message', 'test-client-id', data, 'control_pri')
+      noti_manager_keeper.handle_incoming_occupancy_event(event)
+      expect(result).to eq(false)
+
+      result = nil
+      data = { 'metrics' => { 'publishers' => 0 } }
+      event = SplitIoClient::SSE::EventSource::StreamData.new('message', 'test-client-id', data, 'control_sec')
+      noti_manager_keeper.handle_incoming_occupancy_event(event)
+      expect(result).to eq(nil)
+
+      result = nil
+      data = { 'metrics' => { 'publishers' => 0 } }
+      event = SplitIoClient::SSE::EventSource::StreamData.new('message', 'test-client-id', data, 'control_pri')
+      noti_manager_keeper.handle_incoming_occupancy_event(event)
+      expect(result).to eq(nil)
     end
   end
 end

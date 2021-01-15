@@ -74,7 +74,7 @@ module SplitIoClient
         def connect_stream(latch)
           socket_write(latch)
 
-          while @connected.value
+          while connected?
             begin
               partial_data = @socket.readpartial(10_000, timeout: @read_timeout)
 
