@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'concurrent/atomics'
+require 'concurrent'
 
 module SplitIoClient
   module SSE
@@ -8,6 +8,8 @@ module SplitIoClient
       def initialize(config)
         @config = config
         @publisher_available = Concurrent::AtomicBoolean.new(true)
+        @publishers_pri = Concurrent::AtomicFixnum.new
+        @publishers_sec = Concurrent::AtomicFixnum.new
         @on = { occupancy: ->(_) {}, push_shutdown: ->(_) {} }
 
         yield self if block_given?
@@ -16,8 +18,8 @@ module SplitIoClient
       def handle_incoming_occupancy_event(event)
         if event.data['type'] == 'CONTROL'
           process_event_control(event.data['controlType'])
-        elsif event.channel == SplitIoClient::Constants::CONTROL_PRI
-          process_event_occupancy(event.data['metrics']['publishers'])
+        else
+          process_event_occupancy(event.channel, event.data['metrics']['publishers'])
         end
       rescue StandardError => e
         @config.logger.error(e)
@@ -46,15 +48,27 @@ module SplitIoClient
         end
       end
 
-      def process_event_occupancy(publishers)
-        @config.logger.debug("Occupancy process event with #{publishers} publishers") if @config.debug_enabled
-        if publishers <= 0 && @publisher_available.value
+      def process_event_occupancy(channel, publishers)
+        @config.logger.debug("Processed occupancy event with #{publishers} publishers. Channel: #{channel}")
+
+        update_publishers(channel, publishers)
+
+        if !are_publishers_available? && @publisher_available.value
           @publisher_available.make_false
           dispatch_occupancy_event(false)
-        elsif publishers >= 1 && !@publisher_available.value
+        elsif are_publishers_available? && !@publisher_available.value
           @publisher_available.make_true
           dispatch_occupancy_event(true)
         end
+      end
+
+      def update_publishers(channel, publishers)
+        @publishers_pri.value = publishers if channel == SplitIoClient::Constants::CONTROL_PRI
+        @publishers_sec.value = publishers if channel == SplitIoClient::Constants::CONTROL_SEC
+      end
+
+      def are_publishers_available?
+        @publishers_pri.value.positive? || @publishers_sec.value.positive?
       end
 
       def dispatch_occupancy_event(push_enable)
