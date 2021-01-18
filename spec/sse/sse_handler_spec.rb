@@ -67,12 +67,15 @@ describe SplitIoClient::SSE::SSEHandler do
         connected_event = false
         disconnect_event = false
         sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository, notification_manager_keeper) do |handler|
-          handler.on_connected { connected_event = true }
+          handler.on_connected do
+            sse_handler.start_workers
+            connected_event = true
+          end
           handler.on_disconnect { disconnect_event = true }
         end
 
-        sse_handler.start('token-test', 'channel-test')
-        sse_handler.start_workers
+        connected = sse_handler.start('token-test', 'channel-test')
+        expect(connected).to eq(true)
 
         sleep(2)
 
@@ -100,12 +103,15 @@ describe SplitIoClient::SSE::SSEHandler do
         connected_event = false
         disconnect_event = false
         sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository, notification_manager_keeper) do |handler|
-          handler.on_connected { connected_event = true }
+          handler.on_connected do
+            sse_handler.start_workers
+            connected_event = true
+          end
           handler.on_disconnect { disconnect_event = true }
         end
 
-        sse_handler.start('token-test', 'channel-test')
-        sse_handler.start_workers
+        connected = sse_handler.start('token-test', 'channel-test')
+        expect(connected).to eq(true)
 
         sleep(2)
 
@@ -133,12 +139,15 @@ describe SplitIoClient::SSE::SSEHandler do
         connected_event = false
         disconnect_event = false
         sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository, notification_manager_keeper) do |handler|
-          handler.on_connected { connected_event = true }
+          handler.on_connected do
+            sse_handler.start_workers
+            connected_event = true
+          end
           handler.on_disconnect { disconnect_event = true }
         end
 
-        sse_handler.start('token-test', 'channel-test')
-        sse_handler.start_workers
+        connected = sse_handler.start('token-test', 'channel-test')
+        expect(connected).to eq(true)
 
         sleep(2)
 
@@ -168,12 +177,15 @@ describe SplitIoClient::SSE::SSEHandler do
         connected_event = false
         disconnect_event = false
         sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository, notification_manager_keeper) do |handler|
-          handler.on_connected { connected_event = true }
+          handler.on_connected do
+            sse_handler.start_workers
+            connected_event = true
+          end
           handler.on_disconnect { disconnect_event = true }
         end
 
-        sse_handler.start('token-test', 'channel-test')
-        sse_handler.start_workers
+        connected = sse_handler.start('token-test', 'channel-test')
+        expect(connected).to eq(true)
 
         sleep(2)
 
@@ -205,12 +217,15 @@ describe SplitIoClient::SSE::SSEHandler do
         connected_event = false
         disconnect_event = false
         sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository, notification_manager_keeper) do |handler|
-          handler.on_connected { connected_event = true }
+          handler.on_connected do
+            sse_handler.start_workers
+            connected_event = true
+          end
           handler.on_disconnect { disconnect_event = true }
         end
 
-        sse_handler.start('token-test', 'channel-test')
-        sse_handler.start_workers
+        connected = sse_handler.start('token-test', 'channel-test')
+        expect(connected).to eq(true)
 
         sleep(2)
 
@@ -236,11 +251,15 @@ describe SplitIoClient::SSE::SSEHandler do
         connected_event = false
         disconnect_event = false
         sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository, notification_manager_keeper) do |handler|
-          handler.on_connected { connected_event = true }
+          handler.on_connected do
+            sse_handler.start_workers
+            connected_event = true
+          end
           handler.on_disconnect { disconnect_event = true }
         end
-        sse_handler.start('token-test', 'channel-test')
-        sse_handler.start_workers
+
+        connected = sse_handler.start('token-test', 'channel-test')
+        expect(connected).to eq(true)
 
         sleep(2)
 
@@ -268,12 +287,15 @@ describe SplitIoClient::SSE::SSEHandler do
         connected_event = false
         disconnect_event = false
         sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository, notification_manager_keeper) do |handler|
-          handler.on_connected { connected_event = true }
+          handler.on_connected do
+            sse_handler.start_workers
+            connected_event = true
+          end
           handler.on_disconnect { disconnect_event = true }
         end
 
-        sse_handler.start('token-test', 'channel-test')
-        sse_handler.start_workers
+        connected = sse_handler.start('token-test', 'channel-test')
+        expect(connected).to eq(true)
 
         sleep(2)
 

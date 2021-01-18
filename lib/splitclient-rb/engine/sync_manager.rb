@@ -44,10 +44,10 @@ module SplitIoClient
       # Starts tasks if stream is enabled.
       def start_stream
         @config.logger.debug('Starting push mode ...')
-        stream_start_thread
+        sync_all_thread
         @synchronizer.start_periodic_data_recording
 
-        stream_start_sse_thread
+        start_sse_connection_thread
       end
 
       def start_poll
@@ -59,23 +59,24 @@ module SplitIoClient
       end
 
       # Starts thread which fetch splits and segments once and trigger task to periodic data recording.
-      def stream_start_thread
+      def sync_all_thread
         @config.threads[:sync_manager_start_stream] = Thread.new do
           begin
             @synchronizer.sync_all
           rescue StandardError => e
-            @config.logger.error("stream_start_thread error : #{e.inspect}")
+            @config.logger.error("sync_all_thread error : #{e.inspect}")
           end
         end
       end
 
       # Starts thread which connect to sse and after that fetch splits and segments once.
-      def stream_start_sse_thread
+      def start_sse_connection_thread
         @config.threads[:sync_manager_start_sse] = Thread.new do
           begin
-            @push_manager.start_sse
+            connected = @push_manager.start_sse
+            @synchronizer.start_periodic_fetch unless connected
           rescue StandardError => e
-            @config.logger.error("stream_start_sse_thread error : #{e.inspect}")
+            @config.logger.error("start_sse_connection_thread error : #{e.inspect}")
           end
         end
       end

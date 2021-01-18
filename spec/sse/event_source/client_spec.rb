@@ -22,7 +22,6 @@ describe SplitIoClient::SSE::EventSource::Client do
       server.setup_response('/') do |_, res|
         send_stream_content(res, event_split_update)
       end
-
       event_queue = Queue.new
       connected_event = false
       disconnect_event = false
@@ -50,7 +49,7 @@ describe SplitIoClient::SSE::EventSource::Client do
     end
   end
 
-  it 'receive split kill event' do
+  it 'receive split kill event' do    
     mock_server do |server|
       server.setup_response('/') do |_, res|
         send_stream_content(res, event_split_kill)
