@@ -240,7 +240,7 @@ describe SplitIoClient::SSE::EventSource::Client do
       end
 
       connected = sse_client.start(server.base_uri)
-      
+
       expect(connected).to eq(false)
       expect(sse_client.connected?).to eq(false)
       expect(connected_event).to eq(false)
