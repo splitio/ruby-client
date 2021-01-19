@@ -109,7 +109,11 @@ module SplitIoClient
           @config.logger.info("SSE client first event code: #{response_code}") if @config.debug_enabled
           @first_event.make_false
 
-          dispatch_connected if response_code == OK_CODE
+          error_event = false
+          events = @event_parser.parse(data)
+          events.each { |e| error_event = true if e.event_type == ERROR_EVENT_TYPE }
+
+          dispatch_connected if response_code == OK_CODE && !error_event
           latch.count_down
         end
 
