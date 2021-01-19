@@ -232,18 +232,17 @@ describe SplitIoClient::SSE::EventSource::Client do
 
       event_queue = Queue.new
       connected_event = false
-      disconnect_queue = Queue.new
+      disconnect_event = false
       sse_client = subject.new(config) do |client|
         client.on_event { |event| event_queue << event }
         client.on_connected { connected_event = true }
-        client.on_disconnect { disconnect_queue << true }
+        client.on_disconnect { disconnect_event = true }
       end
 
       connected = sse_client.start(server.base_uri)
       expect(connected).to eq(false)
 
-      result = disconnect_queue.pop
-      expect(result).to eq(true)
+      expect(disconnect_event).to eq(true)
       expect(sse_client.connected?).to eq(false)
       expect(connected_event).to eq(false)
       expect(event_queue.empty?).to eq(true)
@@ -258,18 +257,17 @@ describe SplitIoClient::SSE::EventSource::Client do
 
       event_queue = Queue.new
       connected_event = false
-      disconnect_queue = Queue.new
+      disconnect_event = false
       sse_client = subject.new(config) do |client|
         client.on_event { |event| event_queue << event }
         client.on_connected { connected_event = true }
-        client.on_disconnect { disconnect_queue << true }
+        client.on_disconnect { disconnect_event = true }
       end
 
       connected = sse_client.start(server.base_uri)
       expect(connected).to eq(false)
 
-      result = disconnect_queue.pop
-      expect(result).to eq(true)
+      expect(disconnect_event).to eq(true)
       expect(sse_client.connected?).to eq(false)
       expect(connected_event).to eq(false)
       expect(event_queue.empty?).to eq(true)
