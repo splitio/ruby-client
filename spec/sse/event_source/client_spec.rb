@@ -241,11 +241,12 @@ describe SplitIoClient::SSE::EventSource::Client do
 
       connected = sse_client.start(server.base_uri)
 
+      sleep 5
       expect(connected).to eq(false)
-      expect(disconnect_event).to eq(true)
       expect(sse_client.connected?).to eq(false)
       expect(connected_event).to eq(false)
       expect(event_queue.empty?).to eq(true)
+      expect(disconnect_event).to eq(true)
     end
   end
 
