@@ -105,7 +105,6 @@ module SplitIoClient
         def read_first_event(data, latch)
           return unless @first_event.value
 
-          puts data
           response_code = @event_parser.first_event(data)
           @config.logger.debug("SSE client first event code: #{response_code}")
 
