@@ -227,7 +227,7 @@ describe SplitIoClient::SSE::EventSource::Client do
   it 'receive error event' do
     mock_server do |server|
       server.setup_response('/') do |_, res|
-        send_stream_content(res, event_error, 200)
+        send_stream_content(res, event_error, 400)
       end
 
       event_queue = Queue.new
@@ -241,6 +241,9 @@ describe SplitIoClient::SSE::EventSource::Client do
 
       sse_client.start(server.base_uri)
 
+      expect(sse_client.connected?).to eq(false)
+      expect(connected_event).to eq(false)
+      expect(event_queue.empty?).to eq(true)
       expect(disconnect_event).to eq(true)
     end
   end
