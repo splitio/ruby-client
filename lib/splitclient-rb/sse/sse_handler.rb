@@ -13,11 +13,10 @@ module SplitIoClient
         @notification_processor = SplitIoClient::SSE::NotificationProcessor.new(config, @splits_worker, @segments_worker)
         @sse_client = SSE::EventSource::Client.new(@config) do |client|
           client.on_event { |event| handle_incoming_message(event) }
-          client.on_connected { process_connected }
-          client.on_disconnect { |reconnect| process_disconnect(reconnect) }
+          client.on_action { |action| process_action(action) }
         end
 
-        @on = { connected: ->(_) {}, disconnect: ->(_) {} }
+        @on = { action: ->(_) {} }
 
         yield self if block_given?
       end
@@ -48,22 +47,14 @@ module SplitIoClient
         @segments_worker.stop
       end
 
-      def on_connected(&action)
-        @on[:connected] = action
-      end
-
-      def on_disconnect(&action)
-        @on[:disconnect] = action
-      end
-
-      def process_disconnect(reconnect)
-        @on[:disconnect].call(reconnect)
+      def on_action(&action)
+        @on[:action] = action
       end
 
       private
 
-      def process_connected
-        @on[:connected].call
+      def process_action(action)
+        @on[:action].call(action)
       end
 
       def handle_incoming_message(notification)

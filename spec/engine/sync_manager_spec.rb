@@ -93,7 +93,7 @@ describe SplitIoClient::Engine::SyncManager do
     end
   end
 
-  it 'start sync manager receiving control message, must switch to pollingbundl' do
+  it 'start sync manager receiving control message, must switch to polling' do
     mock_server do |server|
       server.setup_response('/') do |_, res|
         send_content(res, event_control)
