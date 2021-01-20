@@ -11,8 +11,7 @@ module SplitIoClient
       )
         @synchronizer = synchronizer
         notification_manager_keeper = SplitIoClient::SSE::NotificationManagerKeeper.new(config) do |manager|
-          manager.on_occupancy { |publisher_available| process_occupancy(publisher_available) }
-          manager.on_push_shutdown { process_push_shutdown }
+          manager.on_action { |action| process_action(action) }
         end
         @sse_handler = SplitIoClient::SSE::SSEHandler.new(
           config,
@@ -21,8 +20,7 @@ module SplitIoClient
           repositories[:segments],
           notification_manager_keeper
         ) do |handler|
-          handler.on_connected { process_connected }
-          handler.on_disconnect { |reconnect| process_disconnect(reconnect) }
+          handler.on_action { |action| process_action(action) }
         end
 
         @push_manager = PushManager.new(config, @sse_handler, api_key)
@@ -85,6 +83,46 @@ module SplitIoClient
         PhusionPassenger.on_event(:starting_worker_process) { |forked| start_stream if forked }
       end
 
+      def process_action(action)
+        case action
+        when Constants::PUSH_CONNECTED
+          process_connected
+        when Constants::PUSH_RETRYABLE_ERROR
+          process_disconnect(true)
+        when Constants::PUSH_NONRETRYABLE_ERROR
+          process_disconnect(false)
+        when Constants::PUSH_SUBSYSTEM_DOWN
+          process_subsystem_down
+        when Constants::PUSH_SUBSYSTEM_READY
+          process_subsystem_ready
+        when Constants::PUSH_SUBSYSTEM_OFF
+          process_push_shutdown
+        else
+          @config.logger.debug('Incorrect action type.')
+        end
+      rescue StandardError => e
+        @config.logger.error("process_action error: #{e.inspect}")
+      end
+
+      def process_subsystem_ready
+        @synchronizer.stop_periodic_fetch
+        @synchronizer.sync_all
+        @sse_handler.start_workers
+      end
+
+      def process_subsystem_down
+        @sse_handler.stop_workers
+        @synchronizer.start_periodic_fetch
+      end
+
+      def process_push_shutdown
+        @push_manager.stop_sse
+        @sse_handler.stop_workers
+        @synchronizer.start_periodic_fetch
+      rescue StandardError => e
+        @config.logger.error("process_push_shutdown error: #{e.inspect}")
+      end
+
       def process_connected
         if @sse_connected.value
           @config.logger.debug('Streaming already connected.')
@@ -115,28 +153,6 @@ module SplitIoClient
         end
       rescue StandardError => e
         @config.logger.error("process_disconnect error: #{e.inspect}")
-      end
-
-      def process_occupancy(push_enable)
-        if push_enable
-          @synchronizer.stop_periodic_fetch
-          @synchronizer.sync_all
-          @sse_handler.start_workers
-          return
-        end
-
-        @sse_handler.stop_workers
-        @synchronizer.start_periodic_fetch
-      rescue StandardError => e
-        @config.logger.error("process_occupancy error: #{e.inspect}")
-      end
-
-      def process_push_shutdown
-        @push_manager.stop_sse
-        @sse_handler.stop_workers
-        @synchronizer.start_periodic_fetch
-      rescue StandardError => e
-        @config.logger.error("process_push_shutdown error: #{e.inspect}")
       end
     end
   end

@@ -20,7 +20,7 @@ module SplitIoClient
           @first_event = Concurrent::AtomicBoolean.new(true)
           @socket = nil
           @event_parser = SSE::EventSource::EventParser.new(config)
-          @on = { event: ->(_) {}, connected: ->(_) {}, disconnect: ->(_) {} }
+          @on = { event: ->(_) {}, action: ->(_) {} }
 
           yield self if block_given?
         end
@@ -29,16 +29,12 @@ module SplitIoClient
           @on[:event] = action
         end
 
-        def on_connected(&action)
-          @on[:connected] = action
+        def on_action(&action)
+          @on[:action] = action
         end
 
-        def on_disconnect(&action)
-          @on[:disconnect] = action
-        end
-
-        def close(reconnect = false)
-          dispatch_disconnect(reconnect)
+        def close(action = Constants::PUSH_NONRETRYABLE_ERROR)
+          dispatch_action(action)
           @connected.make_false
           SplitIoClient::Helpers::ThreadHelper.stop(:connect_stream, @config)
           @socket&.close
@@ -85,7 +81,7 @@ module SplitIoClient
               raise 'eof exception' if partial_data == :eof
             rescue StandardError => e
               @config.logger.error('Error reading partial data: ' + e.inspect) if @config.debug_enabled
-              close(true) # close conexion & reconnect
+              close(Constants::PUSH_RETRYABLE_ERROR)
               return
             end
 
@@ -99,7 +95,7 @@ module SplitIoClient
           @socket.write(build_request(@uri))
         rescue StandardError => e
           @config.logger.error("Error during connecting to #{@uri.host}. Error: #{e.inspect}")
-          close
+          close(Constants::PUSH_NONRETRYABLE_ERROR)
         end
 
         def read_first_event(data, latch)
@@ -113,7 +109,11 @@ module SplitIoClient
           events.each { |e| error_event = true if e.event_type == ERROR_EVENT_TYPE }
           @first_event.make_false
 
-          dispatch_connected if response_code == OK_CODE && !error_event
+          if response_code == OK_CODE && !error_event
+            @connected.make_true
+            dispatch_action(Constants::PUSH_CONNECTED)
+          end
+
           latch.count_down
         end
 
@@ -154,9 +154,9 @@ module SplitIoClient
         def dispatch_error(event)
           @config.logger.error("Event error: #{event.event_type}, #{event.data}")
           if event.data['code'] >= 40_140 && event.data['code'] <= 40_149
-            close(true) # close conexion & reconnect
+            close(Constants::PUSH_RETRYABLE_ERROR)
           elsif event.data['code'] >= 40_000 && event.data['code'] <= 49_999
-            close # close conexion
+            close(Constants::PUSH_NONRETRYABLE_ERROR)
           end
         end
 
@@ -165,15 +165,9 @@ module SplitIoClient
           @on[:event].call(event)
         end
 
-        def dispatch_connected
-          @connected.make_true
-          @config.logger.debug('Dispatching connected') if @config.debug_enabled
-          @on[:connected].call
-        end
-
-        def dispatch_disconnect(reconnect)
-          @config.logger.debug('Dispatching disconnect') if @config.debug_enabled
-          @on[:disconnect].call(reconnect)
+        def dispatch_action(action)
+          @config.logger.debug("Dispatching action: #{action}") if @config.debug_enabled
+          @on[:action].call(action)
         end
       end
     end
