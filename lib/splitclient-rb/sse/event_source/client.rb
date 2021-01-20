@@ -43,6 +43,11 @@ module SplitIoClient
         end
 
         def start(url)
+          if connected?
+            @config.logger.debug('SSEClient already running.')
+            return true
+          end
+
           @uri = URI(url)
           latch = Concurrent::CountDownLatch.new(1)
 
