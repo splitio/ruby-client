@@ -19,12 +19,13 @@ module SplitIoClient
         if response[:push_enabled] && @sse_handler.start(response[:token], response[:channels])
           schedule_next_token_refresh(response[:exp])
           @back_off.reset
-          return
+          return true
         end
 
         stop_sse
 
         schedule_next_token_refresh(@back_off.interval) if response[:retry]
+        false
       rescue StandardError => e
         @config.logger.error("start_sse: #{e.inspect}")
       end

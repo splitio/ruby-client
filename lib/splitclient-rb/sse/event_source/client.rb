@@ -9,6 +9,7 @@ module SplitIoClient
       class Client
         DEFAULT_READ_TIMEOUT = 70
         CONNECT_TIMEOUT = 30_000
+        OK_CODE = 200
         KEEP_ALIVE_RESPONSE = "c\r\n:keepalive\n\n\r\n".freeze
         ERROR_EVENT_TYPE = 'error'.freeze
 
@@ -16,6 +17,7 @@ module SplitIoClient
           @config = config
           @read_timeout = read_timeout
           @connected = Concurrent::AtomicBoolean.new(false)
+          @first_event = Concurrent::AtomicBoolean.new(true)
           @socket = nil
           @event_parser = SSE::EventSource::EventParser.new(config)
           @on = { event: ->(_) {}, connected: ->(_) {}, disconnect: ->(_) {} }
@@ -72,11 +74,13 @@ module SplitIoClient
         end
 
         def connect_stream(latch)
-          socket_write(latch)
+          socket_write
 
-          while connected?
+          while connected? || @first_event.value
             begin
               partial_data = @socket.readpartial(10_000, timeout: @read_timeout)
+
+              read_first_event(partial_data, latch)
 
               raise 'eof exception' if partial_data == :eof
             rescue StandardError => e
@@ -89,14 +93,27 @@ module SplitIoClient
           end
         end
 
-        def socket_write(latch)
+        def socket_write
+          @first_event.make_true
           @socket = socket_connect
           @socket.write(build_request(@uri))
-          dispatch_connected
         rescue StandardError => e
           @config.logger.error("Error during connecting to #{@uri.host}. Error: #{e.inspect}")
           close
-        ensure
+        end
+
+        def read_first_event(data, latch)
+          return unless @first_event.value
+
+          response_code = @event_parser.first_event(data)
+          @config.logger.debug("SSE client first event code: #{response_code}")
+
+          error_event = false
+          events = @event_parser.parse(data)
+          events.each { |e| error_event = true if e.event_type == ERROR_EVENT_TYPE }
+          @first_event.make_false
+
+          dispatch_connected if response_code == OK_CODE && !error_event
           latch.count_down
         end
 

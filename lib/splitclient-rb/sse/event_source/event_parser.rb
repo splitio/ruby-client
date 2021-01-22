@@ -4,6 +4,8 @@ module SplitIoClient
   module SSE
     module EventSource
       class EventParser
+        BAD_REQUEST_CODE = 400
+
         def initialize(config)
           @config = config
         end
@@ -27,8 +29,15 @@ module SplitIoClient
 
           events
         rescue StandardError => e
-          @config.logger.error("Error during parsing a event: #{e.inspect}")
+          @config.logger.debug("Error during parsing a event: #{e.inspect}")
           []
+        end
+
+        def first_event(raw_data)
+          raw_data.split("\n")[0].split(' ')[1].to_i
+        rescue StandardError => e
+          @config.logger.debug("Error parsing first event: #{e.inspect}")
+          BAD_REQUEST_CODE
         end
 
         private

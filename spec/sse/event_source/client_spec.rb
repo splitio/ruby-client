@@ -22,7 +22,6 @@ describe SplitIoClient::SSE::EventSource::Client do
       server.setup_response('/') do |_, res|
         send_stream_content(res, event_split_update)
       end
-
       event_queue = Queue.new
       connected_event = false
       disconnect_event = false
@@ -31,7 +30,9 @@ describe SplitIoClient::SSE::EventSource::Client do
         client.on_connected { connected_event = true }
         client.on_disconnect { disconnect_event = true }
       end
-      sse_client.start(server.base_uri)
+
+      connected = sse_client.start(server.base_uri)
+      expect(connected).to eq(true)
 
       event_result = event_queue.pop
       expect(event_result.data['type']).to eq(SplitIoClient::SSE::EventSource::EventTypes::SPLIT_UPDATE)
@@ -64,7 +65,9 @@ describe SplitIoClient::SSE::EventSource::Client do
         client.on_connected { connected_event = true }
         client.on_disconnect { disconnect_event = true }
       end
-      sse_client.start(server.base_uri)
+
+      connected = sse_client.start(server.base_uri)
+      expect(connected).to eq(true)
 
       event_result = event_queue.pop
       expect(event_result.data['type']).to eq(SplitIoClient::SSE::EventSource::EventTypes::SPLIT_KILL)
@@ -99,7 +102,9 @@ describe SplitIoClient::SSE::EventSource::Client do
         client.on_connected { connected_event = true }
         client.on_disconnect { disconnect_event = true }
       end
-      sse_client.start(server.base_uri)
+
+      connected = sse_client.start(server.base_uri)
+      expect(connected).to eq(true)
 
       event_result = event_queue.pop
       expect(event_result.data['type']).to eq(SplitIoClient::SSE::EventSource::EventTypes::SEGMENT_UPDATE)
@@ -133,7 +138,9 @@ describe SplitIoClient::SSE::EventSource::Client do
         client.on_connected { connected_event = true }
         client.on_disconnect { disconnect_event = true }
       end
-      sse_client.start(server.base_uri)
+
+      connected = sse_client.start(server.base_uri)
+      expect(connected).to eq(true)
 
       event_result = event_queue.pop
       expect(event_result.data['type']).to eq(SplitIoClient::SSE::EventSource::EventTypes::CONTROL)
@@ -166,7 +173,9 @@ describe SplitIoClient::SSE::EventSource::Client do
         client.on_connected { connected_event = true }
         client.on_disconnect { disconnect_event = true }
       end
-      sse_client.start(server.base_uri)
+
+      connected = sse_client.start(server.base_uri)
+      expect(connected).to eq(true)
 
       sleep 0.5
       expect(event_queue.empty?).to be_truthy
@@ -195,7 +204,9 @@ describe SplitIoClient::SSE::EventSource::Client do
         client.on_connected { connected_event = true }
         client.on_disconnect { disconnect_event = true }
       end
-      sse_client.start(server.base_uri)
+
+      connected = sse_client.start(server.base_uri)
+      expect(connected).to eq(true)
 
       event_result = event_queue.pop
       expect(event_result.data['metrics']['publishers']).to eq(2)
@@ -216,33 +227,53 @@ describe SplitIoClient::SSE::EventSource::Client do
   it 'receive error event' do
     mock_server do |server|
       server.setup_response('/') do |_, res|
-        send_stream_content(res, event_error)
+        send_stream_content(res, event_error, 400)
       end
 
       event_queue = Queue.new
       connected_event = false
-      disconnect_queue = Queue.new
+      disconnect_event = false
       sse_client = subject.new(config) do |client|
         client.on_event { |event| event_queue << event }
         client.on_connected { connected_event = true }
-        client.on_disconnect { disconnect_queue << true }
+        client.on_disconnect { disconnect_event = true }
       end
-      sse_client.start(server.base_uri)
 
-      result = disconnect_queue.pop
-      expect(result).to eq(true)
+      connected = sse_client.start(server.base_uri)
+
+      expect(connected).to eq(false)
       expect(sse_client.connected?).to eq(false)
-      expect(connected_event).to eq(true)
+      expect(connected_event).to eq(false)
       expect(event_queue.empty?).to eq(true)
+    end
+  end
+
+  it 'first event - when server return 400' do
+    mock_server do |server|
+      server.setup_response('/') do |_, res|
+        send_stream_content(res, event_error, 400)
+      end
+
+      event_queue = Queue.new
+      connected_event = false
+      disconnect_event = false
+      sse_client = subject.new(config) do |client|
+        client.on_event { |event| event_queue << event }
+        client.on_connected { connected_event = true }
+        client.on_disconnect { disconnect_event = true }
+      end
+
+      connected = sse_client.start(server.base_uri)
+      expect(connected).to eq(false)
     end
   end
 end
 
 private
 
-def send_stream_content(res, content)
+def send_stream_content(res, content, status = 200)
   res.content_type = 'text/event-stream'
-  res.status = 200
+  res.status = status
   res.chunked = true
   rd, wr = IO.pipe
   wr.write(content)
