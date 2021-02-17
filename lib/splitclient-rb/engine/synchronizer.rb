@@ -30,7 +30,7 @@ module SplitIoClient
       def sync_all
         @config.threads[:sync_all_thread] = Thread.new do
           @config.logger.debug('Synchronizing Splits and Segments ...') if @config.debug_enabled
-          fetch_splits
+          @split_fetcher.fetch_splits
           fetch_segments
         end
       end
@@ -53,21 +53,12 @@ module SplitIoClient
       end
 
       def fetch_splits
-        back_off = SplitIoClient::SSE::EventSource::BackOff.new(SplitIoClient::Constants::FETCH_BACK_OFF_BASE_RETRIES, 1)
-        loop do
-          break if @split_fetcher.fetch_splits
-
-          sleep(back_off.interval)
-        end
+        segment_names = @split_fetcher.fetch_splits
+        @segment_fetcher.fetch_segments_if_not_exists(segment_names) unless segment_names.empty?
       end
 
       def fetch_segment(name)
-        back_off = SplitIoClient::SSE::EventSource::BackOff.new(SplitIoClient::Constants::FETCH_BACK_OFF_BASE_RETRIES, 1)
-        loop do
-          break if @segment_fetcher.fetch_segment(name)
-
-          sleep(back_off.interval)
-        end
+        @segment_fetcher.fetch_segment(name)
       end
 
       private

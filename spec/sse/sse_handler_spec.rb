@@ -183,7 +183,7 @@ describe SplitIoClient::SSE::SSEHandler do
   end
 
   context 'SEGMENT UPDATE event' do
-    it 'must trigger fetch' do
+    it 'must trigger fetch - with retries' do
       mock_server do |server|
         server.setup_response('/') do |_, res|
           send_content(res, event_segment_update_must_fetch)
@@ -203,7 +203,7 @@ describe SplitIoClient::SSE::SSEHandler do
 
         expect(action_event).to eq(SplitIoClient::Constants::PUSH_CONNECTED)
         expect(sse_handler.sse_client.connected?).to eq(true)
-        expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=1470947453877')).to have_been_made.times(1)
+        expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=1470947453877')).to have_been_made.times(12)
 
         sse_handler.sse_client.close
 
