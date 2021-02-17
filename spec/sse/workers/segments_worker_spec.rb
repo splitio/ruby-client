@@ -41,6 +41,16 @@ describe SplitIoClient::SSE::Workers::SegmentsWorker do
 
   context 'add segment name to queue' do
     it 'must trigger fetch' do
+      stub_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=1470947453877')
+        .to_return(status: 200, body:
+      '{
+        "name": "segment1",
+        "added": [],
+        "removed": [],
+        "since": 1470947453878,
+        "till": 1470947453878
+      }')
+
       worker = subject.new(synchronizer, config, segments_repository)
 
       worker.start
@@ -49,6 +59,17 @@ describe SplitIoClient::SSE::Workers::SegmentsWorker do
       sleep(1)
 
       expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=1470947453877')).to have_been_made.times(2)
+    end
+
+    it 'must trigger fetch - with retries' do
+      worker = subject.new(synchronizer, config, segments_repository)
+
+      worker.start
+      worker.add_to_queue(1_506_703_262_918, 'segment1')
+
+      sleep(1)
+
+      expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=1470947453877')).to have_been_made.times(12)
     end
 
     it 'must not trigger fetch' do

@@ -49,11 +49,12 @@ module SplitIoClient
           while (item = @queue.pop)
             segment_name = item[:segment_name]
             change_number = item[:change_number]
-            since = @segments_repository.get_change_number(segment_name)
+            @config.logger.debug("SegmentsWorker change_number dequeue #{segment_name}, #{change_number}")
 
-            unless since >= change_number
-              @config.logger.debug("SegmentsWorker fetch_segment with #{since}")
+            attempt = 0
+            while change_number > @segments_repository.get_change_number(segment_name).to_i && attempt <= Workers::MAX_RETRIES_ALLOWED
               @synchronizer.fetch_segment(segment_name)
+              attempt += 1
             end
           end
         end

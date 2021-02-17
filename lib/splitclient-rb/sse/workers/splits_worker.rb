@@ -3,6 +3,8 @@
 module SplitIoClient
   module SSE
     module Workers
+      MAX_RETRIES_ALLOWED = 10
+
       class SplitsWorker
         def initialize(synchronizer, config, splits_repository)
           @synchronizer = synchronizer
@@ -59,11 +61,12 @@ module SplitIoClient
 
         def perform
           while (change_number = @queue.pop)
-            since = @splits_repository.get_change_number
+            @config.logger.debug("SplitsWorker change_number dequeue #{change_number}")
 
-            unless since.to_i >= change_number
-              @config.logger.debug("SplitsWorker fetch_splits with #{since}")
+            attempt = 0
+            while change_number > @splits_repository.get_change_number.to_i && attempt <= Workers::MAX_RETRIES_ALLOWED
               @synchronizer.fetch_splits
+              attempt += 1
             end
           end
         end
