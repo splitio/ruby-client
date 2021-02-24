@@ -2,9 +2,9 @@ CHANGES
 
 7.2.3 (Feb 24, 2021)
 - Fixed missing segment fetch after an SPLIT_UPDATE.
-- Updated occupancy logic to process secondary region.
-- Updated sse client connection confirmation.
-- Updated naming retryable erros.
+- Updated streaming logic to support multiregion.
+- Updated sse client connection logic to read confirmation event.
+- Updated naming of retryable erros.
 
 7.2.2 (Dec 18, 2020)
 - Fixed issue: undefined local variable or method post_impressions_count
