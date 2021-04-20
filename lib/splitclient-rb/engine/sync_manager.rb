@@ -11,8 +11,7 @@ module SplitIoClient
       )
         @synchronizer = synchronizer
         notification_manager_keeper = SplitIoClient::SSE::NotificationManagerKeeper.new(config) do |manager|
-          manager.on_occupancy { |publisher_available| process_occupancy(publisher_available) }
-          manager.on_push_shutdown { process_push_shutdown }
+          manager.on_action { |action| process_action(action) }
         end
         @sse_handler = SplitIoClient::SSE::SSEHandler.new(
           config,
@@ -21,8 +20,7 @@ module SplitIoClient
           repositories[:segments],
           notification_manager_keeper
         ) do |handler|
-          handler.on_connected { process_connected }
-          handler.on_disconnect { |reconnect| process_disconnect(reconnect) }
+          handler.on_action { |action| process_action(action) }
         end
 
         @push_manager = PushManager.new(config, @sse_handler, api_key)
@@ -44,10 +42,10 @@ module SplitIoClient
       # Starts tasks if stream is enabled.
       def start_stream
         @config.logger.debug('Starting push mode ...')
-        stream_start_thread
+        sync_all_thread
         @synchronizer.start_periodic_data_recording
 
-        stream_start_sse_thread
+        start_sse_connection_thread
       end
 
       def start_poll
@@ -59,29 +57,70 @@ module SplitIoClient
       end
 
       # Starts thread which fetch splits and segments once and trigger task to periodic data recording.
-      def stream_start_thread
+      def sync_all_thread
         @config.threads[:sync_manager_start_stream] = Thread.new do
           begin
             @synchronizer.sync_all
           rescue StandardError => e
-            @config.logger.error("stream_start_thread error : #{e.inspect}")
+            @config.logger.error("sync_all_thread error : #{e.inspect}")
           end
         end
       end
 
       # Starts thread which connect to sse and after that fetch splits and segments once.
-      def stream_start_sse_thread
+      def start_sse_connection_thread
         @config.threads[:sync_manager_start_sse] = Thread.new do
           begin
-            @push_manager.start_sse
+            connected = @push_manager.start_sse
+            @synchronizer.start_periodic_fetch unless connected
           rescue StandardError => e
-            @config.logger.error("stream_start_sse_thread error : #{e.inspect}")
+            @config.logger.error("start_sse_connection_thread error : #{e.inspect}")
           end
         end
       end
 
       def start_stream_forked
         PhusionPassenger.on_event(:starting_worker_process) { |forked| start_stream if forked }
+      end
+
+      def process_action(action)
+        case action
+        when Constants::PUSH_CONNECTED
+          process_connected
+        when Constants::PUSH_RETRYABLE_ERROR
+          process_disconnect(true)
+        when Constants::PUSH_NONRETRYABLE_ERROR
+          process_disconnect(false)
+        when Constants::PUSH_SUBSYSTEM_DOWN
+          process_subsystem_down
+        when Constants::PUSH_SUBSYSTEM_READY
+          process_subsystem_ready
+        when Constants::PUSH_SUBSYSTEM_OFF
+          process_push_shutdown
+        else
+          @config.logger.debug('Incorrect action type.')
+        end
+      rescue StandardError => e
+        @config.logger.error("process_action error: #{e.inspect}")
+      end
+
+      def process_subsystem_ready
+        @synchronizer.stop_periodic_fetch
+        @synchronizer.sync_all
+        @sse_handler.start_workers
+      end
+
+      def process_subsystem_down
+        @sse_handler.stop_workers
+        @synchronizer.start_periodic_fetch
+      end
+
+      def process_push_shutdown
+        @push_manager.stop_sse
+        @sse_handler.stop_workers
+        @synchronizer.start_periodic_fetch
+      rescue StandardError => e
+        @config.logger.error("process_push_shutdown error: #{e.inspect}")
       end
 
       def process_connected
@@ -114,28 +153,6 @@ module SplitIoClient
         end
       rescue StandardError => e
         @config.logger.error("process_disconnect error: #{e.inspect}")
-      end
-
-      def process_occupancy(push_enable)
-        if push_enable
-          @synchronizer.stop_periodic_fetch
-          @synchronizer.sync_all
-          @sse_handler.start_workers
-          return
-        end
-
-        @sse_handler.stop_workers
-        @synchronizer.start_periodic_fetch
-      rescue StandardError => e
-        @config.logger.error("process_occupancy error: #{e.inspect}")
-      end
-
-      def process_push_shutdown
-        @push_manager.stop_sse
-        @sse_handler.stop_workers
-        @synchronizer.start_periodic_fetch
-      rescue StandardError => e
-        @config.logger.error("process_push_shutdown error: #{e.inspect}")
       end
     end
   end

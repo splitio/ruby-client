@@ -27,18 +27,44 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
   let(:params) { { split_fetcher: split_fetcher, segment_fetcher: segment_fetcher, imp_counter: impression_counter } }
   let(:synchronizer) { SplitIoClient::Engine::Synchronizer.new(repositories, api_key, config, sdk_blocker, params) }
 
-  before do
-    mock_split_changes(splits)
-    mock_segment_changes('segment1', segment1, '-1')
-    mock_segment_changes('segment1', segment1, '1470947453877')
-    mock_segment_changes('segment2', segment2, '-1')
-    mock_segment_changes('segment2', segment2, '1470947453878')
-    mock_segment_changes('segment3', segment3, '-1')
+  it 'add change number - must tigger fetcch - with retries' do
+    stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+      .to_return(status: 200, body:
+    '{
+      "splits": [],
+      "since": -1,
+      "till": 1506703262918
+    }')
 
-    split_fetcher.fetch_splits
+    stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262918')
+      .to_return(status: 200, body:
+    '{
+      "splits": [],
+      "since": 1506703262918,
+      "till": 1506703262918
+    }')
+
+    worker = subject.new(synchronizer, config, splits_repository)
+    worker.start
+    worker.add_to_queue(1_506_703_262_919)
+
+    sleep(1)
+
+    expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262918')).to have_been_made.times(10)
   end
 
   context 'add change number to queue' do
+    before do
+      mock_split_changes(splits)
+      mock_segment_changes('segment1', segment1, '-1')
+      mock_segment_changes('segment1', segment1, '1470947453877')
+      mock_segment_changes('segment2', segment2, '-1')
+      mock_segment_changes('segment2', segment2, '1470947453878')
+      mock_segment_changes('segment3', segment3, '-1')
+
+      split_fetcher.fetch_splits
+    end
+
     it 'must trigger fetch' do
       worker = subject.new(synchronizer, config, splits_repository)
       worker.start
@@ -71,6 +97,17 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
   end
 
   context 'kill split notification' do
+    before do
+      mock_split_changes(splits)
+      mock_segment_changes('segment1', segment1, '-1')
+      mock_segment_changes('segment1', segment1, '1470947453877')
+      mock_segment_changes('segment2', segment2, '-1')
+      mock_segment_changes('segment2', segment2, '1470947453878')
+      mock_segment_changes('segment3', segment3, '-1')
+
+      split_fetcher.fetch_splits
+    end
+
     it 'must kill split and trigger fetch' do
       worker = subject.new(synchronizer, config, splits_repository)
 

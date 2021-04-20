@@ -42,8 +42,7 @@ describe SplitIoClient::Engine::PushManager do
         stub_request(:get, config.auth_service_url).to_return(status: 200, body: body_response)
         config.streaming_service_url = server.base_uri
 
-        connected_event = false
-        disconnect_event = false
+        action_event = nil
         sse_handler = SplitIoClient::SSE::SSEHandler.new(
           config,
           synchronizer,
@@ -51,28 +50,25 @@ describe SplitIoClient::Engine::PushManager do
           segments_repository,
           notification_manager_keeper
         ) do |handler|
-          handler.on_connected { connected_event = true }
-          handler.on_disconnect { disconnect_event = true }
+          handler.on_action { |action| action_event = action }
         end
 
         push_manager = subject.new(config, sse_handler, api_key)
-        push_manager.start_sse
+        connected = push_manager.start_sse
 
         expect(a_request(:get, config.auth_service_url)).to have_been_made.times(1)
 
         sleep(1.5)
-
+        expect(connected).to eq(true)
         expect(sse_handler.connected?).to eq(true)
-        expect(connected_event).to eq(true)
-        expect(disconnect_event).to eq(false)
+        expect(action_event).to eq(SplitIoClient::Constants::PUSH_CONNECTED)
       end
     end
 
     it 'must not connect to server. Auth server return 500' do
       stub_request(:get, config.auth_service_url).to_return(status: 500)
 
-      connected_event = false
-      disconnect_event = false
+      action_event = nil
       sse_handler = SplitIoClient::SSE::SSEHandler.new(
         config,
         synchronizer,
@@ -80,27 +76,25 @@ describe SplitIoClient::Engine::PushManager do
         segments_repository,
         notification_manager_keeper
       ) do |handler|
-        handler.on_connected { connected_event = true }
-        handler.on_disconnect { disconnect_event = true }
+        handler.on_action { |action| action_event = action }
       end
 
       push_manager = subject.new(config, sse_handler, api_key)
-      push_manager.start_sse
+      connected = push_manager.start_sse
 
       expect(a_request(:get, config.auth_service_url)).to have_been_made.times(1)
 
       sleep(1.5)
 
+      expect(connected).to eq(false)
       expect(sse_handler.connected?).to eq(false)
-      expect(connected_event).to eq(false)
-      expect(disconnect_event).to eq(true)
+      expect(action_event).to eq(SplitIoClient::Constants::PUSH_NONRETRYABLE_ERROR)
     end
 
     it 'must not connect to server. Auth server return 401' do
       stub_request(:get, config.auth_service_url).to_return(status: 401)
 
-      connected_event = false
-      disconnect_event = false
+      action_event = nil
       sse_handler = SplitIoClient::SSE::SSEHandler.new(
         config,
         synchronizer,
@@ -108,20 +102,19 @@ describe SplitIoClient::Engine::PushManager do
         segments_repository,
         notification_manager_keeper
       ) do |handler|
-        handler.on_connected { connected_event = true }
-        handler.on_disconnect { disconnect_event = true }
+        handler.on_action { |action| action_event = action }
       end
 
       push_manager = subject.new(config, sse_handler, api_key)
-      push_manager.start_sse
+      connected = push_manager.start_sse
 
       expect(a_request(:get, config.auth_service_url)).to have_been_made.times(1)
 
       sleep(1.5)
 
+      expect(connected).to eq(false)
       expect(sse_handler.connected?).to eq(false)
-      expect(connected_event).to eq(false)
-      expect(disconnect_event).to eq(true)
+      expect(action_event).to eq(SplitIoClient::Constants::PUSH_NONRETRYABLE_ERROR)
     end
   end
 
@@ -135,8 +128,7 @@ describe SplitIoClient::Engine::PushManager do
         stub_request(:get, config.auth_service_url).to_return(status: 200, body: body_response)
         config.streaming_service_url = server.base_uri
 
-        connected_event = false
-        disconnect_event = false
+        action_event = nil
         sse_handler = SplitIoClient::SSE::SSEHandler.new(
           config,
           synchronizer,
@@ -144,25 +136,23 @@ describe SplitIoClient::Engine::PushManager do
           segments_repository,
           notification_manager_keeper
         ) do |handler|
-          handler.on_connected { connected_event = true }
-          handler.on_disconnect { disconnect_event = true }
+          handler.on_action { |action| action_event = action }
         end
 
         push_manager = subject.new(config, sse_handler, api_key)
-        push_manager.start_sse
+        connected = push_manager.start_sse
 
         expect(a_request(:get, config.auth_service_url)).to have_been_made.times(1)
 
         sleep(1.5)
 
+        expect(connected).to eq(true)
         expect(sse_handler.connected?).to eq(true)
-        expect(connected_event).to eq(true)
-        expect(disconnect_event).to eq(false)
+        expect(action_event).to eq(SplitIoClient::Constants::PUSH_CONNECTED)
 
         push_manager.stop_sse
 
         expect(sse_handler.connected?).to eq(false)
-        expect(disconnect_event).to eq(true)
       end
     end
   end

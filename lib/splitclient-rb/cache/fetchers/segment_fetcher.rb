@@ -27,14 +27,22 @@ module SplitIoClient
           end
         end
 
-        def fetch_segment(name)
-          @semaphore.synchronize do
-            segments_api.fetch_segments_by_names([name])
-            true
+        def fetch_segments_if_not_exists(names)
+          names.each do |name|
+            change_number = @segments_repository.get_change_number(name)
+
+            fetch_segment(name) if change_number == -1
           end
         rescue StandardError => error
           @config.log_found_exception(__method__.to_s, error)
-          false
+        end
+
+        def fetch_segment(name)
+          @semaphore.synchronize do
+            segments_api.fetch_segments_by_names([name])
+          end
+        rescue StandardError => error
+          @config.log_found_exception(__method__.to_s, error)
         end
 
         def fetch_segments
