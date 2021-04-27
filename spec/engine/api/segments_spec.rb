@@ -11,14 +11,11 @@ describe SplitIoClient::Api::Segments do
     )
   end
   let(:log) { StringIO.new }
-  let(:segments_api) { described_class.new('', metrics, segments_repository, config) }
+  let(:segments_api) { described_class.new('', segments_repository, config) }
   let(:adapter) do
     SplitIoClient::Cache::Adapters::MemoryAdapter.new(SplitIoClient::Cache::Adapters::MemoryAdapters::MapAdapter.new)
   end
   let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
-  let(:metrics_adapter) { config.metrics_adapter }
-  let(:metrics_repository) { SplitIoClient::Cache::Repositories::MetricsRepository.new(config) }
-  let(:metrics) { SplitIoClient::Metrics.new(100, metrics_repository) }
   let(:segments) do
     File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/segments/segments.json')))
   end
@@ -34,8 +31,6 @@ describe SplitIoClient::Api::Segments do
       expect(log.string).to include "'employees' segment retrieved."
       expect(log.string).to include "'employees' 2 added keys"
       expect(log.string).to include ':added=>["max", "dan"]'
-
-      expect(metrics_repository.counts).to include 'segmentChangeFetcher.status.200'
     end
 
     it 'throws exception if request to fetch segments from API returns unexpected status code' do

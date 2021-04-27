@@ -41,8 +41,6 @@ describe SplitIoClient do
     mock_segment_changes('segment2', segment2, '1470947453878')
     mock_segment_changes('segment3', segment3, '-1')
     stub_request(:post, 'https://events.split.io/api/testImpressions/bulk').to_return(status: 200, body: 'ok')
-    stub_request(:post, 'https://events.split.io/api/metrics/time').to_return(status: 200, body: 'ok')
-    stub_request(:post, 'https://events.split.io/api/metrics/counter').to_return(status: 200, body: 'ok')
     stub_request(:post, 'https://events.split.io/api/testImpressions/count').to_return(status: 200, body: 'ok')
   end
 

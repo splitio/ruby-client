@@ -4,9 +4,8 @@ module SplitIoClient
   module Cache
     module Senders
       class LocalhostRepoCleaner
-        def initialize(impressions_repository, metrics_repository, events_repository, config)
+        def initialize(impressions_repository, events_repository, config)
           @impressions_repository = impressions_repository
-          @metrics_repository = metrics_repository
           @events_repository = events_repository
           @config = config
         end
@@ -40,7 +39,6 @@ module SplitIoClient
 
         def clear_repositories
           @impressions_repository.clear
-          @metrics_repository.clear
           @events_repository.clear
         end
       end

@@ -119,12 +119,6 @@ describe SplitIoClient, type: :client do
         load_splits(all_keys_matcher_json)
       end
 
-      it 'saves just one metric to Redis' do
-        expect(subject.instance_variable_get(:@metrics)).to receive(:time)
-          .with('sdk.get_treatment', anything).once.and_call_original
-        subject.get_treatment('fake_user_id_1', 'test_feature')
-      end
-
       it 'returns CONTROL for random id' do
         expect(subject.get_treatment('random_user_id', 'my_random_feature'))
           .to eq SplitIoClient::Engine::Models::Treatment::CONTROL
@@ -341,23 +335,11 @@ describe SplitIoClient, type: :client do
         expect(result[:treatment]).to eq 'off'
         expect(result[:config]).to eq nil
       end
-
-      it 'saves get_treatment_with_config metric' do
-        expect(subject.instance_variable_get(:@metrics)).to receive(:time)
-          .with('sdk.get_treatment_with_config', anything).once.and_call_original
-        subject.get_treatment_with_config('fake_user_id_1', 'test_feature')
-      end
     end
 
     context '#get_treatments' do
       before do
         load_splits(all_keys_matcher_json)
-      end
-
-      it 'saves just one metric to Redis' do
-        expect(subject.instance_variable_get(:@metrics)).to receive(:time)
-          .with('sdk.get_treatments', anything).once.and_call_original
-        subject.get_treatments(222, %w[new_feature foo test_feature])
       end
 
       it 'returns empty hash on nil split_names' do
@@ -407,12 +389,6 @@ describe SplitIoClient, type: :client do
         expect(result[:test_feature]).to eq(treatment: 'on', config: '{"killed":false}')
         expect(result[:no_configs_feature]).to eq(treatment: 'on', config: nil)
         expect(result[:killed_feature]).to eq(treatment: 'off', config: '{"killed":true}')
-      end
-
-      it 'saves just one metric' do
-        expect(subject.instance_variable_get(:@metrics)).to receive(:time)
-          .with('sdk.get_treatments_with_config', anything).once.and_call_original
-        subject.get_treatments_with_config('fake_user_id_1', split_names)
       end
     end
 
@@ -727,12 +703,6 @@ describe SplitIoClient, type: :client do
       it 'returns control' do
         stub_request(:post, 'https://events.split.io/api/testImpressions/bulk')
           .to_return(status: 200, body: '', headers: {})
-
-        stub_request(:post, 'https://events.split.io/api/metrics/time')
-          .to_return(status: 200)
-
-        stub_request(:post, 'https://events.split.io/api/metrics/counter')
-          .to_return(status: 200)
 
         expect(subject.get_treatment('fake_user_id_1', 'test_feature')).to eq 'on'
         subject.destroy

@@ -3,10 +3,6 @@
 require 'spec_helper'
 
 describe SplitIoClient::Cache::Fetchers::SegmentFetcher do
-  let(:metrics_repository) do
-    SplitIoClient::Cache::Repositories::MetricsRepository.new(@default_config)
-  end
-  let(:metrics) { SplitIoClient::Metrics.new(100, metrics_repository) }
   let(:segments_json) do
     File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/segments/segments.json')))
   end
@@ -38,8 +34,8 @@ describe SplitIoClient::Cache::Fetchers::SegmentFetcher do
     let(:config) { SplitIoClient::SplitConfig.new }
     let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config) }
-    let(:segment_fetcher) { described_class.new(segments_repository, '', metrics, config) }
-    let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, '', metrics, config) }
+    let(:segment_fetcher) { described_class.new(segments_repository, '', config) }
+    let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, '', config) }
 
     it 'fetch segments' do
       split_fetcher.send(:fetch_splits)
@@ -67,8 +63,8 @@ describe SplitIoClient::Cache::Fetchers::SegmentFetcher do
     let(:adapter) { SplitIoClient::Cache::Adapters::RedisAdapter.new(config.redis_url) }
     let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config) }
-    let(:segment_fetcher) { described_class.new(segments_repository, '', metrics, config) }
-    let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, '', metrics, config) }
+    let(:segment_fetcher) { described_class.new(segments_repository, '', config) }
+    let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, '', config) }
 
     it 'fetch segments' do
       split_fetcher.send(:fetch_splits)

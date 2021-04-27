@@ -4,10 +4,9 @@ module SplitIoClient
       class SplitFetcher
         attr_reader :splits_repository
 
-        def initialize(splits_repository, api_key, metrics, config, sdk_blocker = nil)
+        def initialize(splits_repository, api_key, config, sdk_blocker = nil)
           @splits_repository = splits_repository
           @api_key = api_key
-          @metrics = metrics
           @config = config
           @sdk_blocker = sdk_blocker
           @semaphore = Mutex.new
@@ -94,7 +93,7 @@ module SplitIoClient
         end
 
         def splits_api
-          @splits_api ||= SplitIoClient::Api::Splits.new(@api_key, @metrics, @config)
+          @splits_api ||= SplitIoClient::Api::Splits.new(@api_key, @config)
         end
       end
     end

@@ -3,10 +3,6 @@
 require 'spec_helper'
 
 describe SplitIoClient::Cache::Fetchers::SplitFetcher do
-  let(:metrics_repository) do
-    SplitIoClient::Cache::Repositories::MetricsRepository.new(config)
-  end
-  let(:metrics) { SplitIoClient::Metrics.new(100, metrics_repository) }
   let(:active_splits_json) do
     File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/splits/splits.json')))
   end
@@ -28,7 +24,7 @@ describe SplitIoClient::Cache::Fetchers::SplitFetcher do
       )
     end
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config) }
-    let(:store) { described_class.new(splits_repository, '', metrics, config) }
+    let(:store) { described_class.new(splits_repository, '', config) }
 
     it 'returns splits since' do
       splits = store.send(:splits_since, -1)
@@ -76,7 +72,7 @@ describe SplitIoClient::Cache::Fetchers::SplitFetcher do
     end
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config) }
     let(:adapter) { SplitIoClient::Cache::Adapters::RedisAdapter.new(config.redis_url) }
-    let(:store) { described_class.new(splits_repository, '', metrics, config) }
+    let(:store) { described_class.new(splits_repository, '', config) }
 
     it 'returns splits since' do
       splits = store.send(:splits_since, -1)

@@ -16,7 +16,6 @@ module SplitIoClient
         @splits_repository = repositories[:splits]
         @segments_repository = repositories[:segments]
         @impressions_repository = repositories[:impressions]
-        @metrics_repository = repositories[:metrics]
         @events_repository = repositories[:events]
         @api_key = api_key
         @config = config
@@ -37,7 +36,6 @@ module SplitIoClient
 
       def start_periodic_data_recording
         impressions_sender
-        metrics_sender
         events_sender
         impressions_count_sender
       end
@@ -70,11 +68,6 @@ module SplitIoClient
       # Starts thread which loops constantly and sends impressions to the Split API
       def impressions_sender
         ImpressionsSender.new(@impressions_repository, @config, @impressions_api).call
-      end
-
-      # Starts thread which loops constantly and sends metrics to the Split API
-      def metrics_sender
-        MetricsSender.new(@metrics_repository, @api_key, @config).call
       end
 
       # Starts thread which loops constantly and sends events to the Split API
