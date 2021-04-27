@@ -4,33 +4,23 @@ module SplitIoClient
   module Api
     # Retrieves split definitions from the Split Backend
     class Splits < Client
-      METRICS_PREFIX = 'splitChangeFetcher'
-
-      def initialize(api_key, metrics, config)
+      def initialize(api_key, config)
         super(config)
         @api_key = api_key
-        @metrics = metrics
       end
 
       def since(since)
-        start = Time.now
-
         response = get_api("#{@config.base_uri}/splitChanges", @api_key, since: since)
         if response.success?
           result = splits_with_segment_names(response.body)
 
-          @metrics.count(METRICS_PREFIX + '.status.' + response.status.to_s, 1)
           unless result[:splits].empty?
             @config.split_logger.log_if_debug("#{result[:splits].length} splits retrieved. since=#{since}")
           end
           @config.split_logger.log_if_transport("Split changes response: #{result.to_s}")
 
-          latency = (Time.now - start) * 1000.0
-          @metrics.time(METRICS_PREFIX + '.time', latency)
-
           result
         else
-          @metrics.count(METRICS_PREFIX + '.status.' + response.status.to_s, 1)
           @config.logger.error("Unexpected status code while fetching splits: #{response.status}. " \
           'Check your API key and base URI')
           raise 'Split SDK failed to connect to backend to fetch split definitions'

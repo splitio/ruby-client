@@ -63,10 +63,6 @@ module SplitIoClient
       #Safeguard for users of older SDK versions.
       @impressions_bulk_size = opts[:impressions_bulk_size] || @impressions_queue_size > 0 ? @impressions_queue_size : 0
 
-      @metrics_adapter = SplitConfig.init_cache_adapter(
-        opts[:cache_adapter] || SplitConfig.default_cache_adapter, :map_adapter, nil, @redis_url
-      )
-
       @debug_enabled = opts[:debug_enabled] || SplitConfig.default_debug
       @transport_debug_enabled = opts[:transport_debug_enabled] || SplitConfig.default_debug
       @block_until_ready = SplitConfig.default_block_until_ready
@@ -147,12 +143,6 @@ module SplitIoClient
     #
     # @return [Object] Impressions adapter instance
     attr_accessor :impressions_adapter
-
-    #
-    # The cache adapter to store metrics in
-    #
-    # @return [Symbol] Metrics adapter
-    attr_accessor :metrics_adapter
 
     #
     # The cache adapter to store events in
@@ -374,10 +364,6 @@ module SplitIoClient
 
     # @return [LocalStore] configuration value for local cache store
     def self.default_cache_adapter
-      :memory
-    end
-
-    def self.default_metrics_adapter
       :memory
     end
 

@@ -9,13 +9,11 @@ module SplitIoClient
     # @param api_key [String] the API key for your split account
     #
     # @return [SplitIoClient] split.io client instance
-    def initialize(api_key, metrics, splits_repository, segments_repository, impressions_repository, metrics_repository, events_repository, sdk_blocker, config, impressions_manager)
+    def initialize(api_key, splits_repository, segments_repository, impressions_repository, events_repository, sdk_blocker, config, impressions_manager)
       @api_key = api_key
-      @metrics = metrics
       @splits_repository = splits_repository
       @segments_repository = segments_repository
       @impressions_repository = impressions_repository
-      @metrics_repository = metrics_repository
       @events_repository = events_repository
       @sdk_blocker = sdk_blocker
       @destroyed = false
@@ -209,9 +207,6 @@ module SplitIoClient
         @splits_repository.get_splits(sanitized_split_names).each_with_object({}) do |(name, data), memo|
           memo.merge!(name => treatment(key, name, attributes, data, false, true, evaluator, calling_method, impressions))
         end
-      latency = (Time.now - start) * 1000.0
-      # Measure
-      @metrics.time('sdk.' + calling_method, latency)
 
       @impressions_manager.track(impressions)
 
@@ -282,16 +277,10 @@ module SplitIoClient
 
           control_treatment.merge({ label: Engine::Models::Label::NOT_READY })
         end
-
-        latency = (Time.now - start) * 1000.0
         
         impression = @impressions_manager.build_impression(matching_key, bucketing_key, split_name, treatment_data, { attributes: attributes, time: nil })
         impressions << impression unless impression.nil?
-
-        # Measure
-        @metrics.time('sdk.' + calling_method, latency) unless multiple
       rescue StandardError => error
-        p error
         @config.log_found_exception(__method__.to_s, error)
 
         impression = @impressions_manager.build_impression(matching_key, bucketing_key, split_name, control_treatment, { attributes: attributes, time: nil })

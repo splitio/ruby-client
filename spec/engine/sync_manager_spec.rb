@@ -22,8 +22,6 @@ describe SplitIoClient::Engine::SyncManager do
   let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config) }
   let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
   let(:impressions_repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
-  let(:metrics_repository) { SplitIoClient::Cache::Repositories::MetricsRepository.new(config) }
-  let(:metrics) { SplitIoClient::Metrics.new(100, metrics_repository) }
   let(:events_repository) { SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key) }
   let(:sdk_blocker) { SplitIoClient::Cache::Stores::SDKBlocker.new(splits_repository, segments_repository, config) }
   let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
@@ -32,14 +30,13 @@ describe SplitIoClient::Engine::SyncManager do
       splits: splits_repository,
       segments: segments_repository,
       impressions: impressions_repository,
-      metrics: metrics_repository,
       events: events_repository
     }
   end
   let(:sync_params) do
     {
-      split_fetcher: SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, metrics, config, sdk_blocker),
-      segment_fetcher: SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, metrics, config, sdk_blocker),
+      split_fetcher: SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, sdk_blocker),
+      segment_fetcher: SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, sdk_blocker),
       imp_counter: impression_counter
     }
   end
@@ -70,7 +67,7 @@ describe SplitIoClient::Engine::SyncManager do
       sleep(2)
       expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.once
       expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262916')).to have_been_made.once
-      expect(config.threads.size).to eq(11)
+      expect(config.threads.size).to eq(10)
     end
   end
 
@@ -89,7 +86,7 @@ describe SplitIoClient::Engine::SyncManager do
       sleep(2)
       expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.once
       expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262916')).to have_been_made.at_least_times(1)
-      expect(config.threads.size).to eq(8)
+      expect(config.threads.size).to eq(7)
     end
   end
 

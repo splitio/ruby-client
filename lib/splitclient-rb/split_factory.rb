@@ -32,20 +32,16 @@ module SplitIoClient
       @segments_repository = SegmentsRepository.new(@config)
       @impressions_repository = ImpressionsRepository.new(@config)
       @events_repository = EventsRepository.new(@config, @api_key)
-      @metrics_repository = MetricsRepository.new(@config)
       @sdk_blocker = SDKBlocker.new(@splits_repository, @segments_repository, @config)
-      @metrics = Metrics.new(100, @metrics_repository)
       @impression_counter = SplitIoClient::Engine::Common::ImpressionCounter.new
       @impressions_manager = SplitIoClient::Engine::Common::ImpressionManager.new(@config, @impressions_repository, @impression_counter)
 
       start!
 
-      @client = SplitClient.new(@api_key, @metrics, @splits_repository, @segments_repository, @impressions_repository, @metrics_repository, @events_repository, @sdk_blocker, @config, @impressions_manager)
+      @client = SplitClient.new(@api_key, @splits_repository, @segments_repository, @impressions_repository, @events_repository, @sdk_blocker, @config, @impressions_manager)
       @manager = SplitManager.new(@splits_repository, @sdk_blocker, @config)
 
       validate_api_key
-
-      RedisMetricsFixer.new(@metrics_repository, @config).call
 
       register_factory
     end
@@ -54,8 +50,8 @@ module SplitIoClient
       if @config.localhost_mode
         start_localhost_components
       else
-        split_fetcher = SplitFetcher.new(@splits_repository, @api_key, @metrics, config, @sdk_blocker)
-        segment_fetcher = SegmentFetcher.new(@segments_repository, @api_key, @metrics, config, @sdk_blocker)
+        split_fetcher = SplitFetcher.new(@splits_repository, @api_key, config, @sdk_blocker)
+        segment_fetcher = SegmentFetcher.new(@segments_repository, @api_key, config, @sdk_blocker)
         params = { split_fetcher: split_fetcher, segment_fetcher: segment_fetcher, imp_counter: @impression_counter }
 
         synchronizer = SplitIoClient::Engine::Synchronizer.new(repositories, @api_key, @config, @sdk_blocker, params)
@@ -135,7 +131,6 @@ module SplitIoClient
         segments: @segments_repository,
         impressions: @impressions_repository,
         events: @events_repository,
-        metrics: @metrics_repository
       }
     end
 
@@ -143,7 +138,7 @@ module SplitIoClient
       LocalhostSplitStore.new(@splits_repository, @config, @sdk_blocker).call
 
       # Starts thread which loops constantly and cleans up repositories to avoid memory issues in localhost mode
-      LocalhostRepoCleaner.new(@impressions_repository, @metrics_repository, @events_repository, @config).call
+      LocalhostRepoCleaner.new(@impressions_repository, @events_repository, @config).call
     end
   end
 end

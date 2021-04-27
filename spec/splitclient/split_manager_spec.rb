@@ -23,12 +23,6 @@ describe SplitIoClient do
 
     stub_request(:get, 'https://sdk.split.io/api/segmentChanges/employees?since=-1')
       .to_return(status: 200, body: segments)
-
-    stub_request(:post, 'https://events.split.io/api/metrics/time')
-      .to_return(status: 200)
-
-    stub_request(:post, 'https://events.split.io/api/metrics/counter')
-      .to_return(status: 200)
   end
 
   context '#split' do
@@ -146,8 +140,6 @@ describe SplitIoClient do
 
     it 'returns nil for #split' do
       expect(subject.split('uber_feature')).to be nil
-
-      expect(a_request(:post, 'https://events.split.io/api/metrics/time')).to have_been_made.at_least_once
     end
   end
 end

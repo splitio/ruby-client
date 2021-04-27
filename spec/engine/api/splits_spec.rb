@@ -12,10 +12,7 @@ describe SplitIoClient::Api::Splits do
   end
 
   let(:log) { StringIO.new }
-  let(:splits_api) { described_class.new('', metrics, config) }
-  let(:metrics_adapter) { config.metrics_adapter }
-  let(:metrics_repository) { SplitIoClient::Cache::Repositories::MetricsRepository.new(config) }
-  let(:metrics) { SplitIoClient::Metrics.new(100, metrics_repository) }
+  let(:splits_api) { described_class.new('', config) }
   let(:splits) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/splits/splits.json'))) }
 
   context '#splits_with_segment_names' do
@@ -39,9 +36,6 @@ describe SplitIoClient::Api::Splits do
 
       expect(log.string).to include '2 splits retrieved. since=-1'
       expect(log.string).to include returned_splits.to_s
-
-      expect(metrics_repository.counts).to include 'splitChangeFetcher.status.200'
-      expect(metrics_repository.latencies).to include 'splitChangeFetcher.time'
     end
 
     it 'throws exception if request to get splits from API returns unexpected status code' do

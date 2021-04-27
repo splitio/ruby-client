@@ -4,10 +4,9 @@ module SplitIoClient
       class SegmentFetcher
         attr_reader :segments_repository
 
-        def initialize(segments_repository, api_key, metrics, config, sdk_blocker = nil)
+        def initialize(segments_repository, api_key, config, sdk_blocker = nil)
           @segments_repository = segments_repository
           @api_key = api_key
-          @metrics = metrics
           @config = config
           @sdk_blocker = sdk_blocker
           @semaphore = Mutex.new
@@ -79,7 +78,7 @@ module SplitIoClient
         end        
 
         def segments_api
-          @segments_api ||= SplitIoClient::Api::Segments.new(@api_key, @metrics, @segments_repository, @config)
+          @segments_api ||= SplitIoClient::Api::Segments.new(@api_key, @segments_repository, @config)
         end
       end
     end
