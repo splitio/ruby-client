@@ -76,4 +76,39 @@ describe SplitIoClient::Telemetry::RuntimeConsumer do
     expect(runtime_consumer.events_stats('events_dropped')).to eq(6)
     expect(runtime_consumer.events_stats('events_queued')).to eq(12)
   end
+
+  it 'record and get last synchronozations' do
+    result = runtime_consumer.last_synchronizations
+    expect(result.splits).to be(0)
+    expect(result.segments).to be(0)
+    expect(result.impressions).to be(0)
+    expect(result.impression_count).to be(0)
+    expect(result.events).to be(0)
+    expect(result.telemetry).to be(0)
+    expect(result.token).to be(0)
+
+    runtime_producer.record_successful_sync('split_sync', 111_112)
+    runtime_producer.record_successful_sync('impressions_sync', 222_333)
+    runtime_producer.record_successful_sync('event_sync', 444_555)
+
+    result = runtime_consumer.last_synchronizations
+    expect(result.splits).to be(111_112)
+    expect(result.segments).to be(0)
+    expect(result.impressions).to be(222_333)
+    expect(result.impression_count).to be(0)
+    expect(result.events).to be(444_555)
+    expect(result.telemetry).to be(0)
+    expect(result.token).to be(0)
+
+    runtime_producer.record_successful_sync('split_sync', 999_999)
+
+    result = runtime_consumer.last_synchronizations
+    expect(result.splits).to be(999_999)
+    expect(result.segments).to be(0)
+    expect(result.impressions).to be(222_333)
+    expect(result.impression_count).to be(0)
+    expect(result.events).to be(444_555)
+    expect(result.telemetry).to be(0)
+    expect(result.token).to be(0)
+  end
 end

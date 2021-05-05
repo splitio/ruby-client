@@ -41,7 +41,15 @@ module SplitIoClient
       end
 
       def record_successful_sync(type, timestamp)
-        @storage.last_synchronization_records
+        return if timestamp.zero?
+
+        last_sync = @storage.last_synchronization_records.find { |l| l[:type] == type }
+
+        if last_sync.nil?
+          @storage.last_synchronization_records << { type: type, value: timestamp }
+        else
+          last_sync[:value] = timestamp
+        end
       rescue StandardError => error
         @config.log_found_exception(__method__.to_s, error)
       end

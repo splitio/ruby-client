@@ -16,7 +16,7 @@ module SplitIoClient
 
         SPLIT_SYNC = 'split_sync'
         SEGMENT_SYNC = 'segment_sync'
-        IMPRESSIONS_SYNC = 'impression_sync'
+        IMPRESSIONS_SYNC = 'impressions_sync'
         IMPRESSION_COUNT_SYNC = 'impression_count_sync'
         EVENT_SYNC = 'event_sync'
         TELEMETRY_SYNC = 'telemetry_sync'

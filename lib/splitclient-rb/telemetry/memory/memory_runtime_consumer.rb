@@ -33,6 +33,28 @@ module SplitIoClient
 
         DEFAULT_VALUE
       end
+
+      def last_synchronizations
+        splits = find_last_synchronization(Domain::Constants::SPLIT_SYNC)
+        segments = find_last_synchronization(Domain::Constants::SEGMENT_SYNC)
+        impressions = find_last_synchronization(Domain::Constants::IMPRESSIONS_SYNC)
+        imp_count = find_last_synchronization(Domain::Constants::IMPRESSION_COUNT_SYNC)
+        events = find_last_synchronization(Domain::Constants::EVENT_SYNC)
+        telemetry = find_last_synchronization(Domain::Constants::TELEMETRY_SYNC)
+        token = find_last_synchronization(Domain::Constants::TOKEN_SYNC)
+
+        LastSynchronization.new(splits, segments, impressions, imp_count, events, telemetry, token)
+      end
+
+      private
+
+      def find_last_synchronization(type)
+        last_sync = @storage.last_synchronization_records.find { |l| l[:type] == type }
+
+        return last_sync[:value] unless last_sync.nil?
+
+        DEFAULT_VALUE
+      end
     end
   end
 end

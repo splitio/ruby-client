@@ -103,6 +103,7 @@ require 'splitclient-rb/sse/sse_handler'
 
 # Telemetry
 require 'splitclient-rb/telemetry/domain/constants'
+require 'splitclient-rb/telemetry/domain/last_synchronization'
 require 'splitclient-rb/telemetry/storages/memory'
 require 'splitclient-rb/telemetry/evaluation_consumer'
 require 'splitclient-rb/telemetry/evaluation_producer'
