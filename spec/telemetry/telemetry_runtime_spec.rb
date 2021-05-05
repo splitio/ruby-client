@@ -77,7 +77,7 @@ describe SplitIoClient::Telemetry::RuntimeConsumer do
     expect(runtime_consumer.events_stats('events_queued')).to eq(12)
   end
 
-  it 'record and get last synchronozations' do
+  it 'record and get last synchronizations' do
     result = runtime_consumer.last_synchronizations
     expect(result.splits).to be(0)
     expect(result.segments).to be(0)
