@@ -9,10 +9,10 @@ module SplitIoClient
       end
 
       def record_latency(method, bucket)
-        method_latencies = find_method_latencies(method)
+        method_latencies = @storage.latencies.find { |l| l[:method] == method }
 
         if method_latencies.nil?
-          latencies_array = []
+          latencies_array = Concurrent::Array.new
           latencies_array << bucket
           @storage.latencies << { method: method, latencies: latencies_array }
         else
@@ -23,7 +23,7 @@ module SplitIoClient
       end
 
       def record_exception(method)
-        method_exceptions = find_method_exceptions(method)
+        method_exceptions = @storage.exceptions.find { |l| l[:method] == method }
 
         if method_exceptions.nil?
           @storage.exceptions << { method: method, exceptions: 1 }
@@ -32,16 +32,6 @@ module SplitIoClient
         end
       rescue StandardError => error
         @config.log_found_exception(__method__.to_s, error)
-      end
-
-      private
-
-      def find_method_latencies(method)
-        @storage.latencies.find { |l| l[:method] == method }
-      end
-
-      def find_method_exceptions(method)
-        @storage.exceptions.find { |l| l[:method] == method }
       end
     end
   end

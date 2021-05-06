@@ -9,7 +9,7 @@ describe SplitIoClient::Telemetry::EvaluationConsumer do
   let(:evaluation_producer) { SplitIoClient::Telemetry::EvaluationProducer.new(config, storage) }
   let(:evaluation_consumer) { SplitIoClient::Telemetry::EvaluationConsumer.new(config, storage) }
 
-  it 'record and pop latencies - should return 3' do  
+  it 'record and pop latencies - should return 3' do
     latencies = evaluation_consumer.pop_latencies
     expect(latencies.length).to eq(0)
 
