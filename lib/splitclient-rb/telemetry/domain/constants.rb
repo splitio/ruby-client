@@ -30,6 +30,12 @@ module SplitIoClient
         TOKEN_REFRESH = 'token_refresh'
         ABLY_ERROR = 'ably_error'
         SYNC_MODE = 'sync_mode'
+
+        TREATMENT = 'treatment'
+        TREATMENTS = 'treatments'
+        TREATMENT_WITH_CONFIG = 'treatment_with_config'
+        TREATMENTS_WITH_CONFIG = 'treatments_with_config'
+        TRACK = 'track'
       end
     end
   end

@@ -134,10 +134,10 @@ describe SplitIoClient::Telemetry::RuntimeConsumer do
 
     result = runtime_consumer.pop_http_errors
     expect(result.splits.length).to be(2)
-    expect(result.splits.find { |l| l[:status] == 500 }[:count]).to be(4)
-    expect(result.splits.find { |l| l[:status] == 400 }[:count]).to be(2)
+    expect(result.splits.find { |l| l[:status] == 500 }[:count].value).to be(4)
+    expect(result.splits.find { |l| l[:status] == 400 }[:count].value).to be(2)
     expect(result.segments.length).to be(1)
-    expect(result.segments.find { |l| l[:status] == 500 }[:count]).to be(2)
+    expect(result.segments.find { |l| l[:status] == 500 }[:count].value).to be(2)
     expect(result.impressions.empty?).to be true
     expect(result.impression_count.empty?).to be true
     expect(result.events.empty?).to be true

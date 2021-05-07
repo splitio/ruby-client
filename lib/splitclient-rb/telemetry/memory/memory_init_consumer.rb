@@ -21,11 +21,7 @@ module SplitIoClient
       private
 
       def find_counts(action)
-        counts = @storage.factory_counters.find { |l| l[:action] == action }
-
-        return counts[:counts] unless counts.nil?
-
-        DEFAULT_VALUE
+        @storage.factory_counters.find { |l| l[:action] == action }[:counts].value
       end
     end
   end

@@ -13,17 +13,17 @@ module SplitIoClient
           memo[exception[:method]] = exception[:latencies]
         end
 
-        @storage.clear_latencies
+        @storage.init_latencies
 
         to_return
       end
 
       def pop_exceptions
         to_return = @storage.exceptions.each_with_object({}) do |exception, memo|
-          memo[exception[:method]] = exception[:exceptions]
+          memo[exception[:method]] = exception[:exceptions].value
         end
 
-        @storage.clear_exceptions
+        @storage.init_exceptions
 
         to_return
       end

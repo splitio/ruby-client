@@ -13,25 +13,17 @@ module SplitIoClient
       def pop_tags
         to_return = @storage.tags
 
-        @storage.clear_tags
+        @storage.init_tags
 
         to_return
       end
 
       def impressions_stats(type)
-        stats = @storage.impressions_data_records.find { |l| l[:type] == type }
-
-        return stats[:value] unless stats.nil?
-
-        DEFAULT_VALUE
+        @storage.impressions_data_records.find { |l| l[:type] == type }[:value].value
       end
 
       def events_stats(type)
-        stats = @storage.events_data_records.find { |l| l[:type] == type }
-
-        return stats[:value] unless stats.nil?
-
-        DEFAULT_VALUE
+        @storage.events_data_records.find { |l| l[:type] == type }[:value].value
       end
 
       def last_synchronizations
@@ -55,7 +47,7 @@ module SplitIoClient
         telemetry = find_http_errors(Domain::Constants::TELEMETRY_SYNC)
         token = find_http_errors(Domain::Constants::TOKEN_SYNC)
 
-        @storage.clear_http_errors
+        @storage.init_http_errors
 
         HttpErrors.new(splits, segments, impressions, imp_count, events, telemetry, token)
       end
@@ -69,7 +61,7 @@ module SplitIoClient
         telemetry = find_http_latencies(Domain::Constants::TELEMETRY_SYNC)
         token = find_http_latencies(Domain::Constants::TOKEN_SYNC)
 
-        @storage.clear_http_latencies
+        @storage.init_http_latencies
 
         HttpLatencies.new(splits, segments, impressions, imp_count, events, telemetry, token)
       end
@@ -77,7 +69,7 @@ module SplitIoClient
       def pop_auth_rejections
         to_return = @storage.auth_rejections
 
-        @storage.clear_auth_rejections
+        @storage.init_auth_rejections
 
         to_return.value
       end
@@ -85,7 +77,7 @@ module SplitIoClient
       def pop_token_refreshes
         to_return = @storage.token_refreshes
 
-        @storage.clear_token_refreshes
+        @storage.init_token_refreshes
 
         to_return.value
       end
@@ -93,7 +85,7 @@ module SplitIoClient
       def pop_streaming_events
         events = @storage.streaming_events
 
-        @storage.clear_streaming_events
+        @storage.init_streaming_events
 
         events
       end
@@ -105,27 +97,15 @@ module SplitIoClient
       private
 
       def find_last_synchronization(type)
-        last_sync = @storage.last_synchronization_records.find { |l| l[:type] == type }
-
-        return last_sync[:value] unless last_sync.nil?
-
-        DEFAULT_VALUE
+        @storage.last_synchronization.find { |l| l[:type] == type }[:value].value
       end
 
       def find_http_errors(type)
-        errors = @storage.http_errors.find { |l| l[:type] == type }
-
-        return errors[:value] unless errors.nil?
-
-        []
+        @storage.http_errors.find { |l| l[:type] == type }[:value]
       end
 
       def find_http_latencies(type)
-        latencies = @storage.http_latencies.find { |l| l[:type] == type }
-
-        return latencies[:value] unless latencies.nil?
-
-        []
+        @storage.http_latencies.find { |l| l[:type] == type }[:value]
       end
     end
   end
