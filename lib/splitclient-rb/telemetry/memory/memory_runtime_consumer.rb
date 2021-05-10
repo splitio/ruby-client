@@ -5,25 +5,25 @@ module SplitIoClient
     class MemoryRuntimeConsumer < RuntimeConsumer
       DEFAULT_VALUE = 0
 
-      def initialize(config, storage)
+      def initialize(config, adapter)
         @config = config
-        @storage = storage
+        @adapter = adapter
       end
 
       def pop_tags
-        to_return = @storage.tags
+        to_return = @adapter.tags
 
-        @storage.init_tags
+        @adapter.init_tags
 
         to_return
       end
 
       def impressions_stats(type)
-        @storage.impressions_data_records.find { |l| l[:type] == type }[:value].value
+        @adapter.impressions_data_records.find { |l| l[:type] == type }[:value].value
       end
 
       def events_stats(type)
-        @storage.events_data_records.find { |l| l[:type] == type }[:value].value
+        @adapter.events_data_records.find { |l| l[:type] == type }[:value].value
       end
 
       def last_synchronizations
@@ -47,7 +47,7 @@ module SplitIoClient
         telemetry = find_http_errors(Domain::Constants::TELEMETRY_SYNC)
         token = find_http_errors(Domain::Constants::TOKEN_SYNC)
 
-        @storage.init_http_errors
+        @adapter.init_http_errors
 
         HttpErrors.new(splits, segments, impressions, imp_count, events, telemetry, token)
       end
@@ -61,51 +61,51 @@ module SplitIoClient
         telemetry = find_http_latencies(Domain::Constants::TELEMETRY_SYNC)
         token = find_http_latencies(Domain::Constants::TOKEN_SYNC)
 
-        @storage.init_http_latencies
+        @adapter.init_http_latencies
 
         HttpLatencies.new(splits, segments, impressions, imp_count, events, telemetry, token)
       end
 
       def pop_auth_rejections
-        to_return = @storage.auth_rejections
+        to_return = @adapter.auth_rejections
 
-        @storage.init_auth_rejections
+        @adapter.init_auth_rejections
 
         to_return.value
       end
 
       def pop_token_refreshes
-        to_return = @storage.token_refreshes
+        to_return = @adapter.token_refreshes
 
-        @storage.init_token_refreshes
+        @adapter.init_token_refreshes
 
         to_return.value
       end
 
       def pop_streaming_events
-        events = @storage.streaming_events
+        events = @adapter.streaming_events
 
-        @storage.init_streaming_events
+        @adapter.init_streaming_events
 
         events
       end
 
       def session_length
-        @storage.session_length.value
+        @adapter.session_length.value
       end
 
       private
 
       def find_last_synchronization(type)
-        @storage.last_synchronization.find { |l| l[:type] == type }[:value].value
+        @adapter.last_synchronization.find { |l| l[:type] == type }[:value].value
       end
 
       def find_http_errors(type)
-        @storage.http_errors.find { |l| l[:type] == type }[:value]
+        @adapter.http_errors.find { |l| l[:type] == type }[:value]
       end
 
       def find_http_latencies(type)
-        @storage.http_latencies.find { |l| l[:type] == type }[:value]
+        @adapter.http_latencies.find { |l| l[:type] == type }[:value]
       end
     end
   end

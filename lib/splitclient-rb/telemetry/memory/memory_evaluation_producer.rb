@@ -3,19 +3,19 @@
 module SplitIoClient
   module Telemetry
     class MemoryEvaluationProducer < EvaluationProducer
-      def initialize(config, storage)
+      def initialize(config, adapter)
         @config = config
-        @storage = storage
+        @adapter = adapter
       end
 
       def record_latency(method, bucket)
-        @storage.latencies.find { |l| l[:method] == method }[:latencies] << bucket
+        @adapter.latencies.find { |l| l[:method] == method }[:latencies] << bucket
       rescue StandardError => error
         @config.log_found_exception(__method__.to_s, error)
       end
 
       def record_exception(method)
-        @storage.exceptions.find { |l| l[:method] == method }[:exceptions].increment
+        @adapter.exceptions.find { |l| l[:method] == method }[:exceptions].increment
       rescue StandardError => error
         @config.log_found_exception(__method__.to_s, error)
       end
