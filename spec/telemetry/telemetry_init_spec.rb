@@ -5,48 +5,87 @@ require 'spec_helper'
 describe SplitIoClient::Telemetry::InitConsumer do
   let(:log) { StringIO.new }
   let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log)) }
-  let(:storage) { SplitIoClient::Telemetry::Storages::Memory.new }
-  let(:init_producer) { SplitIoClient::Telemetry::InitProducer.new(config, storage) }
-  let(:init_consumer) { SplitIoClient::Telemetry::InitConsumer.new(config, storage) }
 
-  it 'record and get bur timeouts' do
-    result = init_consumer.bur_timeouts
+  context 'Memory' do
+    let(:adapter) { SplitIoClient::Telemetry::Storages::Memory.new }
+    let(:init_producer) { SplitIoClient::Telemetry::InitProducer.new(config, adapter) }
+    let(:init_consumer) { SplitIoClient::Telemetry::InitConsumer.new(config, adapter) }
 
-    expect(result).to eq(0)
+    it 'record and get bur timeouts' do
+      result = init_consumer.bur_timeouts
 
-    init_producer.record_bur_timeout
-    init_producer.record_bur_timeout
-    init_producer.record_bur_timeout
+      expect(result).to eq(0)
 
-    result = init_consumer.bur_timeouts
+      init_producer.record_bur_timeout
+      init_producer.record_bur_timeout
+      init_producer.record_bur_timeout
 
-    expect(result).to eq(3)
+      result = init_consumer.bur_timeouts
 
-    init_producer.record_bur_timeout
+      expect(result).to eq(3)
 
-    result = init_consumer.bur_timeouts
+      init_producer.record_bur_timeout
 
-    expect(result).to eq(4)
+      result = init_consumer.bur_timeouts
+
+      expect(result).to eq(4)
+    end
+
+    it 'record and get non ready usages' do
+      result = init_consumer.non_ready_usages
+
+      expect(result).to eq(0)
+
+      init_producer.record_non_ready_usages
+      init_producer.record_non_ready_usages
+      init_producer.record_non_ready_usages
+      init_producer.record_non_ready_usages
+
+      result = init_consumer.non_ready_usages
+
+      expect(result).to eq(4)
+
+      init_producer.record_non_ready_usages
+
+      result = init_consumer.non_ready_usages
+
+      expect(result).to eq(5)
+    end
   end
 
-  it 'record and get non ready usages' do
-    result = init_consumer.non_ready_usages
+  context 'Redis' do
+    let(:adapter) { SplitIoClient::Cache::Adapters::RedisAdapter.new('redis://127.0.0.1:6379/0') }
+    let(:init_producer) { SplitIoClient::Telemetry::InitProducer.new(config, adapter) }
+    let(:telemetry_config_key) { 'SPLITIO.telemetry.config' }
 
-    expect(result).to eq(0)
+    it 'record config_init' do
+      adapter.redis.del(telemetry_config_key)
 
-    init_producer.record_non_ready_usages
-    init_producer.record_non_ready_usages
-    init_producer.record_non_ready_usages
-    init_producer.record_non_ready_usages
+      config_init = SplitIoClient::Telemetry::ConfigInit.new('CONSUMER', 'REDIS', 1, 0, %w[t1 t2])
 
-    result = init_consumer.non_ready_usages
+      init_producer.record_config(config_init)
 
-    expect(result).to eq(4)
+      result = JSON.parse(adapter.redis.lrange(telemetry_config_key, 0, -1)[0], symbolize_names: true)
 
-    init_producer.record_non_ready_usages
+      expect(result[:m][:i]).to eq(config.machine_ip)
+      expect(result[:m][:n]).to eq(config.machine_name)
+      expect(result[:m][:s]).to eq("#{config.language}-#{config.version}")
 
-    result = init_consumer.non_ready_usages
+      expect(result[:t][:om]).to eq('CONSUMER')
+      expect(result[:t][:st]).to eq('REDIS')
+      expect(result[:t][:af]).to eq(1)
+      expect(result[:t][:rf]).to eq(0)
+      expect(result[:t][:t]).to eq(%w[t1 t2])
+    end
 
-    expect(result).to eq(5)
+    it 'record config_init when data is nil' do
+      adapter.redis.del(telemetry_config_key)
+
+      init_producer.record_config(nil)
+
+      result = adapter.redis.lrange(telemetry_config_key, 0, -1)
+
+      expect(result.empty?).to be true
+    end
   end
 end

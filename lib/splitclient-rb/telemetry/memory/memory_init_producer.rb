@@ -3,9 +3,9 @@
 module SplitIoClient
   module Telemetry
     class MemoryInitProducer < InitProducer
-      def initialize(config, storage)
+      def initialize(config, adapter)
         @config = config
-        @storage = storage
+        @adapter = adapter
       end
 
       def record_config
@@ -27,7 +27,7 @@ module SplitIoClient
       private
 
       def find_factory_counters(action)
-        @storage.factory_counters.find { |l| l[:action] == action }
+        @adapter.factory_counters.find { |l| l[:action] == action }
       end
     end
   end

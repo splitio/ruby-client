@@ -117,6 +117,8 @@ require 'splitclient-rb/telemetry/memory/memory_init_consumer'
 require 'splitclient-rb/telemetry/memory/memory_init_producer'
 require 'splitclient-rb/telemetry/memory/memory_runtime_consumer'
 require 'splitclient-rb/telemetry/memory/memory_runtime_producer'
+require 'splitclient-rb/telemetry/redis/redis_evaluation_producer'
+require 'splitclient-rb/telemetry/redis/redis_init_producer'
 
 # C extension
 require 'murmurhash/murmurhash_mri'

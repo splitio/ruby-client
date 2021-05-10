@@ -3,27 +3,27 @@
 module SplitIoClient
   module Telemetry
     class MemoryEvaluationConsumer < EvaluationConsumer
-      def initialize(config, storage)
+      def initialize(config, adapter)
         @config = config
-        @storage = storage
+        @adapter = adapter
       end
 
       def pop_latencies
-        to_return = @storage.latencies.each_with_object({}) do |exception, memo|
+        to_return = @adapter.latencies.each_with_object({}) do |exception, memo|
           memo[exception[:method]] = exception[:latencies]
         end
 
-        @storage.init_latencies
+        @adapter.init_latencies
 
         to_return
       end
 
       def pop_exceptions
-        to_return = @storage.exceptions.each_with_object({}) do |exception, memo|
+        to_return = @adapter.exceptions.each_with_object({}) do |exception, memo|
           memo[exception[:method]] = exception[:exceptions].value
         end
 
-        @storage.init_exceptions
+        @adapter.init_exceptions
 
         to_return
       end

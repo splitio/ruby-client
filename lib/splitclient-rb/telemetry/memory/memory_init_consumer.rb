@@ -5,9 +5,9 @@ module SplitIoClient
     class MemoryInitConsumer < InitConsumer
       DEFAULT_VALUE = 0
 
-      def initialize(config, storage)
+      def initialize(config, adapter)
         @config = config
-        @storage = storage
+        @adapter = adapter
       end
 
       def non_ready_usages
@@ -21,7 +21,7 @@ module SplitIoClient
       private
 
       def find_counts(action)
-        @storage.factory_counters.find { |l| l[:action] == action }[:counts].value
+        @adapter.factory_counters.find { |l| l[:action] == action }[:counts].value
       end
     end
   end
