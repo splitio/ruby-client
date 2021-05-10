@@ -101,6 +101,23 @@ require 'splitclient-rb/sse/notification_manager_keeper'
 require 'splitclient-rb/sse/notification_processor'
 require 'splitclient-rb/sse/sse_handler'
 
+# Telemetry
+require 'splitclient-rb/telemetry/domain/constants'
+require 'splitclient-rb/telemetry/domain/structs'
+require 'splitclient-rb/telemetry/storages/memory'
+require 'splitclient-rb/telemetry/evaluation_consumer'
+require 'splitclient-rb/telemetry/evaluation_producer'
+require 'splitclient-rb/telemetry/init_consumer'
+require 'splitclient-rb/telemetry/init_producer'
+require 'splitclient-rb/telemetry/runtime_consumer'
+require 'splitclient-rb/telemetry/runtime_producer'
+require 'splitclient-rb/telemetry/memory/memory_evaluation_consumer'
+require 'splitclient-rb/telemetry/memory/memory_evaluation_producer'
+require 'splitclient-rb/telemetry/memory/memory_init_consumer'
+require 'splitclient-rb/telemetry/memory/memory_init_producer'
+require 'splitclient-rb/telemetry/memory/memory_runtime_consumer'
+require 'splitclient-rb/telemetry/memory/memory_runtime_producer'
+
 # C extension
 require 'murmurhash/murmurhash_mri'
 
