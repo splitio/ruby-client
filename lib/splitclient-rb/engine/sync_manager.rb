@@ -16,9 +16,9 @@ module SplitIoClient
         @sse_handler = SplitIoClient::SSE::SSEHandler.new(
           config,
           @synchronizer,
-          repositories[:splits],
-          repositories[:segments],
-          notification_manager_keeper
+          repositories,
+          notification_manager_keeper,
+          api_key
         ) do |handler|
           handler.on_action { |action| process_action(action) }
         end

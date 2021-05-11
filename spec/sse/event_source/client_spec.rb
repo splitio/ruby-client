@@ -9,6 +9,8 @@ describe SplitIoClient::SSE::EventSource::Client do
   let(:log) { StringIO.new }
   let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log)) }
 
+  let(:api_token) { 'api-token-test' }
+
   let(:event_split_update) { "fb\r\nid: 123\nevent: message\ndata: {\"id\":\"1\",\"clientId\":\"emptyClientId\",\"connectionId\":\"1\",\"timestamp\":1582045421733,\"channel\":\"channel-test\",\"data\":\"{\\\"type\\\" : \\\"SPLIT_UPDATE\\\",\\\"changeNumber\\\": 5564531221}\",\"name\":\"asdasd\"}\n\n\r\n" }
   let(:event_split_kill) { "fb\r\nid: 123\nevent: message\ndata: {\"id\":\"1\",\"clientId\":\"emptyClientId\",\"connectionId\":\"1\",\"timestamp\":1582045421733,\"channel\":\"channel-test\",\"data\":\"{\\\"type\\\" : \\\"SPLIT_KILL\\\",\\\"changeNumber\\\": 5564531221, \\\"defaultTreatment\\\" : \\\"off\\\", \\\"splitName\\\" : \\\"split-test\\\"}\",\"name\":\"asdasd\"}\n\n\r\n" }
   let(:event_segment_update) { "fb\r\nid: 123\nevent: message\ndata: {\"id\":\"1\",\"clientId\":\"emptyClientId\",\"connectionId\":\"1\",\"timestamp\":1582045421733,\"channel\":\"channel-test\",\"data\":\"{\\\"type\\\" : \\\"SEGMENT_UPDATE\\\",\\\"changeNumber\\\": 5564531221, \\\"segmentName\\\" : \\\"segment-test\\\"}\",\"name\":\"asdasd\"}\n\n\r\n" }
@@ -24,7 +26,7 @@ describe SplitIoClient::SSE::EventSource::Client do
       end
       event_queue = Queue.new
       action_event = ''
-      sse_client = subject.new(config) do |client|
+      sse_client = subject.new(config, api_token) do |client|
         client.on_event { |event| event_queue << event }
         client.on_action { |action| action_event = action }
       end
@@ -55,7 +57,7 @@ describe SplitIoClient::SSE::EventSource::Client do
 
       event_queue = Queue.new
       action_event = ''
-      sse_client = subject.new(config) do |client|
+      sse_client = subject.new(config, api_token) do |client|
         client.on_event { |event| event_queue << event }
         client.on_action { |action| action_event = action }
       end
@@ -88,7 +90,7 @@ describe SplitIoClient::SSE::EventSource::Client do
 
       event_queue = Queue.new
       action_event = ''
-      sse_client = subject.new(config) do |client|
+      sse_client = subject.new(config, api_token) do |client|
         client.on_event { |event| event_queue << event }
         client.on_action { |action| action_event = action }
       end
@@ -120,7 +122,7 @@ describe SplitIoClient::SSE::EventSource::Client do
 
       event_queue = Queue.new
       action_event = ''
-      sse_client = subject.new(config) do |client|
+      sse_client = subject.new(config, api_token) do |client|
         client.on_event { |event| event_queue << event }
         client.on_action { |action| action_event = action }
       end
@@ -151,7 +153,7 @@ describe SplitIoClient::SSE::EventSource::Client do
 
       event_queue = Queue.new
       action_event = ''
-      sse_client = subject.new(config) do |client|
+      sse_client = subject.new(config, api_token) do |client|
         client.on_event { |event| event_queue << event }
         client.on_action { |action| action_event = action }
       end
@@ -178,7 +180,7 @@ describe SplitIoClient::SSE::EventSource::Client do
 
       event_queue = Queue.new
       action_event = ''
-      sse_client = subject.new(config) do |client|
+      sse_client = subject.new(config, api_token) do |client|
         client.on_event { |event| event_queue << event }
         client.on_action { |action| action_event = action }
       end
@@ -208,7 +210,7 @@ describe SplitIoClient::SSE::EventSource::Client do
 
       event_queue = Queue.new
       action_event = ''
-      sse_client = subject.new(config) do |client|
+      sse_client = subject.new(config, api_token) do |client|
         client.on_event { |event| event_queue << event }
         client.on_action { |action| action_event = action }
       end
@@ -229,7 +231,7 @@ describe SplitIoClient::SSE::EventSource::Client do
 
       event_queue = Queue.new
       action_event = ''
-      sse_client = subject.new(config) do |client|
+      sse_client = subject.new(config, api_token) do |client|
         client.on_event { |event| event_queue << event }
         client.on_action { |action| action_event = action }
       end

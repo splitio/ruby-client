@@ -13,7 +13,7 @@ module SplitIoClient
         KEEP_ALIVE_RESPONSE = "c\r\n:keepalive\n\n\r\n".freeze
         ERROR_EVENT_TYPE = 'error'.freeze
 
-        def initialize(config, read_timeout: DEFAULT_READ_TIMEOUT)
+        def initialize(config, api_key, read_timeout: DEFAULT_READ_TIMEOUT)
           @config = config
           @read_timeout = read_timeout
           @connected = Concurrent::AtomicBoolean.new(false)
@@ -21,6 +21,7 @@ module SplitIoClient
           @socket = nil
           @event_parser = SSE::EventSource::EventParser.new(config)
           @on = { event: ->(_) {}, action: ->(_) {} }
+          @api_key = api_key
 
           yield self if block_given?
         end
@@ -142,6 +143,10 @@ module SplitIoClient
           req = "GET #{uri.request_uri} HTTP/1.1\r\n"
           req << "Host: #{uri.host}\r\n"
           req << "Accept: text/event-stream\r\n"
+          req << "SplitSDKVersion: #{@config.language}-#{@config.version}\r\n"
+          req << "SplitSDKMachineIP: #{@config.machine_ip}\r\n"
+          req << "SplitSDKMachineName: #{@config.machine_name}\r\n"
+          req << "SplitSDKClientKey: #{@api_key.split(//).last(4).join}\r\n" unless @api_key.nil?
           req << "Cache-Control: no-cache\r\n\r\n"
           @config.logger.debug("Request info: #{req}") if @config.debug_enabled
           req

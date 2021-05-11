@@ -62,7 +62,7 @@ describe SplitIoClient::SSE::SSEHandler do
 
         config.streaming_service_url = server.base_uri
         action_event = ''
-        sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository, notification_manager_keeper) do |handler|
+        sse_handler = subject.new(config, synchronizer, repositories, notification_manager_keeper, api_key) do |handler|
           handler.on_action { |action| action_event = action }
         end
 
@@ -92,7 +92,7 @@ describe SplitIoClient::SSE::SSEHandler do
 
         config.streaming_service_url = server.base_uri
         action_event = ''
-        sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository, notification_manager_keeper) do |handler|
+        sse_handler = subject.new(config, synchronizer, repositories, notification_manager_keeper, api_key) do |handler|
           handler.on_action { |action| action_event = action }
         end
 
@@ -122,7 +122,7 @@ describe SplitIoClient::SSE::SSEHandler do
 
         config.streaming_service_url = server.base_uri
         action_event = ''
-        sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository, notification_manager_keeper) do |handler|
+        sse_handler = subject.new(config, synchronizer, repositories, notification_manager_keeper, api_key) do |handler|
           handler.on_action { |action| action_event = action }
         end
 
@@ -154,7 +154,7 @@ describe SplitIoClient::SSE::SSEHandler do
 
         config.streaming_service_url = server.base_uri
         action_event = ''
-        sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository, notification_manager_keeper) do |handler|
+        sse_handler = subject.new(config, synchronizer, repositories, notification_manager_keeper, api_key) do |handler|
           handler.on_action { |action| action_event = action }
         end
 
@@ -188,7 +188,7 @@ describe SplitIoClient::SSE::SSEHandler do
 
         config.streaming_service_url = server.base_uri
         action_event = ''
-        sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository, notification_manager_keeper) do |handler|
+        sse_handler = subject.new(config, synchronizer, repositories, notification_manager_keeper, api_key) do |handler|
           handler.on_action { |action| action_event = action }
         end
 
@@ -216,7 +216,7 @@ describe SplitIoClient::SSE::SSEHandler do
 
         config.streaming_service_url = server.base_uri
         action_event = ''
-        sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository, notification_manager_keeper) do |handler|
+        sse_handler = subject.new(config, synchronizer, repositories, notification_manager_keeper, api_key) do |handler|
           handler.on_action { |action| action_event = action }
         end
 
@@ -246,7 +246,7 @@ describe SplitIoClient::SSE::SSEHandler do
 
         config.streaming_service_url = server.base_uri
         action_event = ''
-        sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository, notification_manager_keeper) do |handler|
+        sse_handler = subject.new(config, synchronizer, repositories, notification_manager_keeper, api_key) do |handler|
           handler.on_action { |action| action_event = action }
         end
 
