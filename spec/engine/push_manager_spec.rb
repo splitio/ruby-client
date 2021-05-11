@@ -44,9 +44,9 @@ describe SplitIoClient::Engine::PushManager do
         sse_handler = SplitIoClient::SSE::SSEHandler.new(
           config,
           synchronizer,
-          splits_repository,
-          segments_repository,
-          notification_manager_keeper
+          repositories,
+          notification_manager_keeper,
+          api_key
         ) do |handler|
           handler.on_action { |action| action_event = action }
         end
@@ -70,9 +70,9 @@ describe SplitIoClient::Engine::PushManager do
       sse_handler = SplitIoClient::SSE::SSEHandler.new(
         config,
         synchronizer,
-        splits_repository,
-        segments_repository,
-        notification_manager_keeper
+        repositories,
+        notification_manager_keeper,
+        api_key
       ) do |handler|
         handler.on_action { |action| action_event = action }
       end
@@ -96,9 +96,9 @@ describe SplitIoClient::Engine::PushManager do
       sse_handler = SplitIoClient::SSE::SSEHandler.new(
         config,
         synchronizer,
-        splits_repository,
-        segments_repository,
-        notification_manager_keeper
+        repositories,
+        notification_manager_keeper,
+        api_key
       ) do |handler|
         handler.on_action { |action| action_event = action }
       end
@@ -130,9 +130,9 @@ describe SplitIoClient::Engine::PushManager do
         sse_handler = SplitIoClient::SSE::SSEHandler.new(
           config,
           synchronizer,
-          splits_repository,
-          segments_repository,
-          notification_manager_keeper
+          repositories,
+          notification_manager_keeper,
+          api_key
         ) do |handler|
           handler.on_action { |action| action_event = action }
         end
