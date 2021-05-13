@@ -7,7 +7,10 @@ describe SplitIoClient::Cache::Senders::LocalhostRepoCleaner do
     let(:config) { SplitIoClient::SplitConfig.new }
 
     let(:impressions_repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
-    let(:events_repository) { SplitIoClient::Cache::Repositories::EventsRepository.new(config, 'localhost') }
+    let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
+    let(:events_repository) do
+      SplitIoClient::Cache::Repositories::EventsRepository.new(config, 'localhost', telemetry_runtime_producer)
+    end
     let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
     let(:impressions_manager) do
       SplitIoClient::Engine::Common::ImpressionManager.new(config, impressions_repository, impression_counter)

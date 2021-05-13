@@ -34,8 +34,11 @@ describe SplitIoClient::Cache::Fetchers::SegmentFetcher do
     let(:config) { SplitIoClient::SplitConfig.new }
     let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config) }
-    let(:segment_fetcher) { described_class.new(segments_repository, '', config) }
-    let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, '', config) }
+    let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
+    let(:segment_fetcher) { described_class.new(segments_repository, '', config, nil, telemetry_runtime_producer) }
+    let(:split_fetcher) do
+      SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, '', config, nil, telemetry_runtime_producer)
+    end
 
     it 'fetch segments' do
       split_fetcher.send(:fetch_splits)
@@ -63,8 +66,11 @@ describe SplitIoClient::Cache::Fetchers::SegmentFetcher do
     let(:adapter) { SplitIoClient::Cache::Adapters::RedisAdapter.new(config.redis_url) }
     let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config) }
-    let(:segment_fetcher) { described_class.new(segments_repository, '', config) }
-    let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, '', config) }
+    let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
+    let(:segment_fetcher) { described_class.new(segments_repository, '', config, nil, telemetry_runtime_producer) }
+    let(:split_fetcher) do
+      SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, '', config, nil, telemetry_runtime_producer)
+    end
 
     it 'fetch segments' do
       split_fetcher.send(:fetch_splits)

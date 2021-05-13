@@ -8,7 +8,7 @@ module SplitIoClient
       RUBY_ENCODING = '1.9'.respond_to?(:force_encoding)
 
       def initialize(config)
-        @config = config
+        @config = config        
       end
 
       def get_api(url, api_key, params = {})

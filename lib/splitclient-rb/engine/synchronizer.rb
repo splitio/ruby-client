@@ -22,7 +22,7 @@ module SplitIoClient
         @sdk_blocker = sdk_blocker
         @split_fetcher = params[:split_fetcher]
         @segment_fetcher = params[:segment_fetcher]
-        @impressions_api = SplitIoClient::Api::Impressions.new(@api_key, @config)
+        @impressions_api = SplitIoClient::Api::Impressions.new(@api_key, @config, params[:telemetry_runtime_producer])
         @impression_counter = params[:imp_counter]
       end
 
@@ -30,7 +30,7 @@ module SplitIoClient
         @config.threads[:sync_all_thread] = Thread.new do
           @config.logger.debug('Synchronizing Splits and Segments ...') if @config.debug_enabled
           @split_fetcher.fetch_splits
-          fetch_segments
+          @segment_fetcher.fetch_segments
         end
       end
 

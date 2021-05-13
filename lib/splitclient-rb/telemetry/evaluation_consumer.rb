@@ -6,8 +6,8 @@ module SplitIoClient
       extend Forwardable
       def_delegators :@evaluation, :pop_latencies, :pop_exceptions
 
-      def initialize(config, storage)
-        @evaluation = SplitIoClient::Telemetry::MemoryEvaluationConsumer.new(config, storage)
+      def initialize(config)
+        @evaluation = SplitIoClient::Telemetry::MemoryEvaluationConsumer.new(config)
       end
     end
   end

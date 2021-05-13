@@ -5,9 +5,9 @@ module SplitIoClient
     class MemoryRuntimeConsumer < RuntimeConsumer
       DEFAULT_VALUE = 0
 
-      def initialize(config, adapter)
+      def initialize(config)
         @config = config
-        @adapter = adapter
+        @adapter = config.telemetry_adapter
       end
 
       def pop_tags

@@ -93,6 +93,10 @@ module SplitIoClient
         opts[:cache_adapter] || SplitConfig.default_cache_adapter, :queue_adapter, @events_queue_size, @redis_url
       )
 
+      @telemetry_adapter = SplitConfig.init_telemetry_adapter(
+        opts[:cache_adapter] || SplitConfig.default_cache_adapter, @redis_url
+      )
+
       @split_file = opts[:split_file] || SplitConfig.default_split_file
 
       @valid_mode = true
@@ -264,6 +268,8 @@ module SplitIoClient
 
     attr_accessor :impressions_mode
 
+    attr_accessor :telemetry_adapter
+
     def self.default_impressions_mode
       :optimized
     end
@@ -338,6 +344,21 @@ module SplitIoClient
       case adapter
       when :memory
         SplitIoClient::Cache::Adapters::MemoryAdapter.new(map_memory_adapter(data_structure, queue_size))
+      when :redis
+        begin
+          require 'redis'
+        rescue LoadError
+          fail StandardError, 'To use Redis as a cache adapter you must include it in your Gemfile'
+        end
+
+        SplitIoClient::Cache::Adapters::RedisAdapter.new(redis_url)
+      end
+    end
+
+    def self.init_telemetry_adapter(adapter, redis_url)
+      case adapter
+      when :memory
+        Telemetry::Storages::Memory.new
       when :redis
         begin
           require 'redis'

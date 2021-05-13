@@ -6,12 +6,12 @@ module SplitIoClient
       extend Forwardable
       def_delegators :@evaluation, :record_latency, :record_exception
 
-      def initialize(config, adapter)
-        @evaluation = case adapter.class.to_s
+      def initialize(config)
+        @evaluation = case config.telemetry_adapter.class.to_s
                       when 'SplitIoClient::Cache::Adapters::RedisAdapter'
-                        SplitIoClient::Telemetry::RedisEvaluationProducer.new(config, adapter)
+                        SplitIoClient::Telemetry::RedisEvaluationProducer.new(config)
                       else
-                        SplitIoClient::Telemetry::MemoryEvaluationProducer.new(config, adapter)
+                        SplitIoClient::Telemetry::MemoryEvaluationProducer.new(config)
                       end
       end
     end

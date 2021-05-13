@@ -4,10 +4,11 @@ module SplitIoClient
   module Api
     # Retrieves segment changes from the Split Backend
     class Segments < Client
-      def initialize(api_key, segments_repository, config)
+      def initialize(api_key, segments_repository, config, telemetry_runtime_producer)
         super(config)
         @api_key = api_key
         @segments_repository = segments_repository
+        @telemetry_runtime_producer = telemetry_runtime_producer
       end
 
       def fetch_segments_by_names(names)
@@ -32,7 +33,9 @@ module SplitIoClient
       private
 
       def fetch_segment_changes(name, since)
+        start = Time.now
         response = get_api("#{@config.base_uri}/segmentChanges/#{name}", @api_key, since: since)
+
         if response.success?
           segment = JSON.parse(response.body, symbolize_names: true)
           @segments_repository.set_change_number(name, segment[:till])
@@ -46,12 +49,20 @@ module SplitIoClient
           end
           @config.split_logger.log_if_transport("Segment changes response: #{segment.to_s}")
 
+          bucket = BinarySearchLatencyTracker.get_bucket((Time.now - start) * 1000.0)
+          @telemetry_runtime_producer.record_sync_latency(Telemetry::Domain::Constants::SEGMENT_SYNC, bucket)
+          @telemetry_runtime_producer.record_successful_sync(Telemetry::Domain::Constants::SEGMENT_SYNC, (Time.now.to_f * 1000.0).to_i)
+
           segment
         elsif response.status == 403
-            @config.logger.error('Factory Instantiation: You passed a browser type api_key, ' \
-              'please grab an api key from the Split console that is of type sdk')
-            @config.valid_mode =  false
+          @telemetry_runtime_producer.record_sync_error(Telemetry::Domain::Constants::SEGMENT_SYNC, response.status)
+
+          @config.logger.error('Factory Instantiation: You passed a browser type api_key, ' \
+            'please grab an api key from the Split console that is of type sdk')
+          @config.valid_mode =  false
         else
+          @telemetry_runtime_producer.record_sync_error(Telemetry::Domain::Constants::SEGMENT_SYNC, response.status)
+
           @config.logger.error("Unexpected status code while fetching segments: #{response.status}." \
           "Since #{since} - Check your API key and base URI")
 

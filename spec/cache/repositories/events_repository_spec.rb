@@ -20,7 +20,8 @@ describe SplitIoClient::Cache::Repositories::EventsRepository do
       )
     end
 
-    let(:repository) { described_class.new(config, nil) }
+    let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
+    let(:repository) { described_class.new(config, nil, telemetry_runtime_producer) }
 
     before do
       stub_request(:post, 'https://events.split.io/api/events/bulk')
@@ -62,7 +63,7 @@ describe SplitIoClient::Cache::Repositories::EventsRepository do
         events_queue_size: events_queue_size
       )
     end
-    let(:repository) { described_class.new(config, nil) }
+    let(:repository) { described_class.new(config, nil, nil) }
     let(:adapter) { config.events_adapter }
 
     before do
@@ -83,7 +84,7 @@ describe SplitIoClient::Cache::Repositories::EventsRepository do
 
     it 'with ip_addresses_enabled set false' do
       config = SplitIoClient::SplitConfig.new(cache_adapter: :redis, events_queue_size: 3, ip_addresses_enabled: false)
-      repository = described_class.new(config, nil)
+      repository = described_class.new(config, nil, nil)
       adapter = config.events_adapter
       config.events_queue_size.times do |index|
         repository.add(index.to_s, 'traffic_type', 'event_type', (Time.now.to_f * 1000).to_i, 'value', nil, 0)

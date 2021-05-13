@@ -1,6 +1,11 @@
 module SplitIoClient
   EVENTS_SIZE_THRESHOLD = 32768
   EVENT_AVERAGE_SIZE = 1024
+  GET_TREATMENT = 'get_treatment'
+  GET_TREATMENTS = 'get_treatments'
+  GET_TREATMENT_WITH_CONFIG = 'get_treatment_with_config'
+  GET_TREATMENTS_WITH_CONFIG = 'get_treatments_with_config'
+  TRACK = 'track'
 
   class SplitClient
     #
@@ -9,16 +14,17 @@ module SplitIoClient
     # @param api_key [String] the API key for your split account
     #
     # @return [SplitIoClient] split.io client instance
-    def initialize(api_key, splits_repository, segments_repository, impressions_repository, events_repository, sdk_blocker, config, impressions_manager)
+    def initialize(api_key, repositories, sdk_blocker, config, impressions_manager, telemetry_evaluation_producer)
       @api_key = api_key
-      @splits_repository = splits_repository
-      @segments_repository = segments_repository
-      @impressions_repository = impressions_repository
-      @events_repository = events_repository
+      @splits_repository = repositories[:splits]
+      @segments_repository = repositories[:segments]
+      @impressions_repository = repositories[:impressions]
+      @events_repository = repositories[:events]
       @sdk_blocker = sdk_blocker
       @destroyed = false
       @config = config
       @impressions_manager = impressions_manager
+      @telemetry_evaluation_producer = telemetry_evaluation_producer
     end
 
     def get_treatment(
@@ -26,7 +32,7 @@ module SplitIoClient
         multiple = false, evaluator = nil
       )
       impressions = []
-      result = treatment(key, split_name, attributes, split_data, store_impressions, multiple, evaluator, 'get_treatment', impressions)
+      result = treatment(key, split_name, attributes, split_data, store_impressions, multiple, evaluator, GET_TREATMENT, impressions)
       @impressions_manager.track(impressions)
 
       if multiple
@@ -41,7 +47,7 @@ module SplitIoClient
         multiple = false, evaluator = nil
       )
       impressions = []
-      result = treatment(key, split_name, attributes, split_data, store_impressions, multiple, evaluator, 'get_treatment_with_config', impressions)
+      result = treatment(key, split_name, attributes, split_data, store_impressions, multiple, evaluator, GET_TREATMENT_WITH_CONFIG, impressions)
       @impressions_manager.track(impressions)
 
       result
@@ -56,7 +62,7 @@ module SplitIoClient
     end
 
     def get_treatments_with_config(key, split_names, attributes = {})
-      treatments(key, split_names, attributes,'get_treatments_with_config')
+      treatments(key, split_names, attributes, GET_TREATMENTS_WITH_CONFIG)
     end
 
     def destroy
@@ -83,6 +89,7 @@ module SplitIoClient
     def track(key, traffic_type_name, event_type, value = nil, properties = nil)
       return false unless valid_client && @config.split_validator.valid_track_parameters(key, traffic_type_name, event_type, value, properties)
 
+      start = Time.now
       properties_size = EVENT_AVERAGE_SIZE
 
       if !properties.nil?
@@ -100,13 +107,14 @@ module SplitIoClient
           'your events to a valid traffic type defined in the Split console')
       end
 
-      begin
-        @events_repository.add(key.to_s, traffic_type_name.downcase, event_type.to_s, (Time.now.to_f * 1000).to_i, value, properties, properties_size)
-        true
-      rescue StandardError => error
-        @config.log_found_exception(__method__.to_s, error)
-        false
-      end
+      @events_repository.add(key.to_s, traffic_type_name.downcase, event_type.to_s, (Time.now.to_f * 1000).to_i, value, properties, properties_size)
+      record_latency(TRACK, start)
+      true
+    rescue StandardError => error
+      @config.log_found_exception(__method__.to_s, error)
+      record_exception(TRACK)
+
+      false
     end
 
     def keys_from_key(key)
@@ -208,6 +216,7 @@ module SplitIoClient
           memo.merge!(name => treatment(key, name, attributes, data, false, true, evaluator, calling_method, impressions))
         end
 
+      record_latency(calling_method, start)
       @impressions_manager.track(impressions)
 
       split_names_keys = treatments_labels_change_numbers.keys
@@ -277,11 +286,15 @@ module SplitIoClient
 
           control_treatment.merge({ label: Engine::Models::Label::NOT_READY })
         end
+
+        record_latency(calling_method, start) unless multiple
         
         impression = @impressions_manager.build_impression(matching_key, bucketing_key, split_name, treatment_data, { attributes: attributes, time: nil })
         impressions << impression unless impression.nil?
       rescue StandardError => error
         @config.log_found_exception(__method__.to_s, error)
+
+        record_exception(calling_method)
 
         impression = @impressions_manager.build_impression(matching_key, bucketing_key, split_name, control_treatment, { attributes: attributes, time: nil })
         impressions << impression unless impression.nil?
@@ -303,6 +316,38 @@ module SplitIoClient
 
     def parsed_attributes(attributes)
       return attributes || attributes.to_h
+    end
+
+    def record_latency(method, start)
+      bucket = BinarySearchLatencyTracker.get_bucket((Time.now - start) * 1000.0)
+      
+      case method
+      when GET_TREATMENT
+        @telemetry_evaluation_producer.record_latency(Telemetry::Domain::Constants::TREATMENT, bucket)
+      when GET_TREATMENTS
+        @telemetry_evaluation_producer.record_latency(Telemetry::Domain::Constants::TREATMENTS, bucket)
+      when GET_TREATMENT_WITH_CONFIG
+        @telemetry_evaluation_producer.record_latency(Telemetry::Domain::Constants::TREATMENT_WITH_CONFIG, bucket)
+      when GET_TREATMENTS_WITH_CONFIG
+        @telemetry_evaluation_producer.record_latency(Telemetry::Domain::Constants::TREATMENTS_WITH_CONFIG, bucket)
+      when TRACK
+        @telemetry_evaluation_producer.record_latency(Telemetry::Domain::Constants::TRACK, bucket)
+      end      
+    end
+
+    def record_exception(method)
+      case method
+      when GET_TREATMENT
+        @telemetry_evaluation_producer.record_exception(Telemetry::Domain::Constants::TREATMENT)
+      when GET_TREATMENTS
+        @telemetry_evaluation_producer.record_exception(Telemetry::Domain::Constants::TREATMENTS)
+      when GET_TREATMENT_WITH_CONFIG
+        @telemetry_evaluation_producer.record_exception(Telemetry::Domain::Constants::TREATMENT_WITH_CONFIG)
+      when GET_TREATMENTS_WITH_CONFIG
+        @telemetry_evaluation_producer.record_exception(Telemetry::Domain::Constants::TREATMENTS_WITH_CONFIG)
+      when TRACK
+        @telemetry_evaluation_producer.record_exception(Telemetry::Domain::Constants::TRACK)
+      end
     end
   end
 end

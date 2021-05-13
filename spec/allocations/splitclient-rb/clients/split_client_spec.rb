@@ -12,9 +12,10 @@ describe SplitIoClient::SplitClient do
   let(:impressions_manager) do
     SplitIoClient::Engine::Common::ImpressionManager.new(config, impressions_repository, impression_counter)
   end
+  let(:evaluation_producer) { SplitIoClient::Telemetry::EvaluationProducer.new(config) }
   let(:client) do
-    SplitIoClient::SplitClient.new('', splits_repository, segments_repository,
-                                   impressions_repository, nil, nil, config, impressions_manager)
+    repositories = { splits: splits_repository, segments: segments_repository, impressions: impressions_repository, events: nil }
+    SplitIoClient::SplitClient.new('', repositories, nil, config, impressions_manager, evaluation_producer)
   end
 
   context 'control' do

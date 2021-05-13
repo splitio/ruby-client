@@ -11,7 +11,8 @@ describe SplitIoClient::Api::Segments do
     )
   end
   let(:log) { StringIO.new }
-  let(:segments_api) { described_class.new('', segments_repository, config) }
+  let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
+  let(:segments_api) { described_class.new('', segments_repository, config, telemetry_runtime_producer) }
   let(:adapter) do
     SplitIoClient::Cache::Adapters::MemoryAdapter.new(SplitIoClient::Cache::Adapters::MemoryAdapters::MapAdapter.new)
   end

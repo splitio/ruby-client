@@ -3,9 +3,9 @@
 module SplitIoClient
   module Telemetry
     class MemoryInitProducer < InitProducer
-      def initialize(config, adapter)
+      def initialize(config)
         @config = config
-        @adapter = adapter
+        @adapter = config.telemetry_adapter
       end
 
       def record_config
