@@ -33,7 +33,7 @@ describe SplitIoClient::Engine::SyncManager do
       impressions: impressions_repository,
       events: events_repository
     }
-  end  
+  end
   let(:sync_params) do
     {
       split_fetcher: SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, sdk_blocker, telemetry_runtime_producer),
