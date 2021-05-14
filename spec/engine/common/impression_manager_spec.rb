@@ -12,7 +12,9 @@ describe SplitIoClient::Engine::Common::ImpressionManager do
 
   context 'impressions in optimized mode' do
     let(:config) do
-      SplitIoClient::SplitConfig.new(logger: Logger.new(log), impression_listener: impression_listener, impressions_queue_size: 10)
+      SplitIoClient::SplitConfig.new(logger: Logger.new(log),
+                                     impression_listener: impression_listener,
+                                     impressions_queue_size: 10)
     end
     let(:ip) { config.machine_ip }
     let(:machine_name) { config.machine_name }

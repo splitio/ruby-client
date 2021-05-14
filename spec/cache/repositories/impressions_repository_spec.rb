@@ -201,7 +201,7 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
         cache_adapter: :redis,
         ip_addresses_enabled: false
       )
-      custom_runtime_producer = SplitIoClient::Telemetry::RuntimeProducer.new(custom_config)      
+      custom_runtime_producer = SplitIoClient::Telemetry::RuntimeProducer.new(custom_config)
       custom_repository = described_class.new(custom_config)
       custom_adapter = config.impressions_adapter
       custom_impressions_manager = SplitIoClient::Engine::Common::ImpressionManager.new(custom_config,
