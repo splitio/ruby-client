@@ -36,7 +36,7 @@ module SplitIoClient
       @events_repository = EventsRepository.new(@config, @api_key, @runtime_producer)
       @sdk_blocker = SDKBlocker.new(@splits_repository, @segments_repository, @config)
       @impression_counter = SplitIoClient::Engine::Common::ImpressionCounter.new
-      @impressions_manager = SplitIoClient::Engine::Common::ImpressionManager.new(@config, @impressions_repository, @impression_counter)
+      @impressions_manager = SplitIoClient::Engine::Common::ImpressionManager.new(@config, @impressions_repository, @impression_counter, @runtime_producer)
 
       start!
 

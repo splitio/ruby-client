@@ -18,7 +18,9 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
     let(:treatment1) { { treatment: 'on', label: 'custom_label1', change_number: 123_456 } }
     let(:treatment2) { { treatment: 'off', label: 'custom_label2', change_number: 123_499 } }
     let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
-    let(:impressions_manager) { SplitIoClient::Engine::Common::ImpressionManager.new(config, repository, impression_counter) }
+    let(:impressions_manager) do
+      SplitIoClient::Engine::Common::ImpressionManager.new(config, repository, impression_counter, telemetry_runtime_producer)
+    end
 
     before :each do
       Redis.new.flushall

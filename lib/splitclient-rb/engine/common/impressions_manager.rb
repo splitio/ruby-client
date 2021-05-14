@@ -36,15 +36,15 @@ module SplitIoClient
 
           if optimized? && !redis?
             optimized_impressions = impressions.select { |imp| should_queue_impression?(imp[:i]) }
-            dedupe = impressions.length - optimized_impressions.length
 
             unless optimized_impressions.empty?
               dropped = @impressions_repository.add_bulk(optimized_impressions)
+              dedupe = impressions.length - optimized_impressions.length
               queued = optimized_impressions.length - dropped
             end
           else
             dropped = @impressions_repository.add_bulk(impressions)
-            queued = optimized_impressions.length - dropped
+            queued = impressions.length - dropped
           end
 
           record_stats(queued, dropped, dedupe)
@@ -55,9 +55,14 @@ module SplitIoClient
         private
 
         def record_stats(queued, dropped, dedupe)
-          @telemetry_runtime_producer.record_impressions_stats(Telemetry::Domain::Constants::IMPRESSIONS_QUEUED, queued)
-          @telemetry_runtime_producer.record_impressions_stats(Telemetry::Domain::Constants::IMPRESSIONS_DROPPED, dropped)
-          @telemetry_runtime_producer.record_impressions_stats(Telemetry::Domain::Constants::IMPRESSIONS_DEDUPE, dedupe)
+          return if redis?
+
+          imp_queued = Telemetry::Domain::Constants::IMPRESSIONS_QUEUED
+          imp_dropped = Telemetry::Domain::Constants::IMPRESSIONS_DROPPED
+          imp_dedupe = Telemetry::Domain::Constants::IMPRESSIONS_DEDUPE
+          @telemetry_runtime_producer.record_impressions_stats(imp_queued, queued) unless queued.zero?
+          @telemetry_runtime_producer.record_impressions_stats(imp_dropped, dropped) unless dropped.zero?
+          @telemetry_runtime_producer.record_impressions_stats(imp_dedupe, dedupe) unless dedupe.zero?
         end
 
         # added param time for test
