@@ -59,7 +59,7 @@ describe SplitIoClient::Engine::PushManager do
           handler.on_action { |action| action_event = action }
         end
 
-        push_manager = subject.new(config, sse_handler, api_key)
+        push_manager = subject.new(config, sse_handler, api_key, runtime_producer)
         connected = push_manager.start_sse
 
         expect(a_request(:get, config.auth_service_url)).to have_been_made.times(1)
@@ -85,7 +85,7 @@ describe SplitIoClient::Engine::PushManager do
         handler.on_action { |action| action_event = action }
       end
 
-      push_manager = subject.new(config, sse_handler, api_key)
+      push_manager = subject.new(config, sse_handler, api_key, runtime_producer)
       connected = push_manager.start_sse
 
       expect(a_request(:get, config.auth_service_url)).to have_been_made.times(1)
@@ -111,7 +111,7 @@ describe SplitIoClient::Engine::PushManager do
         handler.on_action { |action| action_event = action }
       end
 
-      push_manager = subject.new(config, sse_handler, api_key)
+      push_manager = subject.new(config, sse_handler, api_key, runtime_producer)
       connected = push_manager.start_sse
 
       expect(a_request(:get, config.auth_service_url)).to have_been_made.times(1)
@@ -145,7 +145,7 @@ describe SplitIoClient::Engine::PushManager do
           handler.on_action { |action| action_event = action }
         end
 
-        push_manager = subject.new(config, sse_handler, api_key)
+        push_manager = subject.new(config, sse_handler, api_key, runtime_producer)
         connected = push_manager.start_sse
 
         expect(a_request(:get, config.auth_service_url)).to have_been_made.times(1)

@@ -57,7 +57,7 @@ module SplitIoClient
         params = { split_fetcher: split_fetcher, segment_fetcher: segment_fetcher, imp_counter: @impression_counter, telemetry_runtime_producer: @runtime_producer }
 
         synchronizer = SplitIoClient::Engine::Synchronizer.new(repositories, @api_key, @config, @sdk_blocker, params)
-        SplitIoClient::Engine::SyncManager.new(repositories, @api_key, @config, synchronizer).start
+        SplitIoClient::Engine::SyncManager.new(repositories, @api_key, @config, synchronizer, @runtime_producer).start
       end
     end
 

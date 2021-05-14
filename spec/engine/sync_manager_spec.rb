@@ -63,7 +63,7 @@ describe SplitIoClient::Engine::SyncManager do
 
       config.streaming_service_url = server.base_uri
 
-      sync_manager = subject.new(repositories, api_key, config, synchronizer)
+      sync_manager = subject.new(repositories, api_key, config, synchronizer, telemetry_runtime_producer)
       sync_manager.start
 
       sleep(2)
@@ -82,7 +82,7 @@ describe SplitIoClient::Engine::SyncManager do
       config.streaming_service_url = 'https://fake-sse.io'
       config.connection_timeout = 1
 
-      sync_manager = subject.new(repositories, api_key, config, synchronizer)
+      sync_manager = subject.new(repositories, api_key, config, synchronizer, telemetry_runtime_producer)
       sync_manager.start
 
       sleep(2)
@@ -100,7 +100,7 @@ describe SplitIoClient::Engine::SyncManager do
 
       config.streaming_service_url = server.base_uri
 
-      sync_manager = subject.new(repositories, api_key, config, synchronizer)
+      sync_manager = subject.new(repositories, api_key, config, synchronizer, telemetry_runtime_producer)
       sync_manager.start
 
       sleep(2)

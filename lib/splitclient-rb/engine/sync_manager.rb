@@ -7,7 +7,8 @@ module SplitIoClient
         repositories,
         api_key,
         config,
-        synchronizer
+        synchronizer,
+        telemetry_runtime_producer
       )
         @synchronizer = synchronizer
         notification_manager_keeper = SplitIoClient::SSE::NotificationManagerKeeper.new(config) do |manager|
@@ -23,7 +24,7 @@ module SplitIoClient
           handler.on_action { |action| process_action(action) }
         end
 
-        @push_manager = PushManager.new(config, @sse_handler, api_key)
+        @push_manager = PushManager.new(config, @sse_handler, api_key, telemetry_runtime_producer)
         @sse_connected = Concurrent::AtomicBoolean.new(false)
         @config = config
       end

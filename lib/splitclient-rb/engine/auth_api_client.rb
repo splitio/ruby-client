@@ -6,22 +6,26 @@ require 'cgi'
 module SplitIoClient
   module Engine
     class AuthApiClient
-      def initialize(config)
+      def initialize(config, telemetry_runtime_producer)
         @config = config
         @api_client = SplitIoClient::Api::Client.new(@config)
+        @telemetry_runtime_producer = telemetry_runtime_producer
       end
 
       def authenticate(api_key)
+        start = Time.now
         response = @api_client.get_api(@config.auth_service_url, api_key)
 
-        return process_success(response) if response.success?
+        return process_success(response, start) if response.success?
 
         if response.status >= 400 && response.status < 500
           @config.logger.debug("Error connecting to: #{@config.auth_service_url}. Response status: #{response.status}")
+          @telemetry_runtime_producer.record_auth_rejections
 
           return { push_enabled: false, retry: false }
         end
 
+        @telemetry_runtime_producer.record_sync_error(Telemetry::Domain::Constants::TOKEN_SYNC, response.status.to_i)
         @config.logger.debug("Error connecting to: #{@config.auth_service_url}. Response status: #{response.status}")
         { push_enabled: false, retry: true }
       rescue StandardError => e
@@ -51,8 +55,13 @@ module SplitIoClient
         JWT.decode token, nil, false
       end
 
-      def process_success(response)
+      def process_success(response, start)
         @config.logger.debug("Success connection to: #{@config.auth_service_url}") if @config.debug_enabled
+
+        bucket = BinarySearchLatencyTracker.get_bucket((Time.now - start) * 1000.0)
+        @telemetry_runtime_producer.record_sync_latency(Telemetry::Domain::Constants::TOKEN_SYNC, bucket)
+        timestamp = (Time.now.to_f * 1000.0).to_i
+        @telemetry_runtime_producer.record_successful_sync(Telemetry::Domain::Constants::TOKEN_SYNC, timestamp)
 
         body_json = JSON.parse(response.body, symbolize_names: true)
         push_enabled = body_json[:pushEnabled]
@@ -62,6 +71,8 @@ module SplitIoClient
           decoded_token = decode_token(token)
           channels = channels(decoded_token)
           exp = expiration(decoded_token)
+
+          @telemetry_runtime_producer.record_token_refreshes
         end
 
         { push_enabled: push_enabled, token: token, channels: channels, exp: exp, retry: false }
