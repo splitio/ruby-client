@@ -11,9 +11,13 @@ module SplitIoClient
           end
 
           def add_bulk(impressions)
+            count = 0
             impressions.each do |impression|
               @adapter.add_to_queue(impression)
+              count++
             end
+
+            impressions.lenth - count
           rescue ThreadError # queue is full
             if random_sampler.rand(1..1000) <= 2 # log only 0.2 % of the time
               @config.logger.warn("Dropping impressions. Current size is \
