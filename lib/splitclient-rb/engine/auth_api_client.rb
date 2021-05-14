@@ -18,12 +18,7 @@ module SplitIoClient
 
         return process_success(response, start) if response.success?
 
-        if response.status >= 400 && response.status < 500
-          @config.logger.debug("Error connecting to: #{@config.auth_service_url}. Response status: #{response.status}")
-          @telemetry_runtime_producer.record_auth_rejections
-
-          return { push_enabled: false, retry: false }
-        end
+        return process_error(response) if response.status >= 400 && response.status < 500
 
         @telemetry_runtime_producer.record_sync_error(Telemetry::Domain::Constants::TOKEN_SYNC, response.status.to_i)
         @config.logger.debug("Error connecting to: #{@config.auth_service_url}. Response status: #{response.status}")
@@ -53,6 +48,13 @@ module SplitIoClient
 
       def decode_token(token)
         JWT.decode token, nil, false
+      end
+
+      def process_error(response)
+        @config.logger.debug("Error connecting to: #{@config.auth_service_url}. Response status: #{response.status}")
+        @telemetry_runtime_producer.record_auth_rejections if response.status == 401
+
+        { push_enabled: false, retry: false }
       end
 
       def process_success(response, start)
