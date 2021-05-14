@@ -6,8 +6,8 @@ module SplitIoClient
       extend Forwardable
       def_delegators :@init, :non_ready_usages, :bur_timeouts
 
-      def initialize(config, storage)
-        @init = SplitIoClient::Telemetry::MemoryInitConsumer.new(config, storage)
+      def initialize(config)
+        @init = SplitIoClient::Telemetry::MemoryInitConsumer.new(config)
       end
     end
   end

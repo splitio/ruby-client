@@ -3,9 +3,9 @@
 module SplitIoClient
   module Telemetry
     class MemoryEvaluationConsumer < EvaluationConsumer
-      def initialize(config, adapter)
+      def initialize(config)
         @config = config
-        @adapter = adapter
+        @adapter = config.telemetry_adapter
       end
 
       def pop_latencies

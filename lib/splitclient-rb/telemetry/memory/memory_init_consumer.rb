@@ -5,9 +5,9 @@ module SplitIoClient
     class MemoryInitConsumer < InitConsumer
       DEFAULT_VALUE = 0
 
-      def initialize(config, adapter)
+      def initialize(config)
         @config = config
-        @adapter = adapter
+        @adapter = config.telemetry_adapter
       end
 
       def non_ready_usages

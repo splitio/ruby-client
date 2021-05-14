@@ -3,10 +3,10 @@
 module SplitIoClient
   module Engine
     class PushManager
-      def initialize(config, sse_handler, api_key)
+      def initialize(config, sse_handler, api_key, telemetry_runtime_producer)
         @config = config
         @sse_handler = sse_handler
-        @auth_api_client = AuthApiClient.new(@config)
+        @auth_api_client = AuthApiClient.new(@config, telemetry_runtime_producer)
         @api_key = api_key
         @back_off = SplitIoClient::SSE::EventSource::BackOff.new(@config.auth_retry_back_off_base, 1)
       end

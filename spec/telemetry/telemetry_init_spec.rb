@@ -4,12 +4,11 @@ require 'spec_helper'
 
 describe SplitIoClient::Telemetry::InitConsumer do
   let(:log) { StringIO.new }
-  let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log)) }
 
   context 'Memory' do
-    let(:adapter) { SplitIoClient::Telemetry::Storages::Memory.new }
-    let(:init_producer) { SplitIoClient::Telemetry::InitProducer.new(config, adapter) }
-    let(:init_consumer) { SplitIoClient::Telemetry::InitConsumer.new(config, adapter) }
+    let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log)) }
+    let(:init_producer) { SplitIoClient::Telemetry::InitProducer.new(config) }
+    let(:init_consumer) { SplitIoClient::Telemetry::InitConsumer.new(config) }
 
     it 'record and get bur timeouts' do
       result = init_consumer.bur_timeouts
@@ -54,8 +53,9 @@ describe SplitIoClient::Telemetry::InitConsumer do
   end
 
   context 'Redis' do
-    let(:adapter) { SplitIoClient::Cache::Adapters::RedisAdapter.new('redis://127.0.0.1:6379/0') }
-    let(:init_producer) { SplitIoClient::Telemetry::InitProducer.new(config, adapter) }
+    let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log), cache_adapter: :redis) }
+    let(:adapter) { config.telemetry_adapter }
+    let(:init_producer) { SplitIoClient::Telemetry::InitProducer.new(config) }
     let(:telemetry_config_key) { 'SPLITIO.telemetry.config' }
 
     it 'record config_init' do

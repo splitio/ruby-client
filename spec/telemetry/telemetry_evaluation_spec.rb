@@ -4,12 +4,11 @@ require 'spec_helper'
 
 describe SplitIoClient::Telemetry::EvaluationConsumer do
   let(:log) { StringIO.new }
-  let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log)) }
 
   context 'Memory' do
-    let(:adapter) { SplitIoClient::Telemetry::Storages::Memory.new }
-    let(:evaluation_producer) { SplitIoClient::Telemetry::EvaluationProducer.new(config, adapter) }
-    let(:evaluation_consumer) { SplitIoClient::Telemetry::EvaluationConsumer.new(config, adapter) }
+    let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log)) }
+    let(:evaluation_producer) { SplitIoClient::Telemetry::EvaluationProducer.new(config) }
+    let(:evaluation_consumer) { SplitIoClient::Telemetry::EvaluationConsumer.new(config) }
 
     it 'record and pop latencies' do
       latencies = evaluation_consumer.pop_latencies
@@ -77,8 +76,9 @@ describe SplitIoClient::Telemetry::EvaluationConsumer do
   end
 
   context 'Redis' do
-    let(:adapter) { SplitIoClient::Cache::Adapters::RedisAdapter.new('redis://127.0.0.1:6379/0') }
-    let(:evaluation_producer) { SplitIoClient::Telemetry::EvaluationProducer.new(config, adapter) }
+    let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log), cache_adapter: :redis) }
+    let(:adapter) { config.telemetry_adapter }
+    let(:evaluation_producer) { SplitIoClient::Telemetry::EvaluationProducer.new(config) }
     let(:latency_key) { 'SPLITIO.telemetry.latencies' }
     let(:exception_key) { 'SPLITIO.telemetry.exceptions' }
 

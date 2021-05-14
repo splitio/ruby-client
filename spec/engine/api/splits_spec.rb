@@ -12,7 +12,8 @@ describe SplitIoClient::Api::Splits do
   end
 
   let(:log) { StringIO.new }
-  let(:splits_api) { described_class.new('', config) }
+  let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
+  let(:splits_api) { described_class.new('', config, telemetry_runtime_producer) }
   let(:splits) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/splits/splits.json'))) }
 
   context '#splits_with_segment_names' do

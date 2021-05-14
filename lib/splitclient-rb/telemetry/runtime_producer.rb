@@ -16,8 +16,8 @@ module SplitIoClient
                      :record_streaming_event,
                      :record_session_length
 
-      def initialize(config, storage)
-        @runtime = SplitIoClient::Telemetry::MemoryRuntimeProducer.new(config, storage)
+      def initialize(config)
+        @runtime = SplitIoClient::Telemetry::MemoryRuntimeProducer.new(config)
       end
     end
   end

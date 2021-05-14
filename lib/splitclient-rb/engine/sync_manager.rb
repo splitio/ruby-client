@@ -7,7 +7,8 @@ module SplitIoClient
         repositories,
         api_key,
         config,
-        synchronizer
+        synchronizer,
+        telemetry_runtime_producer
       )
         @synchronizer = synchronizer
         notification_manager_keeper = SplitIoClient::SSE::NotificationManagerKeeper.new(config) do |manager|
@@ -23,7 +24,7 @@ module SplitIoClient
           handler.on_action { |action| process_action(action) }
         end
 
-        @push_manager = PushManager.new(config, @sse_handler, api_key)
+        @push_manager = PushManager.new(config, @sse_handler, api_key, telemetry_runtime_producer)
         @sse_connected = Concurrent::AtomicBoolean.new(false)
         @config = config
       end
@@ -42,7 +43,7 @@ module SplitIoClient
       # Starts tasks if stream is enabled.
       def start_stream
         @config.logger.debug('Starting push mode ...')
-        sync_all_thread
+        @synchronizer.sync_all
         @synchronizer.start_periodic_data_recording
 
         start_sse_connection_thread
@@ -54,17 +55,6 @@ module SplitIoClient
         @synchronizer.start_periodic_data_recording
       rescue StandardError => e
         @config.logger.error("start_poll error : #{e.inspect}")
-      end
-
-      # Starts thread which fetch splits and segments once and trigger task to periodic data recording.
-      def sync_all_thread
-        @config.threads[:sync_manager_start_stream] = Thread.new do
-          begin
-            @synchronizer.sync_all
-          rescue StandardError => e
-            @config.logger.error("sync_all_thread error : #{e.inspect}")
-          end
-        end
       end
 
       # Starts thread which connect to sse and after that fetch splits and segments once.
