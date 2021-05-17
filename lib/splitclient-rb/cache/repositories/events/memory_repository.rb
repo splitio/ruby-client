@@ -5,10 +5,11 @@ module SplitIoClient
         class MemoryRepository < EventsRepository
           EVENTS_MAX_SIZE_BYTES = 5242880
 
-          def initialize(config)
+          def initialize(config, telemetry_runtime_producer)
             @config = config
             @adapter = @config.events_adapter
             @size = 0
+            @telemetry_runtime_producer = telemetry_runtime_producer
           end
 
           def add(key, traffic_type, event_type, time, value, properties, event_size)
@@ -17,8 +18,10 @@ module SplitIoClient
 
             post_events if @size >= EVENTS_MAX_SIZE_BYTES || @adapter.length == @config.events_queue_size
 
-            rescue StandardError => error
-              @config.log_found_exception(__method__.to_s, error)
+            @telemetry_runtime_producer.record_events_stats(Telemetry::Domain::Constants::EVENTS_QUEUED, 1)
+          rescue StandardError => error
+            @config.log_found_exception(__method__.to_s, error)
+            @telemetry_runtime_producer.record_events_stats(Telemetry::Domain::Constants::EVENTS_DROPPED, 1)
           end
 
           def clear
