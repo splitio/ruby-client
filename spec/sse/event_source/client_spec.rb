@@ -222,7 +222,7 @@ describe SplitIoClient::SSE::EventSource::Client do
       expect(sse_client.connected?).to eq(false)
       expect(event_queue.empty?).to eq(true)
 
-      sleep 1
+      sleep 5
       events = telemetry_runtime_consumer.pop_streaming_events
       expect(events.length).to be(1)
     end
