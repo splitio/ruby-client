@@ -9,6 +9,7 @@ module SplitIoClient
         @auth_api_client = AuthApiClient.new(@config, telemetry_runtime_producer)
         @api_key = api_key
         @back_off = SplitIoClient::SSE::EventSource::BackOff.new(@config.auth_retry_back_off_base, 1)
+        @telemetry_runtime_producer = telemetry_runtime_producer
       end
 
       def start_sse
@@ -19,6 +20,8 @@ module SplitIoClient
         if response[:push_enabled] && @sse_handler.start(response[:token], response[:channels])
           schedule_next_token_refresh(response[:exp])
           @back_off.reset
+          record_telemetry(response[:exp])
+
           return true
         end
 
@@ -50,6 +53,10 @@ module SplitIoClient
             @config.logger.debug("schedule_next_token_refresh error: #{e.inspect}") if @config.debug_enabled
           end
         end
+      end
+
+      def record_telemetry(time)
+        @telemetry_runtime_producer.record_streaming_event(Telemetry::Domain::Constants::TOKEN_REFRESH, Time.now + time)
       end
     end
   end

@@ -25,7 +25,7 @@ describe SplitIoClient::Engine::PushManager do
   end
   let(:splits_worker) { SplitIoClient::SSE::Workers::SplitsWorker.new(split_fetcher, config, splits_repository) }
   let(:segments_worker) { SplitIoClient::SSE::Workers::SegmentsWorker.new(segment_fetcher, config, segments_repository) }
-  let(:notification_manager_keeper) { SplitIoClient::SSE::NotificationManagerKeeper.new(config) }
+  let(:notification_manager_keeper) { SplitIoClient::SSE::NotificationManagerKeeper.new(config, runtime_producer) }
   let(:repositories) { { splits: splits_repository, segments: segments_repository } }
   let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
   let(:params) do
@@ -50,11 +50,11 @@ describe SplitIoClient::Engine::PushManager do
 
         action_event = nil
         sse_handler = SplitIoClient::SSE::SSEHandler.new(
-          config,
+          { config: config, api_key: api_key },
           synchronizer,
           repositories,
           notification_manager_keeper,
-          api_key
+          runtime_producer
         ) do |handler|
           handler.on_action { |action| action_event = action }
         end
@@ -76,11 +76,11 @@ describe SplitIoClient::Engine::PushManager do
 
       action_event = nil
       sse_handler = SplitIoClient::SSE::SSEHandler.new(
-        config,
+        { config: config, api_key: api_key },
         synchronizer,
         repositories,
         notification_manager_keeper,
-        api_key
+        runtime_producer
       ) do |handler|
         handler.on_action { |action| action_event = action }
       end
@@ -102,11 +102,11 @@ describe SplitIoClient::Engine::PushManager do
 
       action_event = nil
       sse_handler = SplitIoClient::SSE::SSEHandler.new(
-        config,
+        { config: config, api_key: api_key },
         synchronizer,
         repositories,
         notification_manager_keeper,
-        api_key
+        runtime_producer
       ) do |handler|
         handler.on_action { |action| action_event = action }
       end
@@ -136,11 +136,11 @@ describe SplitIoClient::Engine::PushManager do
 
         action_event = nil
         sse_handler = SplitIoClient::SSE::SSEHandler.new(
-          config,
+          { config: config, api_key: api_key },
           synchronizer,
           repositories,
           notification_manager_keeper,
-          api_key
+          runtime_producer
         ) do |handler|
           handler.on_action { |action| action_event = action }
         end

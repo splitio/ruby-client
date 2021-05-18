@@ -140,6 +140,10 @@ module SplitIoClient
           @adapter.set_string(namespace_key(".split.#{split_name}"), split.to_json)
         end
 
+        def splits_count
+          split_names.length
+        end
+
         private
 
         def increase_tt_name_count(tt_name)

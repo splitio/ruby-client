@@ -21,6 +21,7 @@ describe SplitIoClient::Cache::Repositories::EventsRepository do
     end
 
     let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
+    let(:telemetry_runtime_consumer) { SplitIoClient::Telemetry::RuntimeConsumer.new(config) }
     let(:repository) { described_class.new(config, nil, telemetry_runtime_producer) }
 
     before do
@@ -35,6 +36,12 @@ describe SplitIoClient::Cache::Repositories::EventsRepository do
       config.events_queue_size.times do |index|
         repository.add(index.to_s, 'traffic_type', 'event_type', (Time.now.to_f * 1000).to_i, 'value', nil, 0)
       end
+
+      queued = telemetry_runtime_consumer.events_stats(SplitIoClient::Telemetry::Domain::Constants::EVENTS_QUEUED)
+      dropped = telemetry_runtime_consumer.events_stats(SplitIoClient::Telemetry::Domain::Constants::EVENTS_DROPPED)
+
+      expect(queued).to be(1)
+      expect(dropped).to be(0)
     end
 
     it 'flushes data when it gets to MAX size of events' do
@@ -52,6 +59,12 @@ describe SplitIoClient::Cache::Repositories::EventsRepository do
           SplitIoClient::Cache::Repositories::Events::MemoryRepository::EVENTS_MAX_SIZE_BYTES
         )
       end
+
+      queued = telemetry_runtime_consumer.events_stats(SplitIoClient::Telemetry::Domain::Constants::EVENTS_QUEUED)
+      dropped = telemetry_runtime_consumer.events_stats(SplitIoClient::Telemetry::Domain::Constants::EVENTS_DROPPED)
+
+      expect(queued).to be(1)
+      expect(dropped).to be(0)
     end
   end
 

@@ -10,7 +10,7 @@ module SplitIoClient
           super(config)
           @repository = case @config.events_adapter.class.to_s
           when 'SplitIoClient::Cache::Adapters::MemoryAdapter'
-            Repositories::Events::MemoryRepository.new(@config)
+            Repositories::Events::MemoryRepository.new(@config, telemetry_runtime_producer)
           when 'SplitIoClient::Cache::Adapters::RedisAdapter'
             Repositories::Events::RedisRepository.new(@config)
           end
