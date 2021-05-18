@@ -5,12 +5,17 @@ require 'concurrent'
 module SplitIoClient
   module SSE
     class NotificationManagerKeeper
-      def initialize(config)
+      DISABLED = 0
+      ENABLED = 1
+      PAUSED = 2
+
+      def initialize(config, telemetry_runtime_producer)
         @config = config
         @publisher_available = Concurrent::AtomicBoolean.new(true)
         @publishers_pri = Concurrent::AtomicFixnum.new
         @publishers_sec = Concurrent::AtomicFixnum.new
         @on = { action: ->(_) {} }
+        @telemetry_runtime_producer = telemetry_runtime_producer
 
         yield self if block_given?
       end
@@ -22,6 +27,7 @@ module SplitIoClient
           process_event_occupancy(event.channel, event.data['metrics']['publishers'])
         end
       rescue StandardError => e
+        p e
         @config.logger.error(e)
       end
 
@@ -34,10 +40,13 @@ module SplitIoClient
       def process_event_control(type)
         case type
         when 'STREAMING_PAUSED'
+          @telemetry_runtime_producer.record_streaming_event(Telemetry::Domain::Constants::STREAMING_STATUS, PAUSED)
           dispatch_action(Constants::PUSH_SUBSYSTEM_DOWN)
         when 'STREAMING_RESUMED'
+          @telemetry_runtime_producer.record_streaming_event(Telemetry::Domain::Constants::STREAMING_STATUS, ENABLED)
           dispatch_action(Constants::PUSH_SUBSYSTEM_READY) if @publisher_available.value
         when 'STREAMING_DISABLED'
+          @telemetry_runtime_producer.record_streaming_event(Telemetry::Domain::Constants::STREAMING_STATUS, DISABLED)
           dispatch_action(Constants::PUSH_SUBSYSTEM_OFF)
         else
           @config.logger.error("Incorrect event type: #{incoming_notification}")
@@ -59,8 +68,13 @@ module SplitIoClient
       end
 
       def update_publishers(channel, publishers)
-        @publishers_pri.value = publishers if channel == Constants::CONTROL_PRI
-        @publishers_sec.value = publishers if channel == Constants::CONTROL_SEC
+        if channel == Constants::CONTROL_PRI
+          @telemetry_runtime_producer.record_streaming_event(Telemetry::Domain::Constants::OCCUPANCY_PRI, publishers)
+          @publishers_pri.value = publishers
+        elsif channel == Constants::CONTROL_SEC
+          @telemetry_runtime_producer.record_streaming_event(Telemetry::Domain::Constants::OCCUPANCY_SEC, publishers)
+          @publishers_sec.value = publishers
+        end
       end
 
       def are_publishers_available?

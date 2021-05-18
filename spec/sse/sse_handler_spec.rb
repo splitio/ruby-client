@@ -34,7 +34,7 @@ describe SplitIoClient::SSE::SSEHandler do
   let(:segment_fetcher) do
     SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, sdk_blocker, telemetry_runtime_producer)
   end
-  let(:notification_manager_keeper) { SplitIoClient::SSE::NotificationManagerKeeper.new(config) }
+  let(:notification_manager_keeper) { SplitIoClient::SSE::NotificationManagerKeeper.new(config, telemetry_runtime_producer) }
   let(:repositories) do
     {
       splits: splits_repository,
@@ -74,7 +74,7 @@ describe SplitIoClient::SSE::SSEHandler do
 
         config.streaming_service_url = server.base_uri
         action_event = ''
-        sse_handler = subject.new(config, synchronizer, repositories, notification_manager_keeper, api_key) do |handler|
+        sse_handler = subject.new({ config: config, api_key: api_key }, synchronizer, repositories, notification_manager_keeper, telemetry_runtime_producer) do |handler|
           handler.on_action { |action| action_event = action }
         end
 
@@ -104,7 +104,7 @@ describe SplitIoClient::SSE::SSEHandler do
 
         config.streaming_service_url = server.base_uri
         action_event = ''
-        sse_handler = subject.new(config, synchronizer, repositories, notification_manager_keeper, api_key) do |handler|
+        sse_handler = subject.new({ config: config, api_key: api_key }, synchronizer, repositories, notification_manager_keeper, telemetry_runtime_producer) do |handler|
           handler.on_action { |action| action_event = action }
         end
 
@@ -134,7 +134,7 @@ describe SplitIoClient::SSE::SSEHandler do
 
         config.streaming_service_url = server.base_uri
         action_event = ''
-        sse_handler = subject.new(config, synchronizer, repositories, notification_manager_keeper, api_key) do |handler|
+        sse_handler = subject.new({ config: config, api_key: api_key }, synchronizer, repositories, notification_manager_keeper, telemetry_runtime_producer) do |handler|
           handler.on_action { |action| action_event = action }
         end
 
@@ -166,7 +166,7 @@ describe SplitIoClient::SSE::SSEHandler do
 
         config.streaming_service_url = server.base_uri
         action_event = ''
-        sse_handler = subject.new(config, synchronizer, repositories, notification_manager_keeper, api_key) do |handler|
+        sse_handler = subject.new({ config: config, api_key: api_key }, synchronizer, repositories, notification_manager_keeper, telemetry_runtime_producer) do |handler|
           handler.on_action { |action| action_event = action }
         end
 
@@ -200,7 +200,7 @@ describe SplitIoClient::SSE::SSEHandler do
 
         config.streaming_service_url = server.base_uri
         action_event = ''
-        sse_handler = subject.new(config, synchronizer, repositories, notification_manager_keeper, api_key) do |handler|
+        sse_handler = subject.new({ config: config, api_key: api_key }, synchronizer, repositories, notification_manager_keeper, telemetry_runtime_producer) do |handler|
           handler.on_action { |action| action_event = action }
         end
 
@@ -228,7 +228,7 @@ describe SplitIoClient::SSE::SSEHandler do
 
         config.streaming_service_url = server.base_uri
         action_event = ''
-        sse_handler = subject.new(config, synchronizer, repositories, notification_manager_keeper, api_key) do |handler|
+        sse_handler = subject.new({ config: config, api_key: api_key }, synchronizer, repositories, notification_manager_keeper, telemetry_runtime_producer) do |handler|
           handler.on_action { |action| action_event = action }
         end
 
@@ -258,7 +258,7 @@ describe SplitIoClient::SSE::SSEHandler do
 
         config.streaming_service_url = server.base_uri
         action_event = ''
-        sse_handler = subject.new(config, synchronizer, repositories, notification_manager_keeper, api_key) do |handler|
+        sse_handler = subject.new({ config: config, api_key: api_key }, synchronizer, repositories, notification_manager_keeper, telemetry_runtime_producer) do |handler|
           handler.on_action { |action| action_event = action }
         end
 

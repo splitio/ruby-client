@@ -13,7 +13,7 @@ module SplitIoClient
         KEEP_ALIVE_RESPONSE = "c\r\n:keepalive\n\n\r\n".freeze
         ERROR_EVENT_TYPE = 'error'.freeze
 
-        def initialize(config, api_key, read_timeout: DEFAULT_READ_TIMEOUT)
+        def initialize(config, api_key, telemetry_runtime_producer, read_timeout: DEFAULT_READ_TIMEOUT)
           @config = config
           @read_timeout = read_timeout
           @connected = Concurrent::AtomicBoolean.new(false)
@@ -22,6 +22,7 @@ module SplitIoClient
           @event_parser = SSE::EventSource::EventParser.new(config)
           @on = { event: ->(_) {}, action: ->(_) {} }
           @api_key = api_key
+          @telemetry_runtime_producer = telemetry_runtime_producer
 
           yield self if block_given?
         end
@@ -117,6 +118,7 @@ module SplitIoClient
 
           if response_code == OK_CODE && !error_event
             @connected.make_true
+            @telemetry_runtime_producer.record_streaming_event(Telemetry::Domain::Constants::SSE_CONNECTION_ESTABLISHED, nil)
             dispatch_action(Constants::PUSH_CONNECTED)
           end
 
@@ -163,6 +165,8 @@ module SplitIoClient
 
         def dispatch_error(event)
           @config.logger.error("Event error: #{event.event_type}, #{event.data}")
+          @telemetry_runtime_producer.record_streaming_event(Telemetry::Domain::Constants::ABLY_ERROR, event.data['code'])
+
           if event.data['code'] >= 40_140 && event.data['code'] <= 40_149
             close(Constants::PUSH_RETRYABLE_ERROR)
           elsif event.data['code'] >= 40_000 && event.data['code'] <= 49_999

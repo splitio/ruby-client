@@ -5,13 +5,17 @@ module SplitIoClient
     class SSEHandler
       attr_reader :sse_client
 
-      def initialize(config, synchronizer, repositories, notification_manager_keeper, api_key)
-        @config = config
+      def initialize(metadata,
+                     synchronizer,
+                     repositories,
+                     notification_manager_keeper,
+                     telemetry_runtime_producer)
+        @config = metadata[:config]
         @notification_manager_keeper = notification_manager_keeper
-        @splits_worker = SplitIoClient::SSE::Workers::SplitsWorker.new(synchronizer, config, repositories[:splits])
-        @segments_worker = SplitIoClient::SSE::Workers::SegmentsWorker.new(synchronizer, config, repositories[:segments])
-        @notification_processor = SplitIoClient::SSE::NotificationProcessor.new(config, @splits_worker, @segments_worker)
-        @sse_client = SSE::EventSource::Client.new(@config, api_key) do |client|
+        @splits_worker = SplitIoClient::SSE::Workers::SplitsWorker.new(synchronizer, @config, repositories[:splits])
+        @segments_worker = SplitIoClient::SSE::Workers::SegmentsWorker.new(synchronizer, @config, repositories[:segments])
+        @notification_processor = SplitIoClient::SSE::NotificationProcessor.new(@config, @splits_worker, @segments_worker)
+        @sse_client = SSE::EventSource::Client.new(@config, metadata[:api_key], telemetry_runtime_producer) do |client|
           client.on_event { |event| handle_incoming_message(event) }
           client.on_action { |action| process_action(action) }
         end

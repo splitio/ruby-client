@@ -65,9 +65,11 @@ module SplitIoClient
         @config.log_found_exception(__method__.to_s, error)
       end
 
-      def record_streaming_event(type, data, timestamp)
+      def record_streaming_event(type, data = nil, timestamp = nil)
+        timestamp ||= (Time.now.to_f * 1000.0).to_i
         @adapter.streaming_events << StreamingEvent.new(type, data, timestamp) unless @adapter.streaming_events.length >= 19
       rescue StandardError => error
+        p error
         @config.log_found_exception(__method__.to_s, error)
       end
 
