@@ -36,12 +36,12 @@ module SplitIoClient
 
       def record_sync_error(type, status)
         http_errors = @adapter.http_errors.find { |l| l[:type] == type }
-        http_errors_value = http_errors[:value].find { |l| l[:status] == status }
+        http_errors_value = http_errors[:value].find { |l| l[status] }
 
         if http_errors_value.nil?
-          http_errors[:value] << { status: status, count: Concurrent::AtomicFixnum.new(1) }
+          http_errors[:value] << { status => 1 }
         else
-          http_errors_value[:count].increment
+          http_errors_value[status] += 1
         end
       rescue StandardError => error
         @config.log_found_exception(__method__.to_s, error)
@@ -67,9 +67,8 @@ module SplitIoClient
 
       def record_streaming_event(type, data = nil, timestamp = nil)
         timestamp ||= (Time.now.to_f * 1000.0).to_i
-        @adapter.streaming_events << StreamingEvent.new(type, data, timestamp) unless @adapter.streaming_events.length >= 19
+        @adapter.streaming_events << { e: type, d: data, t: timestamp } unless @adapter.streaming_events.length >= 19
       rescue StandardError => error
-        p error
         @config.log_found_exception(__method__.to_s, error)
       end
 

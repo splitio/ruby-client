@@ -7,9 +7,6 @@ module SplitIoClient
     HttpErrors = Struct.new(:sp, :se, :im, :ic, :ev, :te, :to)
     HttpLatencies = Struct.new(:sp, :se, :im, :ic, :ev, :te, :to)
 
-    # e: type, d: data, tL timestamp
-    StreamingEvent = Struct.new(:e, :d, :t)
-
     # sp: splits, se: segmentos, im: impressions, ev: events, t: telemetry
     Rates = Struct.new(:sp, :se, :im, :ev, :te)
 

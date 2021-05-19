@@ -9,8 +9,8 @@ module SplitIoClient
       end
 
       def pop_latencies
-        to_return = @adapter.latencies.each_with_object({}) do |exception, memo|
-          memo[exception[:method]] = exception[:latencies]
+        to_return = @adapter.latencies.each_with_object({}) do |latency, memo|
+          memo[latency[:method]] = latency[:latencies]
         end
 
         @adapter.init_latencies

@@ -17,7 +17,6 @@ module SplitIoClient
     # @option opts [Int] :connection_timeout (2) The connect timeout for network connections in seconds.
     # @option opts [Int] :features_refresh_rate The SDK polls Split servers for changes to feature roll-out plans. This parameter controls this polling period in seconds.
     # @option opts [Int] :segments_refresh_rate
-    # @option opts [Int] :metrics_refresh_rate
     # @option opts [Int] :impressions_refresh_rate
     # @option opts [Object] :logger a logger to user for messages from the client. Defaults to stdout
     # @option opts [Boolean] :debug_enabled (false) The value for the debug flag
@@ -51,7 +50,6 @@ module SplitIoClient
       end
 
       @segments_refresh_rate = opts[:segments_refresh_rate] || SplitConfig.default_segments_refresh_rate
-      @metrics_refresh_rate = opts[:metrics_refresh_rate] || SplitConfig.default_metrics_refresh_rate
 
       @impressions_mode = init_impressions_mode(opts[:impressions_mode])
 
@@ -109,6 +107,9 @@ module SplitIoClient
       @auth_service_url = opts[:auth_service_url] || SplitConfig.default_auth_service_url
       @auth_retry_back_off_base = SplitConfig.init_auth_retry_back_off(opts[:auth_retry_back_off_base] || SplitConfig.default_auth_retry_back_off_base)
       @streaming_reconnect_back_off_base = SplitConfig.init_streaming_reconnect_back_off(opts[:streaming_reconnect_back_off_base] || SplitConfig.default_streaming_reconnect_back_off_base)
+
+      @telemetry_refresh_rate = SplitConfig.init_telemetry_refresh_rate(opts[:telemetry_refresh_rate])
+      @telemetry_service_url = opts[:telemetry_service_url] || SplitConfig.default_telemetry_service_url
 
       startup_log
     end
@@ -218,7 +219,6 @@ module SplitIoClient
 
     attr_accessor :features_refresh_rate
     attr_accessor :segments_refresh_rate
-    attr_accessor :metrics_refresh_rate
     attr_accessor :impressions_refresh_rate
 
     attr_accessor :impression_listener
@@ -270,6 +270,10 @@ module SplitIoClient
 
     attr_accessor :telemetry_adapter
 
+    attr_accessor :telemetry_refresh_rate
+
+    attr_accessor :telemetry_service_url
+
     def self.default_impressions_mode
       :optimized
     end
@@ -290,6 +294,12 @@ module SplitIoClient
       return (refresh_rate.nil? || refresh_rate <= 0 ? default_rate : refresh_rate) if impressions_mode == :debug
       
       return refresh_rate.nil? || refresh_rate <= 0 ? SplitConfig.default_impressions_refresh_rate_optimized : [default_rate, refresh_rate].max
+    end
+
+    def self.init_telemetry_refresh_rate(refresh_rate)
+      return SplitConfig.default_telemetry_refresh_rate if refresh_rate.nil? || refresh_rate < 60
+
+      refresh_rate
     end
 
     def self.default_streaming_enabled
@@ -412,10 +422,6 @@ module SplitIoClient
       60
     end
 
-    def self.default_metrics_refresh_rate
-      60
-    end
-
     def self.default_impressions_refresh_rate
       60
     end
@@ -438,6 +444,14 @@ module SplitIoClient
 
     def self.default_events_queue_size
       500
+    end
+
+    def self.default_telemetry_refresh_rate
+      3600      
+    end
+
+    def self.default_telemetry_service_url
+      'https://telemetry.split.io/api/v1'
     end
 
     def self.default_split_file

@@ -3,9 +3,13 @@ Documentation:
 
 Metrics/AbcSize:
   Max: 26
+  Exclude:
+    - lib/splitclient-rb/telemetry/memory/memory_synchronizer.rb
 
 Metrics/MethodLength:
   Max: 20
+  Exclude:
+    - lib/splitclient-rb/telemetry/memory/memory_synchronizer.rb
 
 Metrics/ClassLength:
   Max: 150
@@ -20,6 +24,7 @@ Metrics/LineLength:
     - spec/integrations/**/*
     - spec/engine/sync_manager_spec.rb
     - spec/engine/auth_api_client_spec.rb
+    - spec/telemetry/synchronizer_spec.rb
 
 Style/BracesAroundHashParameters:
   Exclude:
@@ -50,3 +55,4 @@ AllCops:
     - lib/splitclient-rb/engine/metrics/**/*
     - lib/splitclient-rb/engine/models/**/*
     - lib/splitclient-rb/engine/parser/**/*
+    - spec/telemetry/synchronizer_spec.rb

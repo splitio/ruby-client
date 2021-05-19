@@ -133,10 +133,10 @@ describe SplitIoClient::Telemetry::RuntimeConsumer do
 
     result = runtime_consumer.pop_http_errors
     expect(result.sp.length).to be(2)
-    expect(result.sp.find { |l| l[:status] == 500 }[:count].value).to be(4)
-    expect(result.sp.find { |l| l[:status] == 400 }[:count].value).to be(2)
+    expect(result.sp.find { |l| l.keys[0] == 500 }.values[0]).to be(4)
+    expect(result.sp.find { |l| l.keys[0] == 400 }.values[0]).to be(2)
     expect(result.se.length).to be(1)
-    expect(result.se.find { |l| l[:status] == 500 }[:count].value).to be(2)
+    expect(result.se.find { |l| l.keys[0] == 500 }.values[0]).to be(2)
     expect(result.im.empty?).to be true
     expect(result.ic.empty?).to be true
     expect(result.ev.empty?).to be true
@@ -232,21 +232,21 @@ describe SplitIoClient::Telemetry::RuntimeConsumer do
 
     result = runtime_consumer.pop_streaming_events
     expect(result.length).to be(4)
-    expect(result[0].e).to be('type-1')
-    expect(result[0].d).to be('data-1')
-    expect(result[0].t).to be(213_123)
+    expect(result[0][:e]).to be('type-1')
+    expect(result[0][:d]).to be('data-1')
+    expect(result[0][:t]).to be(213_123)
 
-    expect(result[1].e).to be('type-2')
-    expect(result[1].d).to be('data-2')
-    expect(result[1].t).to be(213_123)
+    expect(result[1][:e]).to be('type-2')
+    expect(result[1][:d]).to be('data-2')
+    expect(result[1][:t]).to be(213_123)
 
-    expect(result[2].e).to be('type-3')
-    expect(result[2].d).to be('data-3')
-    expect(result[2].t).to be(213_123)
+    expect(result[2][:e]).to be('type-3')
+    expect(result[2][:d]).to be('data-3')
+    expect(result[2][:t]).to be(213_123)
 
-    expect(result[3].e).to be('type-4')
-    expect(result[3].d).to be('data-4')
-    expect(result[3].t).to be(213_123)
+    expect(result[3][:e]).to be('type-4')
+    expect(result[3][:d]).to be('data-4')
+    expect(result[3][:t]).to be(213_123)
 
     30.times do
       runtime_producer.record_streaming_event('type-n', 'data-n', 213_123)

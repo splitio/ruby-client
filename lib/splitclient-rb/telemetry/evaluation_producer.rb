@@ -4,7 +4,9 @@ module SplitIoClient
   module Telemetry
     class EvaluationProducer
       extend Forwardable
-      def_delegators :@evaluation, :record_latency, :record_exception
+      def_delegators :@evaluation,
+                     :record_latency,
+                     :record_exception
 
       def initialize(config)
         @evaluation = case config.telemetry_adapter.class.to_s
