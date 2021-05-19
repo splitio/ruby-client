@@ -51,22 +51,22 @@ module SplitIoClient
 
       def format_stats(usage)
         {
-          ls: usage.ls.to_h,
-          ml: {
+          lS: usage.ls.to_h,
+          mL: {
             t: usage.ml[Telemetry::Domain::Constants::TREATMENT],
             ts: usage.ml[Telemetry::Domain::Constants::TREATMENTS],
             tc: usage.ml[Telemetry::Domain::Constants::TREATMENT_WITH_CONFIG],
             tcs: usage.ml[Telemetry::Domain::Constants::TREATMENTS_WITH_CONFIG],
             tr: usage.ml[Telemetry::Domain::Constants::TRACK]
           },
-          me: {
+          mE: {
             t: usage.me[Telemetry::Domain::Constants::TREATMENT],
             ts: usage.me[Telemetry::Domain::Constants::TREATMENTS],
             tc: usage.me[Telemetry::Domain::Constants::TREATMENT_WITH_CONFIG],
             tcs: usage.me[Telemetry::Domain::Constants::TREATMENTS_WITH_CONFIG],
             tr: usage.me[Telemetry::Domain::Constants::TRACK]
           },
-          he: {
+          hE: {
             sp: usage.he.sp,
             se: usage.he.se,
             im: usage.he.im,
@@ -75,7 +75,7 @@ module SplitIoClient
             te: usage.he.te,
             to: usage.he.to
           },
-          hl: {
+          hL: {
             sp: usage.hl.sp,
             se: usage.hl.se,
             im: usage.hl.im,
@@ -84,18 +84,18 @@ module SplitIoClient
             te: usage.hl.te,
             to: usage.hl.to
           },
-          tr: usage.tr,
-          ar: usage.ar,
-          iq: usage.iq,
-          ide: usage.ide,
-          idr: usage.idr,
-          spc: usage.spc,
-          sec: usage.sec,
-          skc: usage.skc,
-          sl: usage.sl,
-          eq: usage.eq,
-          ed: usage.ed,
-          se: usage.se,
+          tR: usage.tr,
+          aR: usage.ar,
+          iQ: usage.iq,
+          iDe: usage.ide,
+          iDr: usage.idr,
+          spC: usage.spc,
+          seC: usage.sec,
+          skC: usage.skc,
+          sL: usage.sl,
+          eQ: usage.eq,
+          eD: usage.ed,
+          sE: usage.se,
           t: usage.t
         }
       end
