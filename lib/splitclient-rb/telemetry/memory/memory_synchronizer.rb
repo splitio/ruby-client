@@ -39,12 +39,13 @@ module SplitIoClient
 
         @telemetry_api.record_stats(format_stats(usage))
       rescue StandardError => error
-        p error
         @config.log_found_exception(__method__.to_s, error)
       end
 
       def synchronize_config(init_config, timed_until_ready, factory_instances, tags)
-        # implement
+        
+      rescue StandardError => error
+        @config.log_found_exception(__method__.to_s, error)
       end
 
       private
