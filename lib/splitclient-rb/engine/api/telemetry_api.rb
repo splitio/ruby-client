@@ -9,8 +9,20 @@ module SplitIoClient
         @telemetry_runtime_producer = telemetry_runtime_producer
       end
 
-      def record_init
-        # TODO: implement
+      def record_init(config_init)
+        start = Time.now
+        response = post_api("#{@config.telemetry_service_url}/metrics/config", @api_key, config_init)
+
+        if response.success?
+          @config.split_logger.log_if_debug("Telemetry post success: record init.")
+          
+          bucket = BinarySearchLatencyTracker.get_bucket((Time.now - start) * 1000.0)
+          @telemetry_runtime_producer.record_sync_latency(Telemetry::Domain::Constants::TELEMETRY_SYNC, bucket)
+          @telemetry_runtime_producer.record_successful_sync(Telemetry::Domain::Constants::TELEMETRY_SYNC, (Time.now.to_f * 1000.0).to_i)
+        else
+          @telemetry_runtime_producer.record_sync_error(Telemetry::Domain::Constants::TELEMETRY_SYNC, response.status)
+          @config.logger.error("Unexpected status code while posting telemetry config: #{response.status}.")
+        end
       end
 
       def record_stats(stats)
@@ -25,7 +37,7 @@ module SplitIoClient
           @telemetry_runtime_producer.record_successful_sync(Telemetry::Domain::Constants::TELEMETRY_SYNC, (Time.now.to_f * 1000.0).to_i)
         else
           @telemetry_runtime_producer.record_sync_error(Telemetry::Domain::Constants::TELEMETRY_SYNC, response.status)
-          @config.logger.error("Unexpected status code while posting telemetry: #{response.status}.")
+          @config.logger.error("Unexpected status code while posting telemetry usage: #{response.status}.")
         end
       end
     end

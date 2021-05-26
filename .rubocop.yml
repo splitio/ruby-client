@@ -13,6 +13,8 @@ Metrics/MethodLength:
 
 Metrics/ClassLength:
   Max: 150
+  Exclude:
+    - lib/splitclient-rb/telemetry/memory/memory_synchronizer.rb
 
 Metrics/CyclomaticComplexity:
   Max: 8

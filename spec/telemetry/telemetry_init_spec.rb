@@ -71,10 +71,10 @@ describe SplitIoClient::Telemetry::InitConsumer do
       expect(result[:m][:n]).to eq(config.machine_name)
       expect(result[:m][:s]).to eq("#{config.language}-#{config.version}")
 
-      expect(result[:t][:om]).to eq('CONSUMER')
+      expect(result[:t][:oM]).to eq('CONSUMER')
       expect(result[:t][:st]).to eq('REDIS')
-      expect(result[:t][:af]).to eq(1)
-      expect(result[:t][:rf]).to eq(0)
+      expect(result[:t][:aF]).to eq(1)
+      expect(result[:t][:rF]).to eq(0)
       expect(result[:t][:t]).to eq(%w[t1 t2])
     end
 

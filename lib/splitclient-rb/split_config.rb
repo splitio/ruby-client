@@ -111,6 +111,8 @@ module SplitIoClient
       @telemetry_refresh_rate = SplitConfig.init_telemetry_refresh_rate(opts[:telemetry_refresh_rate])
       @telemetry_service_url = opts[:telemetry_service_url] || SplitConfig.default_telemetry_service_url
 
+      @sdk_start_time = Time.now
+
       startup_log
     end
 
@@ -273,6 +275,8 @@ module SplitIoClient
     attr_accessor :telemetry_refresh_rate
 
     attr_accessor :telemetry_service_url
+
+    attr_accessor :sdk_start_time
 
     def self.default_impressions_mode
       :optimized
