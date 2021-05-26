@@ -10,17 +10,17 @@ module SplitIoClient
 
       def initialize(config,
                      telemtry_consumers,
-                     splits_repository,
-                     segments_repository,
+                     telemetry_init_producer,
+                     repositories,
                      telemetry_api)
         @synchronizer = case config.telemetry_adapter.class.to_s
                         when 'SplitIoClient::Cache::Adapters::RedisAdapter'
-                          SplitIoClient::Telemetry::RedisSynchronizer.new(telemtry_consumers[:init])
+                          SplitIoClient::Telemetry::RedisSynchronizer.new(config,
+                                                                          telemetry_init_producer)
                         else
                           SplitIoClient::Telemetry::MemorySynchronizer.new(config,
                                                                            telemtry_consumers,
-                                                                           splits_repository,
-                                                                           segments_repository,
+                                                                           repositories,
                                                                            telemetry_api)
                         end
       end

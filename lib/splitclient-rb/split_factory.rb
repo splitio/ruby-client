@@ -38,7 +38,7 @@ module SplitIoClient
       @impression_counter = SplitIoClient::Engine::Common::ImpressionCounter.new
       @impressions_manager = SplitIoClient::Engine::Common::ImpressionManager.new(@config, @impressions_repository, @impression_counter, @runtime_producer)
       @telemetry_api = SplitIoClient::Api::TelemetryApi.new(@config, @api_key, @runtime_producer)
-      @telemetry_synchronizer = Telemetry::Synchronizer.new(@config, @telemetry_consumers, @splits_repository, @segments_repository, @telemetry_api)
+      @telemetry_synchronizer = Telemetry::Synchronizer.new(@config, @telemetry_consumers, @init_producer, repositories, @telemetry_api)
 
       start!
 

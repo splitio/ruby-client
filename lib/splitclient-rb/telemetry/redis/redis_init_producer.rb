@@ -10,10 +10,10 @@ module SplitIoClient
 
       def record_config(config_data)
         return if config_data.nil?
-
+p config_data
         data = { m: { i: @config.machine_ip, n: @config.machine_name, s: "#{@config.language}-#{@config.version}" },
-                 t: { om: config_data.om, st: config_data.st, af: config_data.af, rf: config_data.rf, t: config_data.t } }
-
+                 t: { oM: config_data.om, st: config_data.st, aF: config_data.af, rF: config_data.rf, t: config_data.t } }
+p data.to_json
         @adapter.add_to_queue(config_key, data.to_json)
       rescue StandardError => error
         @config.log_found_exception(__method__.to_s, error)

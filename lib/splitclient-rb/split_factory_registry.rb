@@ -47,5 +47,17 @@ module SplitIoClient
     def other_factories
       return !@api_keys_hash.empty?
     end
+
+    def active_factories
+      @api_keys_hash.length
+    end
+
+    def redundant_active_factories
+      to_return = 0
+
+      @api_keys_hash.each { |key| to_return += (key[1]-1) }
+
+      to_return
+    end
   end
 end

@@ -5,15 +5,14 @@ module SplitIoClient
     class MemorySynchronizer < Synchronizer
       def initialize(config,
                      telemtry_consumers,
-                     splits_repository,
-                     segments_repository,
+                     repositories,
                      telemetry_api)
         @config = config
         @telemetry_init_consumer = telemtry_consumers[:init]
         @telemetry_runtime_consumer = telemtry_consumers[:runtime]
         @telemtry_evaluation_consumer = telemtry_consumers[:evaluation]
-        @splits_repository = splits_repository
-        @segments_repository = segments_repository
+        @splits_repository = repositories[:splits]
+        @segments_repository = repositories[:segments]
         @telemetry_api = telemetry_api
       end
 
@@ -42,13 +41,79 @@ module SplitIoClient
         @config.log_found_exception(__method__.to_s, error)
       end
 
-      def synchronize_config(init_config, timed_until_ready, factory_instances, tags)
-        
+      def synchronize_config(active_factories = nil, redundant_active_factories = nil, time_until_ready = nil)
+        rates = Rates.new(@config.features_refresh_rate,
+                          @config.segments_refresh_rate,
+                          @config.impressions_refresh_rate,
+                          @config.events_push_rate,
+                          @config.telemetry_refresh_rate)
+
+        url_overrides = UrlOverrides.new(@config.base_uri != SplitConfig.default_base_uri.chomp('/'),
+                                         @config.events_uri != SplitConfig.default_events_uri.chomp('/'),
+                                         @config.auth_service_url != SplitConfig.default_auth_service_url,
+                                         @config.streaming_service_url != SplitConfig.default_streaming_service_url,
+                                         @config.telemetry_service_url != SplitConfig.default_telemetry_service_url)
+
+        active_factories ||= SplitIoClient.split_factory_registry.active_factories
+        redundant_active_factories ||= SplitIoClient.split_factory_registry.redundant_active_factories
+
+        init_config = ConfigInit.new(@config.mode,
+                                     'memory',
+                                     active_factories,
+                                     redundant_active_factories,
+                                     @telemetry_runtime_consumer.pop_tags,
+                                     @config.streaming_enabled,
+                                     rates,
+                                     url_overrides,
+                                     @config.impressions_queue_size,
+                                     @config.events_queue_size,
+                                     @config.impressions_mode,
+                                     !@config.impression_listener.nil?,
+                                     http_proxy_detected?,
+                                     time_until_ready || Time.now - @config.sdk_start_time,
+                                     @telemetry_init_consumer.bur_timeouts,
+                                     @telemetry_init_consumer.non_ready_usages)
+
+        @telemetry_api.record_init(fornat_init_config(init_config))
       rescue StandardError => error
         @config.log_found_exception(__method__.to_s, error)
       end
 
       private
+
+      def fornat_init_config(init)
+        {
+          oM: init.om,
+          sE: init.se,
+          st: init.st,
+          rR: {
+            sp: init.rr.sp,
+            se: init.rr.se,
+            im: init.rr.im,
+            ev: init.rr.ev,
+            te: init.rr.te
+          },
+          iQ: init.iq,
+          eQ: init.eq,
+          iM: init.im,
+          uO: {
+            s: init.uo.s,
+            e: init.uo.e,
+            a: init.uo.a,
+            st: init.uo.st,
+            t: init.uo.t
+          },
+          iL: init.il,
+          hP: init.hp,
+          aF: init.af,
+          rF: init.rf,
+          tR: init.tr,
+          bT: init.bt,
+          nR: init.nr,
+          t: init.t,
+          i: init.i
+        }
+      end
 
       def format_stats(usage)
         {
@@ -99,6 +164,10 @@ module SplitIoClient
           sE: usage.se,
           t: usage.t
         }
+      end
+
+      def http_proxy_detected?
+        !ENV['HTTP_PROXY'].nil? || !ENV['HTTPS_PROXY'].nil?
       end
     end
   end
