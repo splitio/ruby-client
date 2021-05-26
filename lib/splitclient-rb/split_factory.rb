@@ -37,6 +37,8 @@ module SplitIoClient
       @sdk_blocker = SDKBlocker.new(@splits_repository, @segments_repository, @config)
       @impression_counter = SplitIoClient::Engine::Common::ImpressionCounter.new
       @impressions_manager = SplitIoClient::Engine::Common::ImpressionManager.new(@config, @impressions_repository, @impression_counter, @runtime_producer)
+      @telemetry_api = SplitIoClient::Api::TelemetryApi.new(@config, @api_key, @runtime_producer)
+      @telemetry_synchronizer = Telemetry::Synchronizer.new(@config, @telemetry_consumers, @splits_repository, @segments_repository, @telemetry_api)
 
       start!
 
@@ -54,7 +56,13 @@ module SplitIoClient
       else
         split_fetcher = SplitFetcher.new(@splits_repository, @api_key, config, @sdk_blocker, @runtime_producer)
         segment_fetcher = SegmentFetcher.new(@segments_repository, @api_key, config, @sdk_blocker, @runtime_producer)
-        params = { split_fetcher: split_fetcher, segment_fetcher: segment_fetcher, imp_counter: @impression_counter, telemetry_runtime_producer: @runtime_producer }
+        params = { 
+          split_fetcher: split_fetcher,
+          segment_fetcher: segment_fetcher,
+          imp_counter: @impression_counter,
+          telemetry_runtime_producer: @runtime_producer,
+          telemetry_synchronizer: @telemetry_synchronizer
+        }
 
         synchronizer = SplitIoClient::Engine::Synchronizer.new(repositories, @api_key, @config, @sdk_blocker, params)
         SplitIoClient::Engine::SyncManager.new(repositories, @api_key, @config, synchronizer, @runtime_producer).start
@@ -152,6 +160,8 @@ module SplitIoClient
 
       @runtime_consumer = Telemetry::RuntimeConsumer.new(@config)
       @runtime_producer = Telemetry::RuntimeProducer.new(@config)
+
+      @telemetry_consumers = { init: @init_consumer, evaluation: @evaluation_consumer, runtime: @runtime_consumer }
     end
   end
 end

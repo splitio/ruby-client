@@ -85,7 +85,7 @@ module SplitIoClient
       def pop_streaming_events
         events = @adapter.streaming_events
 
-        @adapter.init_streaming_events
+        @adapter.init_streaming_events.map
 
         events
       end

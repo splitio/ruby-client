@@ -9,7 +9,6 @@ describe SplitIoClient do
       read_timeout: 2,
       features_refresh_rate: 3,
       segments_refresh_rate: 4,
-      metrics_refresh_rate: 5,
       impressions_refresh_rate: 65,
       impressions_queue_size: 20,
       logger: Logger.new('/dev/null'),
@@ -26,7 +25,6 @@ describe SplitIoClient do
       expect(configs.read_timeout).to eq SplitIoClient::SplitConfig.default_read_timeout
       expect(configs.features_refresh_rate).to eq SplitIoClient::SplitConfig.default_features_refresh_rate
       expect(configs.segments_refresh_rate).to eq SplitIoClient::SplitConfig.default_segments_refresh_rate
-      expect(configs.metrics_refresh_rate).to eq SplitIoClient::SplitConfig.default_metrics_refresh_rate
       expect(configs.impressions_refresh_rate).to eq SplitIoClient::SplitConfig.default_impressions_refresh_rate_optimized
       expect(configs.impressions_queue_size).to eq SplitIoClient::SplitConfig.default_impressions_queue_size
       expect(configs.debug_enabled).to eq SplitIoClient::SplitConfig.default_debug
@@ -44,7 +42,6 @@ describe SplitIoClient do
       expect(configs.read_timeout).to eq custom_options[:read_timeout]
       expect(configs.features_refresh_rate).to eq custom_options[:features_refresh_rate]
       expect(configs.segments_refresh_rate).to eq custom_options[:segments_refresh_rate]
-      expect(configs.metrics_refresh_rate).to eq custom_options[:metrics_refresh_rate]
       expect(configs.impressions_refresh_rate).to eq custom_options[:impressions_refresh_rate]
       expect(configs.impressions_queue_size).to eq custom_options[:impressions_queue_size]
       expect(configs.debug_enabled).to eq custom_options[:debug_enabled]
@@ -57,7 +54,6 @@ describe SplitIoClient do
       expect(configs.read_timeout).to eq 5
       expect(configs.features_refresh_rate).to eq 5
       expect(configs.segments_refresh_rate).to eq 60
-      expect(configs.metrics_refresh_rate).to eq 60
       expect(configs.impressions_refresh_rate).to eq 300
       expect(configs.impressions_queue_size).to eq 5000
     end
@@ -69,7 +65,6 @@ describe SplitIoClient do
       expect(configs.read_timeout).to eq 5
       expect(configs.features_refresh_rate).to eq 5
       expect(configs.segments_refresh_rate).to eq 60
-      expect(configs.metrics_refresh_rate).to eq 60
       expect(configs.impressions_refresh_rate).to eq 60
       expect(configs.impressions_queue_size).to eq 5000
     end
