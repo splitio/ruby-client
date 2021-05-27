@@ -69,6 +69,12 @@ describe SplitIoClient, type: :client do
 
     before do
       @mode = cache_adapter.equal?(:memory) ? :standalone : :consumer
+
+      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/usage')
+        .to_return(status: 200, body: 'ok')
+
+      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
+        .to_return(status: 200, body: 'ok')
     end
 
     before :each do

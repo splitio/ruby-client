@@ -83,7 +83,7 @@ module SplitIoClient
       end
 
       def start_telemetry_sync_task
-        Telemetry::SyncTask.new(@config, @telemetry_synchronizer)
+        Telemetry::SyncTask.new(@config, @telemetry_synchronizer).call
       end
     end
   end

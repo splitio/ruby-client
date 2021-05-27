@@ -9,15 +9,15 @@ module SplitIoClient
       end
 
       def call
-        telemetry_thread
+        stats_thread
 
-        PhusionPassenger.on_event(:starting_worker_process) { |forked| telemetry_thread if forked } if defined?(PhusionPassenger)
+        PhusionPassenger.on_event(:starting_worker_process) { |forked| stats_thread if forked } if defined?(PhusionPassenger)
       end
 
       private
 
-      def telemetry_thread
-        @config.threads[:telemetry_sender] = Thread.new do
+      def stats_thread
+        @config.threads[:telemetry_stats_sender] = Thread.new do
           begin
             @config.logger.info('Starting Telemetry Sync Task')
 

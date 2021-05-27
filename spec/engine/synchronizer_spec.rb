@@ -69,7 +69,7 @@ describe SplitIoClient::Engine::Synchronizer do
     it 'start_periodic_data_recording' do
       synchronizer.start_periodic_data_recording
 
-      expect(config.threads.size).to eq(3)
+      expect(config.threads.size).to eq(4)
     end
 
     it 'start_periodic_fetch' do
