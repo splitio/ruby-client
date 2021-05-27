@@ -50,6 +50,7 @@ module SplitIoClient
             segments_api.fetch_segments_by_names(@segments_repository.used_segment_names)
 
             @sdk_blocker.segments_ready!
+            @sdk_blocker.sdk_internal_ready
           end
         rescue StandardError => error
           @config.log_found_exception(__method__.to_s, error)

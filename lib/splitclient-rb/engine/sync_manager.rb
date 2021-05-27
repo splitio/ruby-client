@@ -11,7 +11,9 @@ module SplitIoClient
         api_key,
         config,
         synchronizer,
-        telemetry_runtime_producer
+        telemetry_runtime_producer,
+        sdk_blocker,
+        telemetry_synchronizer
       )
         @synchronizer = synchronizer
         notification_manager_keeper = SSE::NotificationManagerKeeper.new(config, telemetry_runtime_producer) do |manager|
@@ -31,6 +33,8 @@ module SplitIoClient
         @sse_connected = Concurrent::AtomicBoolean.new(false)
         @config = config
         @telemetry_runtime_producer = telemetry_runtime_producer
+        @sdk_blocker = sdk_blocker
+        @telemetry_synchronizer = telemetry_synchronizer
       end
 
       def start
@@ -40,6 +44,8 @@ module SplitIoClient
         elsif @config.standalone?
           start_poll
         end
+
+        synchronize_telemetry_config
       end
 
       private
@@ -57,7 +63,7 @@ module SplitIoClient
         @config.logger.debug('Starting polling mode ...')
         @synchronizer.start_periodic_fetch
         @synchronizer.start_periodic_data_recording
-        @telemetry_runtime_producer.record_streaming_event(Telemetry::Domain::Constants::SYNC_MODE, SYNC_MODE_POLLING)
+        record_telemetry(Telemetry::Domain::Constants::SYNC_MODE, SYNC_MODE_POLLING)
       rescue StandardError => e
         @config.logger.error("start_poll error : #{e.inspect}")
       end
@@ -103,20 +109,20 @@ module SplitIoClient
         @synchronizer.stop_periodic_fetch
         @synchronizer.sync_all
         @sse_handler.start_workers
-        @telemetry_runtime_producer.record_streaming_event(Telemetry::Domain::Constants::SYNC_MODE, SYNC_MODE_STREAMING)
+        record_telemetry(Telemetry::Domain::Constants::SYNC_MODE, SYNC_MODE_STREAMING)
       end
 
       def process_subsystem_down
         @sse_handler.stop_workers
         @synchronizer.start_periodic_fetch
-        @telemetry_runtime_producer.record_streaming_event(Telemetry::Domain::Constants::SYNC_MODE, SYNC_MODE_POLLING)
+        record_telemetry(Telemetry::Domain::Constants::SYNC_MODE, SYNC_MODE_POLLING)
       end
 
       def process_push_shutdown
         @push_manager.stop_sse
         @sse_handler.stop_workers
         @synchronizer.start_periodic_fetch
-        @telemetry_runtime_producer.record_streaming_event(Telemetry::Domain::Constants::SYNC_MODE, SYNC_MODE_POLLING)
+        record_telemetry(Telemetry::Domain::Constants::SYNC_MODE, SYNC_MODE_POLLING)
       rescue StandardError => e
         @config.logger.error("process_push_shutdown error: #{e.inspect}")
       end
@@ -131,7 +137,7 @@ module SplitIoClient
         @synchronizer.stop_periodic_fetch
         @synchronizer.sync_all
         @sse_handler.start_workers
-        @telemetry_runtime_producer.record_streaming_event(Telemetry::Domain::Constants::SYNC_MODE, SYNC_MODE_STREAMING)
+        record_telemetry(Telemetry::Domain::Constants::SYNC_MODE, SYNC_MODE_STREAMING)
       rescue StandardError => e
         @config.logger.error("process_connected error: #{e.inspect}")
       end
@@ -145,7 +151,7 @@ module SplitIoClient
         @sse_connected.make_false
         @sse_handler.stop_workers
         @synchronizer.start_periodic_fetch
-        @telemetry_runtime_producer.record_streaming_event(Telemetry::Domain::Constants::SYNC_MODE, SYNC_MODE_POLLING)
+        record_telemetry(Telemetry::Domain::Constants::SYNC_MODE, SYNC_MODE_POLLING)
 
         if reconnect
           @synchronizer.sync_all
@@ -153,6 +159,22 @@ module SplitIoClient
         end
       rescue StandardError => e
         @config.logger.error("process_disconnect error: #{e.inspect}")
+      end
+
+      def record_telemetry(type, data)
+        @telemetry_runtime_producer.record_streaming_event(type, data)
+      end
+
+      def synchronize_telemetry_config
+        @config.threads[:telemetry_config_sender] = Thread.new do
+          begin
+            @sdk_blocker.wait_unitil_internal_ready
+            @telemetry_synchronizer.synchronize_config
+          rescue SplitIoClient::SDKShutdownException
+            @telemetry_synchronizer.synchronize_config
+            @config.logger.info('Posting Telemetry config due to shutdown')
+          end
+        end
       end
     end
   end

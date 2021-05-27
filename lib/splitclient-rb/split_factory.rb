@@ -65,7 +65,7 @@ module SplitIoClient
         }
 
         synchronizer = SplitIoClient::Engine::Synchronizer.new(repositories, @api_key, @config, @sdk_blocker, params)
-        SplitIoClient::Engine::SyncManager.new(repositories, @api_key, @config, synchronizer, @runtime_producer).start
+        SplitIoClient::Engine::SyncManager.new(repositories, @api_key, @config, synchronizer, @runtime_producer, @sdk_blocker, @telemetry_synchronizer).start
       end
     end
 
@@ -162,6 +162,6 @@ module SplitIoClient
       @runtime_producer = Telemetry::RuntimeProducer.new(@config)
 
       @telemetry_consumers = { init: @init_consumer, evaluation: @evaluation_consumer, runtime: @runtime_consumer }
-    end
+    end    
   end
 end

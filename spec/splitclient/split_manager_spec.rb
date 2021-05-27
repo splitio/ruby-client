@@ -23,6 +23,12 @@ describe SplitIoClient do
 
     stub_request(:get, 'https://sdk.split.io/api/segmentChanges/employees?since=-1')
       .to_return(status: 200, body: segments)
+
+    stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/usage')
+      .to_return(status: 200, body: 'ok')
+
+    stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
+      .to_return(status: 200, body: 'ok')
   end
 
   context '#split' do

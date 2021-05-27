@@ -10,7 +10,7 @@ describe SplitIoClient::Telemetry::Synchronizer do
     let(:adapter) { config.telemetry_adapter }
     let(:init_producer) { SplitIoClient::Telemetry::InitProducer.new(config) }    
     let(:synchronizer) { SplitIoClient::Telemetry::Synchronizer.new(config, nil, init_producer, nil, nil) }
-    let(:config_key) { 'SPLITIO.telemetry.config' }
+    let(:config_key) { 'SPLITIO.telemetry.config' }    
 
     it 'synchronize_config with data' do
       adapter.redis.del(config_key)
@@ -42,9 +42,7 @@ describe SplitIoClient::Telemetry::Synchronizer do
     let(:evaluation_producer) { SplitIoClient::Telemetry::EvaluationProducer.new(config) }
     let(:init_producer) { SplitIoClient::Telemetry::InitProducer.new(config) }
     let(:telemetry_api) { SplitIoClient::Api::TelemetryApi.new(config, api_key, runtime_producer) }
-    let(:telemetry_consumers) do
-      { init: init_consumer, runtime: runtime_consumer, evaluation: evaluation_consumer }
-    end
+    let(:telemetry_consumers) { { init: init_consumer, runtime: runtime_consumer, evaluation: evaluation_consumer } }
     let(:body_usage) { "{\"lS\":{\"sp\":111111222,\"se\":111111222,\"im\":111111222,\"ic\":111111222,\"ev\":111111222,\"te\":111111222,\"to\":111111222},\"mL\":{\"t\":[1,3,2,1],\"ts\":[2,3],\"tc\":[],\"tcs\":[],\"tr\":[3]},\"mE\":{\"t\":2,\"ts\":1,\"tc\":1,\"tcs\":0,\"tr\":1},\"hE\":{\"sp\":[],\"se\":[{\"400\":1}],\"im\":[],\"ic\":[],\"ev\":[{\"500\":2},{\"501\":1}],\"te\":[],\"to\":[]},\"hL\":{\"sp\":[6],\"se\":[],\"im\":[],\"ic\":[],\"ev\":[2,1],\"te\":[],\"to\":[]},\"tR\":1,\"aR\":1,\"iQ\":3,\"iDe\":1,\"iDr\":2,\"spC\":3,\"seC\":3,\"skC\":7,\"sL\":444555,\"eQ\":4,\"eD\":1,\"sE\":[{\"e\":\"token_refresh\",\"d\":222222333,\"t\":222222333},{\"e\":\"sync_mode\",\"d\":0,\"t\":222222333},{\"e\":\"sync_mode\",\"d\":1,\"t\":222222333}],\"t\":[\"tag-1\",\"tag-2\"]}" }
     let(:empty_body_usage) { "{\"lS\":{\"sp\":0,\"se\":0,\"im\":0,\"ic\":0,\"ev\":0,\"te\":0,\"to\":0},\"mL\":{\"t\":[],\"ts\":[],\"tc\":[],\"tcs\":[],\"tr\":[]},\"mE\":{\"t\":0,\"ts\":0,\"tc\":0,\"tcs\":0,\"tr\":0},\"hE\":{\"sp\":[],\"se\":[],\"im\":[],\"ic\":[],\"ev\":[],\"te\":[],\"to\":[]},\"hL\":{\"sp\":[],\"se\":[],\"im\":[],\"ic\":[],\"ev\":[],\"te\":[],\"to\":[]},\"tR\":0,\"aR\":0,\"iQ\":0,\"iDe\":0,\"iDr\":0,\"spC\":0,\"seC\":0,\"skC\":0,\"sL\":0,\"eQ\":0,\"eD\":0,\"sE\":[],\"t\":[]}" }    
     let(:body_custom_config)  { "{\"oM\":\"standalone\",\"sE\":true,\"st\":\"memory\",\"rR\":{\"sp\":100,\"se\":110,\"im\":120,\"ev\":130,\"te\":140},\"iQ\":5000,\"eQ\":500,\"iM\":\"optimized\",\"uO\":{\"s\":true,\"e\":true,\"a\":true,\"st\":false,\"t\":false},\"iL\":false,\"hP\":false,\"aF\":1,\"rF\":1,\"tR\":100,\"bT\":2,\"nR\":1,\"t\":[],\"i\":null}" }
