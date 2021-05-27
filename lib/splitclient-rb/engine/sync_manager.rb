@@ -168,7 +168,7 @@ module SplitIoClient
       def synchronize_telemetry_config
         @config.threads[:telemetry_config_sender] = Thread.new do
           begin
-            @sdk_blocker.wait_unitil_internal_ready
+            @sdk_blocker.wait_unitil_internal_ready unless @config.consumer?
             @telemetry_synchronizer.synchronize_config
           rescue SplitIoClient::SDKShutdownException
             @telemetry_synchronizer.synchronize_config
