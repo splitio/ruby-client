@@ -19,6 +19,10 @@ Metrics/ClassLength:
 Metrics/CyclomaticComplexity:
   Max: 8
 
+Metrics/ParameterLists:
+  Exclude:
+    - lib/splitclient-rb/engine/sync_manager.rb
+
 Metrics/LineLength:
   Max: 130
   Exclude:
