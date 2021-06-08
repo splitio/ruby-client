@@ -57,7 +57,7 @@ module SplitIoClient
         active_factories ||= SplitIoClient.split_factory_registry.active_factories
         redundant_active_factories ||= SplitIoClient.split_factory_registry.redundant_active_factories
 
-        init_config = ConfigInit.new(@config.mode,
+        init_config = ConfigInit.new(mode,
                                      'memory',
                                      active_factories,
                                      redundant_active_factories,
@@ -168,6 +168,15 @@ module SplitIoClient
 
       def http_proxy_detected?
         !ENV['HTTP_PROXY'].nil? || !ENV['HTTPS_PROXY'].nil?
+      end
+
+      def mode
+        case @config.mode
+        when :customer
+          1
+        else
+          0
+        end
       end
     end
   end
