@@ -10,10 +10,10 @@ module SplitIoClient
         @telemetry_runtime_producer = telemetry_runtime_producer
       end
 
-      def since(since)
+      def since(since, cache_control_headers = false)
         start = Time.now
 
-        response = get_api("#{@config.base_uri}/splitChanges", @api_key, since: since)
+        response = get_api("#{@config.base_uri}/splitChanges", @api_key, { since: since }, cache_control_headers)
         if response.success?
           result = splits_with_segment_names(response.body)
 

@@ -22,10 +22,41 @@ describe SplitIoClient::Api::Segments do
   end
 
   context '#fetch_segments' do
-    it 'returns fetch_segments' do
+    it 'returns fetch_segments - checking headers when cache_control_headers is false' do
       stub_request(:get, 'https://sdk.split.io/api/segmentChanges/employees?since=-1')
+        .with(headers: {
+                'Accept' => '*/*',
+                'Accept-Encoding' => 'gzip',
+                'Authorization' => 'Bearer',
+                'Connection' => 'keep-alive',
+                'Keep-Alive' => '30',
+                'Splitsdkversion' => "#{config.language}-#{config.version}"
+              })
         .to_return(status: 200, body: segments)
+
       returned_segment = segments_api.send(:fetch_segment_changes, 'employees', -1)
+
+      expect(returned_segment[:name]).to eq 'employees'
+
+      expect(log.string).to include "'employees' segment retrieved."
+      expect(log.string).to include "'employees' 2 added keys"
+      expect(log.string).to include ':added=>["max", "dan"]'
+    end
+
+    it 'returns fetch_segments - checking headers when cache_control_headers is true' do
+      stub_request(:get, 'https://sdk.split.io/api/segmentChanges/employees?since=-1')
+        .with(headers: {
+                'Accept' => '*/*',
+                'Accept-Encoding' => 'gzip',
+                'Authorization' => 'Bearer',
+                'Connection' => 'keep-alive',
+                'Keep-Alive' => '30',
+                'Splitsdkversion' => "#{config.language}-#{config.version}",
+                'Cache-Control' => 'no-cache'
+              })
+        .to_return(status: 200, body: segments)
+
+      returned_segment = segments_api.send(:fetch_segment_changes, 'employees', -1, true)
 
       expect(returned_segment[:name]).to eq 'employees'
 
