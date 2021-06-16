@@ -67,7 +67,10 @@ module SplitIoClient
             @config.logger.info('Starting segments fetcher service') if @config.debug_enabled
 
             loop do
-              next unless @sdk_blocker.splits_repository.ready?
+              unless @sdk_blocker.splits_repository.ready?
+                sleep 0.2
+                next
+              end
 
               fetch_segments
               @config.logger.debug("Segment names: #{@segments_repository.used_segment_names.to_a}") if @config.debug_enabled
@@ -77,7 +80,7 @@ module SplitIoClient
               sleep(sleep_for)
             end
           end
-        end        
+        end
 
         def segments_api
           @segments_api ||= SplitIoClient::Api::Segments.new(@api_key, @segments_repository, @config, @telemetry_runtime_producer)
