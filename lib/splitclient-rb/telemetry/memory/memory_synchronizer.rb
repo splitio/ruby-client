@@ -67,10 +67,10 @@ module SplitIoClient
                                      url_overrides,
                                      @config.impressions_queue_size,
                                      @config.events_queue_size,
-                                     @config.impressions_mode,
+                                     impressions_mode,
                                      !@config.impression_listener.nil?,
                                      http_proxy_detected?,
-                                     time_until_ready || Time.now - @config.sdk_start_time,
+                                     time_until_ready || Time.now.to_i - @config.sdk_start_time.to_i,
                                      @telemetry_init_consumer.bur_timeouts,
                                      @telemetry_init_consumer.non_ready_usages)
 
@@ -176,6 +176,15 @@ module SplitIoClient
           1
         else
           0
+        end
+      end
+
+      def impressions_mode
+        case @config.impressions_mode
+        when :optimized
+          0
+        else
+          1
         end
       end
     end

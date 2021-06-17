@@ -37,11 +37,12 @@ module SplitIoClient
         def init_latencies
           @latencies = Concurrent::Array.new
 
-          @latencies << { method: Domain::Constants::TREATMENT, latencies: Concurrent::Array.new }
-          @latencies << { method: Domain::Constants::TREATMENTS, latencies: Concurrent::Array.new }
-          @latencies << { method: Domain::Constants::TREATMENT_WITH_CONFIG, latencies: Concurrent::Array.new }
-          @latencies << { method: Domain::Constants::TREATMENTS_WITH_CONFIG, latencies: Concurrent::Array.new }
-          @latencies << { method: Domain::Constants::TRACK, latencies: Concurrent::Array.new }
+          array_size = BinarySearchLatencyTracker::BUCKETS.length
+          @latencies << { method: Domain::Constants::TREATMENT, latencies: Concurrent::Array.new(array_size, 0) }
+          @latencies << { method: Domain::Constants::TREATMENTS, latencies: Concurrent::Array.new(array_size, 0) }
+          @latencies << { method: Domain::Constants::TREATMENT_WITH_CONFIG, latencies: Concurrent::Array.new(array_size, 0) }
+          @latencies << { method: Domain::Constants::TREATMENTS_WITH_CONFIG, latencies: Concurrent::Array.new(array_size, 0) }
+          @latencies << { method: Domain::Constants::TRACK, latencies: Concurrent::Array.new(array_size, 0) }
         end
 
         def init_exceptions
@@ -95,25 +96,26 @@ module SplitIoClient
         def init_http_errors
           @http_errors = Concurrent::Array.new
 
-          @http_errors << { type: Domain::Constants::SPLIT_SYNC, value: Concurrent::Array.new }
-          @http_errors << { type: Domain::Constants::SEGMENT_SYNC, value: Concurrent::Array.new }
-          @http_errors << { type: Domain::Constants::EVENT_SYNC, value: Concurrent::Array.new }
-          @http_errors << { type: Domain::Constants::IMPRESSION_COUNT_SYNC, value: Concurrent::Array.new }
-          @http_errors << { type: Domain::Constants::IMPRESSIONS_SYNC, value: Concurrent::Array.new }
-          @http_errors << { type: Domain::Constants::TELEMETRY_SYNC, value: Concurrent::Array.new }
-          @http_errors << { type: Domain::Constants::TOKEN_SYNC, value: Concurrent::Array.new }
+          @http_errors << { type: Domain::Constants::SPLIT_SYNC, value: Concurrent::Hash.new }
+          @http_errors << { type: Domain::Constants::SEGMENT_SYNC, value: Concurrent::Hash.new }
+          @http_errors << { type: Domain::Constants::EVENT_SYNC, value: Concurrent::Hash.new }
+          @http_errors << { type: Domain::Constants::IMPRESSION_COUNT_SYNC, value: Concurrent::Hash.new }
+          @http_errors << { type: Domain::Constants::IMPRESSIONS_SYNC, value: Concurrent::Hash.new }
+          @http_errors << { type: Domain::Constants::TELEMETRY_SYNC, value: Concurrent::Hash.new }
+          @http_errors << { type: Domain::Constants::TOKEN_SYNC, value: Concurrent::Hash.new }
         end
 
         def init_http_latencies
           @http_latencies = Concurrent::Array.new
 
-          @http_latencies << { type: Domain::Constants::SPLIT_SYNC, value: Concurrent::Array.new }
-          @http_latencies << { type: Domain::Constants::SEGMENT_SYNC, value: Concurrent::Array.new }
-          @http_latencies << { type: Domain::Constants::EVENT_SYNC, value: Concurrent::Array.new }
-          @http_latencies << { type: Domain::Constants::IMPRESSION_COUNT_SYNC, value: Concurrent::Array.new }
-          @http_latencies << { type: Domain::Constants::IMPRESSIONS_SYNC, value: Concurrent::Array.new }
-          @http_latencies << { type: Domain::Constants::TELEMETRY_SYNC, value: Concurrent::Array.new }
-          @http_latencies << { type: Domain::Constants::TOKEN_SYNC, value: Concurrent::Array.new }
+          array_size = BinarySearchLatencyTracker::BUCKETS.length
+          @http_latencies << { type: Domain::Constants::SPLIT_SYNC, value: Concurrent::Array.new(array_size, 0) }
+          @http_latencies << { type: Domain::Constants::SEGMENT_SYNC, value: Concurrent::Array.new(array_size, 0) }
+          @http_latencies << { type: Domain::Constants::EVENT_SYNC, value: Concurrent::Array.new(array_size, 0) }
+          @http_latencies << { type: Domain::Constants::IMPRESSION_COUNT_SYNC, value: Concurrent::Array.new(array_size, 0) }
+          @http_latencies << { type: Domain::Constants::IMPRESSIONS_SYNC, value: Concurrent::Array.new(array_size, 0) }
+          @http_latencies << { type: Domain::Constants::TELEMETRY_SYNC, value: Concurrent::Array.new(array_size, 0) }
+          @http_latencies << { type: Domain::Constants::TOKEN_SYNC, value: Concurrent::Array.new(array_size, 0) }
         end
 
         def init_auth_rejections

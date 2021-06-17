@@ -35,20 +35,19 @@ module SplitIoClient
       end
 
       def record_sync_error(type, status)
-        http_errors = @adapter.http_errors.find { |l| l[:type] == type }
-        http_errors_value = http_errors[:value].find { |l| l[status] }
+        http_errors = @adapter.http_errors.find { |l| l[:type] == type }[:value]
 
-        if http_errors_value.nil?
-          http_errors[:value] << { status => 1 }
-        else
-          http_errors_value[status] += 1
+        begin
+          http_errors[status] += 1
+        rescue StandardError => _
+          http_errors[status] = 1
         end
       rescue StandardError => error
         @config.log_found_exception(__method__.to_s, error)
       end
 
       def record_sync_latency(type, bucket)
-        @adapter.http_latencies.find { |l| l[:type] == type }[:value] << bucket
+        @adapter.http_latencies.find { |l| l[:type] == type }[:value][bucket] += 1
       rescue StandardError => error
         @config.log_found_exception(__method__.to_s, error)
       end

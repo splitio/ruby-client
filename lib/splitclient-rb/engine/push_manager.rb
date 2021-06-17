@@ -56,7 +56,8 @@ module SplitIoClient
       end
 
       def record_telemetry(time)
-        @telemetry_runtime_producer.record_streaming_event(Telemetry::Domain::Constants::TOKEN_REFRESH, Time.now + time)
+        data = (Time.now.to_f * 1000.0).to_i + (time * 1000.0).to_i
+        @telemetry_runtime_producer.record_streaming_event(Telemetry::Domain::Constants::TOKEN_REFRESH, data)
       end
     end
   end

@@ -133,10 +133,10 @@ describe SplitIoClient::Telemetry::RuntimeConsumer do
 
     result = runtime_consumer.pop_http_errors
     expect(result.sp.length).to be(2)
-    expect(result.sp.find { |l| l.keys[0] == 500 }.values[0]).to be(4)
-    expect(result.sp.find { |l| l.keys[0] == 400 }.values[0]).to be(2)
+    expect(result.sp[500]).to be(4)
+    expect(result.sp[400]).to be(2)
     expect(result.se.length).to be(1)
-    expect(result.se.find { |l| l.keys[0] == 500 }.values[0]).to be(2)
+    expect(result.se[500]).to be(2)
     expect(result.im.empty?).to be true
     expect(result.ic.empty?).to be true
     expect(result.ev.empty?).to be true
@@ -155,13 +155,13 @@ describe SplitIoClient::Telemetry::RuntimeConsumer do
 
   it 'record and pop sync_latencies' do
     result = runtime_consumer.pop_http_latencies
-    expect(result.sp.empty?).to be true
-    expect(result.se.empty?).to be true
-    expect(result.im.empty?).to be true
-    expect(result.ic.empty?).to be true
-    expect(result.ev.empty?).to be true
-    expect(result.te.empty?).to be true
-    expect(result.to.empty?).to be true
+    expect(result.sp.length).to be(23)
+    expect(result.se.length).to be(23)
+    expect(result.im.length).to be(23)
+    expect(result.ic.length).to be(23)
+    expect(result.ev.length).to be(23)
+    expect(result.te.length).to be(23)
+    expect(result.to.length).to be(23)
 
     runtime_producer.record_sync_latency('split_sync', 1)
     runtime_producer.record_sync_latency('split_sync', 2)
@@ -178,22 +178,22 @@ describe SplitIoClient::Telemetry::RuntimeConsumer do
     runtime_producer.record_sync_latency('telemetry_sync', 3)
 
     result = runtime_consumer.pop_http_latencies
-    expect(result.sp.length).to be(6)
-    expect(result.se.length).to be(3)
-    expect(result.im.length).to be(0)
-    expect(result.ic.length).to be(0)
-    expect(result.ev.length).to be(0)
-    expect(result.te.length).to be(2)
-    expect(result.to.length).to be(0)
+    expect(result.sp[0]).to be(1)
+    expect(result.sp[1]).to be(1)
+    expect(result.sp[2]).to be(2)
+    expect(result.sp[3]).to be(1)
+    expect(result.sp[5]).to be(1)
+    expect(result.se[2]).to be(3)
+    expect(result.te[3]).to be(2)
 
     result = runtime_consumer.pop_http_latencies
-    expect(result.sp.empty?).to be true
-    expect(result.se.empty?).to be true
-    expect(result.im.empty?).to be true
-    expect(result.ic.empty?).to be true
-    expect(result.ev.empty?).to be true
-    expect(result.te.empty?).to be true
-    expect(result.to.empty?).to be true
+    expect(result.sp.length).to be(23)
+    expect(result.se.length).to be(23)
+    expect(result.im.length).to be(23)
+    expect(result.ic.length).to be(23)
+    expect(result.ev.length).to be(23)
+    expect(result.te.length).to be(23)
+    expect(result.to.length).to be(23)
   end
 
   it 'record and pop auth_rejections' do
