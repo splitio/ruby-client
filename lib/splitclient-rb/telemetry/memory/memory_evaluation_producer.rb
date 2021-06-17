@@ -9,7 +9,7 @@ module SplitIoClient
       end
 
       def record_latency(method, bucket)
-        @adapter.latencies.find { |l| l[:method] == method }[:latencies] << bucket
+        @adapter.latencies.find { |l| l[:method] == method }[:latencies][bucket] += 1
       rescue StandardError => error
         @config.log_found_exception(__method__.to_s, error)
       end

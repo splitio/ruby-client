@@ -13,34 +13,33 @@ describe SplitIoClient::Telemetry::EvaluationConsumer do
     it 'record and pop latencies' do
       latencies = evaluation_consumer.pop_latencies
       expect(latencies.length).to eq(5)
-      expect(latencies[SplitIoClient::Telemetry::Domain::Constants::TREATMENT].length).to eq(0)
-      expect(latencies[SplitIoClient::Telemetry::Domain::Constants::TREATMENTS].length).to eq(0)
-      expect(latencies[SplitIoClient::Telemetry::Domain::Constants::TREATMENT_WITH_CONFIG].length).to eq(0)
-      expect(latencies[SplitIoClient::Telemetry::Domain::Constants::TREATMENTS_WITH_CONFIG].length).to eq(0)
-      expect(latencies[SplitIoClient::Telemetry::Domain::Constants::TRACK].length).to eq(0)
+      expect(latencies[SplitIoClient::Telemetry::Domain::Constants::TREATMENT].length).to eq(23)
+      expect(latencies[SplitIoClient::Telemetry::Domain::Constants::TREATMENTS].length).to eq(23)
+      expect(latencies[SplitIoClient::Telemetry::Domain::Constants::TREATMENT_WITH_CONFIG].length).to eq(23)
+      expect(latencies[SplitIoClient::Telemetry::Domain::Constants::TREATMENTS_WITH_CONFIG].length).to eq(23)
+      expect(latencies[SplitIoClient::Telemetry::Domain::Constants::TRACK].length).to eq(23)
 
-      evaluation_producer.record_latency(SplitIoClient::Telemetry::Domain::Constants::TREATMENT, 123)
-      evaluation_producer.record_latency(SplitIoClient::Telemetry::Domain::Constants::TREATMENT, 5555)
-      evaluation_producer.record_latency(SplitIoClient::Telemetry::Domain::Constants::TREATMENTS, 4444)
-      evaluation_producer.record_latency(SplitIoClient::Telemetry::Domain::Constants::TREATMENT_WITH_CONFIG, 222)
-
-      latencies = evaluation_consumer.pop_latencies
-
-      expect(latencies.length).to eq(5)
-      expect(latencies[SplitIoClient::Telemetry::Domain::Constants::TREATMENT].length).to eq(2)
-      expect(latencies[SplitIoClient::Telemetry::Domain::Constants::TREATMENTS].length).to eq(1)
-      expect(latencies[SplitIoClient::Telemetry::Domain::Constants::TREATMENT_WITH_CONFIG].length).to eq(1)
-      expect(latencies[SplitIoClient::Telemetry::Domain::Constants::TREATMENTS_WITH_CONFIG].length).to eq(0)
-      expect(latencies[SplitIoClient::Telemetry::Domain::Constants::TRACK].length).to eq(0)
+      evaluation_producer.record_latency(SplitIoClient::Telemetry::Domain::Constants::TREATMENT, 1)
+      evaluation_producer.record_latency(SplitIoClient::Telemetry::Domain::Constants::TREATMENT, 2)
+      evaluation_producer.record_latency(SplitIoClient::Telemetry::Domain::Constants::TREATMENTS, 3)
+      evaluation_producer.record_latency(SplitIoClient::Telemetry::Domain::Constants::TREATMENT_WITH_CONFIG, 4)
 
       latencies = evaluation_consumer.pop_latencies
 
       expect(latencies.length).to eq(5)
-      expect(latencies[SplitIoClient::Telemetry::Domain::Constants::TREATMENT].length).to eq(0)
-      expect(latencies[SplitIoClient::Telemetry::Domain::Constants::TREATMENTS].length).to eq(0)
-      expect(latencies[SplitIoClient::Telemetry::Domain::Constants::TREATMENT_WITH_CONFIG].length).to eq(0)
-      expect(latencies[SplitIoClient::Telemetry::Domain::Constants::TREATMENTS_WITH_CONFIG].length).to eq(0)
-      expect(latencies[SplitIoClient::Telemetry::Domain::Constants::TRACK].length).to eq(0)
+      expect(latencies[SplitIoClient::Telemetry::Domain::Constants::TREATMENT][1]).to eq(1)
+      expect(latencies[SplitIoClient::Telemetry::Domain::Constants::TREATMENT][2]).to eq(1)
+      expect(latencies[SplitIoClient::Telemetry::Domain::Constants::TREATMENTS][3]).to eq(1)
+      expect(latencies[SplitIoClient::Telemetry::Domain::Constants::TREATMENT_WITH_CONFIG][4]).to eq(1)
+
+      latencies = evaluation_consumer.pop_latencies
+
+      expect(latencies.length).to eq(5)
+      expect(latencies[SplitIoClient::Telemetry::Domain::Constants::TREATMENT].length).to eq(23)
+      expect(latencies[SplitIoClient::Telemetry::Domain::Constants::TREATMENTS].length).to eq(23)
+      expect(latencies[SplitIoClient::Telemetry::Domain::Constants::TREATMENT_WITH_CONFIG].length).to eq(23)
+      expect(latencies[SplitIoClient::Telemetry::Domain::Constants::TREATMENTS_WITH_CONFIG].length).to eq(23)
+      expect(latencies[SplitIoClient::Telemetry::Domain::Constants::TRACK].length).to eq(23)
     end
 
     it 'record and pop exceptions' do

@@ -22,14 +22,14 @@ module SplitIoClient
         TELEMETRY_SYNC = 'telemetry_sync'
         TOKEN_SYNC = 'token_sync'
 
-        SSE_CONNECTION_ESTABLISHED = 'sse_connection_established'
-        OCCUPANCY_PRI = 'occupancy_pri'
-        OCCUPANCY_SEC = 'occupancy_sec'
-        STREAMING_STATUS = 'streaming_status'
-        CONNECTION_ERROR = 'connection_error'
-        TOKEN_REFRESH = 'token_refresh'
-        ABLY_ERROR = 'ably_error'
-        SYNC_MODE = 'sync_mode'
+        SSE_CONNECTION_ESTABLISHED = 0
+        OCCUPANCY_PRI = 10
+        OCCUPANCY_SEC = 20
+        STREAMING_STATUS = 30
+        CONNECTION_ERROR = 40
+        TOKEN_REFRESH = 50
+        ABLY_ERROR = 60
+        SYNC_MODE = 70
 
         TREATMENT = 'treatment'
         TREATMENTS = 'treatments'
