@@ -46,6 +46,7 @@ module SplitIoClient
           end
         rescue StandardError => error
           @config.log_found_exception(__method__.to_s, error)
+          []
         end
 
         def stop_splits_thread
