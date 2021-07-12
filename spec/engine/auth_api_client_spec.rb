@@ -12,11 +12,12 @@ describe SplitIoClient::Engine::AuthApiClient do
   let(:api_key) { 'api-key-test' }
   let(:log) { StringIO.new }
   let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log)) }
+  let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
 
   it 'authenticate success' do
     stub_request(:get, config.auth_service_url).to_return(status: 200, body: body_response)
 
-    auth_api_client = subject.new(config)
+    auth_api_client = subject.new(config, telemetry_runtime_producer)
     response = auth_api_client.authenticate(api_key)
 
     expect(response[:push_enabled]).to eq(true)
@@ -27,7 +28,7 @@ describe SplitIoClient::Engine::AuthApiClient do
   it 'auth server return 500' do
     stub_request(:get, config.auth_service_url).to_return(status: 500)
 
-    auth_api_client = subject.new(config)
+    auth_api_client = subject.new(config, telemetry_runtime_producer)
     response = auth_api_client.authenticate(api_key)
 
     expect(response[:push_enabled]).to eq(false)
@@ -37,7 +38,7 @@ describe SplitIoClient::Engine::AuthApiClient do
   it 'auth server return 401' do
     stub_request(:get, config.auth_service_url).to_return(status: 401)
 
-    auth_api_client = subject.new(config)
+    auth_api_client = subject.new(config, telemetry_runtime_producer)
     response = auth_api_client.authenticate(api_key)
 
     expect(response[:push_enabled]).to eq(false)

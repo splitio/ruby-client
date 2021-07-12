@@ -4,13 +4,13 @@ module SplitIoClient
       class SegmentFetcher
         attr_reader :segments_repository
 
-        def initialize(segments_repository, api_key, metrics, config, sdk_blocker = nil)
+        def initialize(segments_repository, api_key, config, sdk_blocker, telemetry_runtime_producer)
           @segments_repository = segments_repository
           @api_key = api_key
-          @metrics = metrics
           @config = config
           @sdk_blocker = sdk_blocker
           @semaphore = Mutex.new
+          @telemetry_runtime_producer = telemetry_runtime_producer
         end
 
         def call
@@ -27,19 +27,19 @@ module SplitIoClient
           end
         end
 
-        def fetch_segments_if_not_exists(names)
+        def fetch_segments_if_not_exists(names, cache_control_headers = false)
           names.each do |name|
             change_number = @segments_repository.get_change_number(name)
 
-            fetch_segment(name) if change_number == -1
+            fetch_segment(name, cache_control_headers) if change_number == -1
           end
         rescue StandardError => error
           @config.log_found_exception(__method__.to_s, error)
         end
 
-        def fetch_segment(name)
+        def fetch_segment(name, cache_control_headers = false)
           @semaphore.synchronize do
-            segments_api.fetch_segments_by_names([name])
+            segments_api.fetch_segments_by_names([name], cache_control_headers)
           end
         rescue StandardError => error
           @config.log_found_exception(__method__.to_s, error)
@@ -50,6 +50,7 @@ module SplitIoClient
             segments_api.fetch_segments_by_names(@segments_repository.used_segment_names)
 
             @sdk_blocker.segments_ready!
+            @sdk_blocker.sdk_internal_ready
           end
         rescue StandardError => error
           @config.log_found_exception(__method__.to_s, error)
@@ -66,7 +67,10 @@ module SplitIoClient
             @config.logger.info('Starting segments fetcher service') if @config.debug_enabled
 
             loop do
-              next unless @sdk_blocker.splits_repository.ready?
+              unless @sdk_blocker.splits_repository.ready?
+                sleep 0.2
+                next
+              end
 
               fetch_segments
               @config.logger.debug("Segment names: #{@segments_repository.used_segment_names.to_a}") if @config.debug_enabled
@@ -76,10 +80,10 @@ module SplitIoClient
               sleep(sleep_for)
             end
           end
-        end        
+        end
 
         def segments_api
-          @segments_api ||= SplitIoClient::Api::Segments.new(@api_key, @metrics, @segments_repository, @config)
+          @segments_api ||= SplitIoClient::Api::Segments.new(@api_key, @segments_repository, @config, @telemetry_runtime_producer)
         end
       end
     end

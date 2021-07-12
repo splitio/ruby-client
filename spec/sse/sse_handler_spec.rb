@@ -25,24 +25,33 @@ describe SplitIoClient::SSE::SSEHandler do
   let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config) }
   let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
   let(:impressions_repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
-  let(:metrics_repository) { SplitIoClient::Cache::Repositories::MetricsRepository.new(config) }
-  let(:events_repository) { SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key) }
+  let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
+  let(:events_repository) { SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key, telemetry_runtime_producer) }
   let(:sdk_blocker) { SplitIoClient::Cache::Stores::SDKBlocker.new(splits_repository, segments_repository, config) }
-  let(:metrics) { SplitIoClient::Metrics.new(100, metrics_repository) }
-  let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, metrics, config, sdk_blocker) }
-  let(:segment_fetcher) { SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, metrics, config, sdk_blocker) }
-  let(:notification_manager_keeper) { SplitIoClient::SSE::NotificationManagerKeeper.new(config) }
+  let(:split_fetcher) do
+    SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, sdk_blocker, telemetry_runtime_producer)
+  end
+  let(:segment_fetcher) do
+    SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, sdk_blocker, telemetry_runtime_producer)
+  end
+  let(:notification_manager_keeper) { SplitIoClient::SSE::NotificationManagerKeeper.new(config, telemetry_runtime_producer) }
   let(:repositories) do
     {
       splits: splits_repository,
       segments: segments_repository,
       impressions: impressions_repository,
-      metrics: metrics_repository,
       events: events_repository
     }
   end
   let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
-  let(:parameters) { { split_fetcher: split_fetcher, segment_fetcher: segment_fetcher, imp_counter: impression_counter } }
+  let(:parameters) do
+    {
+      split_fetcher: split_fetcher,
+      segment_fetcher: segment_fetcher,
+      imp_counter: impression_counter,
+      telemetry_runtime_producer: telemetry_runtime_producer
+    }
+  end
   let(:synchronizer) { SplitIoClient::Engine::Synchronizer.new(repositories, api_key, config, sdk_blocker, parameters) }
 
   before do
@@ -65,7 +74,7 @@ describe SplitIoClient::SSE::SSEHandler do
 
         config.streaming_service_url = server.base_uri
         action_event = ''
-        sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository, notification_manager_keeper) do |handler|
+        sse_handler = subject.new({ config: config, api_key: api_key }, synchronizer, repositories, notification_manager_keeper, telemetry_runtime_producer) do |handler|
           handler.on_action { |action| action_event = action }
         end
 
@@ -95,7 +104,7 @@ describe SplitIoClient::SSE::SSEHandler do
 
         config.streaming_service_url = server.base_uri
         action_event = ''
-        sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository, notification_manager_keeper) do |handler|
+        sse_handler = subject.new({ config: config, api_key: api_key }, synchronizer, repositories, notification_manager_keeper, telemetry_runtime_producer) do |handler|
           handler.on_action { |action| action_event = action }
         end
 
@@ -125,7 +134,7 @@ describe SplitIoClient::SSE::SSEHandler do
 
         config.streaming_service_url = server.base_uri
         action_event = ''
-        sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository, notification_manager_keeper) do |handler|
+        sse_handler = subject.new({ config: config, api_key: api_key }, synchronizer, repositories, notification_manager_keeper, telemetry_runtime_producer) do |handler|
           handler.on_action { |action| action_event = action }
         end
 
@@ -157,7 +166,7 @@ describe SplitIoClient::SSE::SSEHandler do
 
         config.streaming_service_url = server.base_uri
         action_event = ''
-        sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository, notification_manager_keeper) do |handler|
+        sse_handler = subject.new({ config: config, api_key: api_key }, synchronizer, repositories, notification_manager_keeper, telemetry_runtime_producer) do |handler|
           handler.on_action { |action| action_event = action }
         end
 
@@ -191,7 +200,7 @@ describe SplitIoClient::SSE::SSEHandler do
 
         config.streaming_service_url = server.base_uri
         action_event = ''
-        sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository, notification_manager_keeper) do |handler|
+        sse_handler = subject.new({ config: config, api_key: api_key }, synchronizer, repositories, notification_manager_keeper, telemetry_runtime_producer) do |handler|
           handler.on_action { |action| action_event = action }
         end
 
@@ -219,7 +228,7 @@ describe SplitIoClient::SSE::SSEHandler do
 
         config.streaming_service_url = server.base_uri
         action_event = ''
-        sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository, notification_manager_keeper) do |handler|
+        sse_handler = subject.new({ config: config, api_key: api_key }, synchronizer, repositories, notification_manager_keeper, telemetry_runtime_producer) do |handler|
           handler.on_action { |action| action_event = action }
         end
 
@@ -249,7 +258,7 @@ describe SplitIoClient::SSE::SSEHandler do
 
         config.streaming_service_url = server.base_uri
         action_event = ''
-        sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository, notification_manager_keeper) do |handler|
+        sse_handler = subject.new({ config: config, api_key: api_key }, synchronizer, repositories, notification_manager_keeper, telemetry_runtime_producer) do |handler|
           handler.on_action { |action| action_event = action }
         end
 

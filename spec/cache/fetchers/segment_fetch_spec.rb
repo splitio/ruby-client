@@ -3,10 +3,6 @@
 require 'spec_helper'
 
 describe SplitIoClient::Cache::Fetchers::SegmentFetcher do
-  let(:metrics_repository) do
-    SplitIoClient::Cache::Repositories::MetricsRepository.new(@default_config)
-  end
-  let(:metrics) { SplitIoClient::Metrics.new(100, metrics_repository) }
   let(:segments_json) do
     File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/segments/segments.json')))
   end
@@ -38,11 +34,17 @@ describe SplitIoClient::Cache::Fetchers::SegmentFetcher do
     let(:config) { SplitIoClient::SplitConfig.new }
     let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config) }
-    let(:segment_fetcher) { described_class.new(segments_repository, '', metrics, config) }
-    let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, '', metrics, config) }
+    let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
+    let(:sdk_blocker) { SplitIoClient::Cache::Stores::SDKBlocker.new(splits_repository, segments_repository, config) }
+    let(:segment_fetcher) { described_class.new(segments_repository, '', config, sdk_blocker, telemetry_runtime_producer) }
+    let(:split_fetcher) do
+      SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, '', config, sdk_blocker, telemetry_runtime_producer)
+    end
 
     it 'fetch segments' do
       split_fetcher.send(:fetch_splits)
+      segment_fetcher.send(:fetch_segments)
+      segment_fetcher.send(:fetch_segments)
       segment_fetcher.send(:fetch_segments)
 
       expect(segment_fetcher.segments_repository.used_segment_names).to eq(['employees'])
@@ -67,8 +69,11 @@ describe SplitIoClient::Cache::Fetchers::SegmentFetcher do
     let(:adapter) { SplitIoClient::Cache::Adapters::RedisAdapter.new(config.redis_url) }
     let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config) }
-    let(:segment_fetcher) { described_class.new(segments_repository, '', metrics, config) }
-    let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, '', metrics, config) }
+    let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
+    let(:segment_fetcher) { described_class.new(segments_repository, '', config, nil, telemetry_runtime_producer) }
+    let(:split_fetcher) do
+      SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, '', config, nil, telemetry_runtime_producer)
+    end
 
     it 'fetch segments' do
       split_fetcher.send(:fetch_splits)
