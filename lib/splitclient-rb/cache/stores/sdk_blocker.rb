@@ -11,6 +11,7 @@ module SplitIoClient
           @splits_repository = splits_repository
           @segments_repository = segments_repository
           @config = config
+          @internal_ready = Concurrent::CountDownLatch.new(1)
 
           if @config.standalone?
             @splits_repository.not_ready!
@@ -48,6 +49,14 @@ module SplitIoClient
         def ready?
           return true if @config.consumer?
           @splits_repository.ready? && @segments_repository.ready?
+        end
+
+        def sdk_internal_ready
+          @internal_ready.count_down
+        end
+
+        def wait_unitil_internal_ready
+          @internal_ready.wait
         end
       end
     end

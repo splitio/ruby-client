@@ -11,7 +11,8 @@ describe SplitIoClient::Api::Impressions do
     )
   end
   let(:log) { StringIO.new }
-  let(:impressions_api) { described_class.new('', config) }
+  let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
+  let(:impressions_api) { described_class.new('', config, telemetry_runtime_producer) }
   let(:impressions) do
     [
       {
@@ -40,7 +41,7 @@ describe SplitIoClient::Api::Impressions do
 
     it 'post impressions with impressions_mode in debug' do
       custom_config = SplitIoClient::SplitConfig.new(logger: Logger.new(log), impressions_mode: :debug)
-      custom_api = described_class.new('', custom_config)
+      custom_api = described_class.new('', custom_config, telemetry_runtime_producer)
 
       stub_request(:post, 'https://events.split.io/api/testImpressions/bulk')
         .with(headers: {
@@ -93,7 +94,7 @@ describe SplitIoClient::Api::Impressions do
         ip_addresses_enabled: false
       )
 
-      api = described_class.new('', custom_config)
+      api = described_class.new('', custom_config, telemetry_runtime_producer)
 
       stub_request(:post, 'https://events.split.io/api/testImpressions/bulk')
         .with(headers: {

@@ -11,13 +11,16 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
       )
     end
     let(:repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
-    let(:impression_api) { SplitIoClient::Api::Impressions.new(nil, config) }
+    let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
+    let(:impression_api) { SplitIoClient::Api::Impressions.new(nil, config, telemetry_runtime_producer) }
     let(:sender) { described_class.new(repository, config, impression_api) }
     let(:formatted_impressions) { SplitIoClient::Cache::Senders::ImpressionsFormatter.new(repository).call(true) }
     let(:treatment1) { { treatment: 'on', label: 'custom_label1', change_number: 123_456 } }
     let(:treatment2) { { treatment: 'off', label: 'custom_label2', change_number: 123_499 } }
     let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
-    let(:impressions_manager) { SplitIoClient::Engine::Common::ImpressionManager.new(config, repository, impression_counter) }
+    let(:impressions_manager) do
+      SplitIoClient::Engine::Common::ImpressionManager.new(config, repository, impression_counter, telemetry_runtime_producer)
+    end
 
     before :each do
       Redis.new.flushall

@@ -17,7 +17,6 @@ module SplitIoClient
     # @option opts [Int] :connection_timeout (2) The connect timeout for network connections in seconds.
     # @option opts [Int] :features_refresh_rate The SDK polls Split servers for changes to feature roll-out plans. This parameter controls this polling period in seconds.
     # @option opts [Int] :segments_refresh_rate
-    # @option opts [Int] :metrics_refresh_rate
     # @option opts [Int] :impressions_refresh_rate
     # @option opts [Object] :logger a logger to user for messages from the client. Defaults to stdout
     # @option opts [Boolean] :debug_enabled (false) The value for the debug flag
@@ -51,7 +50,6 @@ module SplitIoClient
       end
 
       @segments_refresh_rate = opts[:segments_refresh_rate] || SplitConfig.default_segments_refresh_rate
-      @metrics_refresh_rate = opts[:metrics_refresh_rate] || SplitConfig.default_metrics_refresh_rate
 
       @impressions_mode = init_impressions_mode(opts[:impressions_mode])
 
@@ -62,10 +60,6 @@ module SplitIoClient
       )
       #Safeguard for users of older SDK versions.
       @impressions_bulk_size = opts[:impressions_bulk_size] || @impressions_queue_size > 0 ? @impressions_queue_size : 0
-
-      @metrics_adapter = SplitConfig.init_cache_adapter(
-        opts[:cache_adapter] || SplitConfig.default_cache_adapter, :map_adapter, nil, @redis_url
-      )
 
       @debug_enabled = opts[:debug_enabled] || SplitConfig.default_debug
       @transport_debug_enabled = opts[:transport_debug_enabled] || SplitConfig.default_debug
@@ -97,6 +91,10 @@ module SplitIoClient
         opts[:cache_adapter] || SplitConfig.default_cache_adapter, :queue_adapter, @events_queue_size, @redis_url
       )
 
+      @telemetry_adapter = SplitConfig.init_telemetry_adapter(
+        opts[:cache_adapter] || SplitConfig.default_cache_adapter, @redis_url
+      )
+
       @split_file = opts[:split_file] || SplitConfig.default_split_file
 
       @valid_mode = true
@@ -109,6 +107,11 @@ module SplitIoClient
       @auth_service_url = opts[:auth_service_url] || SplitConfig.default_auth_service_url
       @auth_retry_back_off_base = SplitConfig.init_auth_retry_back_off(opts[:auth_retry_back_off_base] || SplitConfig.default_auth_retry_back_off_base)
       @streaming_reconnect_back_off_base = SplitConfig.init_streaming_reconnect_back_off(opts[:streaming_reconnect_back_off_base] || SplitConfig.default_streaming_reconnect_back_off_base)
+
+      @telemetry_refresh_rate = SplitConfig.init_telemetry_refresh_rate(opts[:telemetry_refresh_rate])
+      @telemetry_service_url = opts[:telemetry_service_url] || SplitConfig.default_telemetry_service_url
+
+      @sdk_start_time = Time.now
 
       startup_log
     end
@@ -147,12 +150,6 @@ module SplitIoClient
     #
     # @return [Object] Impressions adapter instance
     attr_accessor :impressions_adapter
-
-    #
-    # The cache adapter to store metrics in
-    #
-    # @return [Symbol] Metrics adapter
-    attr_accessor :metrics_adapter
 
     #
     # The cache adapter to store events in
@@ -224,7 +221,6 @@ module SplitIoClient
 
     attr_accessor :features_refresh_rate
     attr_accessor :segments_refresh_rate
-    attr_accessor :metrics_refresh_rate
     attr_accessor :impressions_refresh_rate
 
     attr_accessor :impression_listener
@@ -274,6 +270,14 @@ module SplitIoClient
 
     attr_accessor :impressions_mode
 
+    attr_accessor :telemetry_adapter
+
+    attr_accessor :telemetry_refresh_rate
+
+    attr_accessor :telemetry_service_url
+
+    attr_accessor :sdk_start_time
+
     def self.default_impressions_mode
       :optimized
     end
@@ -294,6 +298,12 @@ module SplitIoClient
       return (refresh_rate.nil? || refresh_rate <= 0 ? default_rate : refresh_rate) if impressions_mode == :debug
       
       return refresh_rate.nil? || refresh_rate <= 0 ? SplitConfig.default_impressions_refresh_rate_optimized : [default_rate, refresh_rate].max
+    end
+
+    def self.init_telemetry_refresh_rate(refresh_rate)
+      return SplitConfig.default_telemetry_refresh_rate if refresh_rate.nil? || refresh_rate < 60
+
+      refresh_rate
     end
 
     def self.default_streaming_enabled
@@ -359,6 +369,21 @@ module SplitIoClient
       end
     end
 
+    def self.init_telemetry_adapter(adapter, redis_url)
+      case adapter
+      when :memory
+        Telemetry::Storages::Memory.new
+      when :redis
+        begin
+          require 'redis'
+        rescue LoadError
+          fail StandardError, 'To use Redis as a cache adapter you must include it in your Gemfile'
+        end
+
+        SplitIoClient::Cache::Adapters::RedisAdapter.new(redis_url)
+      end
+    end
+
     def self.map_memory_adapter(name, queue_size)
       case name
       when :map_adapter
@@ -374,10 +399,6 @@ module SplitIoClient
 
     # @return [LocalStore] configuration value for local cache store
     def self.default_cache_adapter
-      :memory
-    end
-
-    def self.default_metrics_adapter
       :memory
     end
 
@@ -405,10 +426,6 @@ module SplitIoClient
       60
     end
 
-    def self.default_metrics_refresh_rate
-      60
-    end
-
     def self.default_impressions_refresh_rate
       60
     end
@@ -431,6 +448,14 @@ module SplitIoClient
 
     def self.default_events_queue_size
       500
+    end
+
+    def self.default_telemetry_refresh_rate
+      3600      
+    end
+
+    def self.default_telemetry_service_url
+      'https://telemetry.split.io/api/v1'
     end
 
     def self.default_split_file

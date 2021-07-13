@@ -4,11 +4,12 @@ module SplitIoClient
   module Engine
     module Common
       class ImpressionManager
-        def initialize(config, impressions_repository, impression_counter)
+        def initialize(config, impressions_repository, impression_counter, telemetry_runtime_producer)
           @config = config
           @impressions_repository = impressions_repository
           @impression_counter = impression_counter
           @impression_observer = SplitIoClient::Observers::ImpressionObserver.new
+          @telemetry_runtime_producer = telemetry_runtime_producer
         end
 
         # added param time for test
@@ -29,17 +30,40 @@ module SplitIoClient
 
           impression_router.add_bulk(impressions)
 
+          dropped = 0
+          queued = 0
+          dedupe = 0
+
           if optimized? && !redis?
             optimized_impressions = impressions.select { |imp| should_queue_impression?(imp[:i]) }
-            @impressions_repository.add_bulk(optimized_impressions)
+
+            unless optimized_impressions.empty?
+              dropped = @impressions_repository.add_bulk(optimized_impressions)
+              dedupe = impressions.length - optimized_impressions.length
+              queued = optimized_impressions.length - dropped
+            end
           else
-            @impressions_repository.add_bulk(impressions)
+            dropped = @impressions_repository.add_bulk(impressions)
+            queued = impressions.length - dropped
           end
+
+          record_stats(queued, dropped, dedupe)
         rescue StandardError => error
           @config.log_found_exception(__method__.to_s, error)
         end
 
         private
+
+        def record_stats(queued, dropped, dedupe)
+          return if redis?
+
+          imp_queued = Telemetry::Domain::Constants::IMPRESSIONS_QUEUED
+          imp_dropped = Telemetry::Domain::Constants::IMPRESSIONS_DROPPED
+          imp_dedupe = Telemetry::Domain::Constants::IMPRESSIONS_DEDUPE
+          @telemetry_runtime_producer.record_impressions_stats(imp_queued, queued) unless queued.zero?
+          @telemetry_runtime_producer.record_impressions_stats(imp_dropped, dropped) unless dropped.zero?
+          @telemetry_runtime_producer.record_impressions_stats(imp_dedupe, dedupe) unless dedupe.zero?
+        end
 
         # added param time for test
         def impression_data(matching_key, bucketing_key, split_name, treatment, time = nil)

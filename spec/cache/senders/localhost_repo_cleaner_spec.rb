@@ -7,14 +7,16 @@ describe SplitIoClient::Cache::Senders::LocalhostRepoCleaner do
     let(:config) { SplitIoClient::SplitConfig.new }
 
     let(:impressions_repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
-    let(:metrics_repository) { SplitIoClient::Cache::Repositories::MetricsRepository.new(config) }
-    let(:events_repository) { SplitIoClient::Cache::Repositories::EventsRepository.new(config, 'localhost') }
+    let(:runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
+    let(:events_repository) do
+      SplitIoClient::Cache::Repositories::EventsRepository.new(config, 'localhost', runtime_producer)
+    end
     let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
     let(:impressions_manager) do
-      SplitIoClient::Engine::Common::ImpressionManager.new(config, impressions_repository, impression_counter)
+      SplitIoClient::Engine::Common::ImpressionManager.new(config, impressions_repository, impression_counter, runtime_producer)
     end
 
-    let(:cleaner) { described_class.new(impressions_repository, metrics_repository, events_repository, config) }
+    let(:cleaner) { described_class.new(impressions_repository, events_repository, config) }
 
     before do
       stub_request(:post, 'https://events.split.io/api/events/bulk')
@@ -33,8 +35,6 @@ describe SplitIoClient::Cache::Senders::LocalhostRepoCleaner do
 
       impressions_manager.track(impressions)
 
-      metrics_repository.add_latency('foo', 0, SplitIoClient::BinarySearchLatencyTracker.new)
-
       events_repository.add(
         'event',
         'traffic_type',
@@ -47,21 +47,15 @@ describe SplitIoClient::Cache::Senders::LocalhostRepoCleaner do
 
       expect(impressions_repository.empty?).to be false
       expect(empty_events_repository?).to be false
-      expect(empty_metrics_repository?).to be false
 
       cleaner.send(:clear_repositories)
 
       expect(impressions_repository.empty?).to be true
       expect(empty_events_repository?).to be true
-      expect(empty_metrics_repository?).to be true
     end
 
     def empty_events_repository?
       events_repository.instance_variable_get(:@repository).instance_variable_get(:@adapter).empty?
-    end
-
-    def empty_metrics_repository?
-      metrics_repository.instance_variable_get(:@repository).instance_variable_get(:@latencies).empty?
     end
   end
 end

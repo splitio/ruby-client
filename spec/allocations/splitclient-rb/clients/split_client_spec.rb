@@ -8,15 +8,14 @@ describe SplitIoClient::SplitClient do
   let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config) }
   let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
   let(:impressions_repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
-  let(:metrics_repository) { SplitIoClient::Cache::Repositories::MetricsRepository.new(config) }
-  let(:metrics) { SplitIoClient::Metrics.new(100, metrics_repository) }
   let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
+  let(:evaluation_producer) { SplitIoClient::Telemetry::EvaluationProducer.new(config) }
   let(:impressions_manager) do
-    SplitIoClient::Engine::Common::ImpressionManager.new(config, impressions_repository, impression_counter)
+    SplitIoClient::Engine::Common::ImpressionManager.new(config, impressions_repository, impression_counter, evaluation_producer)
   end
   let(:client) do
-    SplitIoClient::SplitClient.new('', metrics, splits_repository, segments_repository,
-                                   impressions_repository, metrics_repository, nil, nil, config, impressions_manager)
+    repositories = { splits: splits_repository, segments: segments_repository, impressions: impressions_repository, events: nil }
+    SplitIoClient::SplitClient.new('', repositories, nil, config, impressions_manager, evaluation_producer)
   end
 
   context 'control' do

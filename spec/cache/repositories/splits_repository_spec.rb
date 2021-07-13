@@ -42,6 +42,10 @@ describe SplitIoClient::Cache::Repositories::SplitsRepository do
       expect(Set.new(repository.split_names)).to eq(Set.new(%w[foo bar baz]))
     end
 
+    it 'returns splits count' do
+      expect(repository.splits_count).to eq(3)
+    end
+
     it 'returns traffic types' do
       expect(repository.traffic_type_exists('tt_name_1')).to be true
       expect(repository.traffic_type_exists('tt_name_2')).to be true

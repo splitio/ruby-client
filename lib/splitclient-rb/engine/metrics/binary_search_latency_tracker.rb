@@ -42,75 +42,13 @@ module SplitIoClient
 
     MAX_LATENCY = 7481828
 
-    attr_accessor :latencies
-
-    def initialize
-      @latencies = Array.new(BUCKETS.length, 0)
-    end
-
-    #
-    # Increment the internal counter for the bucket this latency falls into.
-    # @param millis
-    #
-    def add_latency_millis(millis, return_index = false)
-      index = find_bucket_index(millis * 1000)
-
-      return index if return_index
-
-      @latencies[index] += 1
-      @latencies
-    end
-
-    # Increment the internal counter for the bucket this latency falls into.
-    # @param micros
-    def add_latency_micros(micros, return_index = false)
-      index = find_bucket_index(micros)
-
-      return index if return_index
-
-      @latencies[index] += 1
-      @latencies
-    end
-
-    # Returns the list of latencies buckets as an array.
-    #
-    #
-    # @return the list of latencies buckets as an array.
-    def get_latencies
-      @latencies
-    end
-
-    def get_latency(index)
-      return @latencies[index]
-    end
-
-    def clear
-      @latencies = Array.new(BUCKETS.length, 0)
-    end
-
-    #
-    # Returns the counts in the bucket this latency falls into.
-    # The latencies will not be updated.
-    # @param latency
-    # @return the bucket content for the latency.
-    #
-    def get_bucket_for_latency_millis(latency)
-      return @latencies[find_bucket_index(latency * 1000)]
-    end
-
-    #
-    # Returns the counts in the bucket this latency falls into.
-    # The latencies will not be updated.
-    # @param latency
-    # @return the bucket content for the latency.
-    #
-    def get_bucket_for_latency_micros(latency)
-      return @latencies[find_bucket_index(latency)]
+    def self.get_bucket(latency)
+      return find_bucket_index(latency * 1000)
     end
 
     private
 
-    def find_bucket_index(micros)
+    def self.find_bucket_index(micros)
       if (micros > MAX_LATENCY) then
         return BUCKETS.length - 1
       end

@@ -4,24 +4,20 @@ module SplitIoClient
   module Api
     # Retrieves segment changes from the Split Backend
     class Segments < Client
-      METRICS_PREFIX = 'segmentChangeFetcher'
-
-      def initialize(api_key, metrics, segments_repository, config)
+      def initialize(api_key, segments_repository, config, telemetry_runtime_producer)
         super(config)
-        @metrics = metrics
         @api_key = api_key
         @segments_repository = segments_repository
+        @telemetry_runtime_producer = telemetry_runtime_producer
       end
 
-      def fetch_segments_by_names(names)
-        start = Time.now
-
+      def fetch_segments_by_names(names, cache_control_headers = false)
         return if names.nil? || names.empty?
 
         names.each do |name|
           since = @segments_repository.get_change_number(name)
           loop do
-            segment = fetch_segment_changes(name, since)
+            segment = fetch_segment_changes(name, since, cache_control_headers)
             @segments_repository.add_to_segment(segment)
 
             @config.split_logger.log_if_debug("Segment #{name} fetched before: #{since}, \
@@ -32,19 +28,17 @@ module SplitIoClient
             since = @segments_repository.get_change_number(name)
           end
         end
-
-        latency = (Time.now - start) * 1000.0
-        @metrics.time(METRICS_PREFIX + '.time', latency)
       end
 
       private
 
-      def fetch_segment_changes(name, since)
-        response = get_api("#{@config.base_uri}/segmentChanges/#{name}", @api_key, since: since)
+      def fetch_segment_changes(name, since, cache_control_headers = false)
+        start = Time.now
+        response = get_api("#{@config.base_uri}/segmentChanges/#{name}", @api_key, { since: since }, cache_control_headers)
+
         if response.success?
           segment = JSON.parse(response.body, symbolize_names: true)
           @segments_repository.set_change_number(name, segment[:till])
-          @metrics.count(METRICS_PREFIX + '.status.' + response.status.to_s, 1)
 
           @config.split_logger.log_if_debug("\'#{segment[:name]}\' segment retrieved.")
           unless segment[:added].empty?
@@ -55,15 +49,23 @@ module SplitIoClient
           end
           @config.split_logger.log_if_transport("Segment changes response: #{segment.to_s}")
 
+          bucket = BinarySearchLatencyTracker.get_bucket((Time.now - start) * 1000.0)
+          @telemetry_runtime_producer.record_sync_latency(Telemetry::Domain::Constants::SEGMENT_SYNC, bucket)
+          @telemetry_runtime_producer.record_successful_sync(Telemetry::Domain::Constants::SEGMENT_SYNC, (Time.now.to_f * 1000.0).to_i)
+
           segment
         elsif response.status == 403
-            @config.logger.error('Factory Instantiation: You passed a browser type api_key, ' \
-              'please grab an api key from the Split console that is of type sdk')
-            @config.valid_mode =  false
+          @telemetry_runtime_producer.record_sync_error(Telemetry::Domain::Constants::SEGMENT_SYNC, response.status)
+
+          @config.logger.error('Factory Instantiation: You passed a browser type api_key, ' \
+            'please grab an api key from the Split console that is of type sdk')
+          @config.valid_mode =  false
         else
+          @telemetry_runtime_producer.record_sync_error(Telemetry::Domain::Constants::SEGMENT_SYNC, response.status)
+
           @config.logger.error("Unexpected status code while fetching segments: #{response.status}." \
           "Since #{since} - Check your API key and base URI")
-          @metrics.count(METRICS_PREFIX + '.status.' + response.status.to_s, 1)
+
           raise 'Split SDK failed to connect to backend to fetch segments'
         end
       end

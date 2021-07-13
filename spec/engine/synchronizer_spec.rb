@@ -15,22 +15,20 @@ describe SplitIoClient::Engine::Synchronizer do
   let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config) }
   let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
   let(:impressions_repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
-  let(:metrics_repository) { SplitIoClient::Cache::Repositories::MetricsRepository.new(config) }
-  let(:events_repository) { SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key) }
+  let(:runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
+  let(:events_repository) { SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key, runtime_producer) }
   let(:sdk_blocker) { SplitIoClient::Cache::Stores::SDKBlocker.new(splits_repository, segments_repository, config) }
-  let(:metrics) { SplitIoClient::Metrics.new(100, metrics_repository) }
   let(:split_fetcher) do
-    SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, metrics, config, sdk_blocker)
+    SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, sdk_blocker, runtime_producer)
   end
   let(:segment_fetcher) do
-    SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, metrics, config, sdk_blocker)
+    SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, sdk_blocker, runtime_producer)
   end
   let(:repositories) do
     repos = {}
     repos[:splits] = splits_repository
     repos[:segments] = segments_repository
     repos[:impressions] = impressions_repository
-    repos[:metrics] = metrics_repository
     repos[:events] = events_repository
     repos
   end
@@ -38,6 +36,7 @@ describe SplitIoClient::Engine::Synchronizer do
     params = {}
     params[:split_fetcher] = split_fetcher
     params[:segment_fetcher] = segment_fetcher
+    params[:telemetry_runtime_producer] = runtime_producer
 
     params
   end

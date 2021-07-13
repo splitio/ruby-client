@@ -7,11 +7,12 @@ describe SplitIoClient::SSE::NotificationManagerKeeper do
 
   let(:log) { StringIO.new }
   let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log)) }
+  let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
 
   context 'CONTROL EVENT' do
     it 'STREAMING_PAUSED' do
       action_event = nil
-      noti_manager_keeper = subject.new(config) do |manager|
+      noti_manager_keeper = subject.new(config, telemetry_runtime_producer) do |manager|
         manager.on_action { |action| action_event = action }
       end
 
@@ -24,7 +25,7 @@ describe SplitIoClient::SSE::NotificationManagerKeeper do
 
     it 'STREAMING_RESUMED with publishers enabled' do
       action_event = nil
-      noti_manager_keeper = subject.new(config) do |manager|
+      noti_manager_keeper = subject.new(config, telemetry_runtime_producer) do |manager|
         manager.on_action { |action| action_event = action }
       end
 
@@ -37,7 +38,7 @@ describe SplitIoClient::SSE::NotificationManagerKeeper do
 
     it 'STREAMING_RESUMED without publishers enabled' do
       action_event = nil
-      noti_manager_keeper = subject.new(config) do |manager|
+      noti_manager_keeper = subject.new(config, telemetry_runtime_producer) do |manager|
         manager.on_action { |action| action_event = action }
       end
 
@@ -57,7 +58,7 @@ describe SplitIoClient::SSE::NotificationManagerKeeper do
 
     it 'STREAMING_DISABLED' do
       action_event = nil
-      noti_manager_keeper = subject.new(config) do |manager|
+      noti_manager_keeper = subject.new(config, telemetry_runtime_producer) do |manager|
         manager.on_action { |action| action_event = action }
       end
 
@@ -72,7 +73,7 @@ describe SplitIoClient::SSE::NotificationManagerKeeper do
   context 'OCCUPANCY EVENT' do
     it 'first time without publishers available' do
       action_event = nil
-      noti_manager_keeper = subject.new(config) do |manager|
+      noti_manager_keeper = subject.new(config, telemetry_runtime_producer) do |manager|
         manager.on_action { |action| action_event = action }
       end
 
@@ -85,7 +86,7 @@ describe SplitIoClient::SSE::NotificationManagerKeeper do
 
     it 'first time with publishers available' do
       action_event = nil
-      noti_manager_keeper = subject.new(config) do |manager|
+      noti_manager_keeper = subject.new(config, telemetry_runtime_producer) do |manager|
         manager.on_action { |action| action_event = action }
       end
 
@@ -98,7 +99,7 @@ describe SplitIoClient::SSE::NotificationManagerKeeper do
 
     it 'handle many events' do
       action_event = nil
-      noti_manager_keeper = subject.new(config) do |manager|
+      noti_manager_keeper = subject.new(config, telemetry_runtime_producer) do |manager|
         manager.on_action { |action| action_event = action }
       end
 

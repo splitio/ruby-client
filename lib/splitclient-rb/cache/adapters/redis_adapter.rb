@@ -17,6 +17,10 @@ module SplitIoClient
           @redis = Redis.new(connection)
         end
 
+        def hincrby(key, field, increment)
+          @redis.hincrby(key, field, increment)
+        end
+
         # Map
         def initialize_map(key)
           # No need to initialize hash/map in Redis
