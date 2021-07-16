@@ -6,8 +6,6 @@ module SplitIoClient
       include SplitIoClient::Cache::Fetchers
       include SplitIoClient::Cache::Senders
 
-      FORCE_CACHE_CONTROL_HEADERS = true
-
       def initialize(
         repositories,
         api_key,
@@ -55,12 +53,14 @@ module SplitIoClient
       end
 
       def fetch_splits
-        segment_names = @split_fetcher.fetch_splits(FORCE_CACHE_CONTROL_HEADERS)
-        @segment_fetcher.fetch_segments_if_not_exists(segment_names, FORCE_CACHE_CONTROL_HEADERS) unless segment_names.empty?
+        fetch_options = { cache_control_headers: true, till: nil }
+        segment_names = @split_fetcher.fetch_splits(fetch_options)
+        @segment_fetcher.fetch_segments_if_not_exists(segment_names, true) unless segment_names.empty?
       end
 
       def fetch_segment(name)
-        @segment_fetcher.fetch_segment(name, FORCE_CACHE_CONTROL_HEADERS)
+        fetch_options = { cache_control_headers: true, till: nil }
+        @segment_fetcher.fetch_segment(name, fetch_options)
       end
 
       private
