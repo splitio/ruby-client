@@ -3,17 +3,20 @@
 module SplitIoClient
   module SSE
     module EventSource
+      BACKOFF_MAX_ALLOWED = 1.8
       class BackOff
-        def initialize(back_off_base, attempt = 0)
+        def initialize(back_off_base, attempt = 0, max_allowed = BACKOFF_MAX_ALLOWED)
           @attempt = attempt
           @back_off_base = back_off_base
+          @max_allowed = max_allowed
         end
 
         def interval
+          interval = 0
           interval = (@back_off_base * (2**@attempt)) if @attempt.positive?
           @attempt += 1
 
-          interval || 0
+          interval >= @max_allowed ? @max_allowed : interval
         end
 
         def reset

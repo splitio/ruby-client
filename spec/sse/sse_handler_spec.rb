@@ -62,7 +62,7 @@ describe SplitIoClient::SSE::SSEHandler do
     mock_segment_changes('segment2', segment2, '1470947453878')
     mock_segment_changes('segment3', segment3, '-1')
 
-    synchronizer.fetch_splits
+    synchronizer.fetch_splits(0)
   end
 
   context 'SPLIT UPDATE event' do

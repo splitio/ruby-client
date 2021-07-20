@@ -6,8 +6,8 @@ module SplitIoClient
       include SplitIoClient::Cache::Fetchers
       include SplitIoClient::Cache::Senders
 
-      ON_DEMAND_FETCH_BACKOFF_BASE_MS = 10_000
-      ON_DEMAND_FETCH_BACKOFF_MAX_WAIT_MS = 60_000
+      ON_DEMAND_FETCH_BACKOFF_BASE_SECONDS = 10
+      ON_DEMAND_FETCH_BACKOFF_MAX_WAIT_SECONDS = 60
       ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES = 10
 
       def initialize(
@@ -29,7 +29,6 @@ module SplitIoClient
         @impressions_api = SplitIoClient::Api::Impressions.new(@api_key, @config, params[:telemetry_runtime_producer])
         @impression_counter = params[:imp_counter]
         @telemetry_synchronizer = params[:telemetry_synchronizer]
-        @backoff = new SSE::EventSource::BackOff.new()
       end
 
       def sync_all
@@ -58,14 +57,15 @@ module SplitIoClient
       end
 
       def fetch_splits(target_change_number)
-        return if target_change_number <= @splits_repository.get_change_number
+        return if target_change_number <= @splits_repository.get_change_number.to_i
 
         fetch_options = { cache_control_headers: true, till: nil }
 
         result = attempt_splits_sync(target_change_number,
                                      fetch_options,
                                      @config.on_demand_fetch_max_retries,
-                                     @config.on_demand_fetch_retry_delay_ms)
+                                     @config.on_demand_fetch_retry_delay_seconds,
+                                     false)
 
         attempts = @config.on_demand_fetch_max_retries - result[:remaining_attempts]
         if result[:success]
@@ -79,7 +79,8 @@ module SplitIoClient
         result = attempt_splits_sync(target_change_number,
                                      fetch_options,
                                      ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES,
-                                     @config.on_demand_fetch_retry_delay_ms)
+                                     nil,
+                                     true)
 
         attempts = @config.on_demand_fetch_max_retries - result[:remaining_attempts]
 
@@ -100,8 +101,9 @@ module SplitIoClient
 
       private
 
-      def attempt_splits_sync(target_cn, fetch_options, max_retries, retry_delay_ms)
+      def attempt_splits_sync(target_cn, fetch_options, max_retries, retry_delay_seconds, with_backoff)
         remaining_attempts = max_retries
+        backoff = SSE::EventSource::BackOff.new(ON_DEMAND_FETCH_BACKOFF_BASE_SECONDS, 0, ON_DEMAND_FETCH_BACKOFF_MAX_WAIT_SECONDS) if with_backoff
 
         loop do
           remaining_attempts -= 1
@@ -111,7 +113,8 @@ module SplitIoClient
           return split_sync_result(true, remaining_attempts, segment_names) if target_cn <= @splits_repository.get_change_number
           return split_sync_result(false, remaining_attempts, segment_names) if remaining_attempts <= 0
 
-          sleep(retry_delay_ms)
+          delay = with_backoff ? backoff.interval : retry_delay_seconds
+          sleep(delay)
         end
       end
 

@@ -31,6 +31,7 @@ Metrics/LineLength:
     - spec/engine/sync_manager_spec.rb
     - spec/engine/auth_api_client_spec.rb
     - spec/telemetry/synchronizer_spec.rb
+    - spec/splitclient/split_config_spec.rb
 
 Style/BracesAroundHashParameters:
   Exclude:
@@ -62,3 +63,4 @@ AllCops:
     - lib/splitclient-rb/engine/models/**/*
     - lib/splitclient-rb/engine/parser/**/*
     - spec/telemetry/synchronizer_spec.rb
+    - lib/splitclient-rb/engine/synchronizer.rb

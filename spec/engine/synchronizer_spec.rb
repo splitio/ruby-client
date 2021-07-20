@@ -92,8 +92,41 @@ describe SplitIoClient::Engine::Synchronizer do
     mock_segment_changes('segment1', segment1, '-1')
     mock_segment_changes('segment1', segment1, '1470947453877')
 
-    synchronizer.fetch_splits
+    synchronizer.fetch_splits(0)
     expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.once
+  end
+
+  it 'fetch_splits - ' do
+    sync = subject.new(repositories, api_key, config, sdk_blocker, parameters)
+    stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+      .to_return(status: 200, body:
+    '{
+      "splits": [],
+      "since": -1,
+      "till": 1506703262918
+    }')
+
+    stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262918')
+      .to_return(status: 200, body:
+    '{
+      "splits": [],
+      "since": 1506703262918,
+      "till": 1506703262918
+    }')
+
+    stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262918&till=1506703262920')
+      .to_return(status: 200, body:
+    '{
+      "splits": [],
+      "since": 1506703262918,
+      "till": 1506703262921
+    }')
+
+    sync.fetch_splits(1_506_703_262_920)
+
+    expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.once
+    expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262918')).to have_been_made.times(9)
+    expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262918&till=1506703262920')).to have_been_made.once
   end
 
   it 'fetch_segment' do

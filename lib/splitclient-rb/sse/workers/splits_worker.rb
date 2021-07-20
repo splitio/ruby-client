@@ -60,7 +60,7 @@ module SplitIoClient
         def perform
           while (change_number = @queue.pop)
             @config.logger.debug("SplitsWorker change_number dequeue #{change_number}")
-            @synchronizer.fetch_splits
+            @synchronizer.fetch_splits(change_number)
           end
         end
 

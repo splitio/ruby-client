@@ -49,7 +49,8 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
 
     sleep(1)
 
-    expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262918')).to have_been_made.times(10)
+    expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.times(1)
+    expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262918')).to have_been_made.at_least_times(2)
   end
 
   context 'add change number to queue' do
