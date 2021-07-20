@@ -27,9 +27,9 @@ module SplitIoClient
           end
         end
 
-        def fetch_splits(cache_control_headers = false)
+        def fetch_splits(fetch_options = { cache_control_headers: false, till: nil })
           @semaphore.synchronize do
-            data = splits_since(@splits_repository.get_change_number, cache_control_headers)
+            data = splits_since(@splits_repository.get_change_number, fetch_options)
 
             data[:splits] && data[:splits].each do |split|
               add_split_unless_archived(split)
@@ -68,8 +68,8 @@ module SplitIoClient
           end
         end
 
-        def splits_since(since, cache_control_headers = false)
-          splits_api.since(since, cache_control_headers)
+        def splits_since(since, fetch_options = { cache_control_headers: false, till: nil })
+          splits_api.since(since, fetch_options)
         end
 
         def add_split_unless_archived(split)

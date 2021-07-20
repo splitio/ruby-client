@@ -113,6 +113,9 @@ module SplitIoClient
 
       @sdk_start_time = Time.now
 
+      @on_demand_fetch_retry_delay_ms = SplitConfig.default_on_demand_fetch_retry_delay_ms
+      @on_demand_fetch_max_retries = SplitConfig.default_on_demand_fetch_max_retries
+
       startup_log
     end
 
@@ -277,6 +280,17 @@ module SplitIoClient
     attr_accessor :telemetry_service_url
 
     attr_accessor :sdk_start_time
+
+    attr_accessor :on_demand_fetch_retry_delay_ms    
+    attr_accessor :on_demand_fetch_max_retries
+
+    def self.default_on_demand_fetch_retry_delay_ms
+      50
+    end
+
+    def self.default_on_demand_fetch_max_retries
+      10
+    end
 
     def self.default_impressions_mode
       :optimized
