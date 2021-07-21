@@ -3,8 +3,8 @@
 require 'spec_helper'
 require 'http_server_mock'
 
-describe SplitIoClient::SSE::EventSource::BackOff do
-  subject { SplitIoClient::SSE::EventSource::BackOff }
+describe SplitIoClient::Engine::BackOff do
+  subject { SplitIoClient::Engine::BackOff }
 
   let(:log) { StringIO.new }
 

@@ -96,8 +96,7 @@ describe SplitIoClient::Engine::Synchronizer do
     expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.once
   end
 
-  it 'fetch_splits - ' do
-    sync = subject.new(repositories, api_key, config, sdk_blocker, parameters)
+  it 'fetch_splits - with CDN bypassed' do
     stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
       .to_return(status: 200, body:
     '{
@@ -122,7 +121,7 @@ describe SplitIoClient::Engine::Synchronizer do
       "till": 1506703262921
     }')
 
-    sync.fetch_splits(1_506_703_262_920)
+    synchronizer.fetch_splits(1_506_703_262_920)
 
     expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.once
     expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262918')).to have_been_made.times(9)
@@ -130,10 +129,77 @@ describe SplitIoClient::Engine::Synchronizer do
   end
 
   it 'fetch_segment' do
-    mock_segment_changes('segment3', segment3, '-1')
+    stub_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=-1')
+      .to_return(status: 200, body:
+    '{
+      "name": "segment3",
+      "added": [],
+      "removed": [],
+      "since": -1,
+      "till": 111333
+    }')
 
-    synchronizer.fetch_segment('segment3')
+    stub_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=111333')
+      .to_return(status: 200, body:
+    '{
+      "name": "segment3",
+      "added": [],
+      "removed": [],
+      "since": 111333,
+      "till": 111333
+    }')
+
+    synchronizer.fetch_segment('segment3', 111_222)
     expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=-1')).to have_been_made.once
+    expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=111333')).to have_been_made.once
+  end
+
+  it 'fetch_segment - with CDN bypassed' do
+    stub_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=-1')
+      .to_return(status: 200, body:
+    '{
+      "name": "segment3",
+      "added": [],
+      "removed": [],
+      "since": -1,
+      "till": 111333
+    }')
+
+    stub_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=111333')
+      .to_return(status: 200, body:
+    '{
+      "name": "segment3",
+      "added": [],
+      "removed": [],
+      "since": 111333,
+      "till": 111333
+    }')
+
+    stub_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=111333&till=111555')
+      .to_return(status: 200, body:
+    '{
+      "name": "segment3",
+      "added": [],
+      "removed": [],
+      "since": 111555,
+      "till": 111555
+    }')
+
+    stub_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=111555&till=111555')
+      .to_return(status: 200, body:
+    '{
+      "name": "segment3",
+      "added": [],
+      "removed": [],
+      "since": 111555,
+      "till": 111555
+    }')
+
+    synchronizer.fetch_segment('segment3', 111_555)
+    expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=-1')).to have_been_made.once
+    expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=111333')).to have_been_made.times(10)
+    expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=111333&till=111555')).to have_been_made.once
+    expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=111555&till=111555')).to have_been_made.once
   end
 end
 
