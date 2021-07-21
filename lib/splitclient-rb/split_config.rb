@@ -113,7 +113,7 @@ module SplitIoClient
 
       @sdk_start_time = Time.now
 
-      @on_demand_fetch_retry_delay_ms = SplitConfig.default_on_demand_fetch_retry_delay_ms
+      @on_demand_fetch_retry_delay_seconds = SplitConfig.default_on_demand_fetch_retry_delay_seconds
       @on_demand_fetch_max_retries = SplitConfig.default_on_demand_fetch_max_retries
 
       startup_log
@@ -281,11 +281,11 @@ module SplitIoClient
 
     attr_accessor :sdk_start_time
 
-    attr_accessor :on_demand_fetch_retry_delay_ms    
+    attr_accessor :on_demand_fetch_retry_delay_seconds    
     attr_accessor :on_demand_fetch_max_retries
 
-    def self.default_on_demand_fetch_retry_delay_ms
-      50
+    def self.default_on_demand_fetch_retry_delay_seconds
+      0.05
     end
 
     def self.default_on_demand_fetch_max_retries

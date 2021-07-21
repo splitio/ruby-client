@@ -6,6 +6,10 @@ module SplitIoClient
       include SplitIoClient::Cache::Fetchers
       include SplitIoClient::Cache::Senders
 
+      ON_DEMAND_FETCH_BACKOFF_BASE_SECONDS = 10
+      ON_DEMAND_FETCH_BACKOFF_MAX_WAIT_SECONDS = 60
+      ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES = 10
+
       def initialize(
         repositories,
         api_key,
@@ -52,10 +56,42 @@ module SplitIoClient
         @segment_fetcher.stop_segments_thread
       end
 
-      def fetch_splits
+      def fetch_splits(target_change_number)
+        return if target_change_number <= @splits_repository.get_change_number.to_i
+
         fetch_options = { cache_control_headers: true, till: nil }
-        segment_names = @split_fetcher.fetch_splits(fetch_options)
-        @segment_fetcher.fetch_segments_if_not_exists(segment_names, true) unless segment_names.empty?
+
+        result = attempt_splits_sync(target_change_number,
+                                     fetch_options,
+                                     @config.on_demand_fetch_max_retries,
+                                     @config.on_demand_fetch_retry_delay_seconds,
+                                     false)
+
+        attempts = @config.on_demand_fetch_max_retries - result[:remaining_attempts]
+        if result[:success]
+          @segment_fetcher.fetch_segments_if_not_exists(result[:segment_names], true) unless result[:segment_names].empty?
+          @config.logger.debug("Refresh completed in #{attempts} attempts.") if @config.debug_enabled
+
+          return
+        end
+
+        fetch_options[:till] = target_change_number
+        result = attempt_splits_sync(target_change_number,
+                                     fetch_options,
+                                     ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES,
+                                     nil,
+                                     true)
+
+        attempts = @config.on_demand_fetch_max_retries - result[:remaining_attempts]
+
+        if result[:success]
+          @segment_fetcher.fetch_segments_if_not_exists(result[:segment_names], true) unless result[:segment_names].empty?
+          @config.logger.debug("Refresh completed bypassing the CDN in #{attempts} attempts.")
+        else
+          @config.logger.debug("No changes fetched after #{attempts} attempts with CDN bypassed.")
+        end
+      rescue StandardError => error
+        @config.log_found_exception(__method__.to_s, error)
       end
 
       def fetch_segment(name)
@@ -64,6 +100,23 @@ module SplitIoClient
       end
 
       private
+
+      def attempt_splits_sync(target_cn, fetch_options, max_retries, retry_delay_seconds, with_backoff)
+        remaining_attempts = max_retries
+        backoff = SSE::EventSource::BackOff.new(ON_DEMAND_FETCH_BACKOFF_BASE_SECONDS, 0, ON_DEMAND_FETCH_BACKOFF_MAX_WAIT_SECONDS) if with_backoff
+
+        loop do
+          remaining_attempts -= 1
+
+          segment_names = @split_fetcher.fetch_splits(fetch_options)
+
+          return split_sync_result(true, remaining_attempts, segment_names) if target_cn <= @splits_repository.get_change_number
+          return split_sync_result(false, remaining_attempts, segment_names) if remaining_attempts <= 0
+
+          delay = with_backoff ? backoff.interval : retry_delay_seconds
+          sleep(delay)
+        end
+      end
 
       def fetch_segments
         @segment_fetcher.fetch_segments
@@ -86,6 +139,10 @@ module SplitIoClient
 
       def start_telemetry_sync_task
         Telemetry::SyncTask.new(@config, @telemetry_synchronizer).call
+      end
+
+      def split_sync_result(success, remaining_attempts, segment_names)
+        { success: success, remaining_attempts: remaining_attempts, segment_names: segment_names }
       end
     end
   end

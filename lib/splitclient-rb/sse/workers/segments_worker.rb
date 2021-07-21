@@ -3,6 +3,7 @@
 module SplitIoClient
   module SSE
     module Workers
+      MAX_RETRIES_ALLOWED = 10
       class SegmentsWorker
         def initialize(synchronizer, config, segments_repository)
           @synchronizer = synchronizer
@@ -52,7 +53,7 @@ module SplitIoClient
             @config.logger.debug("SegmentsWorker change_number dequeue #{segment_name}, #{cn}")
 
             attempt = 0
-            while cn > @segments_repository.get_change_number(segment_name).to_i && attempt <= Workers::MAX_RETRIES_ALLOWED
+            while cn > @segments_repository.get_change_number(segment_name).to_i && attempt <= MAX_RETRIES_ALLOWED
               @synchronizer.fetch_segment(segment_name)
               attempt += 1
             end
