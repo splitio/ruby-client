@@ -85,13 +85,13 @@ require 'splitclient-rb/engine/models/split'
 require 'splitclient-rb/engine/models/label'
 require 'splitclient-rb/engine/models/treatment'
 require 'splitclient-rb/engine/auth_api_client'
+require 'splitclient-rb/engine/back_off'
 require 'splitclient-rb/engine/push_manager'
 require 'splitclient-rb/engine/sync_manager'
 require 'splitclient-rb/engine/synchronizer'
 require 'splitclient-rb/utilitites'
 
-# SSE 
-require 'splitclient-rb/sse/event_source/back_off'
+# SSE
 require 'splitclient-rb/sse/event_source/client'
 require 'splitclient-rb/sse/event_source/event_parser'
 require 'splitclient-rb/sse/event_source/event_types'

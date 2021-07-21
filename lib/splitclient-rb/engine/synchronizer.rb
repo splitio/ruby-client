@@ -134,7 +134,7 @@ module SplitIoClient
 
       def attempt_segment_sync(name, target_cn, fetch_options, max_retries, retry_delay_seconds, with_backoff)
         remaining_attempts = max_retries
-        backoff = SSE::EventSource::BackOff.new(ON_DEMAND_FETCH_BACKOFF_BASE_SECONDS, 0, ON_DEMAND_FETCH_BACKOFF_MAX_WAIT_SECONDS) if with_backoff
+        backoff = Engine::BackOff.new(ON_DEMAND_FETCH_BACKOFF_BASE_SECONDS, 0, ON_DEMAND_FETCH_BACKOFF_MAX_WAIT_SECONDS) if with_backoff
 
         loop do
           remaining_attempts -= 1
@@ -151,7 +151,7 @@ module SplitIoClient
 
       def attempt_splits_sync(target_cn, fetch_options, max_retries, retry_delay_seconds, with_backoff)
         remaining_attempts = max_retries
-        backoff = SSE::EventSource::BackOff.new(ON_DEMAND_FETCH_BACKOFF_BASE_SECONDS, 0, ON_DEMAND_FETCH_BACKOFF_MAX_WAIT_SECONDS) if with_backoff
+        backoff = Engine::BackOff.new(ON_DEMAND_FETCH_BACKOFF_BASE_SECONDS, 0, ON_DEMAND_FETCH_BACKOFF_MAX_WAIT_SECONDS) if with_backoff
 
         loop do
           remaining_attempts -= 1
