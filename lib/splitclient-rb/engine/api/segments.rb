@@ -16,6 +16,7 @@ module SplitIoClient
 
         names.each do |name|
           since = @segments_repository.get_change_number(name)
+
           loop do
             segment = fetch_segment_changes(name, since, fetch_options)
             @segments_repository.add_to_segment(segment)

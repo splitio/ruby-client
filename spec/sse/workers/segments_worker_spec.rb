@@ -68,7 +68,7 @@ describe SplitIoClient::SSE::Workers::SegmentsWorker do
 
       sleep(1)
 
-      expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=1470947453877')).to have_been_made.times(12)
+      expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=1470947453877')).to have_been_made.times(11)
     end
 
     it 'must not trigger fetch' do
