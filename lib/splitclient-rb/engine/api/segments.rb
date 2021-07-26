@@ -11,13 +11,14 @@ module SplitIoClient
         @telemetry_runtime_producer = telemetry_runtime_producer
       end
 
-      def fetch_segments_by_names(names, cache_control_headers = false)
+      def fetch_segments_by_names(names, fetch_options = { cache_control_headers: false, till: nil })
         return if names.nil? || names.empty?
 
         names.each do |name|
           since = @segments_repository.get_change_number(name)
+
           loop do
-            segment = fetch_segment_changes(name, since, cache_control_headers)
+            segment = fetch_segment_changes(name, since, fetch_options)
             @segments_repository.add_to_segment(segment)
 
             @config.split_logger.log_if_debug("Segment #{name} fetched before: #{since}, \
@@ -32,9 +33,12 @@ module SplitIoClient
 
       private
 
-      def fetch_segment_changes(name, since, cache_control_headers = false)
+      def fetch_segment_changes(name, since, fetch_options = { cache_control_headers: false, till: nil })
         start = Time.now
-        response = get_api("#{@config.base_uri}/segmentChanges/#{name}", @api_key, { since: since }, cache_control_headers)
+
+        params = { since: since }
+        params[:till] = fetch_options[:till] unless fetch_options[:till].nil?
+        response = get_api("#{@config.base_uri}/segmentChanges/#{name}", @api_key, params, fetch_options[:cache_control_headers])
 
         if response.success?
           segment = JSON.parse(response.body, symbolize_names: true)

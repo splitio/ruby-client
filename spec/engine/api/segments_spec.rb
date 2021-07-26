@@ -43,6 +43,28 @@ describe SplitIoClient::Api::Segments do
       expect(log.string).to include ':added=>["max", "dan"]'
     end
 
+    it 'returns fetch_segments - with till param' do
+      stub_request(:get, 'https://sdk.split.io/api/segmentChanges/employees?since=-1&till=222334')
+        .with(headers: {
+                'Accept' => '*/*',
+                'Accept-Encoding' => 'gzip',
+                'Authorization' => 'Bearer',
+                'Connection' => 'keep-alive',
+                'Keep-Alive' => '30',
+                'Splitsdkversion' => "#{config.language}-#{config.version}"
+              })
+        .to_return(status: 200, body: segments)
+
+      fetch_options = { cache_control_headers: false, till: 222_334 }
+      returned_segment = segments_api.send(:fetch_segment_changes, 'employees', -1, fetch_options)
+
+      expect(returned_segment[:name]).to eq 'employees'
+
+      expect(log.string).to include "'employees' segment retrieved."
+      expect(log.string).to include "'employees' 2 added keys"
+      expect(log.string).to include ':added=>["max", "dan"]'
+    end
+
     it 'returns fetch_segments - checking headers when cache_control_headers is true' do
       stub_request(:get, 'https://sdk.split.io/api/segmentChanges/employees?since=-1')
         .with(headers: {
@@ -56,7 +78,8 @@ describe SplitIoClient::Api::Segments do
               })
         .to_return(status: 200, body: segments)
 
-      returned_segment = segments_api.send(:fetch_segment_changes, 'employees', -1, true)
+      fetch_options = { cache_control_headers: true, till: nil }
+      returned_segment = segments_api.send(:fetch_segment_changes, 'employees', -1, fetch_options)
 
       expect(returned_segment[:name]).to eq 'employees'
 
