@@ -92,15 +92,114 @@ describe SplitIoClient::Engine::Synchronizer do
     mock_segment_changes('segment1', segment1, '-1')
     mock_segment_changes('segment1', segment1, '1470947453877')
 
-    synchronizer.fetch_splits
+    synchronizer.fetch_splits(0)
     expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.once
   end
 
-  it 'fetch_segment' do
-    mock_segment_changes('segment3', segment3, '-1')
+  it 'fetch_splits - with CDN bypassed' do
+    stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+      .to_return(status: 200, body:
+    '{
+      "splits": [],
+      "since": -1,
+      "till": 1506703262918
+    }')
 
-    synchronizer.fetch_segment('segment3')
+    stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262918')
+      .to_return(status: 200, body:
+    '{
+      "splits": [],
+      "since": 1506703262918,
+      "till": 1506703262918
+    }')
+
+    stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262918&till=1506703262920')
+      .to_return(status: 200, body:
+    '{
+      "splits": [],
+      "since": 1506703262918,
+      "till": 1506703262921
+    }')
+
+    synchronizer.fetch_splits(1_506_703_262_920)
+
+    expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.once
+    expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262918')).to have_been_made.times(9)
+    expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262918&till=1506703262920')).to have_been_made.once
+  end
+
+  it 'fetch_segment' do
+    stub_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=-1')
+      .to_return(status: 200, body:
+    '{
+      "name": "segment3",
+      "added": [],
+      "removed": [],
+      "since": -1,
+      "till": 111333
+    }')
+
+    stub_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=111333')
+      .to_return(status: 200, body:
+    '{
+      "name": "segment3",
+      "added": [],
+      "removed": [],
+      "since": 111333,
+      "till": 111333
+    }')
+
+    synchronizer.fetch_segment('segment3', 111_222)
     expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=-1')).to have_been_made.once
+    expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=111333')).to have_been_made.once
+  end
+
+  it 'fetch_segment - with CDN bypassed' do
+    stub_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=-1')
+      .to_return(status: 200, body:
+    '{
+      "name": "segment3",
+      "added": [],
+      "removed": [],
+      "since": -1,
+      "till": 111333
+    }')
+
+    stub_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=111333')
+      .to_return(status: 200, body:
+    '{
+      "name": "segment3",
+      "added": [],
+      "removed": [],
+      "since": 111333,
+      "till": 111333
+    }')
+
+    stub_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=111333&till=111555')
+      .to_return(status: 200, body:
+    '{
+      "name": "segment3",
+      "added": [],
+      "removed": [],
+      "since": 111555,
+      "till": 111555
+    }')
+
+    stub_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=111555&till=111555')
+      .to_return(status: 200, body:
+    '{
+      "name": "segment3",
+      "added": [],
+      "removed": [],
+      "since": 111555,
+      "till": 111555
+    }')
+
+    synchronizer.fetch_segment('segment3', 111_555)
+    expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=-1')).to have_been_made.once
+    expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=111333')).to have_been_made.times(10)
+    expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=111333&till=111555')).to have_been_made.once
+    expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=111555&till=111555')).to have_been_made.once
   end
 end
 

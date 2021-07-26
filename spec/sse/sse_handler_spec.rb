@@ -62,7 +62,7 @@ describe SplitIoClient::SSE::SSEHandler do
     mock_segment_changes('segment2', segment2, '1470947453878')
     mock_segment_changes('segment3', segment3, '-1')
 
-    synchronizer.fetch_splits
+    synchronizer.fetch_splits(0)
   end
 
   context 'SPLIT UPDATE event' do
@@ -212,7 +212,7 @@ describe SplitIoClient::SSE::SSEHandler do
 
         expect(action_event).to eq(SplitIoClient::Constants::PUSH_CONNECTED)
         expect(sse_handler.sse_client.connected?).to eq(true)
-        expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=1470947453877')).to have_been_made.times(12)
+        expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=1470947453877')).to have_been_made.times(11)
 
         sse_handler.sse_client.close
 

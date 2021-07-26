@@ -8,7 +8,7 @@ module SplitIoClient
         @sse_handler = sse_handler
         @auth_api_client = AuthApiClient.new(@config, telemetry_runtime_producer)
         @api_key = api_key
-        @back_off = SplitIoClient::SSE::EventSource::BackOff.new(@config.auth_retry_back_off_base, 1)
+        @back_off = Engine::BackOff.new(@config.auth_retry_back_off_base, 1)
         @telemetry_runtime_producer = telemetry_runtime_producer
       end
 

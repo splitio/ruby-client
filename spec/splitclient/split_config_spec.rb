@@ -31,6 +31,8 @@ describe SplitIoClient do
       expect(configs.ip_addresses_enabled).to eq default_ip
       expect(configs.machine_name).to eq SplitIoClient::SplitConfig.machine_hostname(default_ip, nil, :redis)
       expect(configs.machine_ip).to eq SplitIoClient::SplitConfig.machine_ip(default_ip, nil, :redis)
+      expect(configs.on_demand_fetch_retry_delay_seconds).to eq SplitIoClient::SplitConfig.default_on_demand_fetch_retry_delay_seconds
+      expect(configs.on_demand_fetch_max_retries).to eq SplitIoClient::SplitConfig.default_on_demand_fetch_max_retries
     end
 
     it 'stores and retrieves correctly the customized values' do
