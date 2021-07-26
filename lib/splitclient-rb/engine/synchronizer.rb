@@ -82,7 +82,7 @@ module SplitIoClient
                                      nil,
                                      true)
 
-        attempts = @config.on_demand_fetch_max_retries - result[:remaining_attempts]
+        attempts = ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES - result[:remaining_attempts]
 
         if result[:success]
           @segment_fetcher.fetch_segments_if_not_exists(result[:segment_names], true) unless result[:segment_names].empty?
