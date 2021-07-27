@@ -5,7 +5,8 @@ require 'spec_helper'
 describe SplitIoClient::Cache::Senders::EventsSender do
   RSpec.shared_examples 'Events Sender' do |cache_adapter|
     let(:config) { SplitIoClient::SplitConfig.new(cache_adapter: cache_adapter) }
-    let(:repository) { SplitIoClient::Cache::Repositories::EventsRepository.new(config, nil) }
+    let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
+    let(:repository) { SplitIoClient::Cache::Repositories::EventsRepository.new(config, nil, telemetry_runtime_producer) }
     let(:sender) { described_class.new(repository, config) }
 
     before :each do

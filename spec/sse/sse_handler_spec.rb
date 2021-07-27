@@ -25,24 +25,33 @@ describe SplitIoClient::SSE::SSEHandler do
   let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config) }
   let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
   let(:impressions_repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
-  let(:metrics_repository) { SplitIoClient::Cache::Repositories::MetricsRepository.new(config) }
-  let(:events_repository) { SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key) }
+  let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
+  let(:events_repository) { SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key, telemetry_runtime_producer) }
   let(:sdk_blocker) { SplitIoClient::Cache::Stores::SDKBlocker.new(splits_repository, segments_repository, config) }
-  let(:metrics) { SplitIoClient::Metrics.new(100, metrics_repository) }
-  let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, metrics, config, sdk_blocker) }
-  let(:segment_fetcher) { SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, metrics, config, sdk_blocker) }
-  let(:notification_manager_keeper) { SplitIoClient::SSE::NotificationManagerKeeper.new(config) }
+  let(:split_fetcher) do
+    SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, sdk_blocker, telemetry_runtime_producer)
+  end
+  let(:segment_fetcher) do
+    SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, sdk_blocker, telemetry_runtime_producer)
+  end
+  let(:notification_manager_keeper) { SplitIoClient::SSE::NotificationManagerKeeper.new(config, telemetry_runtime_producer) }
   let(:repositories) do
     {
       splits: splits_repository,
       segments: segments_repository,
       impressions: impressions_repository,
-      metrics: metrics_repository,
       events: events_repository
     }
   end
   let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
-  let(:parameters) { { split_fetcher: split_fetcher, segment_fetcher: segment_fetcher, imp_counter: impression_counter } }
+  let(:parameters) do
+    {
+      split_fetcher: split_fetcher,
+      segment_fetcher: segment_fetcher,
+      imp_counter: impression_counter,
+      telemetry_runtime_producer: telemetry_runtime_producer
+    }
+  end
   let(:synchronizer) { SplitIoClient::Engine::Synchronizer.new(repositories, api_key, config, sdk_blocker, parameters) }
 
   before do
@@ -53,7 +62,7 @@ describe SplitIoClient::SSE::SSEHandler do
     mock_segment_changes('segment2', segment2, '1470947453878')
     mock_segment_changes('segment3', segment3, '-1')
 
-    synchronizer.fetch_splits
+    synchronizer.fetch_splits(0)
   end
 
   context 'SPLIT UPDATE event' do
@@ -64,27 +73,24 @@ describe SplitIoClient::SSE::SSEHandler do
         end
 
         config.streaming_service_url = server.base_uri
-        connected_event = false
-        disconnect_event = false
-        sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository, notification_manager_keeper) do |handler|
-          handler.on_connected { connected_event = true }
-          handler.on_disconnect { disconnect_event = true }
+        action_event = ''
+        sse_handler = subject.new({ config: config, api_key: api_key }, synchronizer, repositories, notification_manager_keeper, telemetry_runtime_producer) do |handler|
+          handler.on_action { |action| action_event = action }
         end
 
-        sse_handler.start('token-test', 'channel-test')
         sse_handler.start_workers
+        connected = sse_handler.start('token-test', 'channel-test')
+        expect(connected).to eq(true)
 
         sleep(2)
 
+        expect(action_event).to eq(SplitIoClient::Constants::PUSH_CONNECTED)
         expect(sse_handler.sse_client.connected?).to eq(true)
         expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.once
-        expect(connected_event).to eq(true)
-        expect(disconnect_event).to eq(false)
 
         sse_handler.sse_client.close
 
         expect(sse_handler.sse_client.connected?).to eq(false)
-        expect(disconnect_event).to eq(true)
       end
     end
 
@@ -97,27 +103,24 @@ describe SplitIoClient::SSE::SSEHandler do
         splits_repository.set_change_number(1_506_703_262_916)
 
         config.streaming_service_url = server.base_uri
-        connected_event = false
-        disconnect_event = false
-        sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository, notification_manager_keeper) do |handler|
-          handler.on_connected { connected_event = true }
-          handler.on_disconnect { disconnect_event = true }
+        action_event = ''
+        sse_handler = subject.new({ config: config, api_key: api_key }, synchronizer, repositories, notification_manager_keeper, telemetry_runtime_producer) do |handler|
+          handler.on_action { |action| action_event = action }
         end
 
-        sse_handler.start('token-test', 'channel-test')
         sse_handler.start_workers
+        connected = sse_handler.start('token-test', 'channel-test')
+        expect(connected).to eq(true)
 
         sleep(2)
 
+        expect(action_event).to eq(SplitIoClient::Constants::PUSH_CONNECTED)
         expect(sse_handler.sse_client.connected?).to eq(true)
         expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262916')).to have_been_made.times(0)
-        expect(connected_event).to eq(true)
-        expect(disconnect_event).to eq(false)
 
         sse_handler.sse_client.close
 
         expect(sse_handler.sse_client.connected?).to eq(false)
-        expect(disconnect_event).to eq(true)
       end
     end
   end
@@ -130,31 +133,28 @@ describe SplitIoClient::SSE::SSEHandler do
         end
 
         config.streaming_service_url = server.base_uri
-        connected_event = false
-        disconnect_event = false
-        sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository, notification_manager_keeper) do |handler|
-          handler.on_connected { connected_event = true }
-          handler.on_disconnect { disconnect_event = true }
+        action_event = ''
+        sse_handler = subject.new({ config: config, api_key: api_key }, synchronizer, repositories, notification_manager_keeper, telemetry_runtime_producer) do |handler|
+          handler.on_action { |action| action_event = action }
         end
 
-        sse_handler.start('token-test', 'channel-test')
         sse_handler.start_workers
+        connected = sse_handler.start('token-test', 'channel-test')
+        expect(connected).to eq(true)
 
         sleep(2)
 
+        expect(action_event).to eq(SplitIoClient::Constants::PUSH_CONNECTED)
         split = splits_repository.get_split('FACUNDO_TEST')
         expect(split[:killed]).to be_truthy
         expect(split[:defaultTreatment]).to eq('on')
         expect(split[:changeNumber]).to eq(1_506_703_262_918)
         expect(sse_handler.sse_client.connected?).to eq(true)
         expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.once
-        expect(connected_event).to eq(true)
-        expect(disconnect_event).to eq(false)
 
         sse_handler.sse_client.close
 
         expect(sse_handler.sse_client.connected?).to eq(false)
-        expect(disconnect_event).to eq(true)
       end
     end
 
@@ -165,64 +165,58 @@ describe SplitIoClient::SSE::SSEHandler do
         end
 
         config.streaming_service_url = server.base_uri
-        connected_event = false
-        disconnect_event = false
-        sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository, notification_manager_keeper) do |handler|
-          handler.on_connected { connected_event = true }
-          handler.on_disconnect { disconnect_event = true }
+        action_event = ''
+        sse_handler = subject.new({ config: config, api_key: api_key }, synchronizer, repositories, notification_manager_keeper, telemetry_runtime_producer) do |handler|
+          handler.on_action { |action| action_event = action }
         end
 
-        sse_handler.start('token-test', 'channel-test')
         sse_handler.start_workers
+        connected = sse_handler.start('token-test', 'channel-test')
+        expect(connected).to eq(true)
 
         sleep(2)
 
+        expect(action_event).to eq(SplitIoClient::Constants::PUSH_CONNECTED)
         split = splits_repository.get_split('FACUNDO_TEST')
         expect(split[:killed]).to be_truthy
         expect(split[:defaultTreatment]).to eq('on')
         expect(split[:changeNumber]).to eq(1_506_703_262_916)
         expect(sse_handler.sse_client.connected?).to eq(true)
         expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262916')).to have_been_made.times(0)
-        expect(connected_event).to eq(true)
-        expect(disconnect_event).to eq(false)
 
         sse_handler.sse_client.close
 
         expect(sse_handler.sse_client.connected?).to eq(false)
-        expect(disconnect_event).to eq(true)
       end
     end
   end
 
   context 'SEGMENT UPDATE event' do
-    it 'must trigger fetch' do
+    it 'must trigger fetch - with retries' do
       mock_server do |server|
         server.setup_response('/') do |_, res|
           send_content(res, event_segment_update_must_fetch)
         end
 
         config.streaming_service_url = server.base_uri
-        connected_event = false
-        disconnect_event = false
-        sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository, notification_manager_keeper) do |handler|
-          handler.on_connected { connected_event = true }
-          handler.on_disconnect { disconnect_event = true }
+        action_event = ''
+        sse_handler = subject.new({ config: config, api_key: api_key }, synchronizer, repositories, notification_manager_keeper, telemetry_runtime_producer) do |handler|
+          handler.on_action { |action| action_event = action }
         end
 
-        sse_handler.start('token-test', 'channel-test')
         sse_handler.start_workers
+        connected = sse_handler.start('token-test', 'channel-test')
+        expect(connected).to eq(true)
 
         sleep(2)
 
+        expect(action_event).to eq(SplitIoClient::Constants::PUSH_CONNECTED)
         expect(sse_handler.sse_client.connected?).to eq(true)
-        expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=1470947453877')).to have_been_made.times(1)
-        expect(connected_event).to eq(true)
-        expect(disconnect_event).to eq(false)
+        expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=1470947453877')).to have_been_made.times(11)
 
         sse_handler.sse_client.close
 
         expect(sse_handler.sse_client.connected?).to eq(false)
-        expect(disconnect_event).to eq(true)
       end
     end
 
@@ -233,26 +227,24 @@ describe SplitIoClient::SSE::SSEHandler do
         end
 
         config.streaming_service_url = server.base_uri
-        connected_event = false
-        disconnect_event = false
-        sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository, notification_manager_keeper) do |handler|
-          handler.on_connected { connected_event = true }
-          handler.on_disconnect { disconnect_event = true }
+        action_event = ''
+        sse_handler = subject.new({ config: config, api_key: api_key }, synchronizer, repositories, notification_manager_keeper, telemetry_runtime_producer) do |handler|
+          handler.on_action { |action| action_event = action }
         end
-        sse_handler.start('token-test', 'channel-test')
+
         sse_handler.start_workers
+        connected = sse_handler.start('token-test', 'channel-test')
+        expect(connected).to eq(true)
 
         sleep(2)
 
+        expect(action_event).to eq(SplitIoClient::Constants::PUSH_CONNECTED)
         expect(sse_handler.sse_client.connected?).to eq(true)
         expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=1470947453877')).to have_been_made.once
-        expect(connected_event).to eq(true)
-        expect(disconnect_event).to eq(false)
 
         sse_handler.sse_client.close
 
         expect(sse_handler.sse_client.connected?).to eq(false)
-        expect(disconnect_event).to eq(true)
       end
     end
   end
@@ -265,26 +257,23 @@ describe SplitIoClient::SSE::SSEHandler do
         end
 
         config.streaming_service_url = server.base_uri
-        connected_event = false
-        disconnect_event = false
-        sse_handler = subject.new(config, synchronizer, splits_repository, segments_repository, notification_manager_keeper) do |handler|
-          handler.on_connected { connected_event = true }
-          handler.on_disconnect { disconnect_event = true }
+        action_event = ''
+        sse_handler = subject.new({ config: config, api_key: api_key }, synchronizer, repositories, notification_manager_keeper, telemetry_runtime_producer) do |handler|
+          handler.on_action { |action| action_event = action }
         end
 
-        sse_handler.start('token-test', 'channel-test')
         sse_handler.start_workers
+        connected = sse_handler.start('token-test', 'channel-test')
+        expect(connected).to eq(true)
 
         sleep(2)
 
+        expect(action_event).to eq(SplitIoClient::Constants::PUSH_CONNECTED)
         expect(sse_handler.sse_client.connected?).to eq(true)
-        expect(connected_event).to eq(true)
-        expect(disconnect_event).to eq(false)
 
         sse_handler.sse_client.close
 
         expect(sse_handler.sse_client.connected?).to eq(false)
-        expect(disconnect_event).to eq(true)
       end
     end
   end

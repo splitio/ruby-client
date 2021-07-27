@@ -1,5 +1,18 @@
 CHANGES
 
+7.3.1 (Jul 26, 2021)
+- Updated the synchronization flow to be more reliable in the event of an edge case generating delay in cache purge propagation, keeping the SDK cache properly synced.
+
+7.3.0 (Jul 12, 2021)
+- Updated SDK telemetry storage, metrics and updater to be more effective and send less often.
+- Fixed high cpu usage when api key is wrong.
+
+7.2.3 (Feb 24, 2021)
+- Fixed missing segment fetch after an SPLIT_UPDATE.
+- Updated streaming logic to support multiregion.
+- Updated sse client connection logic to read confirmation event.
+- Updated naming of retryable erros.
+
 7.2.2 (Dec 18, 2020)
 - Fixed issue: undefined local variable or method post_impressions_count
 

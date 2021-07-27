@@ -4,13 +4,13 @@ module SplitIoClient
       class SplitFetcher
         attr_reader :splits_repository
 
-        def initialize(splits_repository, api_key, metrics, config, sdk_blocker = nil)
+        def initialize(splits_repository, api_key, config, sdk_blocker, telemetry_runtime_producer)
           @splits_repository = splits_repository
           @api_key = api_key
-          @metrics = metrics
           @config = config
           @sdk_blocker = sdk_blocker
           @semaphore = Mutex.new
+          @telemetry_runtime_producer = telemetry_runtime_producer
         end
 
         def call
@@ -27,9 +27,9 @@ module SplitIoClient
           end
         end
 
-        def fetch_splits
+        def fetch_splits(fetch_options = { cache_control_headers: false, till: nil })
           @semaphore.synchronize do
-            data = splits_since(@splits_repository.get_change_number)
+            data = splits_since(@splits_repository.get_change_number, fetch_options)
 
             data[:splits] && data[:splits].each do |split|
               add_split_unless_archived(split)
@@ -41,11 +41,12 @@ module SplitIoClient
             @config.logger.debug("segments seen(#{data[:segment_names].length}): #{data[:segment_names].to_a}") if @config.debug_enabled
 
             @sdk_blocker.splits_ready!
-            true
+
+            data[:segment_names]
           end
         rescue StandardError => error
           @config.log_found_exception(__method__.to_s, error)
-          false
+          []
         end
 
         def stop_splits_thread
@@ -67,8 +68,8 @@ module SplitIoClient
           end
         end
 
-        def splits_since(since)
-          splits_api.since(since)
+        def splits_since(since, fetch_options = { cache_control_headers: false, till: nil })
+          splits_api.since(since, fetch_options)
         end
 
         def add_split_unless_archived(split)
@@ -94,7 +95,7 @@ module SplitIoClient
         end
 
         def splits_api
-          @splits_api ||= SplitIoClient::Api::Splits.new(@api_key, @metrics, @config)
+          @splits_api ||= SplitIoClient::Api::Splits.new(@api_key, @config, @telemetry_runtime_producer)
         end
       end
     end

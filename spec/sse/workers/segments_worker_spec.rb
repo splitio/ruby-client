@@ -16,15 +16,14 @@ describe SplitIoClient::SSE::Workers::SegmentsWorker do
   let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config) }
   let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
   let(:impressions_repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
-  let(:metrics_repository) { SplitIoClient::Cache::Repositories::MetricsRepository.new(config) }
-  let(:events_repository) { SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key) }
+  let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
+  let(:events_repository) { SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key, telemetry_runtime_producer) }
   let(:sdk_blocker) { SplitIoClient::Cache::Stores::SDKBlocker.new(splits_repository, segments_repository, config) }
-  let(:metrics) { SplitIoClient::Metrics.new(100, metrics_repository) }
-  let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, metrics, config, sdk_blocker) }
-  let(:segment_fetcher) { SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, metrics, config, sdk_blocker) }
-  let(:repositories) { { splits: splits_repository, segments: segments_repository, metrics: metrics_repository } }
+  let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, sdk_blocker, telemetry_runtime_producer) }
+  let(:segment_fetcher) { SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, sdk_blocker, telemetry_runtime_producer) }
+  let(:repositories) { { splits: splits_repository, segments: segments_repository } }
   let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
-  let(:params) { { split_fetcher: split_fetcher, segment_fetcher: segment_fetcher, imp_counter: impression_counter } }
+  let(:params) { { split_fetcher: split_fetcher, segment_fetcher: segment_fetcher, imp_counter: impression_counter, telemetry_runtime_producer: telemetry_runtime_producer } }
   let(:synchronizer) { SplitIoClient::Engine::Synchronizer.new(repositories, api_key, config, sdk_blocker, params) }
 
   before do
@@ -41,6 +40,16 @@ describe SplitIoClient::SSE::Workers::SegmentsWorker do
 
   context 'add segment name to queue' do
     it 'must trigger fetch' do
+      stub_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=1470947453877')
+        .to_return(status: 200, body:
+      '{
+        "name": "segment1",
+        "added": [],
+        "removed": [],
+        "since": 1470947453878,
+        "till": 1470947453878
+      }')
+
       worker = subject.new(synchronizer, config, segments_repository)
 
       worker.start
@@ -49,6 +58,17 @@ describe SplitIoClient::SSE::Workers::SegmentsWorker do
       sleep(1)
 
       expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=1470947453877')).to have_been_made.times(2)
+    end
+
+    it 'must trigger fetch - with retries' do
+      worker = subject.new(synchronizer, config, segments_repository)
+
+      worker.start
+      worker.add_to_queue(1_506_703_262_918, 'segment1')
+
+      sleep(1)
+
+      expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=1470947453877')).to have_been_made.times(11)
     end
 
     it 'must not trigger fetch' do

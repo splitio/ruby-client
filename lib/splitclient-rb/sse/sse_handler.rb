@@ -5,19 +5,22 @@ module SplitIoClient
     class SSEHandler
       attr_reader :sse_client
 
-      def initialize(config, synchronizer, splits_repository, segments_repository, notification_manager_keeper)
-        @config = config
+      def initialize(metadata,
+                     synchronizer,
+                     repositories,
+                     notification_manager_keeper,
+                     telemetry_runtime_producer)
+        @config = metadata[:config]
         @notification_manager_keeper = notification_manager_keeper
-        @splits_worker = SplitIoClient::SSE::Workers::SplitsWorker.new(synchronizer, config, splits_repository)
-        @segments_worker = SplitIoClient::SSE::Workers::SegmentsWorker.new(synchronizer, config, segments_repository)
-        @notification_processor = SplitIoClient::SSE::NotificationProcessor.new(config, @splits_worker, @segments_worker)
-        @sse_client = SSE::EventSource::Client.new(@config) do |client|
+        @splits_worker = SplitIoClient::SSE::Workers::SplitsWorker.new(synchronizer, @config, repositories[:splits])
+        @segments_worker = SplitIoClient::SSE::Workers::SegmentsWorker.new(synchronizer, @config, repositories[:segments])
+        @notification_processor = SplitIoClient::SSE::NotificationProcessor.new(@config, @splits_worker, @segments_worker)
+        @sse_client = SSE::EventSource::Client.new(@config, metadata[:api_key], telemetry_runtime_producer) do |client|
           client.on_event { |event| handle_incoming_message(event) }
-          client.on_connected { process_connected }
-          client.on_disconnect { |reconnect| process_disconnect(reconnect) }
+          client.on_action { |action| process_action(action) }
         end
 
-        @on = { connected: ->(_) {}, disconnect: ->(_) {} }
+        @on = { action: ->(_) {} }
 
         yield self if block_given?
       end
@@ -48,22 +51,14 @@ module SplitIoClient
         @segments_worker.stop
       end
 
-      def on_connected(&action)
-        @on[:connected] = action
-      end
-
-      def on_disconnect(&action)
-        @on[:disconnect] = action
-      end
-
-      def process_disconnect(reconnect)
-        @on[:disconnect].call(reconnect)
+      def on_action(&action)
+        @on[:action] = action
       end
 
       private
 
-      def process_connected
-        @on[:connected].call
+      def process_action(action)
+        @on[:action].call(action)
       end
 
       def handle_incoming_message(notification)

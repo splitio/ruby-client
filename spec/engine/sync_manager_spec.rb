@@ -22,9 +22,8 @@ describe SplitIoClient::Engine::SyncManager do
   let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config) }
   let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
   let(:impressions_repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
-  let(:metrics_repository) { SplitIoClient::Cache::Repositories::MetricsRepository.new(config) }
-  let(:metrics) { SplitIoClient::Metrics.new(100, metrics_repository) }
-  let(:events_repository) { SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key) }
+  let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
+  let(:events_repository) { SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key, telemetry_runtime_producer) }
   let(:sdk_blocker) { SplitIoClient::Cache::Stores::SDKBlocker.new(splits_repository, segments_repository, config) }
   let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
   let(:repositories) do
@@ -32,18 +31,26 @@ describe SplitIoClient::Engine::SyncManager do
       splits: splits_repository,
       segments: segments_repository,
       impressions: impressions_repository,
-      metrics: metrics_repository,
       events: events_repository
     }
   end
   let(:sync_params) do
     {
-      split_fetcher: SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, metrics, config, sdk_blocker),
-      segment_fetcher: SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, metrics, config, sdk_blocker),
-      imp_counter: impression_counter
+      split_fetcher: SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, sdk_blocker, telemetry_runtime_producer),
+      segment_fetcher: SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, sdk_blocker, telemetry_runtime_producer),
+      imp_counter: impression_counter,
+      telemetry_runtime_producer: telemetry_runtime_producer
     }
   end
   let(:synchronizer) { SplitIoClient::Engine::Synchronizer.new(repositories, api_key, config, sdk_blocker, sync_params) }
+
+  let(:init_producer) { SplitIoClient::Telemetry::InitProducer.new(config) }
+  let(:init_consumer) { SplitIoClient::Telemetry::InitConsumer.new(config) }
+  let(:runtime_consumer) { SplitIoClient::Telemetry::RuntimeConsumer.new(config) }
+  let(:evaluation_consumer) { SplitIoClient::Telemetry::EvaluationConsumer.new(config) }
+  let(:telemetry_consumers) { { init: init_consumer, runtime: runtime_consumer, evaluation: evaluation_consumer } }
+  let(:telemetry_api) { SplitIoClient::Api::TelemetryApi.new(config, api_key, telemetry_runtime_producer) }
+  let(:telemetry_synchronizer) { SplitIoClient::Telemetry::Synchronizer.new(config, telemetry_consumers, init_producer, repositories, telemetry_api) }
 
   before do
     mock_split_changes_with_since(splits, '-1')
@@ -64,7 +71,7 @@ describe SplitIoClient::Engine::SyncManager do
 
       config.streaming_service_url = server.base_uri
 
-      sync_manager = subject.new(repositories, api_key, config, synchronizer)
+      sync_manager = subject.new(repositories, api_key, config, synchronizer, telemetry_runtime_producer, sdk_blocker, telemetry_synchronizer)
       sync_manager.start
 
       sleep(2)
@@ -83,7 +90,7 @@ describe SplitIoClient::Engine::SyncManager do
       config.streaming_service_url = 'https://fake-sse.io'
       config.connection_timeout = 1
 
-      sync_manager = subject.new(repositories, api_key, config, synchronizer)
+      sync_manager = subject.new(repositories, api_key, config, synchronizer, telemetry_runtime_producer, sdk_blocker, telemetry_synchronizer)
       sync_manager.start
 
       sleep(2)
@@ -93,7 +100,7 @@ describe SplitIoClient::Engine::SyncManager do
     end
   end
 
-  it 'start sync manager receiving control message, must switch to pollingbundl' do
+  it 'start sync manager receiving control message, must switch to polling' do
     mock_server do |server|
       server.setup_response('/') do |_, res|
         send_content(res, event_control)
@@ -101,7 +108,7 @@ describe SplitIoClient::Engine::SyncManager do
 
       config.streaming_service_url = server.base_uri
 
-      sync_manager = subject.new(repositories, api_key, config, synchronizer)
+      sync_manager = subject.new(repositories, api_key, config, synchronizer, telemetry_runtime_producer, sdk_blocker, telemetry_synchronizer)
       sync_manager.start
 
       sleep(2)

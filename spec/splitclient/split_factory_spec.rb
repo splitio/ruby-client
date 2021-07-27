@@ -134,6 +134,12 @@ describe SplitIoClient::SplitFactory do
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
         .to_return(status: 200, body: [])
 
+      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/usage')
+        .to_return(status: 200, body: 'ok')
+
+      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
+        .to_return(status: 200, body: 'ok')
+
       factory = described_class.new('browser_key', options)
       factory.client.destroy
       factory.client.get_treatment('key', 'split')
@@ -150,6 +156,12 @@ describe SplitIoClient::SplitFactory do
 
     before :each do
       SplitIoClient.split_factory_registry = SplitIoClient::SplitFactoryRegistry.new
+
+      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/usage')
+        .to_return(status: 200, body: 'ok')
+
+      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
+        .to_return(status: 200, body: 'ok')
     end
 
     it 'logs warnings stating number of factories' do
@@ -179,6 +191,28 @@ describe SplitIoClient::SplitFactory do
       factory.client.destroy
 
       expect(SplitIoClient.split_factory_registry.number_of_factories_for('API_KEY')).to eq 0
+    end
+
+    it 'active and redundant factories' do
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+        .to_return(status: 200, body: [])
+
+      described_class.new('API_KEY', options)
+
+      described_class.new('ANOTHER_API_KEY', options)
+      described_class.new('ANOTHER_API_KEY', options)
+
+      described_class.new('ANOTHER_API_KEY-2', options)
+      described_class.new('ANOTHER_API_KEY-2', options)
+      described_class.new('ANOTHER_API_KEY-2', options)
+
+      described_class.new('API_KEY-2', options)
+      described_class.new('API_KEY-2', options)
+      described_class.new('API_KEY-2', options)
+      described_class.new('API_KEY-2', options)
+
+      expect(SplitIoClient.split_factory_registry.active_factories).to be(4)
+      expect(SplitIoClient.split_factory_registry.redundant_active_factories).to be(6)
     end
   end
 end

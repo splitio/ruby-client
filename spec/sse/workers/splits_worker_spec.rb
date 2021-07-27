@@ -16,29 +16,55 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
   let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config) }
   let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
   let(:impressions_repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
-  let(:metrics_repository) { SplitIoClient::Cache::Repositories::MetricsRepository.new(config) }
-  let(:events_repository) { SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key) }
+  let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
+  let(:events_repository) { SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key, telemetry_runtime_producer) }
   let(:sdk_blocker) { SplitIoClient::Cache::Stores::SDKBlocker.new(splits_repository, segments_repository, config) }
-  let(:metrics) { SplitIoClient::Metrics.new(100, metrics_repository) }
-  let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, metrics, config, sdk_blocker) }
-  let(:segment_fetcher) { SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, metrics, config, sdk_blocker) }
-  let(:repositories) { { splits: splits_repository, segments: segments_repository, metrics: metrics_repository } }
+  let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, sdk_blocker, telemetry_runtime_producer) }
+  let(:segment_fetcher) { SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, sdk_blocker, telemetry_runtime_producer) }
+  let(:repositories) { { splits: splits_repository, segments: segments_repository } }
   let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
-  let(:params) { { split_fetcher: split_fetcher, segment_fetcher: segment_fetcher, imp_counter: impression_counter } }
+  let(:params) { { split_fetcher: split_fetcher, segment_fetcher: segment_fetcher, imp_counter: impression_counter, telemetry_runtime_producer: telemetry_runtime_producer } }
   let(:synchronizer) { SplitIoClient::Engine::Synchronizer.new(repositories, api_key, config, sdk_blocker, params) }
 
-  before do
-    mock_split_changes(splits)
-    mock_segment_changes('segment1', segment1, '-1')
-    mock_segment_changes('segment1', segment1, '1470947453877')
-    mock_segment_changes('segment2', segment2, '-1')
-    mock_segment_changes('segment2', segment2, '1470947453878')
-    mock_segment_changes('segment3', segment3, '-1')
+  it 'add change number - must tigger fetcch - with retries' do
+    stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+      .to_return(status: 200, body:
+    '{
+      "splits": [],
+      "since": -1,
+      "till": 1506703262918
+    }')
 
-    split_fetcher.fetch_splits
+    stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262918')
+      .to_return(status: 200, body:
+    '{
+      "splits": [],
+      "since": 1506703262918,
+      "till": 1506703262918
+    }')
+
+    worker = subject.new(synchronizer, config, splits_repository)
+    worker.start
+    worker.add_to_queue(1_506_703_262_919)
+
+    sleep(1)
+
+    expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.times(1)
+    expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262918')).to have_been_made.at_least_times(2)
   end
 
   context 'add change number to queue' do
+    before do
+      mock_split_changes(splits)
+      mock_segment_changes('segment1', segment1, '-1')
+      mock_segment_changes('segment1', segment1, '1470947453877')
+      mock_segment_changes('segment2', segment2, '-1')
+      mock_segment_changes('segment2', segment2, '1470947453878')
+      mock_segment_changes('segment3', segment3, '-1')
+
+      split_fetcher.fetch_splits
+    end
+
     it 'must trigger fetch' do
       worker = subject.new(synchronizer, config, splits_repository)
       worker.start
@@ -71,6 +97,17 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
   end
 
   context 'kill split notification' do
+    before do
+      mock_split_changes(splits)
+      mock_segment_changes('segment1', segment1, '-1')
+      mock_segment_changes('segment1', segment1, '1470947453877')
+      mock_segment_changes('segment2', segment2, '-1')
+      mock_segment_changes('segment2', segment2, '1470947453878')
+      mock_segment_changes('segment3', segment3, '-1')
+
+      split_fetcher.fetch_splits
+    end
+
     it 'must kill split and trigger fetch' do
       worker = subject.new(synchronizer, config, splits_repository)
 

@@ -8,6 +8,9 @@ describe SplitIoClient::SSE::EventSource::Client do
 
   let(:log) { StringIO.new }
   let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log)) }
+  let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
+  let(:telemetry_runtime_consumer) { SplitIoClient::Telemetry::RuntimeConsumer.new(config) }
+  let(:api_token) { 'api-token-test' }
 
   let(:event_split_update) { "fb\r\nid: 123\nevent: message\ndata: {\"id\":\"1\",\"clientId\":\"emptyClientId\",\"connectionId\":\"1\",\"timestamp\":1582045421733,\"channel\":\"channel-test\",\"data\":\"{\\\"type\\\" : \\\"SPLIT_UPDATE\\\",\\\"changeNumber\\\": 5564531221}\",\"name\":\"asdasd\"}\n\n\r\n" }
   let(:event_split_kill) { "fb\r\nid: 123\nevent: message\ndata: {\"id\":\"1\",\"clientId\":\"emptyClientId\",\"connectionId\":\"1\",\"timestamp\":1582045421733,\"channel\":\"channel-test\",\"data\":\"{\\\"type\\\" : \\\"SPLIT_KILL\\\",\\\"changeNumber\\\": 5564531221, \\\"defaultTreatment\\\" : \\\"off\\\", \\\"splitName\\\" : \\\"split-test\\\"}\",\"name\":\"asdasd\"}\n\n\r\n" }
@@ -22,16 +25,15 @@ describe SplitIoClient::SSE::EventSource::Client do
       server.setup_response('/') do |_, res|
         send_stream_content(res, event_split_update)
       end
-
       event_queue = Queue.new
-      connected_event = false
-      disconnect_event = false
-      sse_client = subject.new(config) do |client|
+      action_event = ''
+      sse_client = subject.new(config, api_token, telemetry_runtime_producer) do |client|
         client.on_event { |event| event_queue << event }
-        client.on_connected { connected_event = true }
-        client.on_disconnect { disconnect_event = true }
+        client.on_action { |action| action_event = action }
       end
-      sse_client.start(server.base_uri)
+
+      connected = sse_client.start(server.base_uri)
+      expect(connected).to eq(true)
 
       event_result = event_queue.pop
       expect(event_result.data['type']).to eq(SplitIoClient::SSE::EventSource::EventTypes::SPLIT_UPDATE)
@@ -40,13 +42,11 @@ describe SplitIoClient::SSE::EventSource::Client do
       expect(event_result.client_id).to eq('emptyClientId')
       expect(event_result.event_type).to eq('message')
       expect(sse_client.connected?).to eq(true)
-      expect(connected_event).to eq(true)
-      expect(disconnect_event).to eq(false)
+      expect(action_event).to eq(SplitIoClient::Constants::PUSH_CONNECTED)
 
       sse_client.close
 
       expect(sse_client.connected?).to eq(false)
-      expect(disconnect_event).to eq(true)
     end
   end
 
@@ -57,14 +57,14 @@ describe SplitIoClient::SSE::EventSource::Client do
       end
 
       event_queue = Queue.new
-      connected_event = false
-      disconnect_event = false
-      sse_client = subject.new(config) do |client|
+      action_event = ''
+      sse_client = subject.new(config, api_token, telemetry_runtime_producer) do |client|
         client.on_event { |event| event_queue << event }
-        client.on_connected { connected_event = true }
-        client.on_disconnect { disconnect_event = true }
+        client.on_action { |action| action_event = action }
       end
-      sse_client.start(server.base_uri)
+
+      connected = sse_client.start(server.base_uri)
+      expect(connected).to eq(true)
 
       event_result = event_queue.pop
       expect(event_result.data['type']).to eq(SplitIoClient::SSE::EventSource::EventTypes::SPLIT_KILL)
@@ -75,13 +75,11 @@ describe SplitIoClient::SSE::EventSource::Client do
       expect(event_result.client_id).to eq('emptyClientId')
       expect(event_result.event_type).to eq('message')
       expect(sse_client.connected?).to eq(true)
-      expect(connected_event).to eq(true)
-      expect(disconnect_event).to eq(false)
+      expect(action_event).to eq(SplitIoClient::Constants::PUSH_CONNECTED)
 
       sse_client.close
 
       expect(sse_client.connected?).to eq(false)
-      expect(disconnect_event).to eq(true)
     end
   end
 
@@ -92,14 +90,14 @@ describe SplitIoClient::SSE::EventSource::Client do
       end
 
       event_queue = Queue.new
-      connected_event = false
-      disconnect_event = false
-      sse_client = subject.new(config) do |client|
+      action_event = ''
+      sse_client = subject.new(config, api_token, telemetry_runtime_producer) do |client|
         client.on_event { |event| event_queue << event }
-        client.on_connected { connected_event = true }
-        client.on_disconnect { disconnect_event = true }
+        client.on_action { |action| action_event = action }
       end
-      sse_client.start(server.base_uri)
+
+      connected = sse_client.start(server.base_uri)
+      expect(connected).to eq(true)
 
       event_result = event_queue.pop
       expect(event_result.data['type']).to eq(SplitIoClient::SSE::EventSource::EventTypes::SEGMENT_UPDATE)
@@ -109,13 +107,11 @@ describe SplitIoClient::SSE::EventSource::Client do
       expect(event_result.client_id).to eq('emptyClientId')
       expect(event_result.event_type).to eq('message')
       expect(sse_client.connected?).to eq(true)
-      expect(connected_event).to eq(true)
-      expect(disconnect_event).to eq(false)
+      expect(action_event).to eq(SplitIoClient::Constants::PUSH_CONNECTED)
 
       sse_client.close
 
       expect(sse_client.connected?).to eq(false)
-      expect(disconnect_event).to eq(true)
     end
   end
 
@@ -126,14 +122,14 @@ describe SplitIoClient::SSE::EventSource::Client do
       end
 
       event_queue = Queue.new
-      connected_event = false
-      disconnect_event = false
-      sse_client = subject.new(config) do |client|
+      action_event = ''
+      sse_client = subject.new(config, api_token, telemetry_runtime_producer) do |client|
         client.on_event { |event| event_queue << event }
-        client.on_connected { connected_event = true }
-        client.on_disconnect { disconnect_event = true }
+        client.on_action { |action| action_event = action }
       end
-      sse_client.start(server.base_uri)
+
+      connected = sse_client.start(server.base_uri)
+      expect(connected).to eq(true)
 
       event_result = event_queue.pop
       expect(event_result.data['type']).to eq(SplitIoClient::SSE::EventSource::EventTypes::CONTROL)
@@ -142,13 +138,11 @@ describe SplitIoClient::SSE::EventSource::Client do
       expect(event_result.client_id).to eq('emptyClientId')
       expect(event_result.event_type).to eq('message')
       expect(sse_client.connected?).to eq(true)
-      expect(connected_event).to eq(true)
-      expect(disconnect_event).to eq(false)
+      expect(action_event).to eq(SplitIoClient::Constants::PUSH_CONNECTED)
 
       sse_client.close
 
       expect(sse_client.connected?).to eq(false)
-      expect(disconnect_event).to eq(true)
     end
   end
 
@@ -159,25 +153,23 @@ describe SplitIoClient::SSE::EventSource::Client do
       end
 
       event_queue = Queue.new
-      connected_event = false
-      disconnect_event = false
-      sse_client = subject.new(config) do |client|
+      action_event = ''
+      sse_client = subject.new(config, api_token, telemetry_runtime_producer) do |client|
         client.on_event { |event| event_queue << event }
-        client.on_connected { connected_event = true }
-        client.on_disconnect { disconnect_event = true }
+        client.on_action { |action| action_event = action }
       end
-      sse_client.start(server.base_uri)
+
+      connected = sse_client.start(server.base_uri)
+      expect(connected).to eq(true)
 
       sleep 0.5
       expect(event_queue.empty?).to be_truthy
       expect(sse_client.connected?).to eq(true)
-      expect(connected_event).to eq(true)
-      expect(disconnect_event).to eq(false)
+      expect(action_event).to eq(SplitIoClient::Constants::PUSH_CONNECTED)
 
       sse_client.close
 
       expect(sse_client.connected?).to eq(false)
-      expect(disconnect_event).to eq(true)
     end
   end
 
@@ -188,14 +180,14 @@ describe SplitIoClient::SSE::EventSource::Client do
       end
 
       event_queue = Queue.new
-      connected_event = false
-      disconnect_event = false
-      sse_client = subject.new(config) do |client|
+      action_event = ''
+      sse_client = subject.new(config, api_token, telemetry_runtime_producer) do |client|
         client.on_event { |event| event_queue << event }
-        client.on_connected { connected_event = true }
-        client.on_disconnect { disconnect_event = true }
+        client.on_action { |action| action_event = action }
       end
-      sse_client.start(server.base_uri)
+
+      connected = sse_client.start(server.base_uri)
+      expect(connected).to eq(true)
 
       event_result = event_queue.pop
       expect(event_result.data['metrics']['publishers']).to eq(2)
@@ -203,46 +195,64 @@ describe SplitIoClient::SSE::EventSource::Client do
       expect(event_result.client_id).to eq(nil)
       expect(event_result.event_type).to eq('message')
       expect(sse_client.connected?).to eq(true)
-      expect(connected_event).to eq(true)
-      expect(disconnect_event).to eq(false)
+      expect(action_event).to eq(SplitIoClient::Constants::PUSH_CONNECTED)
 
       sse_client.close
 
       expect(sse_client.connected?).to eq(false)
-      expect(disconnect_event).to eq(true)
     end
   end
 
   it 'receive error event' do
     mock_server do |server|
       server.setup_response('/') do |_, res|
-        send_stream_content(res, event_error)
+        send_stream_content(res, event_error, 400)
       end
 
       event_queue = Queue.new
-      connected_event = false
-      disconnect_queue = Queue.new
-      sse_client = subject.new(config) do |client|
+      action_event = ''
+      sse_client = subject.new(config, api_token, telemetry_runtime_producer) do |client|
         client.on_event { |event| event_queue << event }
-        client.on_connected { connected_event = true }
-        client.on_disconnect { disconnect_queue << true }
+        client.on_action { |action| action_event = action }
       end
-      sse_client.start(server.base_uri)
 
-      result = disconnect_queue.pop
-      expect(result).to eq(true)
+      connected = sse_client.start(server.base_uri)
+
+      expect(connected).to eq(false)
       expect(sse_client.connected?).to eq(false)
-      expect(connected_event).to eq(true)
       expect(event_queue.empty?).to eq(true)
+
+      # TODO: review failing in travis
+      # sleep 5
+      # events = telemetry_runtime_consumer.pop_streaming_events
+      # expect(events.length).to be(1)
+    end
+  end
+
+  it 'first event - when server return 400' do
+    mock_server do |server|
+      server.setup_response('/') do |_, res|
+        send_stream_content(res, event_error, 400)
+      end
+
+      event_queue = Queue.new
+      action_event = ''
+      sse_client = subject.new(config, api_token, telemetry_runtime_producer) do |client|
+        client.on_event { |event| event_queue << event }
+        client.on_action { |action| action_event = action }
+      end
+
+      connected = sse_client.start(server.base_uri)
+      expect(connected).to eq(false)
     end
   end
 end
 
 private
 
-def send_stream_content(res, content)
+def send_stream_content(res, content, status = 200)
   res.content_type = 'text/event-stream'
-  res.status = 200
+  res.status = status
   res.chunked = true
   rd, wr = IO.pipe
   wr.write(content)

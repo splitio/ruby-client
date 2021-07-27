@@ -28,24 +28,24 @@ module SplitIoClient
 
       raise 'Invalid SDK mode' unless valid_mode
 
+      build_telemetry_components
+
       @splits_repository = SplitsRepository.new(@config)
       @segments_repository = SegmentsRepository.new(@config)
       @impressions_repository = ImpressionsRepository.new(@config)
-      @events_repository = EventsRepository.new(@config, @api_key)
-      @metrics_repository = MetricsRepository.new(@config)
+      @events_repository = EventsRepository.new(@config, @api_key, @runtime_producer)
       @sdk_blocker = SDKBlocker.new(@splits_repository, @segments_repository, @config)
-      @metrics = Metrics.new(100, @metrics_repository)
       @impression_counter = SplitIoClient::Engine::Common::ImpressionCounter.new
-      @impressions_manager = SplitIoClient::Engine::Common::ImpressionManager.new(@config, @impressions_repository, @impression_counter)
+      @impressions_manager = SplitIoClient::Engine::Common::ImpressionManager.new(@config, @impressions_repository, @impression_counter, @runtime_producer)
+      @telemetry_api = SplitIoClient::Api::TelemetryApi.new(@config, @api_key, @runtime_producer)
+      @telemetry_synchronizer = Telemetry::Synchronizer.new(@config, @telemetry_consumers, @init_producer, repositories, @telemetry_api)
 
       start!
 
-      @client = SplitClient.new(@api_key, @metrics, @splits_repository, @segments_repository, @impressions_repository, @metrics_repository, @events_repository, @sdk_blocker, @config, @impressions_manager)
+      @client = SplitClient.new(@api_key, repositories, @sdk_blocker, @config, @impressions_manager, @evaluation_producer)
       @manager = SplitManager.new(@splits_repository, @sdk_blocker, @config)
 
       validate_api_key
-
-      RedisMetricsFixer.new(@metrics_repository, @config).call
 
       register_factory
     end
@@ -54,12 +54,18 @@ module SplitIoClient
       if @config.localhost_mode
         start_localhost_components
       else
-        split_fetcher = SplitFetcher.new(@splits_repository, @api_key, @metrics, config, @sdk_blocker)
-        segment_fetcher = SegmentFetcher.new(@segments_repository, @api_key, @metrics, config, @sdk_blocker)
-        params = { split_fetcher: split_fetcher, segment_fetcher: segment_fetcher, imp_counter: @impression_counter }
+        split_fetcher = SplitFetcher.new(@splits_repository, @api_key, config, @sdk_blocker, @runtime_producer)
+        segment_fetcher = SegmentFetcher.new(@segments_repository, @api_key, config, @sdk_blocker, @runtime_producer)
+        params = { 
+          split_fetcher: split_fetcher,
+          segment_fetcher: segment_fetcher,
+          imp_counter: @impression_counter,
+          telemetry_runtime_producer: @runtime_producer,
+          telemetry_synchronizer: @telemetry_synchronizer
+        }
 
         synchronizer = SplitIoClient::Engine::Synchronizer.new(repositories, @api_key, @config, @sdk_blocker, params)
-        SplitIoClient::Engine::SyncManager.new(repositories, @api_key, @config, synchronizer).start
+        SplitIoClient::Engine::SyncManager.new(repositories, @api_key, @config, synchronizer, @runtime_producer, @sdk_blocker, @telemetry_synchronizer).start
       end
     end
 
@@ -135,7 +141,6 @@ module SplitIoClient
         segments: @segments_repository,
         impressions: @impressions_repository,
         events: @events_repository,
-        metrics: @metrics_repository
       }
     end
 
@@ -143,7 +148,20 @@ module SplitIoClient
       LocalhostSplitStore.new(@splits_repository, @config, @sdk_blocker).call
 
       # Starts thread which loops constantly and cleans up repositories to avoid memory issues in localhost mode
-      LocalhostRepoCleaner.new(@impressions_repository, @metrics_repository, @events_repository, @config).call
+      LocalhostRepoCleaner.new(@impressions_repository, @events_repository, @config).call
     end
+
+    def build_telemetry_components
+      @evaluation_consumer = Telemetry::EvaluationConsumer.new(@config)
+      @evaluation_producer = Telemetry::EvaluationProducer.new(@config)
+
+      @init_consumer = Telemetry::InitConsumer.new(@config)
+      @init_producer = Telemetry::InitProducer.new(@config)
+
+      @runtime_consumer = Telemetry::RuntimeConsumer.new(@config)
+      @runtime_producer = Telemetry::RuntimeProducer.new(@config)
+
+      @telemetry_consumers = { init: @init_consumer, evaluation: @evaluation_consumer, runtime: @runtime_consumer }
+    end    
   end
 end

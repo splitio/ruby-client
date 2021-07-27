@@ -9,7 +9,8 @@ describe SplitIoClient::Cache::Senders::ImpressionsCountSender do
     SplitIoClient::SplitConfig.new
   end
   let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
-  let(:impressions_api) { SplitIoClient::Api::Impressions.new('key-test', config) }
+  let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
+  let(:impressions_api) { SplitIoClient::Api::Impressions.new('key-test', config, telemetry_runtime_producer) }
   let(:impressions_count_sender) { described_class.new(config, impression_counter, impressions_api) }
 
   before :each do

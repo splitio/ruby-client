@@ -6,16 +6,17 @@ module SplitIoClient
         extend Forwardable
         def_delegators :@repository, :add, :clear, :batch
 
-        def initialize(config, api_key)
+        def initialize(config, api_key, telemetry_runtime_producer)
           super(config)
           @repository = case @config.events_adapter.class.to_s
           when 'SplitIoClient::Cache::Adapters::MemoryAdapter'
-            Repositories::Events::MemoryRepository.new(@config)
+            Repositories::Events::MemoryRepository.new(@config, telemetry_runtime_producer)
           when 'SplitIoClient::Cache::Adapters::RedisAdapter'
             Repositories::Events::RedisRepository.new(@config)
           end
 
           @api_key = api_key
+          @telemetry_runtime_producer = telemetry_runtime_producer
         end
 
         def post_events
@@ -48,7 +49,7 @@ module SplitIoClient
         private
 
         def events_api
-          @events_api ||= SplitIoClient::Api::Events.new(@api_key, @config)
+          @events_api ||= SplitIoClient::Api::Events.new(@api_key, @config, @telemetry_runtime_producer)
         end
       end
     end

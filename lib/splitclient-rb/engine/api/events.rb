@@ -3,9 +3,10 @@
 module SplitIoClient
   module Api
     class Events < Client
-      def initialize(api_key, config)
+      def initialize(api_key, config, telemetry_runtime_producer)
         super(config)
         @api_key = api_key
+        @telemetry_runtime_producer = telemetry_runtime_producer
       end
 
       def post(events)
@@ -13,6 +14,8 @@ module SplitIoClient
           @config.split_logger.log_if_debug('No events to report')
           return
         end
+
+        start = Time.now
 
         events.each_slice(@config.events_queue_size) do |events_slice|
           response = post_api(
@@ -23,7 +26,13 @@ module SplitIoClient
 
           if response.success?
             @config.split_logger.log_if_debug("Events reported: #{events_slice.size}")
+
+            bucket = BinarySearchLatencyTracker.get_bucket((Time.now - start) * 1000.0)
+            @telemetry_runtime_producer.record_sync_latency(Telemetry::Domain::Constants::EVENT_SYNC, bucket)
+            @telemetry_runtime_producer.record_successful_sync(Telemetry::Domain::Constants::EVENT_SYNC, (Time.now.to_f * 1000.0).to_i)
           else
+            @telemetry_runtime_producer.record_sync_error(Telemetry::Domain::Constants::EVENT_SYNC, response.status)
+
             @config.logger.error("Unexpected status code while posting events: #{response.status}." \
             ' - Check your API key and base URI')
             raise 'Split SDK failed to connect to backend to post events'

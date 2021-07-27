@@ -59,12 +59,8 @@ module SplitIoClient
 
         def perform
           while (change_number = @queue.pop)
-            since = @splits_repository.get_change_number
-
-            unless since.to_i >= change_number
-              @config.logger.debug("SplitsWorker fetch_splits with #{since}")
-              @synchronizer.fetch_splits
-            end
+            @config.logger.debug("SplitsWorker change_number dequeue #{change_number}")
+            @synchronizer.fetch_splits(change_number)
           end
         end
 
