@@ -42,8 +42,10 @@ jobs:
             -Dsonar.host.url=${{ secrets.SONARQUBE_HOST }}
             -Dsonar.projectName=${{ github.event.repository.name }}
             -Dsonar.projectKey=${{ github.event.repository.name }}
-            -Dsonar.exclusions='**/*_test.go,**/vendor/**,**/testdata/*'
-            -Dsonar.go.coverage.reportPaths=coverage.out
+            -Dsonar.ruby.coverage.reportPaths='coverage/.resultset.json'
+            -Dsonar.c.file.suffixes=-
+            -Dsonar.cpp.file.suffixes=-
+            -Dsonar.objc.file.suffixes=-
             -Dsonar.links.ci="https://github.com/splitio/${{ github.event.repository.name }}/actions"
             -Dsonar.links.scm="https://github.com/splitio/${{ github.event.repository.name }}"
 
@@ -58,8 +60,10 @@ jobs:
             -Dsonar.host.url=${{ secrets.SONARQUBE_HOST }}
             -Dsonar.projectName=${{ github.event.repository.name }}
             -Dsonar.projectKey=${{ github.event.repository.name }}
-            -Dsonar.exclusions='**/*_test.go,**/vendor/**,**/testdata/*'
-            -Dsonar.go.coverage.reportPaths=coverage.out
+            -Dsonar.ruby.coverage.reportPaths='coverage/.resultset.json'
+            -Dsonar.c.file.suffixes=-
+            -Dsonar.cpp.file.suffixes=-
+            -Dsonar.objc.file.suffixes=-
             -Dsonar.links.ci="https://github.com/splitio/${{ github.event.repository.name }}/actions"
             -Dsonar.links.scm="https://github.com/splitio/${{ github.event.repository.name }}"
             -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
