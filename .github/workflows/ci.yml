@@ -34,7 +34,7 @@ jobs:
       - name: Fix code coverage paths
         working-directory: ./coverage
         run: |
-          sed -i 's@'$GITHUB_WORKSPACE'@/github/workspace/@g' coverage.json
+          sed -i 's@'$GITHUB_WORKSPACE'@/github/workspace/@g' .resultset.json
 
       - name: SonarQube Scan (Push)
         if: github.event_name == 'push'
@@ -47,7 +47,7 @@ jobs:
             -Dsonar.host.url=${{ secrets.SONARQUBE_HOST }}
             -Dsonar.projectName=${{ github.event.repository.name }}
             -Dsonar.projectKey=${{ github.event.repository.name }}
-            -Dsonar.ruby.coverage.reportPaths='coverage/coverage.json'
+            -Dsonar.ruby.coverage.reportPaths='coverage/.resultset.json'
             -Dsonar.c.file.suffixes=-
             -Dsonar.cpp.file.suffixes=-
             -Dsonar.objc.file.suffixes=-
@@ -65,7 +65,7 @@ jobs:
             -Dsonar.host.url=${{ secrets.SONARQUBE_HOST }}
             -Dsonar.projectName=${{ github.event.repository.name }}
             -Dsonar.projectKey=${{ github.event.repository.name }}
-            -Dsonar.ruby.coverage.reportPaths='coverage/coverage.json'
+            -Dsonar.ruby.coverage.reportPaths='coverage/.resultset.json'
             -Dsonar.c.file.suffixes=-
             -Dsonar.cpp.file.suffixes=-
             -Dsonar.objc.file.suffixes=-
