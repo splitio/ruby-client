@@ -31,6 +31,9 @@ jobs:
       - name: Run tests
         run: bundle exec rake
 
+      - name: Fix code coverage paths      
+        run: sed -i 's/\/home\/runner\/work\/ruby-client\/ruby-client\//\/github\/workspace\//g' .resultset.json
+
       - name: SonarQube Scan (Push)
         if: github.event_name == 'push'
         uses: SonarSource/sonarcloud-github-action@v1.5
@@ -42,7 +45,7 @@ jobs:
             -Dsonar.host.url=${{ secrets.SONARQUBE_HOST }}
             -Dsonar.projectName=${{ github.event.repository.name }}
             -Dsonar.projectKey=${{ github.event.repository.name }}
-            -Dsonar.ruby.coverage.reportPaths=/home/runner/work/ruby-client/ruby-client/coverage/.resultset.json
+            -Dsonar.ruby.coverage.reportPaths=.resultset.json
             -Dsonar.c.file.suffixes=-
             -Dsonar.cpp.file.suffixes=-
             -Dsonar.objc.file.suffixes=-
@@ -60,7 +63,7 @@ jobs:
             -Dsonar.host.url=${{ secrets.SONARQUBE_HOST }}
             -Dsonar.projectName=${{ github.event.repository.name }}
             -Dsonar.projectKey=${{ github.event.repository.name }}
-            -Dsonar.ruby.coverage.reportPaths=/home/runner/work/ruby-client/ruby-client/coverage/.resultset.json
+            -Dsonar.ruby.coverage.reportPaths=.resultset.json
             -Dsonar.c.file.suffixes=-
             -Dsonar.cpp.file.suffixes=-
             -Dsonar.objc.file.suffixes=-
