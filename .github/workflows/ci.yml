@@ -35,7 +35,7 @@ jobs:
         working-directory: ./coverage
         run: |
           sed -i 's@'$GITHUB_WORKSPACE'@/github/workspace/@g' .resultset.json
-          ruby -rjson -e 'sqube = JSON.load(File.read("coverage/.resultset.json"))["RSpec"]["coverage"].transform_values {|lines| lines["lines"]}; total = { "RSpec" => { "coverage" => sqube, "timestamp" => Time.now.to_i }}; puts JSON.dump(total)' > coverage/.resultset.sonarqube.json
+          ruby -rjson -e 'sqube = JSON.load(File.read("$GITHUB_WORKSPACE/coverage/.resultset.json"))["RSpec"]["coverage"].transform_values {|lines| lines["lines"]}; total = { "RSpec" => { "coverage" => sqube, "timestamp" => Time.now.to_i }}; puts JSON.dump(total)' > $GITHUB_WORKSPACE/coverage/.resultset.sonarqube.json
 
       - name: SonarQube Scan (Push)
         if: github.event_name == 'push'
