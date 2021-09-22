@@ -33,8 +33,7 @@ jobs:
 
       - name: Fix code coverage paths
         working-directory: ./coverage
-        run: |
-          sed -i 's@'$GITHUB_WORKSPACE'@/github/workspace/@g' .resultset.json
+        run: 's/\/home/runner/work/ruby-client/ruby-client//\/github\/workspace\//g' .resultset.json
 
       - name: SonarQube Scan (Push)
         if: github.event_name == 'push'
