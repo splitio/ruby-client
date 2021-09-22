@@ -45,7 +45,7 @@ jobs:
             -Dsonar.host.url=${{ secrets.SONARQUBE_HOST }}
             -Dsonar.projectName=${{ github.event.repository.name }}
             -Dsonar.projectKey=${{ github.event.repository.name }}
-            -Dsonar.ruby.coverage.reportPaths=/github/workspace/coverage/.resultset.json
+            -Dsonar.ruby.coverage.reportPaths=github/workspace/coverage/.resultset.json
             -Dsonar.c.file.suffixes=-
             -Dsonar.cpp.file.suffixes=-
             -Dsonar.objc.file.suffixes=-
@@ -63,7 +63,7 @@ jobs:
             -Dsonar.host.url=${{ secrets.SONARQUBE_HOST }}
             -Dsonar.projectName=${{ github.event.repository.name }}
             -Dsonar.projectKey=${{ github.event.repository.name }}
-            -Dsonar.ruby.coverage.reportPaths=/github/workspace/coverage/.resultset.json
+            -Dsonar.ruby.coverage.reportPaths=github/workspace/coverage/.resultset.json
             -Dsonar.c.file.suffixes=-
             -Dsonar.cpp.file.suffixes=-
             -Dsonar.objc.file.suffixes=-
