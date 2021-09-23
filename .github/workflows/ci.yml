@@ -33,7 +33,9 @@ jobs:
 
       - name: Fix code coverage paths
         working-directory: ./coverage
-        ruby -rjson -e 'sqube = JSON.load(File.read(".resultset.json"))["RSpec"]["coverage"].transform_values {|lines| lines["lines"]}; total = { "RSpec" => { "coverage" => sqube, "timestamp" => Time.now.to_i }}; puts JSON.dump(total)' > .resultset.sonarqube.json
+        run: |
+          sed -i 's@'$GITHUB_WORKSPACE'@/github/workspace/@g' .resultset.json
+          ruby -rjson -e 'sqube = JSON.load(File.read(".resultset.json"))["RSpec"]["coverage"].transform_values {|lines| lines["lines"]}; total = { "RSpec" => { "coverage" => sqube, "timestamp" => Time.now.to_i }}; puts JSON.dump(total)' > .resultset.sonarqube.json
 
 
       - name: SonarQube Scan (Push)
