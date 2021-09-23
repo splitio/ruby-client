@@ -23,7 +23,7 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@477b21f02be01bcb8030d50f37cfec92bfa615b6
         with:
-          ruby-version: 2.5
+          ruby-version: 2.4
 
       - name: Install dependencies
         run: bundle install
@@ -36,7 +36,6 @@ jobs:
         run: |
           sed -i 's@'$GITHUB_WORKSPACE'@/github/workspace/@g' .resultset.json
           ruby -rjson -e 'sqube = JSON.load(File.read(".resultset.json"))["RSpec"]["coverage"].transform_values {|lines| lines["lines"]}; total = { "RSpec" => { "coverage" => sqube, "timestamp" => Time.now.to_i }}; puts JSON.dump(total)' > .resultset.sonarqube.json
-
 
       - name: SonarQube Scan (Push)
         if: github.event_name == 'push'
