@@ -36,6 +36,7 @@ Gem::Specification.new do |spec|
     spec.extensions = ['ext/murmurhash/extconf.rb']
   end
 
+  spec.add_development_dependency 'simplecov-json'
   spec.add_development_dependency 'allocation_stats'
   spec.add_development_dependency 'appraisal'
   spec.add_development_dependency 'bundler'
