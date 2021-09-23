@@ -33,7 +33,7 @@ jobs:
 
       - name: Fix code coverage paths
         working-directory: ./coverage
-        run: sed -i 's@'$GITHUB_WORKSPACE'@/github/workspace/@g' .resultset.json
+        ruby -rjson -e 'sqube = JSON.load(File.read(".resultset.json"))["RSpec"]["coverage"].transform_values {|lines| lines["lines"]}; total = { "RSpec" => { "coverage" => sqube, "timestamp" => Time.now.to_i }}; puts JSON.dump(total)' > .resultset.sonarqube.json
 
 
       - name: SonarQube Scan (Push)
@@ -47,7 +47,7 @@ jobs:
             -Dsonar.host.url=${{ secrets.SONARQUBE_HOST }}
             -Dsonar.projectName=${{ github.event.repository.name }}
             -Dsonar.projectKey=${{ github.event.repository.name }}
-            -Dsonar.ruby.coverage.reportPaths=coverage/.resultset.json
+            -Dsonar.ruby.coverage.reportPaths=coverage/.resultset.sonarqube.json
             -Dsonar.c.file.suffixes=-
             -Dsonar.cpp.file.suffixes=-
             -Dsonar.objc.file.suffixes=-
@@ -65,7 +65,7 @@ jobs:
             -Dsonar.host.url=${{ secrets.SONARQUBE_HOST }}
             -Dsonar.projectName=${{ github.event.repository.name }}
             -Dsonar.projectKey=${{ github.event.repository.name }}
-            -Dsonar.ruby.coverage.reportPaths=coverage/.resultset.json
+            -Dsonar.ruby.coverage.reportPaths=coverage/.resultset.sonarqube.json
             -Dsonar.c.file.suffixes=-
             -Dsonar.cpp.file.suffixes=-
             -Dsonar.objc.file.suffixes=-
