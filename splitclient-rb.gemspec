@@ -36,7 +36,6 @@ Gem::Specification.new do |spec|
     spec.extensions = ['ext/murmurhash/extconf.rb']
   end
 
-  spec.add_development_dependency 'simplecov-json'
   spec.add_development_dependency 'allocation_stats'
   spec.add_development_dependency 'appraisal'
   spec.add_development_dependency 'bundler'
@@ -47,6 +46,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rspec'
   spec.add_development_dependency 'rubocop', '0.59.0'
   spec.add_development_dependency 'simplecov', '0.20.0'
+  spec.add_development_dependency 'simplecov-json'
   spec.add_development_dependency 'timecop'
   spec.add_development_dependency 'webmock'
 
