@@ -8,6 +8,8 @@ require 'timecop'
 require 'pry'
 
 require 'webmock/rspec'
+require 'simplecov-json'
+SimpleCov.formatter = SimpleCov::Formatter::JSONFormatter
 WebMock.disable_net_connect!
 
 ENV['SPLITCLIENT_ENV'] ||= 'test'

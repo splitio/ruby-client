@@ -1,0 +1,78 @@
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis
+        ports:
+          - 6379:6379
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@477b21f02be01bcb8030d50f37cfec92bfa615b6
+        with:
+          ruby-version: 2.5
+
+      - name: Install dependencies
+        run: bundle install
+
+      - name: Run tests
+        run: bundle exec rake
+
+      - name: Fix code coverage paths
+        working-directory: ./coverage
+        run: |
+          sed -i 's@'$GITHUB_WORKSPACE'@/github/workspace/@g' .resultset.json
+          ruby -rjson -e 'sqube = JSON.load(File.read(".resultset.json"))["RSpec"]["coverage"].transform_values {|lines| lines["lines"]}; total = { "RSpec" => { "coverage" => sqube, "timestamp" => Time.now.to_i }}; puts JSON.dump(total)' > .resultset.sonarqube.json
+
+
+      - name: SonarQube Scan (Push)
+        if: github.event_name == 'push'
+        uses: SonarSource/sonarcloud-github-action@v1.5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
+        with:
+          projectBaseDir: .
+          args: >
+            -Dsonar.host.url=${{ secrets.SONARQUBE_HOST }}
+            -Dsonar.projectName=${{ github.event.repository.name }}
+            -Dsonar.projectKey=${{ github.event.repository.name }}
+            -Dsonar.ruby.coverage.reportPaths=coverage/.resultset.sonarqube.json
+            -Dsonar.c.file.suffixes=-
+            -Dsonar.cpp.file.suffixes=-
+            -Dsonar.objc.file.suffixes=-
+            -Dsonar.links.ci="https://github.com/splitio/${{ github.event.repository.name }}/actions"
+            -Dsonar.links.scm="https://github.com/splitio/${{ github.event.repository.name }}"
+
+      - name: SonarQube Scan (Pull Request)
+        if: github.event_name == 'pull_request'
+        uses: SonarSource/sonarcloud-github-action@v1.5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
+        with:
+          projectBaseDir: .
+          args: >
+            -Dsonar.host.url=${{ secrets.SONARQUBE_HOST }}
+            -Dsonar.projectName=${{ github.event.repository.name }}
+            -Dsonar.projectKey=${{ github.event.repository.name }}
+            -Dsonar.ruby.coverage.reportPaths=coverage/.resultset.sonarqube.json
+            -Dsonar.c.file.suffixes=-
+            -Dsonar.cpp.file.suffixes=-
+            -Dsonar.objc.file.suffixes=-
+            -Dsonar.links.ci="https://github.com/splitio/${{ github.event.repository.name }}/actions"
+            -Dsonar.links.scm="https://github.com/splitio/${{ github.event.repository.name }}"
+            -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
+            -Dsonar.pullrequest.branch=${{ github.event.pull_request.head.ref }}
+            -Dsonar.pullrequest.base=${{ github.event.pull_request.base.ref }}
