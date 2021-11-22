@@ -12,8 +12,8 @@ module SplitIoClient
         config,
         synchronizer,
         telemetry_runtime_producer,
-        sdk_blocker,
-        telemetry_synchronizer
+        telemetry_synchronizer,
+        status_manager
       )
         @synchronizer = synchronizer
         notification_manager_keeper = SSE::NotificationManagerKeeper.new(config, telemetry_runtime_producer) do |manager|
@@ -33,56 +33,39 @@ module SplitIoClient
         @sse_connected = Concurrent::AtomicBoolean.new(false)
         @config = config
         @telemetry_runtime_producer = telemetry_runtime_producer
-        @sdk_blocker = sdk_blocker
         @telemetry_synchronizer = telemetry_synchronizer
+        @status_manager = status_manager
       end
 
       def start
-        if @config.streaming_enabled
-          start_stream
-          start_stream_forked if defined?(PhusionPassenger)
-        elsif @config.standalone?
-          start_poll
-        end
+        @config.threads[:start_sdk] = Thread.new do
+          sleep(0.5) until @synchronizer.sync_all(false)
 
-        synchronize_telemetry_config
+          @status_manager.ready!
+          @telemetry_synchronizer.synchronize_config
+          @synchronizer.start_periodic_data_recording
+
+          if @config.streaming_enabled
+            @config.logger.debug('Starting Straming mode ...')
+
+            connected = @push_manager.start_sse
+
+            if defined?(PhusionPassenger)
+              PhusionPassenger.on_event(:starting_worker_process) do |forked|
+                sse_thread_forked if forked
+              end
+            end
+
+            return if connected
+          end
+
+          @config.logger.debug('Starting polling mode ...')
+          @synchronizer.start_periodic_fetch
+          record_telemetry(Telemetry::Domain::Constants::SYNC_MODE, SYNC_MODE_POLLING)
+        end
       end
 
       private
-
-      # Starts tasks if stream is enabled.
-      def start_stream
-        @config.logger.debug('Starting push mode ...')
-        @synchronizer.sync_all
-        @synchronizer.start_periodic_data_recording
-
-        start_sse_connection_thread
-      end
-
-      def start_poll
-        @config.logger.debug('Starting polling mode ...')
-        @synchronizer.start_periodic_fetch
-        @synchronizer.start_periodic_data_recording
-        record_telemetry(Telemetry::Domain::Constants::SYNC_MODE, SYNC_MODE_POLLING)
-      rescue StandardError => e
-        @config.logger.error("start_poll error : #{e.inspect}")
-      end
-
-      # Starts thread which connect to sse and after that fetch splits and segments once.
-      def start_sse_connection_thread
-        @config.threads[:sync_manager_start_sse] = Thread.new do
-          begin
-            connected = @push_manager.start_sse
-            @synchronizer.start_periodic_fetch unless connected
-          rescue StandardError => e
-            @config.logger.error("start_sse_connection_thread error : #{e.inspect}")
-          end
-        end
-      end
-
-      def start_stream_forked
-        PhusionPassenger.on_event(:starting_worker_process) { |forked| start_stream if forked }
-      end
 
       def process_action(action)
         case action
@@ -165,16 +148,9 @@ module SplitIoClient
         @telemetry_runtime_producer.record_streaming_event(type, data)
       end
 
-      def synchronize_telemetry_config
-        @config.threads[:telemetry_config_sender] = Thread.new do
-          begin
-            @sdk_blocker.wait_unitil_internal_ready unless @config.consumer?
-            @telemetry_synchronizer.synchronize_config
-          rescue SplitIoClient::SDKShutdownException
-            @telemetry_synchronizer.synchronize_config
-            @config.logger.info('Posting Telemetry config due to shutdown')
-          end
-        end
+      def sse_thread_forked
+        connected = @push_manager.start_sse
+        @synchronizer.start_periodic_fetch unless connected
       end
     end
   end

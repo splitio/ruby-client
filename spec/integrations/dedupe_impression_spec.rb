@@ -96,6 +96,7 @@ describe SplitIoClient do
       factory = SplitIoClient::SplitFactory.new('test_api_key-2', streaming_enabled: false, impressions_mode: :optimized)
       client = factory.client
 
+      client.block_until_ready
       client.get_treatments('nico_test', %w[FACUNDO_TEST MAURO_TEST Test_Save_1])
       client.get_treatments('admin', %w[FACUNDO_TEST MAURO_TEST Test_Save_1])
       client.get_treatments('maldo', %w[FACUNDO_TEST Test_Save_1])

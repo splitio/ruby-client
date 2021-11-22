@@ -14,7 +14,6 @@ module SplitIoClient
         repositories,
         api_key,
         config,
-        sdk_blocker,
         params
       )
         @splits_repository = repositories[:splits]
@@ -23,7 +22,6 @@ module SplitIoClient
         @events_repository = repositories[:events]
         @api_key = api_key
         @config = config
-        @sdk_blocker = sdk_blocker
         @split_fetcher = params[:split_fetcher]
         @segment_fetcher = params[:segment_fetcher]
         @impressions_api = SplitIoClient::Api::Impressions.new(@api_key, @config, params[:telemetry_runtime_producer])
@@ -31,12 +29,14 @@ module SplitIoClient
         @telemetry_synchronizer = params[:telemetry_synchronizer]
       end
 
-      def sync_all
+      def sync_all(asynchronous = true)
+        return sync_splits_and_segments unless asynchronous
+
         @config.threads[:sync_all_thread] = Thread.new do
-          @config.logger.debug('Synchronizing Splits and Segments ...') if @config.debug_enabled
-          @split_fetcher.fetch_splits
-          @segment_fetcher.fetch_segments
+          sync_splits_and_segments
         end
+
+        true
       end
 
       def start_periodic_data_recording
@@ -156,18 +156,14 @@ module SplitIoClient
         loop do
           remaining_attempts -= 1
 
-          segment_names = @split_fetcher.fetch_splits(fetch_options)
+          result = @split_fetcher.fetch_splits(fetch_options)
 
-          return sync_result(true, remaining_attempts, segment_names) if target_cn <= @splits_repository.get_change_number
-          return sync_result(false, remaining_attempts, segment_names) if remaining_attempts <= 0
+          return sync_result(true, remaining_attempts, result[:segment_names]) if target_cn <= @splits_repository.get_change_number
+          return sync_result(false, remaining_attempts, result[:segment_names]) if remaining_attempts <= 0
 
           delay = with_backoff ? backoff.interval : retry_delay_seconds
           sleep(delay)
         end
-      end
-
-      def fetch_segments
-        @segment_fetcher.fetch_segments
       end
 
       # Starts thread which loops constantly and sends impressions to the Split API
@@ -191,6 +187,13 @@ module SplitIoClient
 
       def sync_result(success, remaining_attempts, segment_names = nil)
         { success: success, remaining_attempts: remaining_attempts, segment_names: segment_names }
+      end
+
+      def sync_splits_and_segments
+        @config.logger.debug('Synchronizing Splits and Segments ...') if @config.debug_enabled
+        splits_result = @split_fetcher.fetch_splits
+        
+        splits_result[:success] && @segment_fetcher.fetch_segments
       end
     end
   end

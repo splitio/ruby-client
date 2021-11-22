@@ -25,9 +25,9 @@ describe SplitIoClient::Engine::StatusManager do
   it 'wait until ready - should return false' do
     status_manager = subject.new(config)
 
-    expect(status_manager.wait_until_ready(0.5)).to eq(false)
+    expect { status_manager.wait_until_ready(0.5) }.to raise_error(SplitIoClient::SplitIoError, 'SDK start up timeout expired')
 
     status_manager.ready!
-    expect(status_manager.wait_until_ready(0)).to eq(true)
+    expect { status_manager.wait_until_ready(0) }.not_to raise_error
   end
 end

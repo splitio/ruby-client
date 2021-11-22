@@ -30,7 +30,7 @@ describe SplitIoClient do
   end
 
   it 'validates the feature is "default" for id when segment used does not exist' do
-    allow_any_instance_of(SplitIoClient::Cache::Stores::SDKBlocker).to receive(:ready?).and_return(true)
+    subject.block_until_ready
     expect(subject.get_treatment(user, feature)).to eq 'default'
   end
 end

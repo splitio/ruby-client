@@ -24,7 +24,6 @@ describe SplitIoClient::BetweenMatcher do
   let(:feature) { 'test_feature' }
   let(:matching_attributes) { { income: 110 } }
   let(:non_matching_high_value_attributes) { { income: 121 } }
-
   let(:missing_key_attributes) { {} }
   let(:nil_attributes) { nil }
 
@@ -36,6 +35,11 @@ describe SplitIoClient::BetweenMatcher do
     before do
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
         .to_return(status: 200, body: number_matcher_splits)
+
+      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
+        .to_return(status: 200, body: 'ok')
+
+      subject.block_until_ready
     end
 
     it 'validates the treatment is ON for correct number attribute value' do
@@ -60,6 +64,11 @@ describe SplitIoClient::BetweenMatcher do
     before do
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
         .to_return(status: 200, body: negative_number_matcher_splits)
+
+      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
+        .to_return(status: 200, body: 'ok')
+
+      subject.block_until_ready
     end
 
     it 'validates the treatment is ON for correct negative numbers attribute value' do
@@ -86,6 +95,11 @@ describe SplitIoClient::BetweenMatcher do
     before do
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
         .to_return(status: 200, body: datetime_matcher_splits)
+
+      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
+        .to_return(status: 200, body: 'ok')
+
+      subject.block_until_ready
     end
 
     it 'validates the treatment is ON for correct number attribute value' do

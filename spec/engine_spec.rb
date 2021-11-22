@@ -84,6 +84,7 @@ describe SplitIoClient, type: :client do
     context '#equal_to_set_matcher and get_treatment validation attributes' do
       before do
         load_splits(equal_to_set_matcher_json)
+        subject.block_until_ready
       end
 
       it 'get_treatment_with_config returns off' do
@@ -123,6 +124,7 @@ describe SplitIoClient, type: :client do
     context '#get_treatment' do
       before do
         load_splits(all_keys_matcher_json)
+        subject.block_until_ready
       end
 
       it 'returns CONTROL for random id' do
@@ -296,6 +298,7 @@ describe SplitIoClient, type: :client do
     context '#get_treatment_with_config' do
       before do
         load_splits(configurations_json)
+        subject.block_until_ready
       end
 
       it 'returns the config' do
@@ -384,6 +387,7 @@ describe SplitIoClient, type: :client do
     context '#get_treatments_with_config' do
       before do
         load_splits(configurations_json)
+        subject.block_until_ready
       end
 
       split_names = %w[test_feature no_configs_feature killed_feature]
@@ -401,6 +405,7 @@ describe SplitIoClient, type: :client do
     context 'all keys matcher' do
       before do
         load_splits(all_keys_matcher_json)
+        subject.block_until_ready
       end
 
       it 'validates the feature is on for all ids' do
@@ -419,6 +424,7 @@ describe SplitIoClient, type: :client do
         load_segments(segments_json)
 
         load_splits(segment_matcher_json)
+        subject.block_until_ready
       end
 
       it 'validates the feature is on for all ids' do
@@ -496,6 +502,7 @@ describe SplitIoClient, type: :client do
         load_segments(segments_json)
 
         load_splits(segment_matcher2_json)
+        subject.block_until_ready
       end
 
       it 'validates the feature is on for all ids' do
@@ -538,6 +545,7 @@ describe SplitIoClient, type: :client do
     context 'whitelist matcher' do
       before do
         load_splits(whitelist_matcher_json)
+        subject.block_until_ready
       end
 
       it 'validates the feature is on for all ids' do
@@ -552,6 +560,7 @@ describe SplitIoClient, type: :client do
     context 'dependency matcher' do
       before do
         load_splits(dependency_matcher_json)
+        subject.block_until_ready
       end
 
       it 'returns on treatment' do
@@ -572,6 +581,7 @@ describe SplitIoClient, type: :client do
       end
 
       it 'returns default treatment for killed splits' do
+        subject.block_until_ready
         expect(subject.get_treatment('fake_user_id_1', 'test_killed')).to eq 'def_test'
         expect(subject.get_treatment('fake_user_id_2', 'test_killed')).to eq 'def_test'
         expect(subject.get_treatment('fake_user_id_3', 'test_killed')).to eq 'def_test'
@@ -662,6 +672,7 @@ describe SplitIoClient, type: :client do
       context 'traffic allocations' do
         before do
           load_splits(traffic_allocation_json)
+          subject.block_until_ready
         end
 
         it 'returns expected treatment' do
@@ -697,6 +708,7 @@ describe SplitIoClient, type: :client do
 
       it 'returns expected treatment' do
         allow_any_instance_of(SplitIoClient::Splitter).to receive(:bucket).and_return(1)
+        subject.block_until_ready
         expect(subject.get_treatment('test', 'Traffic_Allocation_One_Percent')).to eq('on')
       end
     end
@@ -710,6 +722,7 @@ describe SplitIoClient, type: :client do
         stub_request(:post, 'https://events.split.io/api/testImpressions/bulk')
           .to_return(status: 200, body: '', headers: {})
 
+        subject.block_until_ready
         expect(subject.get_treatment('fake_user_id_1', 'test_feature')).to eq 'on'
         subject.destroy
         expect(subject.get_treatment('fake_user_id_1', 'test_feature')).to eq 'control'
@@ -952,6 +965,10 @@ describe SplitIoClient, type: :client do
       end
 
       it 'fetch splits' do
+        stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
+          .to_return(status: 200, body: 'ok')
+
+        subject.block_until_ready
         expect(subject.instance_variable_get(:@splits_repository).splits.size).to eq(1)
       end
     end

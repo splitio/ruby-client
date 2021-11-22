@@ -9,6 +9,8 @@ module SplitIoClient
       end
 
       def ready?
+        return true if @config.consumer?
+
         @sdk_ready.wait(0)
       end
 
@@ -19,8 +21,12 @@ module SplitIoClient
         @config.logger.info('SplitIO SDK is ready')
       end
 
-      def wait_until_ready(seconds)
-        @sdk_ready.wait(seconds)
+      def wait_until_ready(seconds = nil)
+        return if @config.consumer?
+
+        timeout = seconds || @config.block_until_ready
+
+        raise SDKBlockerTimeoutExpiredException, 'SDK start up timeout expired' unless @sdk_ready.wait(timeout)
       end
     end
   end

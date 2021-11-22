@@ -4,11 +4,10 @@ module SplitIoClient
       class SplitFetcher
         attr_reader :splits_repository
 
-        def initialize(splits_repository, api_key, config, sdk_blocker, telemetry_runtime_producer)
+        def initialize(splits_repository, api_key, config, telemetry_runtime_producer)
           @splits_repository = splits_repository
           @api_key = api_key
           @config = config
-          @sdk_blocker = sdk_blocker
           @semaphore = Mutex.new
           @telemetry_runtime_producer = telemetry_runtime_producer
         end
@@ -40,13 +39,11 @@ module SplitIoClient
 
             @config.logger.debug("segments seen(#{data[:segment_names].length}): #{data[:segment_names].to_a}") if @config.debug_enabled
 
-            @sdk_blocker.splits_ready!
-
-            data[:segment_names]
+            { segment_names: data[:segment_names], success: true }
           end
         rescue StandardError => error
           @config.log_found_exception(__method__.to_s, error)
-          []
+          { segment_names: [], success: false }
         end
 
         def stop_splits_thread

@@ -34,16 +34,16 @@ module SplitIoClient
       @segments_repository = SegmentsRepository.new(@config)
       @impressions_repository = ImpressionsRepository.new(@config)
       @events_repository = EventsRepository.new(@config, @api_key, @runtime_producer)
-      @sdk_blocker = SDKBlocker.new(@splits_repository, @segments_repository, @config)
       @impression_counter = SplitIoClient::Engine::Common::ImpressionCounter.new
       @impressions_manager = SplitIoClient::Engine::Common::ImpressionManager.new(@config, @impressions_repository, @impression_counter, @runtime_producer)
       @telemetry_api = SplitIoClient::Api::TelemetryApi.new(@config, @api_key, @runtime_producer)
       @telemetry_synchronizer = Telemetry::Synchronizer.new(@config, @telemetry_consumers, @init_producer, repositories, @telemetry_api)
+      @status_manager = Engine::StatusManager.new(@config)
 
       start!
 
-      @client = SplitClient.new(@api_key, repositories, @sdk_blocker, @config, @impressions_manager, @evaluation_producer)
-      @manager = SplitManager.new(@splits_repository, @sdk_blocker, @config)
+      @client = SplitClient.new(@api_key, repositories, @status_manager, @config, @impressions_manager, @evaluation_producer)
+      @manager = SplitManager.new(@splits_repository, @status_manager, @config)
 
       validate_api_key
 
@@ -51,22 +51,20 @@ module SplitIoClient
     end
 
     def start!
-      if @config.localhost_mode
-        start_localhost_components
-      else
-        split_fetcher = SplitFetcher.new(@splits_repository, @api_key, config, @sdk_blocker, @runtime_producer)
-        segment_fetcher = SegmentFetcher.new(@segments_repository, @api_key, config, @sdk_blocker, @runtime_producer)
-        params = { 
-          split_fetcher: split_fetcher,
-          segment_fetcher: segment_fetcher,
-          imp_counter: @impression_counter,
-          telemetry_runtime_producer: @runtime_producer,
-          telemetry_synchronizer: @telemetry_synchronizer
-        }
+      return start_localhost_components if @config.localhost_mode
+      
+      split_fetcher = SplitFetcher.new(@splits_repository, @api_key, config, @runtime_producer)
+      segment_fetcher = SegmentFetcher.new(@segments_repository, @api_key, config, @runtime_producer)
+      params = {
+        split_fetcher: split_fetcher,
+        segment_fetcher: segment_fetcher,
+        imp_counter: @impression_counter,
+        telemetry_runtime_producer: @runtime_producer,
+        telemetry_synchronizer: @telemetry_synchronizer
+      }
 
-        synchronizer = SplitIoClient::Engine::Synchronizer.new(repositories, @api_key, @config, @sdk_blocker, params)
-        SplitIoClient::Engine::SyncManager.new(repositories, @api_key, @config, synchronizer, @runtime_producer, @sdk_blocker, @telemetry_synchronizer).start
-      end
+      synchronizer = SplitIoClient::Engine::Synchronizer.new(repositories, @api_key, @config, params)
+      SplitIoClient::Engine::SyncManager.new(repositories, @api_key, @config, synchronizer, @runtime_producer, @telemetry_synchronizer, @status_manager).start
     end
 
     def stop!
@@ -145,7 +143,7 @@ module SplitIoClient
     end
 
     def start_localhost_components
-      LocalhostSplitStore.new(@splits_repository, @config, @sdk_blocker).call
+      LocalhostSplitStore.new(@splits_repository, @config, @status_manager).call
 
       # Starts thread which loops constantly and cleans up repositories to avoid memory issues in localhost mode
       LocalhostRepoCleaner.new(@impressions_repository, @events_repository, @config).call
