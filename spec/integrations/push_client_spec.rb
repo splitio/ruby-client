@@ -36,6 +36,13 @@ describe SplitIoClient do
     File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/auth_body_response.json'))
   end
 
+  before do
+    stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
+    stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1585948850111').to_return(status: 200, body: '')
+    stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1585948850110').to_return(status: 200, body: '')
+    stub_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=-1&till=1470947453879').to_return(status: 200, body: '')
+  end
+
   context 'SPLIT_UPDATE' do
     it 'processing split update event' do
       mock_splits_request(splits, -1)
@@ -363,27 +370,27 @@ describe SplitIoClient do
       end
     end
   end
-end
 
-private
+  private
 
-def send_content(res, content)
-  res.content_type = 'text/event-stream'
-  res.status = 200
-  res.chunked = true
-  rd, wr = IO.pipe
-  wr.write(content)
-  res.body = rd
-  wr.close
-  wr
-end
+  def send_content(res, content)
+    res.content_type = 'text/event-stream'
+    res.status = 200
+    res.chunked = true
+    rd, wr = IO.pipe
+    wr.write(content)
+    res.body = rd
+    wr.close
+    wr
+  end
 
-def mock_splits_request(splits_json, since)
-  stub_request(:get, "https://sdk.split.io/api/splitChanges?since=#{since}")
-    .to_return(status: 200, body: splits_json)
-end
+  def mock_splits_request(splits_json, since)
+    stub_request(:get, "https://sdk.split.io/api/splitChanges?since=#{since}")
+      .to_return(status: 200, body: splits_json)
+  end
 
-def mock_segment_changes(segment_name, segment_json, since)
-  stub_request(:get, "https://sdk.split.io/api/segmentChanges/#{segment_name}?since=#{since}")
-    .to_return(status: 200, body: segment_json)
+  def mock_segment_changes(segment_name, segment_json, since)
+    stub_request(:get, "https://sdk.split.io/api/segmentChanges/#{segment_name}?since=#{since}")
+      .to_return(status: 200, body: segment_json)
+  end
 end

@@ -276,27 +276,27 @@ describe SplitIoClient::SSE::SSEHandler do
       end
     end
   end
-end
 
-private
+  private
 
-def mock_split_changes(splits_json)
-  stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
-    .to_return(status: 200, body: splits_json)
-end
+  def mock_split_changes(splits_json)
+    stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+      .to_return(status: 200, body: splits_json)
+  end
 
-def mock_segment_changes(segment_name, segment_json, since)
-  stub_request(:get, "https://sdk.split.io/api/segmentChanges/#{segment_name}?since=#{since}")
-    .to_return(status: 200, body: segment_json)
-end
+  def mock_segment_changes(segment_name, segment_json, since)
+    stub_request(:get, "https://sdk.split.io/api/segmentChanges/#{segment_name}?since=#{since}")
+      .to_return(status: 200, body: segment_json)
+  end
 
-def send_content(res, content)
-  res.content_type = 'text/event-stream'
-  res.status = 200
-  res.chunked = true
-  rd, wr = IO.pipe
-  wr.write(content)
-  res.body = rd
-  wr.close
-  wr
+  def send_content(res, content)
+    res.content_type = 'text/event-stream'
+    res.status = 200
+    res.chunked = true
+    rd, wr = IO.pipe
+    wr.write(content)
+    res.body = rd
+    wr.close
+    wr
+  end
 end

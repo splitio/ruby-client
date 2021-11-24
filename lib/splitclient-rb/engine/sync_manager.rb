@@ -44,24 +44,22 @@ module SplitIoClient
           @status_manager.ready!
           @telemetry_synchronizer.synchronize_config
           @synchronizer.start_periodic_data_recording
+          connected = false
 
           if @config.streaming_enabled
             @config.logger.debug('Starting Straming mode ...')
-
             connected = @push_manager.start_sse
 
             if defined?(PhusionPassenger)
-              PhusionPassenger.on_event(:starting_worker_process) do |forked|
-                sse_thread_forked if forked
-              end
+              PhusionPassenger.on_event(:starting_worker_process) { |forked| sse_thread_forked if forked }
             end
-
-            return if connected
           end
 
-          @config.logger.debug('Starting polling mode ...')
-          @synchronizer.start_periodic_fetch
-          record_telemetry(Telemetry::Domain::Constants::SYNC_MODE, SYNC_MODE_POLLING)
+          unless connected
+            @config.logger.debug('Starting polling mode ...')
+            @synchronizer.start_periodic_fetch
+            record_telemetry(Telemetry::Domain::Constants::SYNC_MODE, SYNC_MODE_POLLING)
+          end
         end
       end
 

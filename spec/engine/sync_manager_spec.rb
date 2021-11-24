@@ -57,10 +57,10 @@ describe SplitIoClient::Engine::SyncManager do
     mock_segment_changes('segment2', segment2, '1470947453878')
     mock_segment_changes('segment3', segment3, '-1')
     stub_request(:get, config.auth_service_url).to_return(status: 200, body: body_response)
-    status_manager.ready!
+    stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
   end
 
-  it 'start sync manager with success sse connection.' do
+  it 'start sync manager with success sse connection.' do    
     mock_server do |server|
       server.setup_response('/') do |_, res|
         send_content(res, 'content')
@@ -73,7 +73,7 @@ describe SplitIoClient::Engine::SyncManager do
 
       sleep(2)
       expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.once
-      expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262916')).to have_been_made.once
+
       expect(config.threads.size).to eq(10)
     end
   end
@@ -92,7 +92,7 @@ describe SplitIoClient::Engine::SyncManager do
 
       sleep(2)
       expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.once
-      expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262916')).to have_been_made.at_least_times(1)
+
       expect(config.threads.size).to eq(6)
     end
   end
@@ -117,27 +117,27 @@ describe SplitIoClient::Engine::SyncManager do
       expect(sse_handler.connected?).to eq(false)
     end
   end
-end
 
-private
+  private
 
-def mock_split_changes_with_since(splits_json, since)
-  stub_request(:get, "https://sdk.split.io/api/splitChanges?since=#{since}")
-    .to_return(status: 200, body: splits_json)
-end
+  def mock_split_changes_with_since(splits_json, since)
+    stub_request(:get, "https://sdk.split.io/api/splitChanges?since=#{since}")
+      .to_return(status: 200, body: splits_json)
+  end
 
-def mock_segment_changes(segment_name, segment_json, since)
-  stub_request(:get, "https://sdk.split.io/api/segmentChanges/#{segment_name}?since=#{since}")
-    .to_return(status: 200, body: segment_json)
-end
+  def mock_segment_changes(segment_name, segment_json, since)
+    stub_request(:get, "https://sdk.split.io/api/segmentChanges/#{segment_name}?since=#{since}")
+      .to_return(status: 200, body: segment_json)
+  end
 
-def send_content(res, content)
-  res.content_type = 'text/event-stream'
-  res.status = 200
-  res.chunked = true
-  rd, wr = IO.pipe
-  wr.write(content)
-  res.body = rd
-  wr.close
-  wr
+  def send_content(res, content)
+    res.content_type = 'text/event-stream'
+    res.status = 200
+    res.chunked = true
+    rd, wr = IO.pipe
+    wr.write(content)
+    res.body = rd
+    wr.close
+    wr
+  end
 end

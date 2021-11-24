@@ -30,7 +30,9 @@ module SplitIoClient
       end
 
       def sync_all(asynchronous = true)
-        return sync_splits_and_segments unless asynchronous
+        unless asynchronous
+          return sync_splits_and_segments
+        end
 
         @config.threads[:sync_all_thread] = Thread.new do
           sync_splits_and_segments

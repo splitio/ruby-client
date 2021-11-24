@@ -25,6 +25,8 @@ describe SplitIoClient::CombiningMatcher do
 
   describe 'anding' do
     it 'matches' do
+      subject.block_until_ready
+
       expect(subject.get_treatment(
                'user_for_testing_do_no_erase',
                'PASSENGER_anding',
