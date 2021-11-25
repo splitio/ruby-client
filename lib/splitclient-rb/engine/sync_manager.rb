@@ -38,6 +38,13 @@ module SplitIoClient
       end
 
       def start
+        start_thread
+        PhusionPassenger.on_event(:starting_worker_process) { |forked| start_thread if forked } if defined?(PhusionPassenger)
+      end
+
+      private
+
+      def start_thread
         @config.threads[:start_sdk] = Thread.new do
           sleep(0.5) until @synchronizer.sync_all(false)
 
@@ -62,8 +69,6 @@ module SplitIoClient
           end
         end
       end
-
-      private
 
       def process_action(action)
         case action

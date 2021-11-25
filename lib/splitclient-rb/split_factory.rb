@@ -28,6 +28,10 @@ module SplitIoClient
 
       raise 'Invalid SDK mode' unless valid_mode
 
+      validate_api_key
+
+      register_factory
+
       build_telemetry_components
 
       @splits_repository = SplitsRepository.new(@config)
@@ -44,14 +48,16 @@ module SplitIoClient
 
       @client = SplitClient.new(@api_key, repositories, @status_manager, @config, @impressions_manager, @evaluation_producer)
       @manager = SplitManager.new(@splits_repository, @status_manager, @config)
-
-      validate_api_key
-
-      register_factory
     end
 
     def start!
       return start_localhost_components if @config.localhost_mode
+
+      if @config.consumer?
+        @status_manager.ready!
+        @telemetry_synchronizer.synchronize_config
+        return
+      end
       
       split_fetcher = SplitFetcher.new(@splits_repository, @api_key, config, @runtime_producer)
       segment_fetcher = SegmentFetcher.new(@segments_repository, @api_key, config, @runtime_producer)

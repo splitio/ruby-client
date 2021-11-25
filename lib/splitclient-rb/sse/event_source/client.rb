@@ -38,6 +38,7 @@ module SplitIoClient
         def close(action = Constants::PUSH_NONRETRYABLE_ERROR)
           dispatch_action(action)
           @connected.make_false
+          SplitIoClient::Helpers::ThreadHelper.stop(:connect_stream, @config)
           @socket&.close
         rescue StandardError => e
           @config.logger.error("SSEClient close Error: #{e.inspect}")
