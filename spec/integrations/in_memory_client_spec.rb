@@ -42,10 +42,12 @@ describe SplitIoClient do
     mock_segment_changes('segment3', segment3, '-1')
     stub_request(:post, 'https://events.split.io/api/testImpressions/bulk').to_return(status: 200, body: 'ok')
     stub_request(:post, 'https://events.split.io/api/testImpressions/count').to_return(status: 200, body: 'ok')
+    stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: 'ok')
   end
 
   context '#get_treatment' do
     it 'returns treatments with FACUNDO_TEST feature and check impressions' do
+      client.block_until_ready
       expect(client.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
       expect(client.get_treatment('mauro_test', 'FACUNDO_TEST')).to eq 'off'
 
@@ -68,6 +70,7 @@ describe SplitIoClient do
     end
 
     it 'returns treatments with Test_Save_1 feature and check impressions' do
+      client.block_until_ready
       expect(client.get_treatment('1', 'Test_Save_1')).to eq 'on'
       expect(client.get_treatment('24', 'Test_Save_1')).to eq 'off'
 
@@ -90,6 +93,7 @@ describe SplitIoClient do
     end
 
     it 'returns treatments with input validations' do
+      client.block_until_ready
       expect(client.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
       expect(client.get_treatment('', 'FACUNDO_TEST')).to eq 'control'
       expect(client.get_treatment(nil, 'FACUNDO_TEST')).to eq 'control'
@@ -176,6 +180,11 @@ describe SplitIoClient do
       client3 = factory3.client
       client4 = factory4.client
 
+      client1.block_until_ready
+      client2.block_until_ready
+      client3.block_until_ready
+      client4.block_until_ready
+
       expect(client1.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
       expect(client2.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
       expect(client3.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
@@ -196,6 +205,7 @@ describe SplitIoClient do
 
   context '#get_treatment_with_config' do
     it 'returns treatments and configs with FACUNDO_TEST treatment and check impressions' do
+      client.block_until_ready
       expect(client.get_treatment_with_config('nico_test', 'FACUNDO_TEST')).to eq(
         treatment: 'on',
         config: '{"color":"green"}'
@@ -224,6 +234,8 @@ describe SplitIoClient do
     end
 
     it 'returns treatments and configs with MAURO_TEST treatment and check impressions' do
+      client.block_until_ready
+
       expect(client.get_treatment_with_config('mauro', 'MAURO_TEST')).to eq(
         treatment: 'on',
         config: '{"version":"v2"}'
@@ -252,6 +264,8 @@ describe SplitIoClient do
     end
 
     it 'returns treatments with input validations' do
+      client.block_until_ready
+
       expect(client.get_treatment_with_config('nico_test', 'FACUNDO_TEST')).to eq(
         treatment: 'on',
         config: '{"color":"green"}'
@@ -296,6 +310,8 @@ describe SplitIoClient do
     end
 
     it 'returns CONTROL with treatment doesnt exist' do
+      client.block_until_ready
+
       expect(client.get_treatment_with_config('nico_test', 'random_treatment')).to eq(
         treatment: 'control',
         config: nil
@@ -328,6 +344,7 @@ describe SplitIoClient do
 
   context '#get_treatments' do
     it 'returns treatments and check impressions' do
+      client.block_until_ready
       result = client.get_treatments('nico_test', %w[FACUNDO_TEST MAURO_TEST Test_Save_1])
 
       expect(result[:FACUNDO_TEST]).to eq 'on'
@@ -359,6 +376,7 @@ describe SplitIoClient do
     end
 
     it 'returns treatments with input validation' do
+      client.block_until_ready
       result1 = client.get_treatments('nico_test', ['FACUNDO_TEST', '', nil])
       result2 = client.get_treatments('', ['', 'MAURO_TEST', 'Test_Save_1'])
       result3 = client.get_treatments(nil, ['', 'MAURO_TEST', 'Test_Save_1'])
@@ -381,6 +399,7 @@ describe SplitIoClient do
     end
 
     it 'returns CONTROL with treatment doesnt exist' do
+      client.block_until_ready
       result = client.get_treatments('nico_test', %w[FACUNDO_TEST random_treatment])
 
       expect(result[:FACUNDO_TEST]).to eq 'on'
@@ -425,6 +444,7 @@ describe SplitIoClient do
 
   context '#get_treatments_with_config' do
     it 'returns treatments and check impressions' do
+      client.block_until_ready
       result = client.get_treatments_with_config('nico_test', %w[FACUNDO_TEST MAURO_TEST Test_Save_1])
       expect(result[:FACUNDO_TEST]).to eq(
         treatment: 'on',
@@ -463,6 +483,7 @@ describe SplitIoClient do
     end
 
     it 'returns treatments with input validation' do
+      client.block_until_ready
       result1 = client.get_treatments_with_config('nico_test', %w[FACUNDO_TEST "" nil])
       result2 = client.get_treatments_with_config('', %w["" MAURO_TEST Test_Save_1])
       result3 = client.get_treatments_with_config(nil, %w["" MAURO_TEST Test_Save_1])
@@ -500,6 +521,7 @@ describe SplitIoClient do
     end
 
     it 'returns CONTROL with treatment doesnt exist' do
+      client.block_until_ready
       result = client.get_treatments_with_config('nico_test', %w[FACUNDO_TEST random_treatment])
 
       expect(result[:FACUNDO_TEST]).to eq(
@@ -594,6 +616,10 @@ describe SplitIoClient do
       client2 = factory2.client
       client3 = factory3.client
 
+      client1.block_until_ready
+      client2.block_until_ready
+      client3.block_until_ready
+
       result1 = client1.get_treatments_with_config('nico_test', %w[MAURO_TEST])
       result2 = client2.get_treatments_with_config('nico_test', %w[MAURO_TEST])
       result3 = client3.get_treatments_with_config('nico_test', %w[FACUNDO_TEST])
@@ -624,10 +650,16 @@ describe SplitIoClient do
 
   context '#track' do
     it 'returns true' do
+      stub_request(:post, 'https://events.split.io/api/events/bulk').to_return(status: 200, body: '')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262916').to_return(status: 200, body: '')
+
       properties = {
         property_1: 1,
         property_2: 2
       }
+
+      client.block_until_ready
+      sleep 1
 
       expect(client.track('key_1', 'traffic_type_1', 'event_type_1', 123, properties)).to be_truthy
       expect(client.track('key_2', 'traffic_type_2', 'event_type_2', 125)).to be_truthy

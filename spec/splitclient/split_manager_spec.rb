@@ -3,16 +3,11 @@
 require 'spec_helper'
 
 describe SplitIoClient do
-  let(:factory) do
-    SplitIoClient::SplitFactory.new('test_api_key', logger: Logger.new(log), streaming_enabled: false)
-  end
-
+  let(:factory) { SplitIoClient::SplitFactory.new('test_api_key', logger: Logger.new(log), streaming_enabled: false) }
   let(:log) { StringIO.new }
   subject { factory.manager }
   let(:splits) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../test_data/splits/splits.json'))) }
-  let(:segments) do
-    File.read(File.expand_path(File.join(File.dirname(__FILE__), '../test_data/segments/engine_segments.json')))
-  end
+  let(:segments) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../test_data/segments/engine_segments.json'))) }
 
   before do
     stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
@@ -49,13 +44,14 @@ describe SplitIoClient do
     end
 
     it 'returns on invalid split_name' do
+      subject.block_until_ready
       split_name = '  test_1_ruby '
       expect(subject.split(split_name)).not_to be_nil
-      expect(log.string)
-        .to include "split: split_name #{split_name} has extra whitespace, trimming"
+      expect(log.string).to include "split: split_name #{split_name} has extra whitespace, trimming"
     end
 
     it 'returns and logs warning when ready and split does not exist' do
+      subject.block_until_ready
       expect(subject.split('non_existing_feature')).to be_nil
       expect(log.string).to include 'split: you passed non_existing_feature ' \
         'that does not exist in this environment, please double check what Splits exist ' \
@@ -72,6 +68,7 @@ describe SplitIoClient do
 
   context '#split_names' do
     it 'returns split names' do
+      subject.block_until_ready
       expect(subject.split_names).to match_array(%w[test_1_ruby sample_feature])
     end
 
@@ -101,13 +98,14 @@ describe SplitIoClient do
     end
 
     it 'returns configurations' do
-      expect(subject.send(:build_split_view,
-                          'test_1_ruby',
-                          subject.instance_variable_get(:@splits_repository).get_split('test_1_ruby'))[:configs])
-        .to eq(on: '{"size":15,"test":20}')
+      subject.block_until_ready
+      split = subject.instance_variable_get(:@splits_repository).get_split('test_1_ruby')
+      result = subject.send(:build_split_view, 'test_1_ruby', split)[:configs]
+      expect(result).to eq(on: '{"size":15,"test":20}')
     end
 
     it 'returns empty hash when no configurations' do
+      subject.block_until_ready
       expect(subject.send(:build_split_view,
                           'sample_feature',
                           subject.instance_variable_get(:@splits_repository).get_split('sample_feature'))[:configs])
@@ -124,6 +122,7 @@ describe SplitIoClient do
     end
 
     it 'returns expected treatments' do
+      subject.block_until_ready
       expect(subject.send(:build_split_view,
                           'uber_feature',
                           subject.instance_variable_get(:@splits_repository).get_split('uber_feature'))[:treatments])

@@ -7,10 +7,10 @@ module SplitIoClient
         require 'yaml'
         attr_reader :splits_repository
 
-        def initialize(splits_repository, config, sdk_blocker = nil)
+        def initialize(splits_repository, config, status_manager = nil)
           @splits_repository = splits_repository
           @config = config
-          @sdk_blocker = sdk_blocker
+          @status_manager = status_manager
         end
 
         def call
@@ -45,10 +45,7 @@ module SplitIoClient
             store_split(split)
           end
 
-          if @sdk_blocker
-            @sdk_blocker.splits_ready!
-            @sdk_blocker.segments_ready!
-          end
+          @status_manager.ready! if @status_manager
         rescue StandardError => error
           @config.logger.error('Error while parsing the split file. ' \
             'Check that the input file matches the expected format')
