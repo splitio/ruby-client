@@ -33,8 +33,8 @@ module SplitIoClient
 
         TREATMENT = 'treatment'
         TREATMENTS = 'treatments'
-        TREATMENT_WITH_CONFIG = 'treatment_with_config'
-        TREATMENTS_WITH_CONFIG = 'treatments_with_config'
+        TREATMENT_WITH_CONFIG = 'treatmentWithConfig'
+        TREATMENTS_WITH_CONFIG = 'treatmentsWithConfig'
         TRACK = 'track'
       end
     end
