@@ -60,7 +60,7 @@ describe SplitIoClient::Engine::SyncManager do
     stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
   end
 
-  it 'start sync manager with success sse connection.' do    
+  it 'start sync manager with success sse connection.' do
     mock_server do |server|
       server.setup_response('/') do |_, res|
         send_content(res, 'content')
