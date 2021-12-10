@@ -4,9 +4,9 @@ module SplitIoClient
     # Creates a new split manager instance that connects to split.io API.
     #
     # @return [SplitIoManager] split.io client instance
-    def initialize(splits_repository = nil, sdk_blocker, config)
+    def initialize(splits_repository = nil, status_manager, config)
       @splits_repository = splits_repository
-      @sdk_blocker = sdk_blocker
+      @status_manager = status_manager
       @config = config
     end
 
@@ -78,7 +78,7 @@ module SplitIoClient
     end
 
     def block_until_ready(time = nil)
-      @sdk_blocker.block(time) if @sdk_blocker && !@sdk_blocker.ready?
+      @status_manager.wait_until_ready(time) if @status_manager
     end
 
     private
@@ -111,7 +111,7 @@ module SplitIoClient
 
     # move to blocker, alongside block until ready to avoid duplication
     def ready?
-      return @sdk_blocker.ready? if @sdk_blocker
+      return @status_manager.ready? if @status_manager
       true
     end
   end

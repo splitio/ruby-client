@@ -27,12 +27,11 @@ describe SplitIoClient::SSE::SSEHandler do
   let(:impressions_repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
   let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
   let(:events_repository) { SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key, telemetry_runtime_producer) }
-  let(:sdk_blocker) { SplitIoClient::Cache::Stores::SDKBlocker.new(splits_repository, segments_repository, config) }
   let(:split_fetcher) do
-    SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, sdk_blocker, telemetry_runtime_producer)
+    SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, telemetry_runtime_producer)
   end
   let(:segment_fetcher) do
-    SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, sdk_blocker, telemetry_runtime_producer)
+    SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, telemetry_runtime_producer)
   end
   let(:notification_manager_keeper) { SplitIoClient::SSE::NotificationManagerKeeper.new(config, telemetry_runtime_producer) }
   let(:repositories) do
@@ -52,7 +51,7 @@ describe SplitIoClient::SSE::SSEHandler do
       telemetry_runtime_producer: telemetry_runtime_producer
     }
   end
-  let(:synchronizer) { SplitIoClient::Engine::Synchronizer.new(repositories, api_key, config, sdk_blocker, parameters) }
+  let(:synchronizer) { SplitIoClient::Engine::Synchronizer.new(repositories, api_key, config, parameters) }
 
   before do
     mock_split_changes(splits)
@@ -277,27 +276,27 @@ describe SplitIoClient::SSE::SSEHandler do
       end
     end
   end
-end
 
-private
+  private
 
-def mock_split_changes(splits_json)
-  stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
-    .to_return(status: 200, body: splits_json)
-end
+  def mock_split_changes(splits_json)
+    stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+      .to_return(status: 200, body: splits_json)
+  end
 
-def mock_segment_changes(segment_name, segment_json, since)
-  stub_request(:get, "https://sdk.split.io/api/segmentChanges/#{segment_name}?since=#{since}")
-    .to_return(status: 200, body: segment_json)
-end
+  def mock_segment_changes(segment_name, segment_json, since)
+    stub_request(:get, "https://sdk.split.io/api/segmentChanges/#{segment_name}?since=#{since}")
+      .to_return(status: 200, body: segment_json)
+  end
 
-def send_content(res, content)
-  res.content_type = 'text/event-stream'
-  res.status = 200
-  res.chunked = true
-  rd, wr = IO.pipe
-  wr.write(content)
-  res.body = rd
-  wr.close
-  wr
+  def send_content(res, content)
+    res.content_type = 'text/event-stream'
+    res.status = 200
+    res.chunked = true
+    rd, wr = IO.pipe
+    wr.write(content)
+    res.body = rd
+    wr.close
+    wr
+  end
 end

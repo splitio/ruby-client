@@ -14,14 +14,14 @@ module SplitIoClient
 
       def record_latency(method, bucket)
         @adapter.hincrby(latency_key, "#{@sdk_version}/#{@name}/#{@ip}/#{method}/#{bucket}", 1)
-      rescue StandardError => error
-        @config.log_found_exception(__method__.to_s, error)
+      rescue StandardError => e
+        @config.log_found_exception(__method__.to_s, e)
       end
 
       def record_exception(method)
         @adapter.hincrby(exception_key, "#{@sdk_version}/#{@name}/#{@ip}/#{method}", 1)
-      rescue StandardError => error
-        @config.log_found_exception(__method__.to_s, error)
+      rescue StandardError => e
+        @config.log_found_exception(__method__.to_s, e)
       end
 
       private

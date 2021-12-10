@@ -71,6 +71,8 @@ describe SplitIoClient::SplitFactory do
     it 'log an error stating Api Key is invalid' do
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
         .to_return(status: 200, body: [])
+      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
+        .to_return(status: 200, body: '')
 
       factory = described_class.new(nil, options)
 
@@ -89,6 +91,8 @@ describe SplitIoClient::SplitFactory do
     it 'log an error stating Api Key is invalid' do
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
         .to_return(status: 200, body: [])
+      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
+        .to_return(status: 200, body: '')
 
       factory = described_class.new('', options)
 
@@ -114,15 +118,20 @@ describe SplitIoClient::SplitFactory do
         .to_return(status: 200, body: [])
       stub_request(:get, 'https://sdk.split.io/api/segmentChanges/employees?since=-1')
         .to_return(status: 403, body: [])
+      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
+        .to_return(status: 200, body: '')
 
       factory = described_class.new('browser_key', options)
-      factory.start!
 
+      sleep 1
       expect(log.string).to include 'Factory Instantiation: You passed a browser type api_key,' \
         ' please grab an api key from the Split console that is of type sdk'
       expect(factory.instance_variable_get(:@config).valid_mode).to be false
       expect(factory.manager.split('test_split'))
         .to be nil
+
+      puts '###### log'
+      puts log.string
     end
   end
 
@@ -196,6 +205,9 @@ describe SplitIoClient::SplitFactory do
     it 'active and redundant factories' do
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
         .to_return(status: 200, body: [])
+
+      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
+        .to_return(status: 200, body: '')
 
       described_class.new('API_KEY', options)
 

@@ -1,3 +1,3 @@
 module SplitIoClient
-  VERSION = '7.3.1'
+  VERSION = '7.3.2'
 end
