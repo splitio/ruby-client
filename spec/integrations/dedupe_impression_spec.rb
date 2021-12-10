@@ -32,8 +32,14 @@ describe SplitIoClient do
 
   context 'checking logic impressions' do
     it 'get_treament should post 5 impressions - debug mode' do
+      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262916').to_return(status: 200, body: '')
+
       factory = SplitIoClient::SplitFactory.new('test_api_key_debug-1', streaming_enabled: false, impressions_mode: :debug)
       debug_client = factory.client
+
+      debug_client.block_until_ready
+      sleep 1
 
       expect(debug_client.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
       expect(debug_client.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
@@ -49,6 +55,9 @@ describe SplitIoClient do
     end
 
     it 'get_treaments should post 11 impressions - debug mode' do
+      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262916').to_return(status: 200, body: '')
+
       factory = SplitIoClient::SplitFactory.new('test_api_key_debug-2', streaming_enabled: false, impressions_mode: :debug)
       debug_client = factory.client
 
@@ -65,8 +74,14 @@ describe SplitIoClient do
     end
 
     it 'get_treament should post 3 impressions - optimized mode' do
-      factory = SplitIoClient::SplitFactory.new('test_api_key-1', streaming_enabled: false, impressions_mode: :optimized)
+      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262916').to_return(status: 200, body: '')
+      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/usage').to_return(status: 200, body: '')
+
+      factory = SplitIoClient::SplitFactory.new('test_api_key-1', streaming_enabled: false, impressions_mode: :optimized, impressions_refresh_rate: 60)
       client = factory.client
+      client.block_until_ready
+      sleep 1
 
       expect(client.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
       expect(client.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
@@ -76,11 +91,9 @@ describe SplitIoClient do
 
       time_frame = SplitIoClient::Engine::Common::ImpressionCounter.truncate_time_frame((Time.now.to_f * 1000.0).to_i)
 
-      impressions = client.instance_variable_get(:@impressions_repository).batch
-
+      client.destroy
       sleep 0.5
 
-      expect(impressions.size).to eq 3
       expect(a_request(:post, 'https://events.split.io/api/testImpressions/count')
       .with(
         body: {
@@ -93,8 +106,15 @@ describe SplitIoClient do
     end
 
     it 'get_treaments should post 8 impressions - optimized mode' do
+      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
+      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/usage').to_return(status: 200, body: '')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262916').to_return(status: 200, body: '')
+
       factory = SplitIoClient::SplitFactory.new('test_api_key-2', streaming_enabled: false, impressions_mode: :optimized)
       client = factory.client
+
+      client.block_until_ready
+      sleep 1
 
       client.get_treatments('nico_test', %w[FACUNDO_TEST MAURO_TEST Test_Save_1])
       client.get_treatments('admin', %w[FACUNDO_TEST MAURO_TEST Test_Save_1])
@@ -103,11 +123,9 @@ describe SplitIoClient do
 
       time_frame = SplitIoClient::Engine::Common::ImpressionCounter.truncate_time_frame((Time.now.to_f * 1000.0).to_i)
 
-      impressions = client.instance_variable_get(:@impressions_repository).batch
-
+      client.destroy
       sleep 0.5
 
-      expect(impressions.size).to eq 8
       expect(a_request(:post, 'https://events.split.io/api/testImpressions/count')
       .with(
         body: {

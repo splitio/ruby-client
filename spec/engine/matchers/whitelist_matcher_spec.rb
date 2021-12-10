@@ -25,10 +25,12 @@ describe SplitIoClient::WhitelistMatcher do
   end
 
   it 'validates the treatment is ON for correct attribute value' do
+    subject.block_until_ready
     expect(subject.get_treatment(user, feature, matching_attributes)).to eq 'on'
   end
 
   it 'validates the treatment is the default treatment for incorrect attributes hash and nil' do
+    subject.block_until_ready
     expect(subject.get_treatment(user, feature, non_matching_value_attributes)).to eq 'default'
     expect(subject.get_treatment(user, feature, missing_key_attributes)).to eq 'default'
     expect(subject.get_treatment(user, feature, nil_attributes)).to eq 'default'

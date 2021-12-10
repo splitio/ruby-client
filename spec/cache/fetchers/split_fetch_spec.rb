@@ -25,7 +25,7 @@ describe SplitIoClient::Cache::Fetchers::SplitFetcher do
     end
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config) }
     let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
-    let(:store) { described_class.new(splits_repository, '', config, nil, telemetry_runtime_producer) }
+    let(:store) { described_class.new(splits_repository, '', config, telemetry_runtime_producer) }
 
     it 'returns splits since' do
       splits = store.send(:splits_since, -1)
@@ -73,7 +73,7 @@ describe SplitIoClient::Cache::Fetchers::SplitFetcher do
     end
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config) }
     let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
-    let(:store) { described_class.new(splits_repository, '', config, nil, telemetry_runtime_producer) }
+    let(:store) { described_class.new(splits_repository, '', config, telemetry_runtime_producer) }
 
     it 'returns splits since' do
       splits = store.send(:splits_since, -1)

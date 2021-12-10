@@ -38,10 +38,12 @@ describe SplitIoClient::GreaterThanOrEqualToMatcher do
     end
 
     it 'validates the treatment is ON for correct attribute value' do
+      subject.block_until_ready
       expect(subject.get_treatment(user, feature, matching_attributes)).to eq 'on'
     end
 
     it 'validates the treatment is the default treatment for incorrect attributes hash and nil' do
+      subject.block_until_ready
       expect(subject.get_treatment(user, feature, non_matching_value_attributes)).to eq 'default'
       expect(subject.get_treatment(user, feature, missing_key_attributes)).to eq 'default'
       expect(subject.get_treatment(user, feature, nil_attributes)).to eq 'default'
@@ -58,14 +60,17 @@ describe SplitIoClient::GreaterThanOrEqualToMatcher do
     end
 
     it 'validates the treatment is ON for correct negative attribute value' do
+      subject.block_until_ready
       expect(subject.get_treatment(user, feature, matching_negative_attributes)).to eq 'on'
     end
 
     it 'validates the treatment is the default treatment for incorrect negative attribute value' do
+      subject.block_until_ready
       expect(subject.get_treatment(user, feature, non_matching_negative_attributes)).to eq 'default'
     end
 
     it 'validates wrong formatted attribute does not match and returns default treatment' do
+      subject.block_until_ready
       expect(subject.get_treatment(user, feature, age: 'asdasd')).to eq 'default'
     end
   end
@@ -82,11 +87,13 @@ describe SplitIoClient::GreaterThanOrEqualToMatcher do
     end
 
     it 'validates the treatment is ON for correct attribute value' do
+      subject.block_until_ready
       expect(subject.get_treatment(user, feature, matching_attributes_1)).to eq 'on'
       expect(subject.get_treatment(user, feature, matching_attributes_2)).to eq 'on'
     end
 
     it 'validates the treatment is the default treatment for incorrect attributes hash and nil' do
+      subject.block_until_ready
       expect(subject.get_treatment(user, feature, non_matching_attributes_1)).to eq 'default'
       expect(subject.get_treatment(user, feature, non_matching_attributes_2)).to eq 'default'
       expect(subject.get_treatment(user, feature, missing_key_attributes)).to eq 'default'

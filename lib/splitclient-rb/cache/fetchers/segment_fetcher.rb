@@ -4,11 +4,10 @@ module SplitIoClient
       class SegmentFetcher
         attr_reader :segments_repository
 
-        def initialize(segments_repository, api_key, config, sdk_blocker, telemetry_runtime_producer)
+        def initialize(segments_repository, api_key, config, telemetry_runtime_producer)
           @segments_repository = segments_repository
           @api_key = api_key
           @config = config
-          @sdk_blocker = sdk_blocker
           @semaphore = Mutex.new
           @telemetry_runtime_producer = telemetry_runtime_producer
         end
@@ -52,11 +51,11 @@ module SplitIoClient
           @semaphore.synchronize do
             segments_api.fetch_segments_by_names(@segments_repository.used_segment_names)
 
-            @sdk_blocker.segments_ready!
-            @sdk_blocker.sdk_internal_ready
+            true
           end
         rescue StandardError => error
           @config.log_found_exception(__method__.to_s, error)
+          false
         end
 
         def stop_segments_thread
@@ -70,11 +69,6 @@ module SplitIoClient
             @config.logger.info('Starting segments fetcher service') if @config.debug_enabled
 
             loop do
-              unless @sdk_blocker.splits_repository.ready?
-                sleep 0.2
-                next
-              end
-
               fetch_segments
               @config.logger.debug("Segment names: #{@segments_repository.used_segment_names.to_a}") if @config.debug_enabled
 

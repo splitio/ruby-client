@@ -12,10 +12,7 @@ describe SplitIoClient::Engine::SyncManager do
   let(:segment1) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/segment1.json')) }
   let(:segment2) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/segment2.json')) }
   let(:segment3) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/segment3.json')) }
-  let(:body_response) do
-    File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/auth_body_response.json'))
-  end
-
+  let(:body_response) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/auth_body_response.json')) }
   let(:api_key) { 'api-key-test' }
   let(:log) { StringIO.new }
   let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log), streaming_enabled: true) }
@@ -24,7 +21,6 @@ describe SplitIoClient::Engine::SyncManager do
   let(:impressions_repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
   let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
   let(:events_repository) { SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key, telemetry_runtime_producer) }
-  let(:sdk_blocker) { SplitIoClient::Cache::Stores::SDKBlocker.new(splits_repository, segments_repository, config) }
   let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
   let(:repositories) do
     {
@@ -36,14 +32,13 @@ describe SplitIoClient::Engine::SyncManager do
   end
   let(:sync_params) do
     {
-      split_fetcher: SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, sdk_blocker, telemetry_runtime_producer),
-      segment_fetcher: SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, sdk_blocker, telemetry_runtime_producer),
+      split_fetcher: SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, telemetry_runtime_producer),
+      segment_fetcher: SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, telemetry_runtime_producer),
       imp_counter: impression_counter,
       telemetry_runtime_producer: telemetry_runtime_producer
     }
   end
-  let(:synchronizer) { SplitIoClient::Engine::Synchronizer.new(repositories, api_key, config, sdk_blocker, sync_params) }
-
+  let(:synchronizer) { SplitIoClient::Engine::Synchronizer.new(repositories, api_key, config, sync_params) }
   let(:init_producer) { SplitIoClient::Telemetry::InitProducer.new(config) }
   let(:init_consumer) { SplitIoClient::Telemetry::InitConsumer.new(config) }
   let(:runtime_consumer) { SplitIoClient::Telemetry::RuntimeConsumer.new(config) }
@@ -51,6 +46,7 @@ describe SplitIoClient::Engine::SyncManager do
   let(:telemetry_consumers) { { init: init_consumer, runtime: runtime_consumer, evaluation: evaluation_consumer } }
   let(:telemetry_api) { SplitIoClient::Api::TelemetryApi.new(config, api_key, telemetry_runtime_producer) }
   let(:telemetry_synchronizer) { SplitIoClient::Telemetry::Synchronizer.new(config, telemetry_consumers, init_producer, repositories, telemetry_api) }
+  let(:status_manager) { SplitIoClient::Engine::StatusManager.new(config) }
 
   before do
     mock_split_changes_with_since(splits, '-1')
@@ -61,6 +57,7 @@ describe SplitIoClient::Engine::SyncManager do
     mock_segment_changes('segment2', segment2, '1470947453878')
     mock_segment_changes('segment3', segment3, '-1')
     stub_request(:get, config.auth_service_url).to_return(status: 200, body: body_response)
+    stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
   end
 
   it 'start sync manager with success sse connection.' do
@@ -71,13 +68,13 @@ describe SplitIoClient::Engine::SyncManager do
 
       config.streaming_service_url = server.base_uri
 
-      sync_manager = subject.new(repositories, api_key, config, synchronizer, telemetry_runtime_producer, sdk_blocker, telemetry_synchronizer)
+      sync_manager = subject.new(repositories, api_key, config, synchronizer, telemetry_runtime_producer, telemetry_synchronizer, status_manager)
       sync_manager.start
 
       sleep(2)
       expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.once
-      expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262916')).to have_been_made.once
-      expect(config.threads.size).to eq(11)
+
+      expect(config.threads.size).to eq(10)
     end
   end
 
@@ -90,13 +87,13 @@ describe SplitIoClient::Engine::SyncManager do
       config.streaming_service_url = 'https://fake-sse.io'
       config.connection_timeout = 1
 
-      sync_manager = subject.new(repositories, api_key, config, synchronizer, telemetry_runtime_producer, sdk_blocker, telemetry_synchronizer)
+      sync_manager = subject.new(repositories, api_key, config, synchronizer, telemetry_runtime_producer, telemetry_synchronizer, status_manager)
       sync_manager.start
 
       sleep(2)
       expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.once
-      expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262916')).to have_been_made.at_least_times(1)
-      expect(config.threads.size).to eq(8)
+
+      expect(config.threads.size).to eq(6)
     end
   end
 
@@ -108,7 +105,7 @@ describe SplitIoClient::Engine::SyncManager do
 
       config.streaming_service_url = server.base_uri
 
-      sync_manager = subject.new(repositories, api_key, config, synchronizer, telemetry_runtime_producer, sdk_blocker, telemetry_synchronizer)
+      sync_manager = subject.new(repositories, api_key, config, synchronizer, telemetry_runtime_producer, telemetry_synchronizer, status_manager)
       sync_manager.start
 
       sleep(2)
@@ -120,27 +117,27 @@ describe SplitIoClient::Engine::SyncManager do
       expect(sse_handler.connected?).to eq(false)
     end
   end
-end
 
-private
+  private
 
-def mock_split_changes_with_since(splits_json, since)
-  stub_request(:get, "https://sdk.split.io/api/splitChanges?since=#{since}")
-    .to_return(status: 200, body: splits_json)
-end
+  def mock_split_changes_with_since(splits_json, since)
+    stub_request(:get, "https://sdk.split.io/api/splitChanges?since=#{since}")
+      .to_return(status: 200, body: splits_json)
+  end
 
-def mock_segment_changes(segment_name, segment_json, since)
-  stub_request(:get, "https://sdk.split.io/api/segmentChanges/#{segment_name}?since=#{since}")
-    .to_return(status: 200, body: segment_json)
-end
+  def mock_segment_changes(segment_name, segment_json, since)
+    stub_request(:get, "https://sdk.split.io/api/segmentChanges/#{segment_name}?since=#{since}")
+      .to_return(status: 200, body: segment_json)
+  end
 
-def send_content(res, content)
-  res.content_type = 'text/event-stream'
-  res.status = 200
-  res.chunked = true
-  rd, wr = IO.pipe
-  wr.write(content)
-  res.body = rd
-  wr.close
-  wr
+  def send_content(res, content)
+    res.content_type = 'text/event-stream'
+    res.status = 200
+    res.chunked = true
+    rd, wr = IO.pipe
+    wr.write(content)
+    res.body = rd
+    wr.close
+    wr
+  end
 end
