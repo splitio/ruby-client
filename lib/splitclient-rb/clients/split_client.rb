@@ -14,13 +14,13 @@ module SplitIoClient
     # @param api_key [String] the API key for your split account
     #
     # @return [SplitIoClient] split.io client instance
-    def initialize(api_key, repositories, sdk_blocker, config, impressions_manager, telemetry_evaluation_producer)
+    def initialize(api_key, repositories, status_manager, config, impressions_manager, telemetry_evaluation_producer)
       @api_key = api_key
       @splits_repository = repositories[:splits]
       @segments_repository = repositories[:segments]
       @impressions_repository = repositories[:impressions]
       @events_repository = repositories[:events]
-      @sdk_blocker = sdk_blocker
+      @status_manager = status_manager
       @destroyed = false
       @config = config
       @impressions_manager = impressions_manager
@@ -137,7 +137,7 @@ module SplitIoClient
       else
         {
           treatment: treatment_data[:treatment],
-          config: treatment_data[:config]
+          config: treatment_data[:config],
         }
       end
     end
@@ -157,7 +157,7 @@ module SplitIoClient
     end
 
     def block_until_ready(time = nil)
-      @sdk_blocker.block(time) if @sdk_blocker && !@sdk_blocker.ready?
+      @status_manager.wait_until_ready(time) if @status_manager
     end
 
     private
@@ -310,7 +310,7 @@ module SplitIoClient
     end
 
     def ready?
-      return @sdk_blocker.ready? if @sdk_blocker
+      return @status_manager.ready? if @status_manager
       true
     end
 

@@ -77,7 +77,7 @@ module SplitIoClient
         end
 
         def connect_stream(latch)
-          socket_write
+          socket_write(latch)
 
           while connected? || @first_event.value
             begin
@@ -96,13 +96,14 @@ module SplitIoClient
           end
         end
 
-        def socket_write
+        def socket_write(latch)
           @first_event.make_true
           @socket = socket_connect
           @socket.write(build_request(@uri))
         rescue StandardError => e
           @config.logger.error("Error during connecting to #{@uri.host}. Error: #{e.inspect}")
           close(Constants::PUSH_NONRETRYABLE_ERROR)
+          latch.count_down
         end
 
         def read_first_event(data, latch)

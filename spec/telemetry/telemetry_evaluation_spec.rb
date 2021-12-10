@@ -80,6 +80,9 @@ describe SplitIoClient::Telemetry::EvaluationConsumer do
     let(:evaluation_producer) { SplitIoClient::Telemetry::EvaluationProducer.new(config) }
     let(:latency_key) { 'SPLITIO.telemetry.latencies' }
     let(:exception_key) { 'SPLITIO.telemetry.exceptions' }
+    let(:sdk_version) { "#{config.language}-#{config.version}" }
+    let(:name) { config.machine_name }
+    let(:ip) { config.machine_ip }
 
     it 'record latency' do
       adapter.redis.del(latency_key)
@@ -88,6 +91,8 @@ describe SplitIoClient::Telemetry::EvaluationConsumer do
       expect(evaluation_producer.record_latency(SplitIoClient::Telemetry::Domain::Constants::TREATMENT, 5555)).to eq(1)
       expect(evaluation_producer.record_latency(SplitIoClient::Telemetry::Domain::Constants::TREATMENTS, 4444)).to eq(1)
       expect(evaluation_producer.record_latency(SplitIoClient::Telemetry::Domain::Constants::TREATMENT_WITH_CONFIG, 222)).to eq(1)
+      expect(evaluation_producer.record_latency(SplitIoClient::Telemetry::Domain::Constants::TREATMENTS_WITH_CONFIG, 2)).to eq(1)
+      expect(evaluation_producer.record_latency(SplitIoClient::Telemetry::Domain::Constants::TRACK, 3)).to eq(1)
 
       expect(evaluation_producer.record_latency(SplitIoClient::Telemetry::Domain::Constants::TREATMENT, 123)).to eq(2)
       expect(evaluation_producer.record_latency(SplitIoClient::Telemetry::Domain::Constants::TREATMENT, 5555)).to eq(2)
@@ -98,6 +103,12 @@ describe SplitIoClient::Telemetry::EvaluationConsumer do
       expect(evaluation_producer.record_latency(SplitIoClient::Telemetry::Domain::Constants::TREATMENT, 5555)).to eq(3)
       expect(evaluation_producer.record_latency(SplitIoClient::Telemetry::Domain::Constants::TREATMENTS, 4444)).to eq(3)
       expect(evaluation_producer.record_latency(SplitIoClient::Telemetry::Domain::Constants::TREATMENT_WITH_CONFIG, 222)).to eq(3)
+
+      expect(adapter.redis.hget(latency_key, "#{sdk_version}/#{name}/#{ip}/treatment/123").to_i).to eq(3)
+      expect(adapter.redis.hget(latency_key, "#{sdk_version}/#{name}/#{ip}/treatments/4444").to_i).to eq(3)
+      expect(adapter.redis.hget(latency_key, "#{sdk_version}/#{name}/#{ip}/treatmentWithConfig/222").to_i).to eq(3)
+      expect(adapter.redis.hget(latency_key, "#{sdk_version}/#{name}/#{ip}/treatmentsWithConfig/2").to_i).to eq(1)
+      expect(adapter.redis.hget(latency_key, "#{sdk_version}/#{name}/#{ip}/track/3").to_i).to eq(1)
     end
 
     it 'record exception' do
@@ -109,6 +120,15 @@ describe SplitIoClient::Telemetry::EvaluationConsumer do
       expect(evaluation_producer.record_exception(SplitIoClient::Telemetry::Domain::Constants::TREATMENTS)).to eq(2)
       expect(evaluation_producer.record_exception(SplitIoClient::Telemetry::Domain::Constants::TREATMENTS)).to eq(3)
       expect(evaluation_producer.record_exception(SplitIoClient::Telemetry::Domain::Constants::TREATMENT)).to eq(3)
+      expect(evaluation_producer.record_exception(SplitIoClient::Telemetry::Domain::Constants::TREATMENT_WITH_CONFIG)).to eq(1)
+      expect(evaluation_producer.record_exception(SplitIoClient::Telemetry::Domain::Constants::TREATMENTS_WITH_CONFIG)).to eq(1)
+      expect(evaluation_producer.record_exception(SplitIoClient::Telemetry::Domain::Constants::TRACK)).to eq(1)
+
+      expect(adapter.redis.hget(exception_key, "#{sdk_version}/#{name}/#{ip}/treatment").to_i).to eq(3)
+      expect(adapter.redis.hget(exception_key, "#{sdk_version}/#{name}/#{ip}/treatments").to_i).to eq(3)
+      expect(adapter.redis.hget(exception_key, "#{sdk_version}/#{name}/#{ip}/treatmentWithConfig").to_i).to eq(1)
+      expect(adapter.redis.hget(exception_key, "#{sdk_version}/#{name}/#{ip}/treatmentsWithConfig").to_i).to eq(1)
+      expect(adapter.redis.hget(exception_key, "#{sdk_version}/#{name}/#{ip}/track").to_i).to eq(1)
     end
   end
 end

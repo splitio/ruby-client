@@ -17,12 +17,11 @@ describe SplitIoClient::Engine::Synchronizer do
   let(:impressions_repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
   let(:runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
   let(:events_repository) { SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key, runtime_producer) }
-  let(:sdk_blocker) { SplitIoClient::Cache::Stores::SDKBlocker.new(splits_repository, segments_repository, config) }
   let(:split_fetcher) do
-    SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, sdk_blocker, runtime_producer)
+    SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, runtime_producer)
   end
   let(:segment_fetcher) do
-    SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, sdk_blocker, runtime_producer)
+    SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, runtime_producer)
   end
   let(:repositories) do
     repos = {}
@@ -40,7 +39,7 @@ describe SplitIoClient::Engine::Synchronizer do
 
     params
   end
-  let(:synchronizer) { subject.new(repositories, api_key, config, sdk_blocker, parameters) }
+  let(:synchronizer) { subject.new(repositories, api_key, config, parameters) }
 
   context 'tests with mock data' do
     before do
@@ -53,8 +52,8 @@ describe SplitIoClient::Engine::Synchronizer do
       mock_segment_changes('segment3', segment3, '1470947453879')
     end
 
-    it 'sync_all' do
-      synchronizer.sync_all
+    it 'sync_all asynchronous - should return true' do
+      result = synchronizer.sync_all
 
       sleep(2)
 
@@ -64,6 +63,21 @@ describe SplitIoClient::Engine::Synchronizer do
       expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment2?since=-1')).to have_been_made.once
       expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment2?since=1470947453878')).to have_been_made.once
       expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=-1')).to have_been_made.once
+      expect(result).to eq(true)
+    end
+
+    it 'sync_all synchronous - should return true' do
+      result = synchronizer.sync_all
+
+      sleep(2)
+
+      expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.once
+      expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=-1')).to have_been_made.once
+      expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=1470947453877')).to have_been_made.once
+      expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment2?since=-1')).to have_been_made.once
+      expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment2?since=1470947453878')).to have_been_made.once
+      expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=-1')).to have_been_made.once
+      expect(result).to eq(true)
     end
 
     it 'start_periodic_data_recording' do
@@ -82,6 +96,16 @@ describe SplitIoClient::Engine::Synchronizer do
       expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment2?since=1470947453878')).to have_been_made.once
       expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=-1')).to have_been_made.once
     end
+  end
+
+  it 'sync_all synchronous - should return false' do
+    stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1').to_return(status: 500)
+
+    result = synchronizer.sync_all(false)
+
+    sleep(2)
+
+    expect(result).to eq(false)
   end
 
   it 'fetch_splits' do

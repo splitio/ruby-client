@@ -21,8 +21,8 @@ module SplitIoClient
           @impression_counter.inc(split_name, impression_data[:m]) if optimized? && !redis?
 
           impression(impression_data, params[:attributes])
-        rescue StandardError => error
-          @config.log_found_exception(__method__.to_s, error)
+        rescue StandardError => e
+          @config.log_found_exception(__method__.to_s, e)
         end
 
         def track(impressions)
@@ -48,8 +48,8 @@ module SplitIoClient
           end
 
           record_stats(queued, dropped, dedupe)
-        rescue StandardError => error
-          @config.log_found_exception(__method__.to_s, error)
+        rescue StandardError => e
+          @config.log_found_exception(__method__.to_s, e)
         end
 
         private
