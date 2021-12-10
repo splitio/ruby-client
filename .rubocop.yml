@@ -64,4 +64,4 @@ AllCops:
     - lib/splitclient-rb/engine/parser/**/*
     - spec/telemetry/synchronizer_spec.rb
     - lib/splitclient-rb/engine/synchronizer.rb
-    - tmp/*
+    - tmp/**
