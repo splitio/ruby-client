@@ -1,6 +1,6 @@
 CHANGES
 
-7.3.2 (Dec 3, 2021)
+7.3.2 (Dec 10, 2021)
 - Updated the readiness flow to be more consistent with the other sdks and improve the readiness time.
 - Updated the name of telemety key latencies in Redis.
 
