@@ -14,12 +14,6 @@ module SplitIoClient
 
         def call
           impressions_count_thread
-
-          if defined?(PhusionPassenger)
-            PhusionPassenger.on_event(:starting_worker_process) do |forked|
-              impressions_count_thread if forked
-            end
-          end
         end
 
         private
