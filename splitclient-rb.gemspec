@@ -51,11 +51,11 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'webmock'
 
   spec.add_runtime_dependency 'concurrent-ruby', '~> 1.0'
-  spec.add_runtime_dependency 'faraday', '>= 0.8'
+  spec.add_runtime_dependency 'faraday', '~> 1.9.3'
   spec.add_runtime_dependency 'json', '>= 1.8'
   spec.add_runtime_dependency 'jwt', '>= 2.2.1'
   spec.add_runtime_dependency 'lru_redux'
-  spec.add_runtime_dependency 'net-http-persistent', '>= 2.9'
+  spec.add_runtime_dependency 'net-http-persistent', '~> 4.0.1'
   spec.add_runtime_dependency 'redis', '>= 4.2.2'
   spec.add_runtime_dependency 'socketry', '~> 0.5.1'
   spec.add_runtime_dependency 'thread_safe', '>= 0.3'
