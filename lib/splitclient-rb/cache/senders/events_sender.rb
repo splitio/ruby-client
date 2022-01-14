@@ -11,12 +11,6 @@ module SplitIoClient
 
         def call          
           events_thread
-
-          if defined?(PhusionPassenger)
-            PhusionPassenger.on_event(:starting_worker_process) do |forked|
-              events_thread if forked
-            end
-          end
         end
 
         private

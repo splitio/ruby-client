@@ -70,10 +70,6 @@ module SplitIoClient
             perform
           end
         end
-
-        def perform_passenger_forked
-          PhusionPassenger.on_event(:starting_worker_process) { |forked| perform_thread if forked }
-        end
       end
     end
   end

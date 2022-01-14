@@ -15,15 +15,10 @@ module SplitIoClient
         def call
           if ENV['SPLITCLIENT_ENV'] == 'test'
             fetch_splits
-          else
-            splits_thread
-
-            if defined?(PhusionPassenger)
-              PhusionPassenger.on_event(:starting_worker_process) do |forked|
-                splits_thread if forked
-              end
-            end
+            return
           end
+          
+          splits_thread
         end
 
         def fetch_splits(fetch_options = { cache_control_headers: false, till: nil })
