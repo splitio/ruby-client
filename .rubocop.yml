@@ -65,3 +65,4 @@ AllCops:
     - spec/telemetry/synchronizer_spec.rb
     - lib/splitclient-rb/engine/synchronizer.rb
     - tmp/**/*
+    - lib/splitclient-rb/sse/event_source/client.rb
