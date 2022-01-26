@@ -34,7 +34,6 @@ module SplitIoClient
       end
 
       def stop_sse
-        @sse_handler.process_disconnect if @sse_handler.sse_client.nil?
         @sse_handler.stop
         SplitIoClient::Helpers::ThreadHelper.stop(:schedule_next_token_refresh, @config)
       end

@@ -35,11 +35,15 @@ module SplitIoClient
           @on[:action] = action
         end
 
-        def close(action = Constants::PUSH_NONRETRYABLE_ERROR)
-          dispatch_action(action)
+        def close(action = nil)
+          unless connected?
+            @config.logger.error('SSEClient already disconected.') if @config.debug_enabled
+            return
+          end
+
           @connected.make_false
-          SplitIoClient::Helpers::ThreadHelper.stop(:connect_stream, @config)
           @socket&.close
+          dispatch_action(action) unless action.nil?
         rescue StandardError => e
           @config.logger.error("SSEClient close Error: #{e.inspect}")
         end
@@ -72,12 +76,14 @@ module SplitIoClient
         def connect_thread(latch)
           @config.threads[:connect_stream] = Thread.new do
             @config.logger.info('Starting connect_stream thread ...') if @config.debug_enabled
-            connect_stream(latch)
+            action = connect_stream(latch)
+            dispatch_action(action) unless action.nil?
+            @config.logger.info('connect_stream thread finished.') if @config.debug_enabled
           end
         end
 
         def connect_stream(latch)
-          socket_write(latch)
+          return Constants::PUSH_NONRETRYABLE_ERROR unless socket_write(latch)
 
           while connected? || @first_event.value
             begin
@@ -86,24 +92,30 @@ module SplitIoClient
               read_first_event(partial_data, latch)
 
               raise 'eof exception' if partial_data == :eof
+            rescue Errno::EBADF, IOError => e
+              @config.logger.error(e.inspect)
+              return nil
             rescue StandardError => e
-              @config.logger.error('Error reading partial data: ' + e.inspect) if @config.debug_enabled
-              close(Constants::PUSH_RETRYABLE_ERROR)
-              return
+              return nil if ENV['SPLITCLIENT_ENV'] == 'test'
+
+              @config.logger.error("Error reading partial data: #{e.inspect}") if @config.debug_enabled
+              return Constants::PUSH_RETRYABLE_ERROR
             end
 
             process_data(partial_data)
           end
+          nil
         end
 
         def socket_write(latch)
           @first_event.make_true
           @socket = socket_connect
           @socket.write(build_request(@uri))
+          true
         rescue StandardError => e
           @config.logger.error("Error during connecting to #{@uri.host}. Error: #{e.inspect}")
-          close(Constants::PUSH_NONRETRYABLE_ERROR)
           latch.count_down
+          false
         end
 
         def read_first_event(data, latch)
@@ -181,8 +193,10 @@ module SplitIoClient
         end
 
         def dispatch_action(action)
-          @config.logger.debug("Dispatching action: #{action}") if @config.debug_enabled
-          @on[:action].call(action)
+          @config.threads[:dispatch_action] = Thread.new do
+            @config.logger.debug("Dispatching action: #{action}") if @config.debug_enabled
+            @on[:action].call(action)
+          end
         end
       end
     end

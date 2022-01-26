@@ -33,21 +33,11 @@ module SplitIoClient
         end
 
         def add_to_queue(change_number)
-          unless @running.value
-            @config.logger.debug('splits worker not running.')
-            return
-          end
-
           @config.logger.debug("SplitsWorker add to queue #{change_number}")
           @queue.push(change_number)
         end
 
         def kill_split(change_number, split_name, default_treatment)
-          unless @running.value
-            @config.logger.debug('splits worker not running.')
-            return
-          end
-
           return if @splits_repository.get_change_number.to_i > change_number
 
           @config.logger.debug("SplitsWorker kill #{split_name}, #{change_number}")

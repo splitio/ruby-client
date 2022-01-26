@@ -136,6 +136,7 @@ module SplitIoClient
         record_telemetry(Telemetry::Domain::Constants::SYNC_MODE, SYNC_MODE_POLLING)
 
         if reconnect
+          @push_manager.stop_sse
           @synchronizer.sync_all
           @push_manager.start_sse
         end
