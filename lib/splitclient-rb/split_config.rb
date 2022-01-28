@@ -329,7 +329,7 @@ module SplitIoClient
     end
 
     def self.default_auth_service_url
-      'https://auth.split.io/api/auth'
+      'https://auth.split.io/api/v2/auth'
     end
 
     def self.default_auth_retry_back_off_base

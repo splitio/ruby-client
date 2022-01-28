@@ -13,11 +13,6 @@ module SplitIoClient
         end
 
         def add_to_queue(change_number, segment_name)
-          unless @running.value
-            @config.logger.debug('segments worker not running.')
-            return
-          end
-
           item = { change_number: change_number, segment_name: segment_name }
           @config.logger.debug("SegmentsWorker add to queue #{item}")
           @queue.push(item)

@@ -42,6 +42,7 @@ describe SplitIoClient::SSE::EventSource::Client do
       expect(event_result.client_id).to eq('emptyClientId')
       expect(event_result.event_type).to eq('message')
       expect(sse_client.connected?).to eq(true)
+      sleep(2)
       expect(action_event).to eq(SplitIoClient::Constants::PUSH_CONNECTED)
 
       sse_client.close
@@ -75,6 +76,7 @@ describe SplitIoClient::SSE::EventSource::Client do
       expect(event_result.client_id).to eq('emptyClientId')
       expect(event_result.event_type).to eq('message')
       expect(sse_client.connected?).to eq(true)
+      sleep(2)
       expect(action_event).to eq(SplitIoClient::Constants::PUSH_CONNECTED)
 
       sse_client.close
@@ -107,6 +109,7 @@ describe SplitIoClient::SSE::EventSource::Client do
       expect(event_result.client_id).to eq('emptyClientId')
       expect(event_result.event_type).to eq('message')
       expect(sse_client.connected?).to eq(true)
+      sleep(2)
       expect(action_event).to eq(SplitIoClient::Constants::PUSH_CONNECTED)
 
       sse_client.close
@@ -138,6 +141,7 @@ describe SplitIoClient::SSE::EventSource::Client do
       expect(event_result.client_id).to eq('emptyClientId')
       expect(event_result.event_type).to eq('message')
       expect(sse_client.connected?).to eq(true)
+      sleep(2)
       expect(action_event).to eq(SplitIoClient::Constants::PUSH_CONNECTED)
 
       sse_client.close
@@ -195,6 +199,7 @@ describe SplitIoClient::SSE::EventSource::Client do
       expect(event_result.client_id).to eq(nil)
       expect(event_result.event_type).to eq('message')
       expect(sse_client.connected?).to eq(true)
+      sleep(2)
       expect(action_event).to eq(SplitIoClient::Constants::PUSH_CONNECTED)
 
       sse_client.close

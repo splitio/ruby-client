@@ -93,7 +93,6 @@ describe SplitIoClient::Engine::PushManager do
 
       expect(connected).to eq(false)
       expect(sse_handler.connected?).to eq(false)
-      expect(action_event).to eq(SplitIoClient::Constants::PUSH_NONRETRYABLE_ERROR)
     end
 
     it 'must not connect to server. Auth server return 401' do
@@ -119,7 +118,6 @@ describe SplitIoClient::Engine::PushManager do
 
       expect(connected).to eq(false)
       expect(sse_handler.connected?).to eq(false)
-      expect(action_event).to eq(SplitIoClient::Constants::PUSH_NONRETRYABLE_ERROR)
     end
   end
 
