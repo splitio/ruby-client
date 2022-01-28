@@ -136,20 +136,6 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
       expect(split[:changeNumber]).to eq(1_506_703_262_916)
       expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262916')).to have_been_made.times(0)
     end
-
-    it 'without start, must not fetch ' do
-      worker = subject.new(synchronizer, config, splits_repository)
-
-      worker.kill_split(1_506_703_262_918, 'FACUNDO_TEST', 'on')
-
-      sleep(1)
-
-      split = splits_repository.get_split('FACUNDO_TEST')
-      expect(split[:killed]).to eq(false)
-      expect(split[:defaultTreatment]).to eq('off')
-      expect(split[:changeNumber]).to eq(1_506_703_262_916)
-      expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262916')).to have_been_made.times(0)
-    end
   end
 end
 

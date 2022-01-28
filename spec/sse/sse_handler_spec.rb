@@ -66,6 +66,9 @@ describe SplitIoClient::SSE::SSEHandler do
 
   context 'SPLIT UPDATE event' do
     it 'must trigger a fetch' do
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262916').to_return(status: 200, body: '')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262916&till=1506703262918').to_return(status: 200, body: '')
+
       mock_server do |server|
         server.setup_response('/') do |_, res|
           send_content(res, event_split_update_must_fetch)
@@ -126,6 +129,8 @@ describe SplitIoClient::SSE::SSEHandler do
 
   context 'SPLIT KILL event' do
     it 'must trigger a fetch' do
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262916').to_return(status: 200, body: '')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262916&till=1506703262918').to_return(status: 200, body: '')
       mock_server do |server|
         server.setup_response('/') do |_, res|
           send_content(res, event_split_kill_must_fetch)
@@ -192,6 +197,7 @@ describe SplitIoClient::SSE::SSEHandler do
 
   context 'SEGMENT UPDATE event' do
     it 'must trigger fetch - with retries' do
+      stub_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=1470947453877&till=1470947453879').to_return(status: 200, body: 'Ok')
       mock_server do |server|
         server.setup_response('/') do |_, res|
           send_content(res, event_segment_update_must_fetch)

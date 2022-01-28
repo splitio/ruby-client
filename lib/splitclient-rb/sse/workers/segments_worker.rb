@@ -13,11 +13,6 @@ module SplitIoClient
         end
 
         def add_to_queue(change_number, segment_name)
-          unless @running.value
-            @config.logger.debug('segments worker not running.')
-            return
-          end
-
           item = { change_number: change_number, segment_name: segment_name }
           @config.logger.debug("SegmentsWorker add to queue #{item}")
           @queue.push(item)
@@ -60,10 +55,6 @@ module SplitIoClient
             @config.logger.debug('Starting segments worker ...') if @config.debug_enabled
             perform
           end
-        end
-
-        def perform_passenger_forked
-          PhusionPassenger.on_event(:starting_worker_process) { |forked| perform_thread if forked }
         end
       end
     end

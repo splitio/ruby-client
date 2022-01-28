@@ -8,7 +8,6 @@ module SplitIoClient
 
         unless thread.nil?
           config.logger.debug("Stopping #{thread_sym} thread...") if config.debug_enabled
-          sleep(0.1) while thread.status == 'run'
           Thread.kill(thread)
         end
       rescue StandardError => e

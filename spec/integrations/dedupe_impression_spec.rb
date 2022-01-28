@@ -60,6 +60,7 @@ describe SplitIoClient do
 
       factory = SplitIoClient::SplitFactory.new('test_api_key_debug-2', streaming_enabled: false, impressions_mode: :debug)
       debug_client = factory.client
+      debug_client.block_until_ready
 
       debug_client.get_treatments('nico_test', %w[FACUNDO_TEST MAURO_TEST Test_Save_1])
       debug_client.get_treatments('admin', %w[FACUNDO_TEST MAURO_TEST Test_Save_1])

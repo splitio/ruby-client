@@ -56,10 +56,6 @@ module SplitIoClient
           if @config.streaming_enabled
             @config.logger.debug('Starting Straming mode ...')
             connected = @push_manager.start_sse
-
-            if defined?(PhusionPassenger)
-              PhusionPassenger.on_event(:starting_worker_process) { |forked| sse_thread_forked if forked }
-            end
           end
 
           unless connected
@@ -140,6 +136,7 @@ module SplitIoClient
         record_telemetry(Telemetry::Domain::Constants::SYNC_MODE, SYNC_MODE_POLLING)
 
         if reconnect
+          @push_manager.stop_sse
           @synchronizer.sync_all
           @push_manager.start_sse
         end
@@ -149,11 +146,6 @@ module SplitIoClient
 
       def record_telemetry(type, data)
         @telemetry_runtime_producer.record_streaming_event(type, data)
-      end
-
-      def sse_thread_forked
-        connected = @push_manager.start_sse
-        @synchronizer.start_periodic_fetch unless connected
       end
     end
   end
