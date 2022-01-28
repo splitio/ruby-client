@@ -1,5 +1,15 @@
 CHANGES
 
+7.3.3 (Jan 28, 2021)
+- Fixed edge cases where the sdk lost streaming connection.
+- Updated default auth service url to https://auth.split.io/api/v2/auth
+- Updated dependencies:
+  - faraday to  >= 0.8, < 2.0
+  - net-http-persistent to >= 2.9, < 5.0
+  - redis to >= 4.0.0, < 5.0
+  - socketry to >= 0.4, < 1.0
+  - thread_safe to ~> 0.3
+
 7.3.2 (Dec 10, 2021)
 - Updated the readiness flow to be more consistent with the other sdks and improve the readiness time.
 - Updated the name of telemety key latencies in Redis.
