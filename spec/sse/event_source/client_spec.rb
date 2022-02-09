@@ -11,6 +11,28 @@ describe SplitIoClient::SSE::EventSource::Client do
   let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
   let(:telemetry_runtime_consumer) { SplitIoClient::Telemetry::RuntimeConsumer.new(config) }
   let(:api_token) { 'api-token-test' }
+  let(:event_parser) { SplitIoClient::SSE::EventSource::EventParser.new(config) }
+  let(:repositories) do
+    {
+      splits: SplitIoClient::Cache::Repositories::SplitsRepository.new(config),
+      segments: SplitIoClient::Cache::Repositories::SegmentsRepository.new(config),
+      impressions: SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config),
+      events: SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key, telemetry_runtime_producer)
+    }
+  end
+  let(:parameters) do
+    {
+      split_fetcher: SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, telemetry_runtime_producer),
+      segment_fetcher: SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, telemetry_runtime_producer),
+      imp_counter: SplitIoClient::Engine::Common::ImpressionCounter.new,
+      telemetry_runtime_producer: telemetry_runtime_producer
+    }
+  end
+  let(:synchronizer) { SplitIoClient::Engine::Synchronizer.new(repositories, api_key, config, parameters) }
+  let(:splits_worker) { SplitIoClient::SSE::Workers::SplitsWorker.new(synchronizer, config, repositories[:splits]) }
+  let(:segments_worker) { SplitIoClient::SSE::Workers::SegmentsWorker.new(synchronizer, config, repositories[:segments]) }
+  let(:notification_manager_keeper) { SplitIoClient::SSE::NotificationManagerKeeper.new(config, telemetry_runtime_producer) }
+  let(:notification_processor) { SplitIoClient::SSE::NotificationProcessor.new(config, splits_worker, segments_worker) }
 
   let(:event_split_update) { "fb\r\nid: 123\nevent: message\ndata: {\"id\":\"1\",\"clientId\":\"emptyClientId\",\"connectionId\":\"1\",\"timestamp\":1582045421733,\"channel\":\"channel-test\",\"data\":\"{\\\"type\\\" : \\\"SPLIT_UPDATE\\\",\\\"changeNumber\\\": 5564531221}\",\"name\":\"asdasd\"}\n\n\r\n" }
   let(:event_split_kill) { "fb\r\nid: 123\nevent: message\ndata: {\"id\":\"1\",\"clientId\":\"emptyClientId\",\"connectionId\":\"1\",\"timestamp\":1582045421733,\"channel\":\"channel-test\",\"data\":\"{\\\"type\\\" : \\\"SPLIT_KILL\\\",\\\"changeNumber\\\": 5564531221, \\\"defaultTreatment\\\" : \\\"off\\\", \\\"splitName\\\" : \\\"split-test\\\"}\",\"name\":\"asdasd\"}\n\n\r\n" }
@@ -27,10 +49,7 @@ describe SplitIoClient::SSE::EventSource::Client do
       end
       event_queue = Queue.new
       action_event = ''
-      sse_client = subject.new(config, api_token, telemetry_runtime_producer) do |client|
-        client.on_event { |event| event_queue << event }
-        client.on_action { |action| action_event = action }
-      end
+      sse_client = subject.new(config, api_token, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor)
 
       connected = sse_client.start(server.base_uri)
       expect(connected).to eq(true)
@@ -59,10 +78,7 @@ describe SplitIoClient::SSE::EventSource::Client do
 
       event_queue = Queue.new
       action_event = ''
-      sse_client = subject.new(config, api_token, telemetry_runtime_producer) do |client|
-        client.on_event { |event| event_queue << event }
-        client.on_action { |action| action_event = action }
-      end
+      sse_client = subject.new(config, api_token, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor)
 
       connected = sse_client.start(server.base_uri)
       expect(connected).to eq(true)
@@ -93,10 +109,7 @@ describe SplitIoClient::SSE::EventSource::Client do
 
       event_queue = Queue.new
       action_event = ''
-      sse_client = subject.new(config, api_token, telemetry_runtime_producer) do |client|
-        client.on_event { |event| event_queue << event }
-        client.on_action { |action| action_event = action }
-      end
+      sse_client = subject.new(config, api_token, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor)
 
       connected = sse_client.start(server.base_uri)
       expect(connected).to eq(true)
@@ -126,10 +139,7 @@ describe SplitIoClient::SSE::EventSource::Client do
 
       event_queue = Queue.new
       action_event = ''
-      sse_client = subject.new(config, api_token, telemetry_runtime_producer) do |client|
-        client.on_event { |event| event_queue << event }
-        client.on_action { |action| action_event = action }
-      end
+      sse_client = subject.new(config, api_token, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor)
 
       connected = sse_client.start(server.base_uri)
       expect(connected).to eq(true)
@@ -158,10 +168,7 @@ describe SplitIoClient::SSE::EventSource::Client do
 
       event_queue = Queue.new
       action_event = ''
-      sse_client = subject.new(config, api_token, telemetry_runtime_producer) do |client|
-        client.on_event { |event| event_queue << event }
-        client.on_action { |action| action_event = action }
-      end
+      sse_client = subject.new(config, api_token, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor)
 
       connected = sse_client.start(server.base_uri)
       expect(connected).to eq(true)
@@ -185,10 +192,7 @@ describe SplitIoClient::SSE::EventSource::Client do
 
       event_queue = Queue.new
       action_event = ''
-      sse_client = subject.new(config, api_token, telemetry_runtime_producer) do |client|
-        client.on_event { |event| event_queue << event }
-        client.on_action { |action| action_event = action }
-      end
+      sse_client = subject.new(config, api_token, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor)
 
       connected = sse_client.start(server.base_uri)
       expect(connected).to eq(true)
@@ -215,11 +219,7 @@ describe SplitIoClient::SSE::EventSource::Client do
       end
 
       event_queue = Queue.new
-      action_event = ''
-      sse_client = subject.new(config, api_token, telemetry_runtime_producer) do |client|
-        client.on_event { |event| event_queue << event }
-        client.on_action { |action| action_event = action }
-      end
+      sse_client = subject.new(config, api_token, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor)
 
       connected = sse_client.start(server.base_uri)
 
@@ -240,12 +240,7 @@ describe SplitIoClient::SSE::EventSource::Client do
         send_stream_content(res, event_error, 400)
       end
 
-      event_queue = Queue.new
-      action_event = ''
-      sse_client = subject.new(config, api_token, telemetry_runtime_producer) do |client|
-        client.on_event { |event| event_queue << event }
-        client.on_action { |action| action_event = action }
-      end
+      sse_client = subject.new(config, api_token, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor)
 
       connected = sse_client.start(server.base_uri)
       expect(connected).to eq(false)

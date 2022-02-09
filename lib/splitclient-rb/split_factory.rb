@@ -33,15 +33,10 @@ module SplitIoClient
       register_factory
 
       build_telemetry_components
+      build_repositories
+      build_impressions_components
+      build_telemetry_synchronizer
 
-      @splits_repository = SplitsRepository.new(@config)
-      @segments_repository = SegmentsRepository.new(@config)
-      @impressions_repository = ImpressionsRepository.new(@config)
-      @events_repository = EventsRepository.new(@config, @api_key, @runtime_producer)
-      @impression_counter = SplitIoClient::Engine::Common::ImpressionCounter.new
-      @impressions_manager = SplitIoClient::Engine::Common::ImpressionManager.new(@config, @impressions_repository, @impression_counter, @runtime_producer)
-      @telemetry_api = SplitIoClient::Api::TelemetryApi.new(@config, @api_key, @runtime_producer)
-      @telemetry_synchronizer = Telemetry::Synchronizer.new(@config, @telemetry_consumers, @init_producer, repositories, @telemetry_api)
       @status_manager = Engine::StatusManager.new(@config)
 
       start!
@@ -59,18 +54,12 @@ module SplitIoClient
         return
       end
       
-      split_fetcher = SplitFetcher.new(@splits_repository, @api_key, config, @runtime_producer)
-      segment_fetcher = SegmentFetcher.new(@segments_repository, @api_key, config, @runtime_producer)
-      params = {
-        split_fetcher: split_fetcher,
-        segment_fetcher: segment_fetcher,
-        imp_counter: @impression_counter,
-        telemetry_runtime_producer: @runtime_producer,
-        telemetry_synchronizer: @telemetry_synchronizer
-      }
+      build_fetchers
+      build_synchronizer
+      build_streaming_components
+      build_sync_manager
 
-      synchronizer = SplitIoClient::Engine::Synchronizer.new(repositories, @api_key, @config, params)
-      SplitIoClient::Engine::SyncManager.new(repositories, @api_key, @config, synchronizer, @runtime_producer, @telemetry_synchronizer, @status_manager).start
+      @sync_manager.start
     end
 
     def stop!
@@ -166,6 +155,55 @@ module SplitIoClient
       @runtime_producer = Telemetry::RuntimeProducer.new(@config)
 
       @telemetry_consumers = { init: @init_consumer, evaluation: @evaluation_consumer, runtime: @runtime_consumer }
-    end    
+    end
+
+    def build_fetchers
+      @split_fetcher = SplitFetcher.new(@splits_repository, @api_key, @config, @runtime_producer)
+      @segment_fetcher = SegmentFetcher.new(@segments_repository, @api_key, @config, @runtime_producer)
+    end
+
+    def build_synchronizer
+      params = {
+        split_fetcher: @split_fetcher,
+        segment_fetcher: @segment_fetcher,
+        imp_counter: @impression_counter,
+        telemetry_runtime_producer: @runtime_producer,
+        telemetry_synchronizer: @telemetry_synchronizer
+      }
+
+      @synchronizer = SplitIoClient::Engine::Synchronizer.new(repositories, @api_key, @config, params)
+    end
+
+    def build_sync_manager
+      @sync_manager = SplitIoClient::Engine::SyncManager.new(@config, @synchronizer, @runtime_producer, @telemetry_synchronizer, @status_manager, @sse_handler, @push_manager)
+    end
+
+    def build_streaming_components      
+      splits_worker = SplitIoClient::SSE::Workers::SplitsWorker.new(@synchronizer, @config, @splits_repository)
+      segments_worker = SplitIoClient::SSE::Workers::SegmentsWorker.new(synchronizer, @config, @segments_repository)
+      notification_manager_keeper = SSE::NotificationManagerKeeper.new(@config, @runtime_producer)
+      notification_processor = SplitIoClient::SSE::NotificationProcessor.new(@config, @splits_worker, @segments_worker)
+      event_parser = SSE::EventSource::EventParser.new(config)
+      sse_client = SSE::EventSource::Client.new(@config, @api_key, @runtime_producer, event_parser, notification_manager_keeper, notification_processor)
+      @sse_handler = SSE::SSEHandler.new(@config, splits_worker, segments_worker, sse_client)
+      @push_manager = PushManager.new(@config, @sse_handler, @api_key, @runtime_producer)
+    end
+
+    def build_repositories
+      @splits_repository = SplitsRepository.new(@config)
+      @segments_repository = SegmentsRepository.new(@config)
+      @impressions_repository = ImpressionsRepository.new(@config)
+      @events_repository = EventsRepository.new(@config, @api_key, @runtime_producer)
+    end
+
+    def build_telemetry_synchronizer
+      telemetry_api = SplitIoClient::Api::TelemetryApi.new(@config, @api_key, @runtime_producer)
+      @telemetry_synchronizer = Telemetry::Synchronizer.new(@config, @telemetry_consumers, @init_producer, repositories, telemetry_api)
+    end
+
+    def build_impressions_components
+      @impression_counter = SplitIoClient::Engine::Common::ImpressionCounter.new
+      @impressions_manager = SplitIoClient::Engine::Common::ImpressionManager.new(@config, @impressions_repository, @impression_counter, @runtime_producer)
+    end
   end
 end
