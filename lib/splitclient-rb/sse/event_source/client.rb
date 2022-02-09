@@ -13,26 +13,23 @@ module SplitIoClient
         KEEP_ALIVE_RESPONSE = "c\r\n:keepalive\n\n\r\n".freeze
         ERROR_EVENT_TYPE = 'error'.freeze
 
-        def initialize(config, api_key, telemetry_runtime_producer, read_timeout: DEFAULT_READ_TIMEOUT)
+        def initialize(config,
+                       api_key,
+                       telemetry_runtime_producer,
+                       event_parser,
+                       notification_manager_keeper,
+                       notification_processor,
+                       read_timeout: DEFAULT_READ_TIMEOUT)
           @config = config
+          @api_key = api_key
+          @telemetry_runtime_producer = telemetry_runtime_producer
+          @event_parser = event_parser
+          @notification_manager_keeper = notification_manager_keeper
+          @notification_processor = notification_processor
           @read_timeout = read_timeout
           @connected = Concurrent::AtomicBoolean.new(false)
           @first_event = Concurrent::AtomicBoolean.new(true)
           @socket = nil
-          @event_parser = SSE::EventSource::EventParser.new(config)
-          @on = { event: ->(_) {}, action: ->(_) {} }
-          @api_key = api_key
-          @telemetry_runtime_producer = telemetry_runtime_producer
-
-          yield self if block_given?
-        end
-
-        def on_event(&action)
-          @on[:event] = action
-        end
-
-        def on_action(&action)
-          @on[:action] = action
         end
 
         def close(action = nil)
@@ -188,15 +185,15 @@ module SplitIoClient
         end
 
         def dispatch_event(event)
-          @config.logger.debug("Dispatching event: #{event.event_type}, #{event.channel}") if @config.debug_enabled
-          @on[:event].call(event)
+          if event.occupancy?
+            @notification_manager_keeper.handle_incoming_occupancy_event(event)
+          else
+            @notification_processor.process(event)
+          end
         end
 
         def dispatch_action(action)
-          @config.threads[:dispatch_action] = Thread.new do
-            @config.logger.debug("Dispatching action: #{action}") if @config.debug_enabled
-            @on[:action].call(action)
-          end
+          # TODO: will use status queue here.
         end
       end
     end

@@ -6,35 +6,21 @@ module SplitIoClient
       SYNC_MODE_STREAMING = 0
       SYNC_MODE_POLLING = 1
 
-      def initialize(
-        repositories,
-        api_key,
-        config,
-        synchronizer,
-        telemetry_runtime_producer,
-        telemetry_synchronizer,
-        status_manager
-      )
-        @synchronizer = synchronizer
-        notification_manager_keeper = SSE::NotificationManagerKeeper.new(config, telemetry_runtime_producer) do |manager|
-          manager.on_action { |action| process_action(action) }
-        end
-        @sse_handler = SSE::SSEHandler.new(
-          { config: config, api_key: api_key },
-          @synchronizer,
-          repositories,
-          notification_manager_keeper,
-          telemetry_runtime_producer
-        ) do |handler|
-          handler.on_action { |action| process_action(action) }
-        end
-
-        @push_manager = PushManager.new(config, @sse_handler, api_key, telemetry_runtime_producer)
-        @sse_connected = Concurrent::AtomicBoolean.new(false)
+      def initialize(config,
+                     synchronizer,
+                     telemetry_runtime_producer,
+                     telemetry_synchronizer,
+                     status_manager,
+                     sse_handler,
+                     push_manager)
         @config = config
+        @synchronizer = synchronizer
         @telemetry_runtime_producer = telemetry_runtime_producer
         @telemetry_synchronizer = telemetry_synchronizer
         @status_manager = status_manager
+        @sse_handler = sse_handler
+        @push_manager = push_manager
+        @sse_connected = Concurrent::AtomicBoolean.new(false)
       end
 
       def start

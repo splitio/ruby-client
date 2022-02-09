@@ -27,13 +27,10 @@ describe SplitIoClient::SSE::SSEHandler do
   let(:impressions_repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
   let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
   let(:events_repository) { SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key, telemetry_runtime_producer) }
-  let(:split_fetcher) do
-    SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, telemetry_runtime_producer)
-  end
-  let(:segment_fetcher) do
-    SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, telemetry_runtime_producer)
-  end
+  let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, telemetry_runtime_producer) }
+  let(:segment_fetcher) { SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, telemetry_runtime_producer) }
   let(:notification_manager_keeper) { SplitIoClient::SSE::NotificationManagerKeeper.new(config, telemetry_runtime_producer) }
+  let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
   let(:repositories) do
     {
       splits: splits_repository,
@@ -42,7 +39,6 @@ describe SplitIoClient::SSE::SSEHandler do
       events: events_repository
     }
   end
-  let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
   let(:parameters) do
     {
       split_fetcher: split_fetcher,
@@ -52,6 +48,11 @@ describe SplitIoClient::SSE::SSEHandler do
     }
   end
   let(:synchronizer) { SplitIoClient::Engine::Synchronizer.new(repositories, api_key, config, parameters) }
+  let(:splits_worker) { SplitIoClient::SSE::Workers::SplitsWorker.new(synchronizer, config, splits_repository) }
+  let(:segments_worker) { SplitIoClient::SSE::Workers::SegmentsWorker.new(synchronizer, config, segments_repository) }
+  let(:notification_processor) { SplitIoClient::SSE::NotificationProcessor.new(config, splits_worker, segments_worker) }
+  let(:event_parser) { SplitIoClient::SSE::EventSource::EventParser.new(config) }
+  let(:sse_client) { SplitIoClient::SSE::EventSource::Client.new(config, api_key, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor) }
 
   before do
     mock_split_changes(splits)
@@ -76,9 +77,7 @@ describe SplitIoClient::SSE::SSEHandler do
 
         config.streaming_service_url = server.base_uri
         action_event = ''
-        sse_handler = subject.new({ config: config, api_key: api_key }, synchronizer, repositories, notification_manager_keeper, telemetry_runtime_producer) do |handler|
-          handler.on_action { |action| action_event = action }
-        end
+        sse_handler = subject.new(config, splits_worker, segments_worker, sse_client)
 
         sse_handler.start_workers
         connected = sse_handler.start('token-test', 'channel-test')
@@ -106,9 +105,8 @@ describe SplitIoClient::SSE::SSEHandler do
 
         config.streaming_service_url = server.base_uri
         action_event = ''
-        sse_handler = subject.new({ config: config, api_key: api_key }, synchronizer, repositories, notification_manager_keeper, telemetry_runtime_producer) do |handler|
-          handler.on_action { |action| action_event = action }
-        end
+
+        sse_handler = subject.new(config, splits_worker, segments_worker, sse_client)
 
         sse_handler.start_workers
         connected = sse_handler.start('token-test', 'channel-test')
@@ -138,9 +136,7 @@ describe SplitIoClient::SSE::SSEHandler do
 
         config.streaming_service_url = server.base_uri
         action_event = ''
-        sse_handler = subject.new({ config: config, api_key: api_key }, synchronizer, repositories, notification_manager_keeper, telemetry_runtime_producer) do |handler|
-          handler.on_action { |action| action_event = action }
-        end
+        sse_handler = subject.new(config, splits_worker, segments_worker, sse_client)
 
         sse_handler.start_workers
         connected = sse_handler.start('token-test', 'channel-test')
@@ -170,9 +166,7 @@ describe SplitIoClient::SSE::SSEHandler do
 
         config.streaming_service_url = server.base_uri
         action_event = ''
-        sse_handler = subject.new({ config: config, api_key: api_key }, synchronizer, repositories, notification_manager_keeper, telemetry_runtime_producer) do |handler|
-          handler.on_action { |action| action_event = action }
-        end
+        sse_handler = subject.new(config, splits_worker, segments_worker, sse_client)
 
         sse_handler.start_workers
         connected = sse_handler.start('token-test', 'channel-test')
@@ -205,9 +199,7 @@ describe SplitIoClient::SSE::SSEHandler do
 
         config.streaming_service_url = server.base_uri
         action_event = ''
-        sse_handler = subject.new({ config: config, api_key: api_key }, synchronizer, repositories, notification_manager_keeper, telemetry_runtime_producer) do |handler|
-          handler.on_action { |action| action_event = action }
-        end
+        sse_handler = subject.new(config, splits_worker, segments_worker, sse_client)
 
         sse_handler.start_workers
         connected = sse_handler.start('token-test', 'channel-test')
@@ -233,9 +225,7 @@ describe SplitIoClient::SSE::SSEHandler do
 
         config.streaming_service_url = server.base_uri
         action_event = ''
-        sse_handler = subject.new({ config: config, api_key: api_key }, synchronizer, repositories, notification_manager_keeper, telemetry_runtime_producer) do |handler|
-          handler.on_action { |action| action_event = action }
-        end
+        sse_handler = subject.new(config, splits_worker, segments_worker, sse_client)
 
         sse_handler.start_workers
         connected = sse_handler.start('token-test', 'channel-test')
@@ -263,9 +253,7 @@ describe SplitIoClient::SSE::SSEHandler do
 
         config.streaming_service_url = server.base_uri
         action_event = ''
-        sse_handler = subject.new({ config: config, api_key: api_key }, synchronizer, repositories, notification_manager_keeper, telemetry_runtime_producer) do |handler|
-          handler.on_action { |action| action_event = action }
-        end
+        sse_handler = subject.new(config, splits_worker, segments_worker, sse_client)
 
         sse_handler.start_workers
         connected = sse_handler.start('token-test', 'channel-test')

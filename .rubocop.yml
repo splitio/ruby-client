@@ -20,6 +20,7 @@ Metrics/CyclomaticComplexity:
   Max: 8
 
 Metrics/ParameterLists:
+  Max: 8
   Exclude:
     - lib/splitclient-rb/engine/sync_manager.rb
 
@@ -32,6 +33,7 @@ Metrics/LineLength:
     - spec/engine/auth_api_client_spec.rb
     - spec/telemetry/synchronizer_spec.rb
     - spec/splitclient/split_config_spec.rb
+    - spec/engine/push_manager_spec.rb
 
 Style/BracesAroundHashParameters:
   Exclude:

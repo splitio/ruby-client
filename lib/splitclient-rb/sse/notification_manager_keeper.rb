@@ -14,10 +14,7 @@ module SplitIoClient
         @publisher_available = Concurrent::AtomicBoolean.new(true)
         @publishers_pri = Concurrent::AtomicFixnum.new
         @publishers_sec = Concurrent::AtomicFixnum.new
-        @on = { action: ->(_) {} }
         @telemetry_runtime_producer = telemetry_runtime_producer
-
-        yield self if block_given?
       end
 
       def handle_incoming_occupancy_event(event)
@@ -27,12 +24,7 @@ module SplitIoClient
           process_event_occupancy(event.channel, event.data['metrics']['publishers'])
         end
       rescue StandardError => e
-        p e
         @config.logger.error(e)
-      end
-
-      def on_action(&action)
-        @on[:action] = action
       end
 
       private
@@ -83,7 +75,7 @@ module SplitIoClient
 
       def dispatch_action(action)
         @config.logger.debug("Dispatching action: #{action}")
-        @on[:action].call(action)
+        # TODO: will use status queue here.
       end
     end
   end
