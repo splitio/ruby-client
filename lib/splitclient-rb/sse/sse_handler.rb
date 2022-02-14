@@ -16,8 +16,7 @@ module SplitIoClient
       end
 
       def start(token_jwt, channels)
-        url = "#{@config.streaming_service_url}?channels=#{channels}&v=1.1&accessToken=#{token_jwt}"
-        @sse_client.start(url)
+        @sse_client.start("#{@config.streaming_service_url}?channels=#{channels}&v=1.1&accessToken=#{token_jwt}")
       end
 
       def stop
