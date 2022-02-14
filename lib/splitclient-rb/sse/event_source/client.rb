@@ -19,6 +19,7 @@ module SplitIoClient
                        event_parser,
                        notification_manager_keeper,
                        notification_processor,
+                       status_queue,
                        read_timeout: DEFAULT_READ_TIMEOUT)
           @config = config
           @api_key = api_key
@@ -26,13 +27,14 @@ module SplitIoClient
           @event_parser = event_parser
           @notification_manager_keeper = notification_manager_keeper
           @notification_processor = notification_processor
+          @status_queue = status_queue
           @read_timeout = read_timeout
           @connected = Concurrent::AtomicBoolean.new(false)
           @first_event = Concurrent::AtomicBoolean.new(true)
           @socket = nil
         end
 
-        def close(action = nil)
+        def close(status = nil)
           unless connected?
             @config.logger.error('SSEClient already disconected.') if @config.debug_enabled
             return
@@ -40,7 +42,7 @@ module SplitIoClient
 
           @connected.make_false
           @socket&.close
-          dispatch_action(action) unless action.nil?
+          push_status(status)
         rescue StandardError => e
           @config.logger.error("SSEClient close Error: #{e.inspect}")
         end
@@ -73,8 +75,8 @@ module SplitIoClient
         def connect_thread(latch)
           @config.threads[:connect_stream] = Thread.new do
             @config.logger.info('Starting connect_stream thread ...') if @config.debug_enabled
-            action = connect_stream(latch)
-            dispatch_action(action) unless action.nil?
+            new_status = connect_stream(latch)
+            push_status(new_status)
             @config.logger.info('connect_stream thread finished.') if @config.debug_enabled
           end
         end
@@ -129,7 +131,7 @@ module SplitIoClient
           if response_code == OK_CODE && !error_event
             @connected.make_true
             @telemetry_runtime_producer.record_streaming_event(Telemetry::Domain::Constants::SSE_CONNECTION_ESTABLISHED, nil)
-            dispatch_action(Constants::PUSH_CONNECTED)
+            push_status(Constants::PUSH_CONNECTED)
           end
 
           latch.count_down
@@ -192,8 +194,11 @@ module SplitIoClient
           end
         end
 
-        def dispatch_action(action)
-          # TODO: will use status queue here.
+        def push_status(status)
+          return if status.nil?
+          
+          @config.logger.debug("Pushing new sse status: #{status}")
+          @status_queue.push(status)
         end
       end
     end
