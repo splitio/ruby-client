@@ -30,7 +30,8 @@ describe SplitIoClient::Engine::PushManager do
   end
   let(:synchronizer) { SplitIoClient::Engine::Synchronizer.new(repositories, api_key, config, params) }
   let(:event_parser) { SplitIoClient::SSE::EventSource::EventParser.new(config) }
-  let(:sse_client) { SplitIoClient::SSE::EventSource::Client.new(config, api_key, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor) }
+  let(:push_status_queue) { Queue.new }
+  let(:sse_client) { SplitIoClient::SSE::EventSource::Client.new(config, api_key, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor, push_status_queue) }
 
   context 'start_sse' do
     it 'must connect to server' do

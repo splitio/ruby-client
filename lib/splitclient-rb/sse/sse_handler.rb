@@ -21,7 +21,7 @@ module SplitIoClient
       end
 
       def stop
-        @sse_client.close(Constants::PUSH_NONRETRYABLE_ERROR)
+        @sse_client.close(Constants::PUSH_FORCED_STOP)
         stop_workers
       rescue StandardError => e
         @config.logger.debug("SSEHandler stop error: #{e.inspect}") if @config.debug_enabled
