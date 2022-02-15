@@ -37,7 +37,7 @@ describe SplitIoClient::Telemetry::Synchronizer do
     let(:runtime_consumer) { SplitIoClient::Telemetry::RuntimeConsumer.new(config) }
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config) }
     let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
-    let(:api_key) { 'api-key-test' }
+    let(:api_key) { 'Synchronizer-key' }
     let(:runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
     let(:evaluation_producer) { SplitIoClient::Telemetry::EvaluationProducer.new(config) }
     let(:init_producer) { SplitIoClient::Telemetry::InitProducer.new(config) }

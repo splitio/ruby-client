@@ -9,7 +9,7 @@ describe SplitIoClient::Engine::AuthApiClient do
     File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/auth_body_response.json'))
   end
 
-  let(:api_key) { 'api-key-test' }
+  let(:api_key) { 'AuthApiClient-key' }
   let(:log) { StringIO.new }
   let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log)) }
   let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }

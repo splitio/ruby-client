@@ -9,12 +9,13 @@ module SplitIoClient
       ENABLED = 1
       PAUSED = 2
 
-      def initialize(config, telemetry_runtime_producer)
+      def initialize(config, telemetry_runtime_producer, status_queue)
         @config = config
+        @telemetry_runtime_producer = telemetry_runtime_producer
+        @status_queue = status_queue
         @publisher_available = Concurrent::AtomicBoolean.new(true)
         @publishers_pri = Concurrent::AtomicFixnum.new
         @publishers_sec = Concurrent::AtomicFixnum.new
-        @telemetry_runtime_producer = telemetry_runtime_producer
       end
 
       def handle_incoming_occupancy_event(event)
@@ -33,13 +34,13 @@ module SplitIoClient
         case type
         when 'STREAMING_PAUSED'
           @telemetry_runtime_producer.record_streaming_event(Telemetry::Domain::Constants::STREAMING_STATUS, PAUSED)
-          dispatch_action(Constants::PUSH_SUBSYSTEM_DOWN)
+          push_status(Constants::PUSH_SUBSYSTEM_DOWN)
         when 'STREAMING_RESUMED'
           @telemetry_runtime_producer.record_streaming_event(Telemetry::Domain::Constants::STREAMING_STATUS, ENABLED)
-          dispatch_action(Constants::PUSH_SUBSYSTEM_READY) if @publisher_available.value
+          push_status(Constants::PUSH_SUBSYSTEM_READY) if @publisher_available.value
         when 'STREAMING_DISABLED'
           @telemetry_runtime_producer.record_streaming_event(Telemetry::Domain::Constants::STREAMING_STATUS, DISABLED)
-          dispatch_action(Constants::PUSH_SUBSYSTEM_OFF)
+          push_status(Constants::PUSH_SUBSYSTEM_OFF)
         else
           @config.logger.error("Incorrect event type: #{incoming_notification}")
         end
@@ -52,10 +53,10 @@ module SplitIoClient
 
         if !are_publishers_available? && @publisher_available.value
           @publisher_available.make_false
-          dispatch_action(Constants::PUSH_SUBSYSTEM_DOWN)
+          push_status(Constants::PUSH_SUBSYSTEM_DOWN)
         elsif are_publishers_available? && !@publisher_available.value
           @publisher_available.make_true
-          dispatch_action(Constants::PUSH_SUBSYSTEM_READY)
+          push_status(Constants::PUSH_SUBSYSTEM_READY)
         end
       end
 
@@ -73,9 +74,9 @@ module SplitIoClient
         @publishers_pri.value.positive? || @publishers_sec.value.positive?
       end
 
-      def dispatch_action(action)
-        @config.logger.debug("Dispatching action: #{action}")
-        # TODO: will use status queue here.
+      def push_status(status)
+        @config.logger.debug("Pushing occupancy status: #{status}")
+        @status_queue.push(status)
       end
     end
   end

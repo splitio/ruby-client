@@ -174,13 +174,13 @@ module SplitIoClient
       @synchronizer = Engine::Synchronizer.new(repositories, @api_key, @config, params)
     end
 
-    def build_streaming_components      
+    def build_streaming_components
+      @push_status_queue = Queue.new
       splits_worker = SSE::Workers::SplitsWorker.new(@synchronizer, @config, @splits_repository)
       segments_worker = SSE::Workers::SegmentsWorker.new(@synchronizer, @config, @segments_repository)
-      notification_manager_keeper = SSE::NotificationManagerKeeper.new(@config, @runtime_producer)
+      notification_manager_keeper = SSE::NotificationManagerKeeper.new(@config, @runtime_producer, @push_status_queue)
       notification_processor = SSE::NotificationProcessor.new(@config, splits_worker, segments_worker)
-      event_parser = SSE::EventSource::EventParser.new(config)
-      @push_status_queue = Queue.new
+      event_parser = SSE::EventSource::EventParser.new(config)      
       sse_client = SSE::EventSource::Client.new(@config, @api_key, @runtime_producer, event_parser, notification_manager_keeper, notification_processor, @push_status_queue)
       @sse_handler = SSE::SSEHandler.new(@config, splits_worker, segments_worker, sse_client)
       @push_manager = Engine::PushManager.new(@config, @sse_handler, @api_key, @runtime_producer)

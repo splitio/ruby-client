@@ -7,7 +7,7 @@ describe SplitIoClient::Engine::PushManager do
   subject { SplitIoClient::Engine::PushManager }
 
   let(:body_response) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/auth_body_response.json')) }
-  let(:api_key) { 'api-key-test' }
+  let(:api_key) { 'PushManager-key' }
   let(:log) { StringIO.new }
   let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log)) }
   let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config) }
@@ -17,7 +17,8 @@ describe SplitIoClient::Engine::PushManager do
   let(:segment_fetcher) { SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, runtime_producer) }
   let(:splits_worker) { SplitIoClient::SSE::Workers::SplitsWorker.new(split_fetcher, config, splits_repository) }
   let(:segments_worker) { SplitIoClient::SSE::Workers::SegmentsWorker.new(segment_fetcher, config, segments_repository) }
-  let(:notification_manager_keeper) { SplitIoClient::SSE::NotificationManagerKeeper.new(config, runtime_producer) }
+  let(:push_status_queue) { Queue.new }
+  let(:notification_manager_keeper) { SplitIoClient::SSE::NotificationManagerKeeper.new(config, runtime_producer, push_status_queue) }
   let(:repositories) { { splits: splits_repository, segments: segments_repository } }
   let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
   let(:params) do
@@ -30,8 +31,8 @@ describe SplitIoClient::Engine::PushManager do
   end
   let(:synchronizer) { SplitIoClient::Engine::Synchronizer.new(repositories, api_key, config, params) }
   let(:event_parser) { SplitIoClient::SSE::EventSource::EventParser.new(config) }
-  let(:push_status_queue) { Queue.new }
-  let(:sse_client) { SplitIoClient::SSE::EventSource::Client.new(config, api_key, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor, push_status_queue) }
+  let(:notification_processor) { SplitIoClient::SSE::NotificationProcessor.new(config, splits_worker, segments_worker) }
+  let(:sse_client) { SplitIoClient::SSE::EventSource::Client.new(config, api_key, runtime_producer, event_parser, notification_manager_keeper, notification_processor, push_status_queue) }
 
   context 'start_sse' do
     it 'must connect to server' do
@@ -43,7 +44,6 @@ describe SplitIoClient::Engine::PushManager do
         stub_request(:get, config.auth_service_url).to_return(status: 200, body: body_response)
         config.streaming_service_url = server.base_uri
 
-        action_event = nil
         sse_handler = SplitIoClient::SSE::SSEHandler.new(config, splits_worker, segments_worker, sse_client)
 
         push_manager = subject.new(config, sse_handler, api_key, runtime_producer)
@@ -54,7 +54,7 @@ describe SplitIoClient::Engine::PushManager do
         sleep(1.5)
         expect(connected).to eq(true)
         expect(sse_handler.connected?).to eq(true)
-        expect(action_event).to eq(SplitIoClient::Constants::PUSH_CONNECTED)
+        expect(push_status_queue.pop(true)).to eq(SplitIoClient::Constants::PUSH_CONNECTED)
       end
     end
 
@@ -101,9 +101,7 @@ describe SplitIoClient::Engine::PushManager do
         stub_request(:get, config.auth_service_url).to_return(status: 200, body: body_response)
         config.streaming_service_url = server.base_uri
 
-        action_event = nil
         sse_handler = SplitIoClient::SSE::SSEHandler.new(config, splits_worker, segments_worker, sse_client)
-
         push_manager = subject.new(config, sse_handler, api_key, runtime_producer)
         connected = push_manager.start_sse
 
@@ -113,7 +111,7 @@ describe SplitIoClient::Engine::PushManager do
 
         expect(connected).to eq(true)
         expect(sse_handler.connected?).to eq(true)
-        expect(action_event).to eq(SplitIoClient::Constants::PUSH_CONNECTED)
+        expect(push_status_queue.pop(true)).to eq(SplitIoClient::Constants::PUSH_CONNECTED)
 
         push_manager.stop_sse
 
