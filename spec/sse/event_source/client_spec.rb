@@ -65,7 +65,8 @@ describe SplitIoClient::SSE::EventSource::Client do
         expect(connected).to eq(true)
         expect(sse_client.connected?).to eq(true)
         expect(push_status_queue.pop(true)).to eq(SplitIoClient::Constants::PUSH_CONNECTED)
-        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.times(1)
+        sleep 1
+        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1').with(headers: { 'Authorization' => 'Bearer client-spec-key' })).to have_been_made.times(1)
 
         sse_client.close
 
