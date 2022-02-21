@@ -160,7 +160,7 @@ module SplitIoClient
         end
 
         def pipelined
-          @redis.pipelined do
+          @redis.pipelined do |pipeline|
             yield
           end
         end

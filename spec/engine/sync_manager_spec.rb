@@ -13,7 +13,7 @@ describe SplitIoClient::Engine::SyncManager do
   let(:segment2) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/segment2.json')) }
   let(:segment3) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/segment3.json')) }
   let(:body_response) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/auth_body_response.json')) }
-  let(:api_key) { 'api-key-test' }
+  let(:api_key) { 'SyncManager-key' }
   let(:log) { StringIO.new }
   let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log), streaming_enabled: true) }
   let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config) }
@@ -47,6 +47,15 @@ describe SplitIoClient::Engine::SyncManager do
   let(:telemetry_api) { SplitIoClient::Api::TelemetryApi.new(config, api_key, telemetry_runtime_producer) }
   let(:telemetry_synchronizer) { SplitIoClient::Telemetry::Synchronizer.new(config, telemetry_consumers, init_producer, repositories, telemetry_api) }
   let(:status_manager) { SplitIoClient::Engine::StatusManager.new(config) }
+  let(:splits_worker) { SplitIoClient::SSE::Workers::SplitsWorker.new(synchronizer, config, splits_repository) }
+  let(:segments_worker) { SplitIoClient::SSE::Workers::SegmentsWorker.new(synchronizer, config, segments_repository) }
+  let(:notification_processor) { SplitIoClient::SSE::NotificationProcessor.new(config, splits_worker, segments_worker) }
+  let(:event_parser) { SplitIoClient::SSE::EventSource::EventParser.new(config) }
+  let(:push_status_queue) { Queue.new }
+  let(:notification_manager_keeper) { SplitIoClient::SSE::NotificationManagerKeeper.new(config, telemetry_runtime_producer, push_status_queue) }
+  let(:sse_client) { SplitIoClient::SSE::EventSource::Client.new(config, api_key, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor, push_status_queue) }
+  let(:sse_handler) { SplitIoClient::SSE::SSEHandler.new(config, splits_worker, segments_worker, sse_client) }
+  let(:push_manager) { SplitIoClient::Engine::PushManager.new(config, sse_handler, api_key, telemetry_runtime_producer) }
 
   before do
     mock_split_changes_with_since(splits, '-1')
@@ -68,7 +77,7 @@ describe SplitIoClient::Engine::SyncManager do
 
       config.streaming_service_url = server.base_uri
 
-      sync_manager = subject.new(repositories, api_key, config, synchronizer, telemetry_runtime_producer, telemetry_synchronizer, status_manager)
+      sync_manager = subject.new(config, synchronizer, telemetry_runtime_producer, telemetry_synchronizer, status_manager, sse_handler, push_manager, push_status_queue)
       sync_manager.start
 
       sleep(2)
@@ -87,7 +96,7 @@ describe SplitIoClient::Engine::SyncManager do
       config.streaming_service_url = 'https://fake-sse.io'
       config.connection_timeout = 1
 
-      sync_manager = subject.new(repositories, api_key, config, synchronizer, telemetry_runtime_producer, telemetry_synchronizer, status_manager)
+      sync_manager = subject.new(config, synchronizer, telemetry_runtime_producer, telemetry_synchronizer, status_manager, sse_handler, push_manager, push_status_queue)
       sync_manager.start
 
       sleep(2)
@@ -105,7 +114,7 @@ describe SplitIoClient::Engine::SyncManager do
 
       config.streaming_service_url = server.base_uri
 
-      sync_manager = subject.new(repositories, api_key, config, synchronizer, telemetry_runtime_producer, telemetry_synchronizer, status_manager)
+      sync_manager = subject.new(config, synchronizer, telemetry_runtime_producer, telemetry_synchronizer, status_manager, sse_handler, push_manager, push_status_queue)
       sync_manager.start
 
       sleep(2)

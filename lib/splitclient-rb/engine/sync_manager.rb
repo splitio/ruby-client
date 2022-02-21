@@ -6,35 +6,23 @@ module SplitIoClient
       SYNC_MODE_STREAMING = 0
       SYNC_MODE_POLLING = 1
 
-      def initialize(
-        repositories,
-        api_key,
-        config,
-        synchronizer,
-        telemetry_runtime_producer,
-        telemetry_synchronizer,
-        status_manager
-      )
-        @synchronizer = synchronizer
-        notification_manager_keeper = SSE::NotificationManagerKeeper.new(config, telemetry_runtime_producer) do |manager|
-          manager.on_action { |action| process_action(action) }
-        end
-        @sse_handler = SSE::SSEHandler.new(
-          { config: config, api_key: api_key },
-          @synchronizer,
-          repositories,
-          notification_manager_keeper,
-          telemetry_runtime_producer
-        ) do |handler|
-          handler.on_action { |action| process_action(action) }
-        end
-
-        @push_manager = PushManager.new(config, @sse_handler, api_key, telemetry_runtime_producer)
-        @sse_connected = Concurrent::AtomicBoolean.new(false)
+      def initialize(config,
+                     synchronizer,
+                     telemetry_runtime_producer,
+                     telemetry_synchronizer,
+                     status_manager,
+                     sse_handler,
+                     push_manager,
+                     status_queue)
         @config = config
+        @synchronizer = synchronizer
         @telemetry_runtime_producer = telemetry_runtime_producer
         @telemetry_synchronizer = telemetry_synchronizer
         @status_manager = status_manager
+        @sse_handler = sse_handler
+        @push_manager = push_manager
+        @status_queue = status_queue
+        @sse_connected = Concurrent::AtomicBoolean.new(false)
       end
 
       def start
@@ -55,6 +43,7 @@ module SplitIoClient
 
           if @config.streaming_enabled
             @config.logger.debug('Starting Straming mode ...')
+            start_push_status_monitor
             connected = @push_manager.start_sse
           end
 
@@ -64,27 +53,6 @@ module SplitIoClient
             record_telemetry(Telemetry::Domain::Constants::SYNC_MODE, SYNC_MODE_POLLING)
           end
         end
-      end
-
-      def process_action(action)
-        case action
-        when Constants::PUSH_CONNECTED
-          process_connected
-        when Constants::PUSH_RETRYABLE_ERROR
-          process_disconnect(true)
-        when Constants::PUSH_NONRETRYABLE_ERROR
-          process_disconnect(false)
-        when Constants::PUSH_SUBSYSTEM_DOWN
-          process_subsystem_down
-        when Constants::PUSH_SUBSYSTEM_READY
-          process_subsystem_ready
-        when Constants::PUSH_SUBSYSTEM_OFF
-          process_push_shutdown
-        else
-          @config.logger.debug('Incorrect action type.')
-        end
-      rescue StandardError => e
-        @config.logger.error("process_action error: #{e.inspect}")
       end
 
       def process_subsystem_ready
@@ -124,6 +92,19 @@ module SplitIoClient
         @config.logger.error("process_connected error: #{e.inspect}")
       end
 
+      def process_forced_stop
+        unless @sse_connected.value
+          @config.logger.debug('Streaming already disconnected.')
+          return
+        end
+
+        @sse_connected.make_false
+        @synchronizer.start_periodic_fetch
+        record_telemetry(Telemetry::Domain::Constants::SYNC_MODE, SYNC_MODE_POLLING)
+      rescue StandardError => e
+        @config.logger.error("process_connected error: #{e.inspect}")
+      end
+
       def process_disconnect(reconnect)
         unless @sse_connected.value
           @config.logger.debug('Streaming already disconnected.')
@@ -146,6 +127,40 @@ module SplitIoClient
 
       def record_telemetry(type, data)
         @telemetry_runtime_producer.record_streaming_event(type, data)
+      end
+
+      def start_push_status_monitor
+        @config.threads[:push_status_handler] = Thread.new do
+          @config.logger.debug('Starting push status handler ...') if @config.debug_enabled
+          incoming_push_status_handler
+        end
+      end
+
+      def incoming_push_status_handler
+        while (status = @status_queue.pop)
+          @config.logger.debug("Push status handler dequeue #{status}") if @config.debug_enabled
+
+          case status
+          when Constants::PUSH_CONNECTED
+            process_connected
+          when Constants::PUSH_RETRYABLE_ERROR
+            process_disconnect(true)
+          when Constants::PUSH_FORCED_STOP
+            process_forced_stop
+          when Constants::PUSH_NONRETRYABLE_ERROR
+            process_disconnect(false)
+          when Constants::PUSH_SUBSYSTEM_DOWN
+            process_subsystem_down
+          when Constants::PUSH_SUBSYSTEM_READY
+            process_subsystem_ready
+          when Constants::PUSH_SUBSYSTEM_OFF
+            process_push_shutdown
+          else
+            @config.logger.debug('Incorrect push status type.')
+          end
+        end
+      rescue StandardError => e
+        @config.logger.error("Push status handler error: #{e.inspect}")
       end
     end
   end

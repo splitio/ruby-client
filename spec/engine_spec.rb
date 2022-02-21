@@ -7,7 +7,7 @@ require 'my_impression_listener'
 describe SplitIoClient, type: :client do
   RSpec.shared_examples 'SplitIoClient' do |cache_adapter|
     subject do
-      SplitIoClient::SplitFactory.new('test_api_key',
+      SplitIoClient::SplitFactory.new('engine-spec-key',
                                       logger: Logger.new(log),
                                       cache_adapter: cache_adapter,
                                       redis_namespace: 'test',
@@ -83,6 +83,15 @@ describe SplitIoClient, type: :client do
 
     context '#equal_to_set_matcher and get_treatment validation attributes' do
       before do
+        stub_request(:post, 'https://events.split.io/api/testImpressions/bulk')
+          .to_return(status: 200, body: '')
+
+        stub_request(:get, 'https://sdk.split.io/api/splitChanges?since')
+          .to_return(status: 200, body: '')
+
+        stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
+          .to_return(status: 200, body: '')
+
         load_splits(equal_to_set_matcher_json)
         subject.block_until_ready
       end
@@ -123,6 +132,10 @@ describe SplitIoClient, type: :client do
 
     context '#get_treatment' do
       before do
+        stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
+        stub_request(:get, 'https://sdk.split.io/api/splitChanges?since').to_return(status: 200, body: '')
+        stub_request(:post, 'https://events.split.io/api/testImpressions/bulk').to_return(status: 200, body: '')
+
         load_splits(all_keys_matcher_json)
         subject.block_until_ready
       end
@@ -176,7 +189,7 @@ describe SplitIoClient, type: :client do
         value = 123
         expect(subject.get_treatment({ bucketing_key: 'random_user_id', matching_key: value }, 'test_feature'))
           .to eq 'on'
-        expect(log.string).to include "get_treatment: matching_key \"#{value}\" is not of type String, converting"
+        expect(log.string).to include "get_treatment: matching_key \"#{value}\" is not of type String, converting"        
       end
 
       it 'returns control on nil bucketing_key' do
@@ -957,7 +970,7 @@ describe SplitIoClient, type: :client do
 
     context 'standalone mode' do
       subject do
-        SplitIoClient::SplitFactory.new('test_api_key',
+        SplitIoClient::SplitFactory.new('engine-standalone-key',
                                         logger: Logger.new('/dev/null'),
                                         cache_adapter: :memory,
                                         mode: :standalone,
@@ -983,7 +996,7 @@ describe SplitIoClient, type: :client do
       end
 
       subject do
-        SplitIoClient::SplitFactory.new('test_api_key',
+        SplitIoClient::SplitFactory.new('engine-spec-redis-key',
                                         logger: Logger.new('/dev/null'),
                                         cache_adapter: :redis,
                                         redis_namespace: 'test',
