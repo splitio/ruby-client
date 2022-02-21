@@ -116,6 +116,7 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
       expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262916')).to have_been_made.times(0)
     end
   end
+
   private
 
   def mock_split_changes(splits_json)

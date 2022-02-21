@@ -189,7 +189,7 @@ describe SplitIoClient, type: :client do
         value = 123
         expect(subject.get_treatment({ bucketing_key: 'random_user_id', matching_key: value }, 'test_feature'))
           .to eq 'on'
-        expect(log.string).to include "get_treatment: matching_key \"#{value}\" is not of type String, converting"        
+        expect(log.string).to include "get_treatment: matching_key \"#{value}\" is not of type String, converting"
       end
 
       it 'returns control on nil bucketing_key' do
