@@ -1,6 +1,10 @@
 CHANGES
 
-7.3.3 (Jan 28, 2021)
+7.3.4 (Feb 21, 2022)
+- Updated streaming events architecture with a new queue logic.
+- Fixed redis integration Pipelining command deprecation warning.
+
+7.3.3 (Jan 28, 2022)
 - Fixed edge cases where the sdk lost streaming connection.
 - Updated default auth service url to https://auth.split.io/api/v2/auth
 - Updated dependencies:
