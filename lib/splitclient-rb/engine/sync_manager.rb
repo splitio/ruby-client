@@ -42,7 +42,7 @@ module SplitIoClient
           connected = false
 
           if @config.streaming_enabled
-            @config.logger.debug('Starting Straming mode ...')
+            @config.logger.debug('Starting Streaming mode ...')
             start_push_status_monitor
             connected = @push_manager.start_sse
           end
