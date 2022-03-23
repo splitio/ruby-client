@@ -27,8 +27,9 @@ describe SplitIoClient::Engine::Impressions::UniqueKeysTracker do
       stub_request(:post, post_url).with(body: body_expect).to_return(status: 200, body: '')
 
       cache = Concurrent::Hash.new
-      component_config = { cache_max_size: 2, max_bulk_size: 2 }
-      tracker = subject.new(config, filter_adapter, sender_adapter, cache, component_config)
+      config.unique_keys_cache_max_size = 2
+      config.unique_keys_bulk_size = 2
+      tracker = subject.new(config, filter_adapter, sender_adapter, cache)
 
       2.times do |i|
         expect(tracker.track("feature-test-#{i}", 'key_test-1')).to eq(true)
@@ -54,8 +55,9 @@ describe SplitIoClient::Engine::Impressions::UniqueKeysTracker do
       stub_request(:post, post_url).with(body: body_expect2).to_return(status: 200, body: '')
 
       cache = Concurrent::Hash.new
-      component_config = { cache_max_size: 4, max_bulk_size: 2 }
-      tracker = subject.new(config, filter_adapter, sender_adapter, cache, component_config)
+      config.unique_keys_cache_max_size = 4
+      config.unique_keys_bulk_size = 2
+      tracker = subject.new(config, filter_adapter, sender_adapter, cache)
 
       4.times do |i|
         expect(tracker.track("feature-test-#{i}", 'key-1')).to eq(true)
@@ -74,8 +76,9 @@ describe SplitIoClient::Engine::Impressions::UniqueKeysTracker do
 
     it 'track - should add elemets to cache' do
       cache = Concurrent::Hash.new
-      component_config = { cache_max_size: 5, max_bulk_size: 5 }
-      tracker = subject.new(config, filter_adapter, sender_adapter_test, cache, component_config)
+      config.unique_keys_cache_max_size = 5
+      config.unique_keys_bulk_size = 5
+      tracker = subject.new(config, filter_adapter, sender_adapter_test, cache)
 
       expect(tracker.track('feature_name_test', 'key_test')).to eq(true)
       expect(tracker.track('feature_name_test', 'key_test')).to eq(false)
@@ -99,8 +102,9 @@ describe SplitIoClient::Engine::Impressions::UniqueKeysTracker do
 
     it 'track - full cache and send bulk' do
       cache = Concurrent::Hash.new
-      component_config = { cache_max_size: 10, max_bulk_size: 5 }
-      tracker = subject.new(config, filter_adapter, sender_adapter_test, cache, component_config)
+      config.unique_keys_cache_max_size = 10
+      config.unique_keys_bulk_size = 5
+      tracker = subject.new(config, filter_adapter, sender_adapter_test, cache)
 
       10.times { |i| expect(tracker.track("feature-test-#{i}", 'key_test')).to eq(true) }
 
