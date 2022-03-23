@@ -7,12 +7,12 @@ module SplitIoClient
         extend Forwardable
         def_delegators :@sender, :record_uniques_key, :record_impressions_count
 
-        def initialize(config)
+        def initialize(config, telemetry_api)
           @sender = case config.telemetry_adapter.class.to_s
                     when 'SplitIoClient::Cache::Adapters::RedisAdapter'
-                      Cache::Senders::MemoryUniqueKeysSender.new(config)
-                    else
                       Cache::Senders::RedisUniqueKeysSender.new(config)
+                    else
+                      Cache::Senders::MemoryUniqueKeysSender.new(config, telemetry_api)
                     end
         end
       end
