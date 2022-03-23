@@ -18,8 +18,28 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
     let(:treatment1) { { treatment: 'on', label: 'custom_label1', change_number: 123_456 } }
     let(:treatment2) { { treatment: 'off', label: 'custom_label2', change_number: 123_499 } }
     let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
+    let(:impression_observer) { SplitIoClient::Observers::ImpressionObserver.new }
+    let(:unique_keys_tracker) do
+      bf = BloomFilter::Native.new(size: 100, hashes: 2, seed: 1, bucket: 3, raise: false)
+      filter_adapter = SplitIoClient::Cache::Filter::FilterAdapter.new(config, bf)
+      api_key = 'ImpressionsSender-key'
+      telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, api_key, telemetry_runtime_producer)
+      sender_adapter = SplitIoClient::Cache::Senders::UniqueKeysSenderAdapter.new(config, telemetry_api)
+
+      SplitIoClient::Engine::Impressions::UniqueKeysTracker.new(config,
+                                                                filter_adapter,
+                                                                sender_adapter,
+                                                                Concurrent::Hash.new)
+    end
+    let(:impression_router) { SplitIoClient::ImpressionRouter.new(config) }
     let(:impressions_manager) do
-      SplitIoClient::Engine::Common::ImpressionManager.new(config, repository, impression_counter, telemetry_runtime_producer)
+      SplitIoClient::Engine::Common::ImpressionManager.new(config,
+                                                           repository,
+                                                           impression_counter,
+                                                           telemetry_runtime_producer,
+                                                           impression_observer,
+                                                           unique_keys_tracker,
+                                                           impression_router)
     end
 
     before :each do

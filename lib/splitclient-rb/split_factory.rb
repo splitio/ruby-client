@@ -1,3 +1,7 @@
+# frozen_string_literal: true
+
+require 'bloomfilter-rb'
+
 module SplitIoClient
   class SplitFactory
     ROOT_PROCESS_ID = Process.pid
@@ -34,6 +38,7 @@ module SplitIoClient
 
       build_telemetry_components
       build_repositories
+      build_unique_keys_tracker
       build_impressions_components
       build_telemetry_synchronizer
 
@@ -198,13 +203,24 @@ module SplitIoClient
     end
 
     def build_telemetry_synchronizer
-      telemetry_api = Api::TelemetryApi.new(@config, @api_key, @runtime_producer)
-      @telemetry_synchronizer = Telemetry::Synchronizer.new(@config, @telemetry_consumers, @init_producer, repositories, telemetry_api)
+      @telemetry_api = Api::TelemetryApi.new(@config, @api_key, @runtime_producer)
+      @telemetry_synchronizer = Telemetry::Synchronizer.new(@config, @telemetry_consumers, @init_producer, repositories, @telemetry_api)
+    end
+
+    def build_unique_keys_tracker
+      bf = BloomFilter::Native.new(size: 95_850_584, hashes: 2)
+      filter_adapter = Cache::Filter::FilterAdapter.new(@config, bf)
+      sender_adapter = Cache::Senders::UniqueKeysSenderAdapter.new(config, @telemetry_api)
+      cache = Concurrent::Hash.new
+      @unique_keys_tracker = Engine::Impressions::UniqueKeysTracker.new(@config, filter_adapter, sender_adapter, cache)
     end
 
     def build_impressions_components
       @impression_counter = Engine::Common::ImpressionCounter.new
-      @impressions_manager = Engine::Common::ImpressionManager.new(@config, @impressions_repository, @impression_counter, @runtime_producer)
+      impression_observer = Observers::ImpressionObserver.new
+      impression_router = ImpressionRouter.new(@config)
+
+      @impressions_manager = Engine::Common::ImpressionManager.new(@config, @impressions_repository, @impression_counter, @runtime_producer, impression_observer, @unique_keys_tracker, impression_router)
     end
   end
 end
