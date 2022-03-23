@@ -37,5 +37,17 @@ module SplitIoClient
 
       interval * random_factor
     end
+
+    def split_bulk_to_send(hash, divisions)
+      count = 0
+
+      hash.each_with_object([]) do |key_value, final|
+        final[count % divisions] ||= {}
+        final[count % divisions][key_value[0]] = key_value[1]
+        count += 1
+      end
+    rescue StandardError
+      []
+    end
   end  
 end
