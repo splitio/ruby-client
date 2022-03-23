@@ -9,14 +9,13 @@ module SplitIoClient
         def initialize(config,
                        filter_adapter,
                        sender_adapter,
-                       cache,
-                       component_config)
+                       cache)
           @config = config
           @filter_adapter = filter_adapter
           @sender_adapter = sender_adapter
           @cache = cache
-          @cache_max_size = component_config[:cache_max_size]
-          @max_bulk_size = component_config[:max_bulk_size]
+          @cache_max_size = config.unique_keys_cache_max_size
+          @max_bulk_size = config.unique_keys_bulk_size
           @semaphore = Mutex.new
         end
 

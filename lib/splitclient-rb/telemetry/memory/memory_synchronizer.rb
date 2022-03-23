@@ -183,8 +183,10 @@ module SplitIoClient
         case @config.impressions_mode
         when :optimized
           0
-        else
+        when :debug
           1
+        else
+          2
         end
       end
     end
