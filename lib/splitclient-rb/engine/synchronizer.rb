@@ -12,7 +12,6 @@ module SplitIoClient
 
       def initialize(
         repositories,
-        api_key,
         config,
         params
       )
@@ -20,13 +19,13 @@ module SplitIoClient
         @segments_repository = repositories[:segments]
         @impressions_repository = repositories[:impressions]
         @events_repository = repositories[:events]
-        @api_key = api_key
         @config = config
         @split_fetcher = params[:split_fetcher]
         @segment_fetcher = params[:segment_fetcher]
-        @impressions_api = SplitIoClient::Api::Impressions.new(@api_key, @config, params[:telemetry_runtime_producer])
+        @impressions_api = params[:impressions_api]
         @impression_counter = params[:imp_counter]
         @telemetry_synchronizer = params[:telemetry_synchronizer]
+        @impressions_sender_adapter = params[:impressions_sender_adapter]
       end
 
       def sync_all(asynchronous = true)
@@ -180,7 +179,7 @@ module SplitIoClient
 
       # Starts thread which loops constantly and sends impressions count to the Split API
       def impressions_count_sender
-        ImpressionsCountSender.new(@config, @impression_counter, @impressions_api).call
+        ImpressionsCountSender.new(@config, @impression_counter, @impressions_sender_adapter).call
       end
 
       def start_telemetry_sync_task

@@ -25,12 +25,12 @@ module SplitIoClient
 
           begin
             case @config.impressions_mode
-            when :debug
-              impression_data[:pt] = @impression_observer.test_and_set(impression_data) unless redis?
-            when :none
+            when :debug #  In DEBUG mode we should calculate the pt only.
+              impression_data[:pt] = @impression_observer.test_and_set(impression_data)
+            when :none # In NONE mode we should track the total amount of evaluations and the unique keys.
               @impression_counter.inc(split_name, impression_data[:m])
               @unique_keys_tracker.track(split_name, matching_key)
-            else
+            else # In OPTIMIZED mode we should track the total amount of evaluations and deduplicate the impressions.
               impression_data[:pt] = @impression_observer.test_and_set(impression_data)
               @impression_counter.inc(split_name, impression_data[:m])
             end

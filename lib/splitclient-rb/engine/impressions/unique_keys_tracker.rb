@@ -87,9 +87,8 @@ module SplitIoClient
               @sender_adapter.record_uniques_key(b)
             end
           end
-        rescue StandardError => error
-          puts error
-          @config.log_found_exception(__method__.to_s, error)
+        rescue StandardError => e
+          @config.log_found_exception(__method__.to_s, e)
         end
       end
     end

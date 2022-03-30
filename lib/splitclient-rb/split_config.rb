@@ -115,6 +115,8 @@ module SplitIoClient
       @unique_keys_cache_max_size = SplitConfig.default_unique_keys_cache_max_size
       @unique_keys_bulk_size = SplitConfig.default_unique_keys_bulk_size(@cache_adapter)
 
+      @counter_refresh_rate = SplitConfig.default_counter_refresh_rate(@cache_adapter)
+
       @sdk_start_time = Time.now
 
       @on_demand_fetch_retry_delay_seconds = SplitConfig.default_on_demand_fetch_retry_delay_seconds
@@ -291,6 +293,17 @@ module SplitIoClient
     attr_accessor :unique_keys_refresh_rate
     attr_accessor :unique_keys_cache_max_size
     attr_accessor :unique_keys_bulk_size
+
+    attr_accessor :counter_refresh_rate
+
+    def self.default_counter_refresh_rate(adapter)
+      case adapter
+      when :redis
+        300 # Send bulk impressions count - Refresh rate: 5 min.
+      else
+        1800 # Send bulk impressions count - Refresh rate: 30 min.
+      end
+    end
 
     def self.default_on_demand_fetch_retry_delay_seconds
       0.05

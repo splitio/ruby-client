@@ -172,11 +172,12 @@ module SplitIoClient
         split_fetcher: @split_fetcher,
         segment_fetcher: @segment_fetcher,
         imp_counter: @impression_counter,
-        telemetry_runtime_producer: @runtime_producer,
-        telemetry_synchronizer: @telemetry_synchronizer
+        telemetry_synchronizer: @telemetry_synchronizer,
+        impressions_sender_adapter: @impressions_sender_adapter,
+        impressions_api: @impressions_api
       }
 
-      @synchronizer = Engine::Synchronizer.new(repositories, @api_key, @config, params)
+      @synchronizer = Engine::Synchronizer.new(repositories, @config, params)
     end
 
     def build_streaming_components
@@ -210,9 +211,10 @@ module SplitIoClient
     def build_unique_keys_tracker
       bf = BloomFilter::Native.new(size: 95_850_584, hashes: 2)
       filter_adapter = Cache::Filter::FilterAdapter.new(@config, bf)
-      sender_adapter = Cache::Senders::UniqueKeysSenderAdapter.new(config, @telemetry_api)
+      @impressions_api = Api::Impressions.new(@api_key, @config, @runtime_producer)
+      @impressions_sender_adapter = Cache::Senders::ImpressionsSenderAdapter.new(config, @telemetry_api, @impressions_api)
       cache = Concurrent::Hash.new
-      @unique_keys_tracker = Engine::Impressions::UniqueKeysTracker.new(@config, filter_adapter, sender_adapter, cache)
+      @unique_keys_tracker = Engine::Impressions::UniqueKeysTracker.new(@config, filter_adapter, @impressions_sender_adapter, cache)
     end
 
     def build_impressions_components
