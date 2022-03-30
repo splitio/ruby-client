@@ -38,7 +38,7 @@ describe SplitIoClient::Engine::SyncManager do
       telemetry_runtime_producer: telemetry_runtime_producer
     }
   end
-  let(:synchronizer) { SplitIoClient::Engine::Synchronizer.new(repositories, api_key, config, sync_params) }
+  let(:synchronizer) { SplitIoClient::Engine::Synchronizer.new(repositories, config, sync_params) }
   let(:init_producer) { SplitIoClient::Telemetry::InitProducer.new(config) }
   let(:init_consumer) { SplitIoClient::Telemetry::InitConsumer.new(config) }
   let(:runtime_consumer) { SplitIoClient::Telemetry::RuntimeConsumer.new(config) }

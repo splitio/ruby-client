@@ -30,7 +30,7 @@ describe SplitIoClient::SSE::SSEHandler do
       telemetry_runtime_producer: telemetry_runtime_producer
     }
   end
-  let(:synchronizer) { SplitIoClient::Engine::Synchronizer.new(repositories, api_key, config, parameters) }
+  let(:synchronizer) { SplitIoClient::Engine::Synchronizer.new(repositories, config, parameters) }
   let(:splits_worker) { SplitIoClient::SSE::Workers::SplitsWorker.new(synchronizer, config, splits_repository) }
   let(:segments_worker) { SplitIoClient::SSE::Workers::SegmentsWorker.new(synchronizer, config, segments_repository) }
   let(:notification_processor) { SplitIoClient::SSE::NotificationProcessor.new(config, splits_worker, segments_worker) }

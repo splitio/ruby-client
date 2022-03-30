@@ -9,37 +9,29 @@ describe SplitIoClient::Engine::Synchronizer do
   let(:segment1) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/segment1.json')) }
   let(:segment2) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/segment2.json')) }
   let(:segment3) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/segment3.json')) }
-  let(:api_key) { 'Synchronizer-key' }
   let(:log) { StringIO.new }
   let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log)) }
-  let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config) }
-  let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
-  let(:impressions_repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
-  let(:runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
-  let(:events_repository) { SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key, runtime_producer) }
-  let(:split_fetcher) do
-    SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, runtime_producer)
-  end
-  let(:segment_fetcher) do
-    SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, runtime_producer)
-  end
-  let(:repositories) do
-    repos = {}
-    repos[:splits] = splits_repository
-    repos[:segments] = segments_repository
-    repos[:impressions] = impressions_repository
-    repos[:events] = events_repository
-    repos
-  end
-  let(:parameters) do
-    params = {}
-    params[:split_fetcher] = split_fetcher
-    params[:segment_fetcher] = segment_fetcher
-    params[:telemetry_runtime_producer] = runtime_producer
+  let(:synchronizer) do
+    api_key = 'Synchronizer-key'
+    runtime_producer = SplitIoClient::Telemetry::RuntimeProducer.new(config)
+    splits_repository = SplitIoClient::Cache::Repositories::SplitsRepository.new(config)
+    segments_repository = SplitIoClient::Cache::Repositories::SegmentsRepository.new(config)
 
-    params
+    repositories = {
+      splits: splits_repository,
+      segments: segments_repository,
+      impressions: SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config),
+      events: SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key, runtime_producer)
+    }
+
+    parameters = {
+      split_fetcher: SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, runtime_producer),
+      segment_fetcher: SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, runtime_producer),
+      telemetry_runtime_producer: runtime_producer
+    }
+
+    subject.new(repositories, config, parameters)
   end
-  let(:synchronizer) { subject.new(repositories, api_key, config, parameters) }
 
   context 'tests with mock data' do
     before do

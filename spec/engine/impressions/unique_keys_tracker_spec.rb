@@ -16,7 +16,8 @@ describe SplitIoClient::Engine::Impressions::UniqueKeysTracker do
     let(:api_key) { 'UniqueKeysTracker-key' }
     let(:runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
     let(:telemetry_api) { SplitIoClient::Api::TelemetryApi.new(config, api_key, runtime_producer) }
-    let(:sender_adapter) { SplitIoClient::Cache::Senders::UniqueKeysSenderAdapter.new(config, telemetry_api) }
+    let(:impressions_api) { SplitIoClient::Api::Impressions.new(api_key, config, runtime_producer) }
+    let(:sender_adapter) { SplitIoClient::Cache::Senders::ImpressionsSenderAdapter.new(config, telemetry_api, impressions_api) }
 
     it 'track - full cache and send bulk' do
       post_url = 'https://telemetry.split.io/api/v1/mtks/ss'

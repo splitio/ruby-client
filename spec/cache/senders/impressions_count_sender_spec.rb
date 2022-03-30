@@ -5,14 +5,6 @@ require 'spec_helper'
 describe SplitIoClient::Cache::Senders::ImpressionsCountSender do
   subject { SplitIoClient::Cache::Senders::ImpressionsCountSender }
 
-  let(:config) do
-    SplitIoClient::SplitConfig.new
-  end
-  let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
-  let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
-  let(:impressions_api) { SplitIoClient::Api::Impressions.new('key-test', config, telemetry_runtime_producer) }
-  let(:impressions_count_sender) { described_class.new(config, impression_counter, impressions_api) }
-
   before :each do
     impression_counter.inc('feature1', make_timestamp('2020-09-02 09:15:11'))
     impression_counter.inc('feature1', make_timestamp('2020-09-02 09:20:11'))
@@ -22,49 +14,93 @@ describe SplitIoClient::Cache::Senders::ImpressionsCountSender do
     impression_counter.inc('feature1', make_timestamp('2020-09-02 10:50:11'))
   end
 
-  it 'post impressions count with corresponding impressions count data' do
-    stub_request(:post, 'https://events.split.io/api/testImpressions/count').to_return(status: 200, body: 'ok')
+  context 'Redis Adapter' do
+    let(:config) do
+      SplitIoClient::SplitConfig.new(cache_adapter: :redis, redis_namespace: 'prefix-test')
+    end
+    let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
+    let(:impressions_sender_adapter) { SplitIoClient::Cache::Senders::ImpressionsSenderAdapter.new(config, nil, nil) }
+    let(:impressions_count_sender) do
+      config.counter_refresh_rate = 0.5
+      subject.new(config, impression_counter, impressions_sender_adapter)
+    end
 
-    impressions_count_sender.call
+    it 'posting impressions count' do
+      key = "#{config.redis_namespace}.impressions.count"
+      impressions_count_sender.call
 
-    sleep 0.5
+      sleep 1
 
-    expect(a_request(:post, 'https://events.split.io/api/testImpressions/count')
-      .with(
-        body:
-        {
-          pf:
-          [
-            {
-              f: 'feature1',
-              m: make_timestamp('2020-09-02 09:00:00'),
-              rc: 3
-            },
-            {
-              f: 'feature2',
-              m: make_timestamp('2020-09-02 09:00:00'),
-              rc: 2
-            },
-            {
-              f: 'feature1',
-              m: make_timestamp('2020-09-02 10:00:00'),
-              rc: 1
-            }
-          ]
-        }.to_json
-      )).to have_been_made
+      expect(config.cache_adapter.find_in_map(key, 'feature1::1599055200000').to_i).to eq(3)
+      expect(config.cache_adapter.find_in_map(key, 'feature2::1599055200000').to_i).to eq(2)
+      expect(config.cache_adapter.find_in_map(key, 'feature1::1599058800000').to_i).to eq(1)
+
+      config.cache_adapter.delete(key)
+    end
   end
 
-  it 'calls #post_impressions upon destroy' do
-    expect(impressions_count_sender).to receive(:post_impressions_count).with(no_args)
+  context 'Memory Adapter' do
+    let(:config) do
+      SplitIoClient::SplitConfig.new
+    end
+    let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
+    let(:impressions_sender_adapter) do
+      telemetry_runtime_producer = SplitIoClient::Telemetry::RuntimeProducer.new(config)
+      impressions_api = SplitIoClient::Api::Impressions.new('key-test', config, telemetry_runtime_producer)
+      telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, 'key-test', telemetry_runtime_producer)
 
-    impressions_count_sender.send(:impressions_count_thread)
+      SplitIoClient::Cache::Senders::ImpressionsSenderAdapter.new(config, telemetry_api, impressions_api)
+    end
+    let(:impressions_count_sender) do
+      config.counter_refresh_rate = 0.5
 
-    sender_thread = config.threads[:impressions_count_sender]
+      subject.new(config, impression_counter, impressions_sender_adapter)
+    end
 
-    sender_thread.raise(SplitIoClient::SDKShutdownException)
+    it 'post impressions count with corresponding impressions count data' do
+      stub_request(:post, 'https://events.split.io/api/testImpressions/count').to_return(status: 200, body: 'ok')
 
-    sender_thread.join
+      impressions_count_sender.call
+
+      sleep 1
+
+      expect(a_request(:post, 'https://events.split.io/api/testImpressions/count')
+        .with(
+          body:
+          {
+            pf:
+            [
+              {
+                f: 'feature1',
+                m: make_timestamp('2020-09-02 09:00:00'),
+                rc: 3
+              },
+              {
+                f: 'feature2',
+                m: make_timestamp('2020-09-02 09:00:00'),
+                rc: 2
+              },
+              {
+                f: 'feature1',
+                m: make_timestamp('2020-09-02 10:00:00'),
+                rc: 1
+              }
+            ]
+          }.to_json
+        )).to have_been_made
+    end
+
+    it 'calls #post_impressions upon destroy' do
+      expect(impressions_count_sender).to receive(:post_impressions_count).with(no_args)
+
+      impressions_count_sender.send(:impressions_count_thread)
+
+      sender_thread = config.threads[:impressions_count_sender]
+
+      sender_thread.raise(SplitIoClient::SDKShutdownException)
+
+      sender_thread.join
+    end
   end
 
   def make_timestamp(time)
