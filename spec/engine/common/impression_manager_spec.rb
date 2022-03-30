@@ -67,7 +67,11 @@ describe SplitIoClient::Engine::Common::ImpressionManager do
       treatment = { treatment: 'off', label: 'default label', change_number: 1_478_113_516_002 }
       params = { attributes: {}, time: 1_478_113_516_222 }
 
-      impression = impression_manager.build_impression('matching_key_test', 'bucketing_key_test', 'split_name_test', treatment, params)
+      impression = impression_manager.build_impression('matching_key_test',
+                                                       'bucketing_key_test',
+                                                       'split_name_test',
+                                                       treatment,
+                                                       params)
       expect(impression).to match(expected)
 
       result_count = impression_counter.pop_all
