@@ -297,12 +297,9 @@ module SplitIoClient
     attr_accessor :counter_refresh_rate
 
     def self.default_counter_refresh_rate(adapter)
-      case adapter
-      when :redis
-        300 # Send bulk impressions count - Refresh rate: 5 min.
-      else
-        1800 # Send bulk impressions count - Refresh rate: 30 min.
-      end
+      return 300 if adapter == :redis # Send bulk impressions count - Refresh rate: 5 min.
+
+      1800 # Send bulk impressions count - Refresh rate: 30 min.
     end
 
     def self.default_on_demand_fetch_retry_delay_seconds

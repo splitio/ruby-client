@@ -10,7 +10,11 @@ module SplitIoClient
         end
 
         def record_uniques_key(uniques)
-          # TODO: implementation
+          formatted = uniques_formatter(uniques)
+
+          @adapter.add_to_queue(unique_keys_key, formatted) unless formatted.nil?
+        rescue StandardError => e
+          @config.log_found_exception(__method__.to_s, e)
         end
 
         def record_impressions_count(impressions_count)
@@ -27,6 +31,27 @@ module SplitIoClient
 
         def impressions_count_key
           "#{@config.redis_namespace}.impressions.count"
+        end
+
+        def unique_keys_key
+          "#{@config.redis_namespace}.uniquekeys"
+        end
+
+        def uniques_formatter(uniques)
+          return if uniques.empty?
+
+          to_return = []
+          uniques.each do |key, value|
+            to_return << {
+              f: key,
+              k: value.to_a
+            }
+          end
+
+          to_return
+        rescue StandardError => error
+          @config.log_found_exception(__method__.to_s, error)
+          nil
         end
       end
     end

@@ -26,6 +26,7 @@ module SplitIoClient
         @impression_counter = params[:imp_counter]
         @telemetry_synchronizer = params[:telemetry_synchronizer]
         @impressions_sender_adapter = params[:impressions_sender_adapter]
+        @unique_keys_tracker = params[:unique_keys_tracker]
       end
 
       def sync_all(asynchronous = true)
@@ -45,6 +46,7 @@ module SplitIoClient
         events_sender
         impressions_count_sender
         start_telemetry_sync_task
+        start_unique_keys_tracker_task
       end
 
       def start_periodic_fetch
@@ -184,6 +186,10 @@ module SplitIoClient
 
       def start_telemetry_sync_task
         Telemetry::SyncTask.new(@config, @telemetry_synchronizer).call
+      end
+
+      def start_unique_keys_tracker_task
+        @unique_keys_tracker.call
       end
 
       def sync_result(success, remaining_attempts, segment_names = nil)
