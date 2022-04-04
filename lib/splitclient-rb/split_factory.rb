@@ -38,10 +38,10 @@ module SplitIoClient
 
       build_telemetry_components
       build_repositories
+      build_telemetry_synchronizer
       build_impressions_sender_adapter
       build_unique_keys_tracker
       build_impressions_components
-      build_telemetry_synchronizer
 
       @status_manager = Engine::StatusManager.new(@config)
 
@@ -233,8 +233,8 @@ module SplitIoClient
 
     def build_impression_counter
       case @config.impressions_mode
-      when :none
-        @impression_counter = Engine::Common::NoopmpressionCounter.new
+      when :debug
+        @impression_counter = Engine::Common::NoopImpressionCounter.new
       else
         @impression_counter = Engine::Common::ImpressionCounter.new
       end

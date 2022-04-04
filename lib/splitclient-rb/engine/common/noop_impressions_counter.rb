@@ -5,7 +5,7 @@ require 'concurrent'
 module SplitIoClient
   module Engine
     module Common
-      class NoopmpressionCounter
+      class NoopImpressionCounter
         def inc(split_name, time_frame)
           # no-op
         end

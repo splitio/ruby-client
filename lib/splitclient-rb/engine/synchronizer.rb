@@ -43,8 +43,8 @@ module SplitIoClient
 
       def start_periodic_data_recording
         impressions_sender
-        events_sender
         impressions_count_sender
+        events_sender
         start_telemetry_sync_task
         start_unique_keys_tracker_task
       end
@@ -171,7 +171,7 @@ module SplitIoClient
 
       # Starts thread which loops constantly and sends impressions to the Split API
       def impressions_sender
-        ImpressionsSender.new(@impressions_repository, @config, @impressions_api).call
+        ImpressionsSender.new(@impressions_repository, @config, @impressions_api).call unless @config.impressions_mode == :none
       end
 
       # Starts thread which loops constantly and sends events to the Split API
@@ -181,7 +181,7 @@ module SplitIoClient
 
       # Starts thread which loops constantly and sends impressions count to the Split API
       def impressions_count_sender
-        ImpressionsCountSender.new(@config, @impression_counter, @impressions_sender_adapter).call
+        ImpressionsCountSender.new(@config, @impression_counter, @impressions_sender_adapter).call unless @config.impressions_mode == :debug
       end
 
       def start_telemetry_sync_task
