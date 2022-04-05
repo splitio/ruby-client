@@ -49,6 +49,7 @@ module SplitIoClient
           end
         rescue SplitIoClient::SDKShutdownException
           send_bulk_data
+          @config.logger.info('Posting unique keys due to shutdown')
         end
 
         def clear_filter_thread

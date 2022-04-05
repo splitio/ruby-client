@@ -27,7 +27,8 @@ describe SplitIoClient::Engine::Synchronizer do
     parameters = {
       split_fetcher: SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, runtime_producer),
       segment_fetcher: SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, runtime_producer),
-      telemetry_runtime_producer: runtime_producer
+      telemetry_runtime_producer: runtime_producer,
+      unique_keys_tracker: SplitIoClient::Engine::Impressions::NoopUniqueKeysTracker.new
     }
 
     subject.new(repositories, config, parameters)
