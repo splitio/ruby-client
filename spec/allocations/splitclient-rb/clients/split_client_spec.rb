@@ -17,7 +17,12 @@ describe SplitIoClient::SplitClient do
   let(:runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
   let(:api_key) { 'SplitClient-key' }
   let(:telemetry_api) { SplitIoClient::Api::TelemetryApi.new(config, api_key, runtime_producer) }
-  let(:sender_adapter) { SplitIoClient::Cache::Senders::UniqueKeysSenderAdapter.new(config, telemetry_api) }
+  let(:impressions_api) { SplitIoClient::Api::Impressions.new(api_key, config, runtime_producer) }
+  let(:sender_adapter) do
+    SplitIoClient::Cache::Senders::ImpressionsSenderAdapter.new(config,
+                                                                telemetry_api,
+                                                                impressions_api)
+  end
   let(:unique_keys_tracker) do
     SplitIoClient::Engine::Impressions::UniqueKeysTracker.new(config,
                                                               filter_adapter,

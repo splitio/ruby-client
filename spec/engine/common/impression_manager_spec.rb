@@ -16,7 +16,8 @@ describe SplitIoClient::Engine::Common::ImpressionManager do
     filter_adapter = SplitIoClient::Cache::Filter::FilterAdapter.new(config, bf)
     api_key = 'ImpressionManager-key'
     telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, api_key, telemetry_runtime_producer)
-    sender_adapter = SplitIoClient::Cache::Senders::UniqueKeysSenderAdapter.new(config, telemetry_api)
+    impressions_api = SplitIoClient::Api::Impressions.new(api_key, config, telemetry_runtime_producer)
+    sender_adapter = SplitIoClient::Cache::Senders::ImpressionsSenderAdapter.new(config, telemetry_api, impressions_api)
 
     SplitIoClient::Engine::Impressions::UniqueKeysTracker.new(config,
                                                               filter_adapter,

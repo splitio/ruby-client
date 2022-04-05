@@ -20,7 +20,6 @@ module SplitIoClient
           @config.threads[:impressions_count_sender] = Thread.new do
             begin
               @config.logger.info('Starting impressions count service')
-
               loop do
                 sleep(@config.counter_refresh_rate)
 

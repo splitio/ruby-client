@@ -46,7 +46,7 @@ module SplitIoClient
         end
 
         def impressions_count_formatter(counts)
-          return if counts.empty?
+          return if counts.nil? || counts.empty?
 
           formated_counts = {pf: []}
 

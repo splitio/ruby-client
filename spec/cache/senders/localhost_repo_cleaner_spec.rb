@@ -18,7 +18,8 @@ describe SplitIoClient::Cache::Senders::LocalhostRepoCleaner do
       filter_adapter = SplitIoClient::Cache::Filter::FilterAdapter.new(config, bf)
       api_key = 'LocalhostRepoCleaner-key'
       telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, api_key, runtime_producer)
-      sender_adapter = SplitIoClient::Cache::Senders::UniqueKeysSenderAdapter.new(config, telemetry_api)
+      impressions_api = SplitIoClient::Api::Impressions.new(api_key, config, runtime_producer)
+      sender_adapter = SplitIoClient::Cache::Senders::ImpressionsSenderAdapter.new(config, telemetry_api, impressions_api)
 
       SplitIoClient::Engine::Impressions::UniqueKeysTracker.new(config,
                                                                 filter_adapter,
