@@ -55,8 +55,10 @@ module SplitIoClient
       return start_localhost_components if @config.localhost_mode
 
       if @config.consumer?
-        @status_manager.ready!
-        @telemetry_synchronizer.synchronize_config
+        build_synchronizer
+        build_sync_manager
+        
+        @sync_manager.start_consumer
         return
       end
       

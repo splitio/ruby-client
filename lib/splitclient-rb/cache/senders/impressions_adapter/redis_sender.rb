@@ -4,6 +4,8 @@ module SplitIoClient
   module Cache
     module Senders
       class RedisImpressionsSender < ImpressionsSenderAdapter
+        EXPIRE_SECONDS = 3600
+
         def initialize(config)
           @config = config
           @adapter = @config.impressions_adapter
@@ -12,18 +14,28 @@ module SplitIoClient
         def record_uniques_key(uniques)
           formatted = uniques_formatter(uniques)
 
-          @adapter.add_to_queue(unique_keys_key, formatted) unless formatted.nil?
+          unless formatted.nil?
+            size = @adapter.add_to_queue(unique_keys_key, formatted)
+            @adapter.expire(unique_keys_key, EXPIRE_SECONDS) if formatted.size == size
+          end
         rescue StandardError => e
           @config.log_found_exception(__method__.to_s, e)
         end
 
         def record_impressions_count(impressions_count)
-          @adapter.redis.pipelined do |pipeline|
+          return if impressions_count.nil? || impressions_count.empty?
+
+          size = 0
+          res = @adapter.redis.pipelined do |pipeline|
             impressions_count.each do |key, value|
               pipeline.hincrby(impressions_count_key, key, value)
             end
           end
+puts res
+puts '----'
+          @adapter.expire(impressions_count_key, EXPIRE_SECONDS) if impressions_count.size == size
         rescue StandardError => e
+          puts e
           @config.log_found_exception(__method__.to_s, e)
         end
 
