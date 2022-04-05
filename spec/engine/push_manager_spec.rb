@@ -29,7 +29,7 @@ describe SplitIoClient::Engine::PushManager do
       telemetry_runtime_producer: runtime_producer
     }
   end
-  let(:synchronizer) { SplitIoClient::Engine::Synchronizer.new(repositories, api_key, config, params) }
+  let(:synchronizer) { SplitIoClient::Engine::Synchronizer.new(repositories, config, params) }
   let(:event_parser) { SplitIoClient::SSE::EventSource::EventParser.new(config) }
   let(:notification_processor) { SplitIoClient::SSE::NotificationProcessor.new(config, splits_worker, segments_worker) }
   let(:sse_client) { SplitIoClient::SSE::EventSource::Client.new(config, api_key, runtime_producer, event_parser, notification_manager_keeper, notification_processor, push_status_queue) }

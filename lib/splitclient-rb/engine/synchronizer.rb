@@ -12,7 +12,6 @@ module SplitIoClient
 
       def initialize(
         repositories,
-        api_key,
         config,
         params
       )
@@ -20,13 +19,14 @@ module SplitIoClient
         @segments_repository = repositories[:segments]
         @impressions_repository = repositories[:impressions]
         @events_repository = repositories[:events]
-        @api_key = api_key
         @config = config
         @split_fetcher = params[:split_fetcher]
         @segment_fetcher = params[:segment_fetcher]
-        @impressions_api = SplitIoClient::Api::Impressions.new(@api_key, @config, params[:telemetry_runtime_producer])
+        @impressions_api = params[:impressions_api]
         @impression_counter = params[:imp_counter]
         @telemetry_synchronizer = params[:telemetry_synchronizer]
+        @impressions_sender_adapter = params[:impressions_sender_adapter]
+        @unique_keys_tracker = params[:unique_keys_tracker]
       end
 
       def sync_all(asynchronous = true)
@@ -43,9 +43,10 @@ module SplitIoClient
 
       def start_periodic_data_recording
         impressions_sender
-        events_sender
         impressions_count_sender
+        events_sender
         start_telemetry_sync_task
+        start_unique_keys_tracker_task
       end
 
       def start_periodic_fetch
@@ -170,7 +171,7 @@ module SplitIoClient
 
       # Starts thread which loops constantly and sends impressions to the Split API
       def impressions_sender
-        ImpressionsSender.new(@impressions_repository, @config, @impressions_api).call
+        ImpressionsSender.new(@impressions_repository, @config, @impressions_api).call unless @config.impressions_mode == :none
       end
 
       # Starts thread which loops constantly and sends events to the Split API
@@ -180,11 +181,15 @@ module SplitIoClient
 
       # Starts thread which loops constantly and sends impressions count to the Split API
       def impressions_count_sender
-        ImpressionsCountSender.new(@config, @impression_counter, @impressions_api).call
+        ImpressionsCountSender.new(@config, @impression_counter, @impressions_sender_adapter).call unless @config.impressions_mode == :debug
       end
 
       def start_telemetry_sync_task
         Telemetry::SyncTask.new(@config, @telemetry_synchronizer).call
+      end
+
+      def start_unique_keys_tracker_task
+        @unique_keys_tracker.call
       end
 
       def sync_result(success, remaining_attempts, segment_names = nil)

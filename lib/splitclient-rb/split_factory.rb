@@ -38,9 +38,10 @@ module SplitIoClient
 
       build_telemetry_components
       build_repositories
+      build_telemetry_synchronizer
+      build_impressions_sender_adapter
       build_unique_keys_tracker
       build_impressions_components
-      build_telemetry_synchronizer
 
       @status_manager = Engine::StatusManager.new(@config)
 
@@ -172,11 +173,13 @@ module SplitIoClient
         split_fetcher: @split_fetcher,
         segment_fetcher: @segment_fetcher,
         imp_counter: @impression_counter,
-        telemetry_runtime_producer: @runtime_producer,
-        telemetry_synchronizer: @telemetry_synchronizer
+        telemetry_synchronizer: @telemetry_synchronizer,
+        impressions_sender_adapter: @impressions_sender_adapter,
+        impressions_api: @impressions_api,
+        unique_keys_tracker: @unique_keys_tracker
       }
 
-      @synchronizer = Engine::Synchronizer.new(repositories, @api_key, @config, params)
+      @synchronizer = Engine::Synchronizer.new(repositories, @config, params)
     end
 
     def build_streaming_components
@@ -208,19 +211,46 @@ module SplitIoClient
     end
 
     def build_unique_keys_tracker
+      if @config.impressions_mode != :none
+        @unique_keys_tracker = Engine::Impressions::NoopUniqueKeysTracker.new
+        return
+      end
+
       bf = BloomFilter::Native.new(size: 95_850_584, hashes: 2)
       filter_adapter = Cache::Filter::FilterAdapter.new(@config, bf)
-      sender_adapter = Cache::Senders::UniqueKeysSenderAdapter.new(config, @telemetry_api)
       cache = Concurrent::Hash.new
-      @unique_keys_tracker = Engine::Impressions::UniqueKeysTracker.new(@config, filter_adapter, sender_adapter, cache)
+      @unique_keys_tracker = Engine::Impressions::UniqueKeysTracker.new(@config, filter_adapter, @impressions_sender_adapter, cache)
+    end
+
+    def build_impressions_observer
+      if (@config.cache_adapter == :redis && @config.impressions_mode != :optimized) ||
+         (@config.cache_adapter == :memory && @config.impressions_mode == :none)
+        @impression_observer = Observers::NoopImpressionObserver.new
+      else
+        @impression_observer = Observers::ImpressionObserver.new
+      end
+    end
+
+    def build_impression_counter
+      case @config.impressions_mode
+      when :debug
+        @impression_counter = Engine::Common::NoopImpressionCounter.new
+      else
+        @impression_counter = Engine::Common::ImpressionCounter.new
+      end
+    end
+
+    def build_impressions_sender_adapter
+      @impressions_api = Api::Impressions.new(@api_key, @config, @runtime_producer)
+      @impressions_sender_adapter = Cache::Senders::ImpressionsSenderAdapter.new(@config, @telemetry_api, @impressions_api)
     end
 
     def build_impressions_components
-      @impression_counter = Engine::Common::ImpressionCounter.new
-      impression_observer = Observers::ImpressionObserver.new
-      impression_router = ImpressionRouter.new(@config)
+      build_impressions_observer
+      build_impression_counter
 
-      @impressions_manager = Engine::Common::ImpressionManager.new(@config, @impressions_repository, @impression_counter, @runtime_producer, impression_observer, @unique_keys_tracker, impression_router)
+      impression_router = ImpressionRouter.new(@config)
+      @impressions_manager = Engine::Common::ImpressionManager.new(@config, @impressions_repository, @impression_counter, @runtime_producer, @impression_observer, @unique_keys_tracker, impression_router)
     end
   end
 end

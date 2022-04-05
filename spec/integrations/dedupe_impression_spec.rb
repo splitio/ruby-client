@@ -82,7 +82,6 @@ describe SplitIoClient do
       factory = SplitIoClient::SplitFactory.new('test_api_key-1', streaming_enabled: false, impressions_mode: :optimized, impressions_refresh_rate: 60)
       client = factory.client
       client.block_until_ready
-      sleep 1
 
       expect(client.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
       expect(client.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
@@ -92,8 +91,8 @@ describe SplitIoClient do
 
       time_frame = SplitIoClient::Engine::Common::ImpressionCounter.truncate_time_frame((Time.now.to_f * 1000.0).to_i)
 
+      sleep 1
       client.destroy
-      sleep 0.5
 
       expect(a_request(:post, 'https://events.split.io/api/testImpressions/count')
       .with(
