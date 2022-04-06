@@ -22,7 +22,6 @@ module SplitIoClient
               @config.logger.info('Starting impressions count service')
               loop do
                 sleep(@config.counter_refresh_rate)
-                puts 'post_impressions_count'
                 post_impressions_count                
               end
             rescue SplitIoClient::SDKShutdownException              

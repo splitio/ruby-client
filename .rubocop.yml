@@ -26,7 +26,7 @@ Metrics/ParameterLists:
     - lib/splitclient-rb/engine/sync_manager.rb
 
 Metrics/LineLength:
-  Max: 130
+  Max: 135
   Exclude:
     - spec/sse/**/*
     - spec/integrations/**/*
@@ -35,6 +35,7 @@ Metrics/LineLength:
     - spec/telemetry/synchronizer_spec.rb
     - spec/splitclient/split_config_spec.rb
     - spec/engine/push_manager_spec.rb
+    - spec/cache/senders/impressions_sender_adapter_spec.rb
 
 Style/BracesAroundHashParameters:
   Exclude:

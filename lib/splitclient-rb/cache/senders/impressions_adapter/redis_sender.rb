@@ -25,21 +25,27 @@ module SplitIoClient
         def record_impressions_count(impressions_count)
           return if impressions_count.nil? || impressions_count.empty?
 
-          size = 0
-          res = @adapter.redis.pipelined do |pipeline|
+          result = @adapter.redis.pipelined do |pipeline|
             impressions_count.each do |key, value|
               pipeline.hincrby(impressions_count_key, key, value)
             end
+            
+            @future = pipeline.hlen(impressions_count_key)
           end
-puts res
-puts '----'
-          @adapter.expire(impressions_count_key, EXPIRE_SECONDS) if impressions_count.size == size
+
+          expire_impressions_count_key(impressions_count, result)
         rescue StandardError => e
-          puts e
           @config.log_found_exception(__method__.to_s, e)
         end
 
         private
+
+        def expire_impressions_count_key(impressions_count, pipeline_result)
+          total_count = impressions_count.sum { |_, value| value }
+          hlen = pipeline_result.last
+
+          @adapter.expire(impressions_count_key, EXPIRE_SECONDS) if impressions_count.size == hlen && (pipeline_result.sum - hlen) == total_count
+        end
 
         def impressions_count_key
           "#{@config.redis_namespace}.impressions.count"
@@ -50,7 +56,7 @@ puts '----'
         end
 
         def uniques_formatter(uniques)
-          return if uniques.empty?
+          return if uniques.nil? || uniques.empty?
 
           to_return = []
           uniques.each do |key, value|

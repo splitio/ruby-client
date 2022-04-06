@@ -29,7 +29,7 @@ module SplitIoClient
         private 
 
         def uniques_formatter(uniques)
-          return if uniques.empty?
+          return if uniques.nil? || uniques.empty?
 
           to_return = { mtks: [] }
           uniques.each do |key, value|
