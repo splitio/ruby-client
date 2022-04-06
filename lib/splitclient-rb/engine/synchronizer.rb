@@ -42,10 +42,13 @@ module SplitIoClient
       end
 
       def start_periodic_data_recording
-        impressions_sender
+        unless @config.consumer?
+          impressions_sender
+          events_sender
+          start_telemetry_sync_task
+        end
+        
         impressions_count_sender
-        events_sender
-        start_telemetry_sync_task
         start_unique_keys_tracker_task
       end
 

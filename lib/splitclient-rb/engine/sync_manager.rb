@@ -30,6 +30,11 @@ module SplitIoClient
         PhusionPassenger.on_event(:starting_worker_process) { |forked| start_thread if forked } if defined?(PhusionPassenger)
       end
 
+      def start_consumer
+        start_consumer_thread
+        PhusionPassenger.on_event(:starting_worker_process) { |forked| start_consumer_thread if forked } if defined?(PhusionPassenger)
+      end
+
       private
 
       def start_thread
@@ -52,6 +57,14 @@ module SplitIoClient
             @synchronizer.start_periodic_fetch
             record_telemetry(Telemetry::Domain::Constants::SYNC_MODE, SYNC_MODE_POLLING)
           end
+        end
+      end
+
+      def start_consumer_thread
+        @config.threads[:start_sdk_consumer] = Thread.new do
+          @status_manager.ready!
+          @telemetry_synchronizer.synchronize_config
+          @synchronizer.start_periodic_data_recording
         end
       end
 

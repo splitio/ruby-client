@@ -18,7 +18,7 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
   let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, telemetry_runtime_producer) }
   let(:synchronizer) do
     segments_repository = SplitIoClient::Cache::Repositories::SegmentsRepository.new(config)
-    telemetry_api = SplitIoClient::Api::TelemetryApi.new(@config, @api_key, telemetry_runtime_producer)
+    telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, api_key, telemetry_runtime_producer)
     impressions_api = SplitIoClient::Api::Impressions.new(api_key, config, telemetry_runtime_producer)
 
     repositories = {
