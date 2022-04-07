@@ -8,11 +8,9 @@ module SplitIoClient
       class BloomFilter
         def initialize(capacity, false_positive_probability = 0.001)
           @capacity = capacity.round
-          # m is the required number of bits in the array
-          m = -(capacity * Math.log(false_positive_probability)) / (Math.log(2) ** 2)
+          m = best_m(capacity, false_positive_probability)
           @ba = BitArray.new(m.round)
-          # k is the number of hash functions that minimizes the probability of false positives
-          @k = (Math.log(2) * (@ba.size / capacity)).round
+          @k = best_k(capacity)
         end
 
         def add(string)
@@ -34,6 +32,16 @@ module SplitIoClient
         end
       
         private
+
+        # m is the required number of bits in the array
+        def best_m(capacity, false_positive_probability)
+          -(capacity * Math.log(false_positive_probability)) / (Math.log(2) ** 2)
+        end
+
+        # k is the number of hash functions that minimizes the probability of false positives
+        def best_k(capacity)
+          (Math.log(2) * (@ba.size / capacity)).round
+        end
 
         def hashes(data)
           m = @ba.size
