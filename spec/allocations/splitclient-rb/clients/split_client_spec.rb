@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
-require 'bloomfilter-rb'
 
 describe SplitIoClient::SplitClient do
   let(:config) { SplitIoClient::SplitConfig.new(impressions_queue_size: 10) }
@@ -12,7 +11,7 @@ describe SplitIoClient::SplitClient do
   let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
   let(:evaluation_producer) { SplitIoClient::Telemetry::EvaluationProducer.new(config) }
   let(:impression_observer) { SplitIoClient::Observers::ImpressionObserver.new }
-  let(:bf) { BloomFilter::Native.new(size: 100, hashes: 2, seed: 1, bucket: 3, raise: false) }
+  let(:bf) { SplitIoClient::Cache::Filter::BloomFilter.new(1_000) }
   let(:filter_adapter) { SplitIoClient::Cache::Filter::FilterAdapter.new(config, bf) }
   let(:runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
   let(:api_key) { 'SplitClient-key' }

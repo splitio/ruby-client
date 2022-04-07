@@ -6,11 +6,11 @@ class FilterTest
     @values = Set.new
   end
 
-  def insert(key)
+  def add(key)
     @values.add(key)
   end
 
-  def include?(key)
+  def contains?(key)
     @values.include?(key)
   end
 

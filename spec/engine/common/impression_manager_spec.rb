@@ -12,7 +12,7 @@ describe SplitIoClient::Engine::Common::ImpressionManager do
   let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
   let(:unique_cache) { Concurrent::Hash.new }
   let(:unique_keys_tracker) do
-    bf = BloomFilter::Native.new(size: 100, hashes: 2, seed: 1, bucket: 3, raise: false)
+    bf = SplitIoClient::Cache::Filter::BloomFilter.new(1_000)
     filter_adapter = SplitIoClient::Cache::Filter::FilterAdapter.new(config, bf)
     api_key = 'ImpressionManager-key'
     telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, api_key, telemetry_runtime_producer)

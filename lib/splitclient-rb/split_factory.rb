@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'bloomfilter-rb'
-
 module SplitIoClient
   class SplitFactory
     ROOT_PROCESS_ID = Process.pid
@@ -218,7 +216,7 @@ module SplitIoClient
         return
       end
 
-      bf = BloomFilter::Native.new(size: 95_850_584, hashes: 2)
+      bf = Cache::Filter::BloomFilter.new(30_000_000)
       filter_adapter = Cache::Filter::FilterAdapter.new(@config, bf)
       cache = Concurrent::Hash.new
       @unique_keys_tracker = Engine::Impressions::UniqueKeysTracker.new(@config, filter_adapter, @impressions_sender_adapter, cache)
