@@ -10,13 +10,13 @@ module SplitIoClient
         end
 
         def add(feature_name, key)
-          @filter.insert("#{feature_name}#{key}")
+          @filter.add("#{feature_name}#{key}")
         rescue StandardError => e
           @config.log_found_exception(__method__.to_s, e)
         end
 
         def contains?(feature_name, key)
-          @filter.include?("#{feature_name}#{key}")
+          @filter.contains?("#{feature_name}#{key}")
         rescue StandardError => e
           @config.log_found_exception(__method__.to_s, e)
         end

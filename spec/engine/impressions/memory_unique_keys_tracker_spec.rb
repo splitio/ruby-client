@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
-require 'bloomfilter-rb'
 require 'unique_keys_sender_adapter_test'
 
 describe SplitIoClient::Engine::Impressions::UniqueKeysTracker do
@@ -9,7 +8,7 @@ describe SplitIoClient::Engine::Impressions::UniqueKeysTracker do
 
   let(:log) { StringIO.new }
   let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log)) }
-  let(:bf) { BloomFilter::Native.new(size: 100, hashes: 2, seed: 1, bucket: 3, raise: false) }
+  let(:bf) { SplitIoClient::Cache::Filter::BloomFilter.new(1_000) }
   let(:filter_adapter) { SplitIoClient::Cache::Filter::FilterAdapter.new(config, bf) }
 
   context 'with sender_adapter' do

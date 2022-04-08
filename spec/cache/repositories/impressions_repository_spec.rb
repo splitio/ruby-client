@@ -108,7 +108,7 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
     let(:runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
     let(:impression_observer) { SplitIoClient::Observers::ImpressionObserver.new }
     let(:unique_keys_tracker) do
-      bf = BloomFilter::Native.new(size: 100, hashes: 2, seed: 1, bucket: 3, raise: false)
+      bf = SplitIoClient::Cache::Filter::BloomFilter.new(1_000)
       filter_adapter = SplitIoClient::Cache::Filter::FilterAdapter.new(config, bf)
       api_key = 'ImpressionsRepository-memory-key'
       telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, api_key, runtime_producer)
@@ -167,7 +167,7 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
     let(:runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
     let(:impression_observer) { SplitIoClient::Observers::ImpressionObserver.new }
     let(:unique_keys_tracker) do
-      bf = BloomFilter::Native.new(size: 100, hashes: 2, seed: 1, bucket: 3, raise: false)
+      bf = SplitIoClient::Cache::Filter::BloomFilter.new(1_000)
       filter_adapter = SplitIoClient::Cache::Filter::FilterAdapter.new(config, bf)
       api_key = 'ImpressionsRepository-key'
       telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, api_key, runtime_producer)
