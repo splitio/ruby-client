@@ -9,15 +9,13 @@ module SplitIoClient
                        impression_counter,
                        telemetry_runtime_producer,
                        impression_observer,
-                       unique_keys_tracker,
-                       impression_router)
+                       unique_keys_tracker)
           @config = config
           @impressions_repository = impressions_repository
           @impression_counter = impression_counter
           @impression_observer = impression_observer
           @telemetry_runtime_producer = telemetry_runtime_producer
           @unique_keys_tracker = unique_keys_tracker
-          @impression_router = impression_router
         end
 
         def build_impression(matching_key, bucketing_key, split_name, treatment, params = {})
@@ -58,11 +56,17 @@ module SplitIoClient
             @config.log_found_exception(__method__.to_s, e)
           ensure
             record_stats(stats)
-            @impression_router.add_bulk(impressions)
+            impression_router.add_bulk(impressions)
           end
         end
 
         private
+
+        def impression_router
+          @impression_router ||= SplitIoClient::ImpressionRouter.new(@config)
+        rescue StandardError => error
+          @config.log_found_exception(__method__.to_s, error)
+        end
 
         def record_stats(stats)
           return if redis?

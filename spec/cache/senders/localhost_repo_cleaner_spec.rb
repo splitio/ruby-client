@@ -26,15 +26,13 @@ describe SplitIoClient::Cache::Senders::LocalhostRepoCleaner do
                                                                 sender_adapter,
                                                                 Concurrent::Hash.new)
     end
-    let(:impression_router) { SplitIoClient::ImpressionRouter.new(config) }
     let(:impressions_manager) do
       SplitIoClient::Engine::Common::ImpressionManager.new(config,
                                                            impressions_repository,
                                                            impression_counter,
                                                            runtime_producer,
                                                            impression_observer,
-                                                           unique_keys_tracker,
-                                                           impression_router)
+                                                           unique_keys_tracker)
     end
 
     let(:cleaner) { described_class.new(impressions_repository, events_repository, config) }

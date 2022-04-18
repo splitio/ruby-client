@@ -28,15 +28,13 @@ describe SplitIoClient::SplitClient do
                                                               sender_adapter,
                                                               Concurrent::Hash.new)
   end
-  let(:impression_router) { SplitIoClient::ImpressionRouter.new(config) }
   let(:impressions_manager) do
     SplitIoClient::Engine::Common::ImpressionManager.new(config,
                                                          impressions_repository,
                                                          impression_counter,
                                                          evaluation_producer,
                                                          impression_observer,
-                                                         unique_keys_tracker,
-                                                         impression_router)
+                                                         unique_keys_tracker)
   end
   let(:client) do
     repositories = { splits: splits_repository, segments: segments_repository, impressions: impressions_repository, events: nil }

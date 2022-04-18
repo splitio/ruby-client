@@ -249,8 +249,7 @@ module SplitIoClient
       build_impressions_observer
       build_impression_counter
 
-      impression_router = ImpressionRouter.new(@config)
-      @impressions_manager = Engine::Common::ImpressionManager.new(@config, @impressions_repository, @impression_counter, @runtime_producer, @impression_observer, @unique_keys_tracker, impression_router)
+      @impressions_manager = Engine::Common::ImpressionManager.new(@config, @impressions_repository, @impression_counter, @runtime_producer, @impression_observer, @unique_keys_tracker)
     end
   end
 end

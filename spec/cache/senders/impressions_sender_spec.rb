@@ -31,15 +31,13 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
                                                                 sender_adapter,
                                                                 Concurrent::Hash.new)
     end
-    let(:impression_router) { SplitIoClient::ImpressionRouter.new(config) }
     let(:impressions_manager) do
       SplitIoClient::Engine::Common::ImpressionManager.new(config,
                                                            repository,
                                                            impression_counter,
                                                            telemetry_runtime_producer,
                                                            impression_observer,
-                                                           unique_keys_tracker,
-                                                           impression_router)
+                                                           unique_keys_tracker)
     end
 
     before :each do
@@ -100,15 +98,15 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
     end
 
     it 'calls #post_impressions upon destroy' do
-      expect(sender).to receive(:post_impressions).with(no_args)
+      stub_request(:post, 'https://events.split.io/api/testImpressions/bulk').to_return(status: 200, body: '')
 
-      sender.send(:impressions_thread)
-
+      sender.call
+      sleep 0.1
       sender_thread = config.threads[:impressions_sender]
-
       sender_thread.raise(SplitIoClient::SDKShutdownException)
+      sleep 1
 
-      sender_thread.join
+      expect(a_request(:post, 'https://events.split.io/api/testImpressions/bulk')).to have_been_made
     end
   end
 

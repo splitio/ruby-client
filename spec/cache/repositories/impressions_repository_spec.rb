@@ -120,15 +120,13 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
                                                                 sender_adapter,
                                                                 Concurrent::Hash.new)
     end
-    let(:impression_router) { SplitIoClient::ImpressionRouter.new(config) }
     let(:impressions_manager) do
       SplitIoClient::Engine::Common::ImpressionManager.new(config,
                                                            repository,
                                                            impression_counter,
                                                            runtime_producer,
                                                            impression_observer,
-                                                           unique_keys_tracker,
-                                                           impression_router)
+                                                           unique_keys_tracker)
     end
 
     it_behaves_like 'Impressions Repository'
@@ -179,15 +177,13 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
                                                                 sender_adapter,
                                                                 Concurrent::Hash.new)
     end
-    let(:impression_router) { SplitIoClient::ImpressionRouter.new(config) }
     let(:impressions_manager) do
       SplitIoClient::Engine::Common::ImpressionManager.new(config,
                                                            repository,
                                                            impression_counter,
                                                            runtime_producer,
                                                            impression_observer,
-                                                           unique_keys_tracker,
-                                                           impression_router)
+                                                           unique_keys_tracker)
     end
 
     it_behaves_like 'Impressions Repository'
@@ -251,8 +247,7 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
                                                                                         impression_counter,
                                                                                         custom_runtime_producer,
                                                                                         impression_observer,
-                                                                                        unique_keys_tracker,
-                                                                                        impression_router)
+                                                                                        unique_keys_tracker)
       other_treatment = { treatment: 'on', label: 'sample_rule_2', change_number: 1_533_177_602_748 }
 
       params = { attributes: {}, time: 1_478_113_516_002 }

@@ -91,15 +91,18 @@ describe SplitIoClient::Cache::Senders::ImpressionsCountSender do
     end
 
     it 'calls #post_impressions upon destroy' do
-      expect(impressions_count_sender).to receive(:post_impressions_count).with(no_args)
+      stub_request(:post, 'https://events.split.io/api/testImpressions/count').to_return(status: 200, body: '')
 
-      impressions_count_sender.send(:impressions_count_thread)
+      config.counter_refresh_rate = 5
+      sender = subject.new(config, impression_counter, impressions_sender_adapter)
 
+      sender.call
+      sleep 0.1
       sender_thread = config.threads[:impressions_count_sender]
-
       sender_thread.raise(SplitIoClient::SDKShutdownException)
 
-      sender_thread.join
+      sleep 1
+      expect(a_request(:post, 'https://events.split.io/api/testImpressions/count')).to have_been_made
     end
   end
 

@@ -24,7 +24,6 @@ describe SplitIoClient::Engine::Common::ImpressionManager do
                                                               sender_adapter,
                                                               unique_cache)
   end
-  let(:impression_router) { SplitIoClient::ImpressionRouter.new(config) }
 
   context 'impressions in none mode' do
     let(:config) do
@@ -45,8 +44,7 @@ describe SplitIoClient::Engine::Common::ImpressionManager do
                   impression_counter,
                   telemetry_runtime_producer,
                   impression_observer,
-                  unique_keys_tracker,
-                  impression_router)
+                  unique_keys_tracker)
     end
 
     it 'build & track impression' do
@@ -105,8 +103,7 @@ describe SplitIoClient::Engine::Common::ImpressionManager do
                   impression_counter,
                   telemetry_runtime_producer,
                   impression_observer,
-                  unique_keys_tracker,
-                  impression_router)
+                  unique_keys_tracker)
     end
     let(:expected) do
       {
@@ -231,8 +228,7 @@ describe SplitIoClient::Engine::Common::ImpressionManager do
                   impression_counter,
                   telemetry_runtime_producer,
                   impression_observer,
-                  unique_keys_tracker,
-                  impression_router)
+                  unique_keys_tracker)
     end
     let(:expected) do
       {
