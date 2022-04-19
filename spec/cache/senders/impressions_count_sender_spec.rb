@@ -37,7 +37,7 @@ describe SplitIoClient::Cache::Senders::ImpressionsCountSender do
       puts config.cache_adapter.get_map(key)
       puts config.cache_adapter.find_in_map(key, 'feature1::1599055200000')
       puts config.cache_adapter.find_in_map(key, 'feature2::1599055200000')
-      puts onfig.cache_adapter.find_in_map(key, 'feature1::1599058800000')
+      puts config.cache_adapter.find_in_map(key, 'feature1::1599058800000')
       puts '#-#-#-# DEBUG'
 
       expect(config.cache_adapter.find_in_map(key, 'feature1::1599055200000').to_i).to eq(3)
