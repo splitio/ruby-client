@@ -6,27 +6,26 @@ describe SplitIoClient::Telemetry::Synchronizer do
   let(:log) { StringIO.new }
 
   context 'Redis' do
-    let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log), cache_adapter: :redis, mode: :consumer) }
+    let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log), cache_adapter: :redis, mode: :consumer, redis_namespace: 'synch-test') }
     let(:adapter) { config.telemetry_adapter }
     let(:init_producer) { SplitIoClient::Telemetry::InitProducer.new(config) }    
     let(:synchronizer) { SplitIoClient::Telemetry::Synchronizer.new(config, nil, init_producer, nil, nil) }
-    let(:config_key) { 'SPLITIO.telemetry.config' }    
+    let(:config_key) { 'synch-test.SPLITIO.telemetry.config' }    
 
     it 'synchronize_config with data' do
       adapter.redis.del(config_key)
       synchronizer.synchronize_config(5, 1, ['tag-1'])
 
-      result = JSON.parse(adapter.redis.lrange(config_key, 0, -1)[0], symbolize_names: true)
-
-      expect(result[:m][:i]).to eq(config.machine_ip)
-      expect(result[:m][:n]).to eq(config.machine_name)
-      expect(result[:m][:s]).to eq("#{config.language}-#{config.version}")
+      field = "#{config.language}-#{config.version}/#{config.machine_name}/#{config.machine_ip}"
+      result = JSON.parse(adapter.find_in_map(config_key, field), symbolize_names: true)
 
       expect(result[:t][:oM]).to eq('consumer')
       expect(result[:t][:st]).to eq('redis')
       expect(result[:t][:aF]).to eq(5)
       expect(result[:t][:rF]).to eq(1)
       expect(result[:t][:t]).to eq(%w[tag-1])
+
+      adapter.redis.del(config_key)
     end
   end
 

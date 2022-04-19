@@ -53,10 +53,10 @@ describe SplitIoClient::Telemetry::InitConsumer do
   end
 
   context 'Redis' do
-    let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log), cache_adapter: :redis) }
+    let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log), cache_adapter: :redis, redis_namespace: 'telemetry-test') }
     let(:adapter) { config.telemetry_adapter }
     let(:init_producer) { SplitIoClient::Telemetry::InitProducer.new(config) }
-    let(:telemetry_config_key) { 'SPLITIO.telemetry.config' }
+    let(:telemetry_config_key) { 'telemetry-test.SPLITIO.telemetry.config' }
 
     it 'record config_init' do
       adapter.redis.del(telemetry_config_key)
@@ -65,17 +65,16 @@ describe SplitIoClient::Telemetry::InitConsumer do
 
       init_producer.record_config(config_init)
 
-      result = JSON.parse(adapter.redis.lrange(telemetry_config_key, 0, -1)[0], symbolize_names: true)
-
-      expect(result[:m][:i]).to eq(config.machine_ip)
-      expect(result[:m][:n]).to eq(config.machine_name)
-      expect(result[:m][:s]).to eq("#{config.language}-#{config.version}")
+      field = "#{config.language}-#{config.version}/#{config.machine_name}/#{config.machine_ip}"
+      result = JSON.parse(adapter.find_in_map(telemetry_config_key, field), symbolize_names: true)
 
       expect(result[:t][:oM]).to eq('CONSUMER')
       expect(result[:t][:st]).to eq('REDIS')
       expect(result[:t][:aF]).to eq(1)
       expect(result[:t][:rF]).to eq(0)
       expect(result[:t][:t]).to eq(%w[t1 t2])
+
+      adapter.redis.del(telemetry_config_key)
     end
 
     it 'record config_init when data is nil' do
@@ -86,6 +85,8 @@ describe SplitIoClient::Telemetry::InitConsumer do
       result = adapter.redis.lrange(telemetry_config_key, 0, -1)
 
       expect(result.empty?).to be true
+
+      adapter.redis.del(telemetry_config_key)
     end
   end
 end
