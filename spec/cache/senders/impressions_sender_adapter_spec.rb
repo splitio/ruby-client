@@ -7,7 +7,7 @@ describe SplitIoClient::Cache::Senders::ImpressionsSenderAdapter do
 
   context 'redis' do
     let(:config) do
-      SplitIoClient::SplitConfig.new(cache_adapter: :redis, redis_namespace: 'prefix-test')
+      SplitIoClient::SplitConfig.new(cache_adapter: :redis, redis_namespace: 'prefix-counter-test')
     end
     let(:impressions_count_key) { "#{config.redis_namespace}.impressions.count" }
     let(:unique_keys_key) { "#{config.redis_namespace}.uniquekeys" }

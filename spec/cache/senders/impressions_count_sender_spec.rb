@@ -29,7 +29,7 @@ describe SplitIoClient::Cache::Senders::ImpressionsCountSender do
       key = "#{config.redis_namespace}.impressions.count"
       impressions_count_sender.call
 
-      sleep 3
+      sleep 1
 
       expect(config.cache_adapter.find_in_map(key, 'feature1::1599055200000').to_i).to eq(3)
       expect(config.cache_adapter.find_in_map(key, 'feature2::1599055200000').to_i).to eq(2)
