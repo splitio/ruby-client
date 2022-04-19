@@ -32,6 +32,14 @@ describe SplitIoClient::Cache::Senders::ImpressionsCountSender do
       sleep 1
 
       expect(config.cache_adapter.exists?(key)).to eq(true)
+
+      puts '#-#-#-# DEBUG'
+      puts config.cache_adapter.get_map(key)
+      puts config.cache_adapter.find_in_map(key, 'feature1::1599055200000')
+      puts config.cache_adapter.find_in_map(key, 'feature2::1599055200000')
+      puts onfig.cache_adapter.find_in_map(key, 'feature1::1599058800000')
+      puts '#-#-#-# DEBUG'
+
       expect(config.cache_adapter.find_in_map(key, 'feature1::1599055200000').to_i).to eq(3)
       expect(config.cache_adapter.find_in_map(key, 'feature2::1599055200000').to_i).to eq(2)
       expect(config.cache_adapter.find_in_map(key, 'feature1::1599058800000').to_i).to eq(1)
