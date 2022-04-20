@@ -51,7 +51,7 @@ module SplitIoClient
 
       @segments_refresh_rate = opts[:segments_refresh_rate] || SplitConfig.default_segments_refresh_rate
 
-      @impressions_mode = init_impressions_mode(opts[:impressions_mode])
+      @impressions_mode = init_impressions_mode(opts[:impressions_mode], opts[:cache_adapter])
 
       @impressions_refresh_rate = SplitConfig.init_impressions_refresh_rate(@impressions_mode, opts[:impressions_refresh_rate], SplitConfig.default_impressions_refresh_rate)
       @impressions_queue_size = opts[:impressions_queue_size] || SplitConfig.default_impressions_queue_size
@@ -314,14 +314,16 @@ module SplitIoClient
       :optimized
     end
 
-    def init_impressions_mode(impressions_mode)
+    def init_impressions_mode(impressions_mode, adapter)
       impressions_mode ||= SplitConfig.default_impressions_mode
+
+      return :debug if adapter == :redis
 
       case impressions_mode
       when :debug
         return :debug
-      when :none
-        return :none
+      # when :none  // we not support :none impression mode yet. Defaulting to :optimized mode
+      #  return :none
       else
         @logger.error('You passed an invalid impressions_mode, impressions_mode should be one of the following values: :debug or :optimized. Defaulting to :optimized mode') unless impressions_mode == :optimized
         return :optimized

@@ -11,12 +11,12 @@ module SplitIoClient
       def record_config(config_data)
         return if config_data.nil?
 
-        data = { m: { i: @config.machine_ip, n: @config.machine_name, s: "#{@config.language}-#{@config.version}" },
-                 t: { oM: config_data.om, st: config_data.st, aF: config_data.af, rF: config_data.rf, t: config_data.t } }
+        data = { t: { oM: config_data.om, st: config_data.st, aF: config_data.af, rF: config_data.rf, t: config_data.t } }
+        field = "#{@config.language}-#{@config.version}/#{@config.machine_name}/#{@config.machine_ip}"
 
-        @adapter.add_to_queue(config_key, data.to_json)
-      rescue StandardError => error
-        @config.log_found_exception(__method__.to_s, error)
+        @adapter.add_to_map(config_key, field, data.to_json)
+      rescue StandardError => e
+        @config.log_found_exception(__method__.to_s, e)
       end
 
       def record_bur_timeout
@@ -30,7 +30,7 @@ module SplitIoClient
       private
 
       def config_key
-        "#{@config.redis_namespace}.telemetry.config"
+        "#{@config.redis_namespace}.telemetry.init"
       end
     end
   end

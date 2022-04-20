@@ -29,8 +29,6 @@ module SplitIoClient
             impressions_count.each do |key, value|
               pipeline.hincrby(impressions_count_key, key, value)
             end
-            
-            @future = pipeline.hlen(impressions_count_key)
           end
 
           expire_impressions_count_key(impressions_count, result)
