@@ -47,7 +47,8 @@ describe SplitIoClient::Engine::Common::ImpressionManager do
                   unique_keys_tracker)
     end
 
-    it 'build & track impression' do
+    # TODO: remove skip test when the sdk support :none mode.
+    xit 'build & track impression' do
       expected =
         {
           m: { s: version, i: ip, n: machine_name },

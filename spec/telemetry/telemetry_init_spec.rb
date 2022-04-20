@@ -56,7 +56,7 @@ describe SplitIoClient::Telemetry::InitConsumer do
     let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log), cache_adapter: :redis, redis_namespace: 'telemetry-test') }
     let(:adapter) { config.telemetry_adapter }
     let(:init_producer) { SplitIoClient::Telemetry::InitProducer.new(config) }
-    let(:telemetry_config_key) { 'telemetry-test.SPLITIO.telemetry.config' }
+    let(:telemetry_config_key) { 'telemetry-test.SPLITIO.telemetry.init' }
 
     it 'record config_init' do
       adapter.redis.del(telemetry_config_key)

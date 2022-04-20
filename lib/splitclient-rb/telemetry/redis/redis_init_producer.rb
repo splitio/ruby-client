@@ -30,7 +30,7 @@ module SplitIoClient
       private
 
       def config_key
-        "#{@config.redis_namespace}.telemetry.config"
+        "#{@config.redis_namespace}.telemetry.init"
       end
     end
   end

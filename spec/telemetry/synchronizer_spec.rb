@@ -10,7 +10,7 @@ describe SplitIoClient::Telemetry::Synchronizer do
     let(:adapter) { config.telemetry_adapter }
     let(:init_producer) { SplitIoClient::Telemetry::InitProducer.new(config) }    
     let(:synchronizer) { SplitIoClient::Telemetry::Synchronizer.new(config, nil, init_producer, nil, nil) }
-    let(:config_key) { 'synch-test.SPLITIO.telemetry.config' }    
+    let(:config_key) { 'synch-test.SPLITIO.telemetry.init' }    
 
     it 'synchronize_config with data' do
       adapter.redis.del(config_key)
