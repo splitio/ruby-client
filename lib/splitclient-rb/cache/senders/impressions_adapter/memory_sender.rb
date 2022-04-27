@@ -31,9 +31,9 @@ module SplitIoClient
         def uniques_formatter(uniques)
           return if uniques.nil? || uniques.empty?
 
-          to_return = { mtks: [] }
+          to_return = { keys: [] }
           uniques.each do |key, value|
-            to_return[:mtks] << {
+            to_return[:keys] << {
               f: key,
               ks: value.to_a
             }

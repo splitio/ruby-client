@@ -19,9 +19,9 @@ describe SplitIoClient::Engine::Impressions::UniqueKeysTracker do
     let(:sender_adapter) { SplitIoClient::Cache::Senders::ImpressionsSenderAdapter.new(config, telemetry_api, impressions_api) }
 
     it 'track - full cache and send bulk' do
-      post_url = 'https://telemetry.split.io/api/v1/mtks/ss'
+      post_url = 'https://telemetry.split.io/api/v1/keys/ss'
       body_expect = {
-        mtks: [{ f: 'feature-test-0', ks: ['key_test-1', 'key_test-2'] }, { f: 'feature-test-1', ks: ['key_test-1'] }]
+        keys: [{ f: 'feature-test-0', ks: ['key_test-1', 'key_test-2'] }, { f: 'feature-test-1', ks: ['key_test-1'] }]
       }.to_json
 
       stub_request(:post, post_url).with(body: body_expect).to_return(status: 200, body: '')
@@ -42,13 +42,13 @@ describe SplitIoClient::Engine::Impressions::UniqueKeysTracker do
     end
 
     it 'track - full cache and send 2 bulks' do
-      post_url = 'https://telemetry.split.io/api/v1/mtks/ss'
+      post_url = 'https://telemetry.split.io/api/v1/keys/ss'
       body_expect1 = {
-        mtks: [{ f: 'feature-test-0', ks: ['key-1', 'key-2'] }, { f: 'feature-test-2', ks: ['key-1', 'key-2'] }]
+        keys: [{ f: 'feature-test-0', ks: ['key-1', 'key-2'] }, { f: 'feature-test-2', ks: ['key-1', 'key-2'] }]
       }.to_json
 
       body_expect2 = {
-        mtks: [{ f: 'feature-test-1', ks: ['key-1', 'key-2'] }, { f: 'feature-test-3', ks: ['key-1'] }]
+        keys: [{ f: 'feature-test-1', ks: ['key-1', 'key-2'] }, { f: 'feature-test-3', ks: ['key-1'] }]
       }.to_json
 
       stub_request(:post, post_url).with(body: body_expect1).to_return(status: 200, body: '')
