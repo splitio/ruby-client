@@ -89,8 +89,8 @@ describe SplitIoClient::Cache::Senders::ImpressionsSenderAdapter do
     let(:sender) { subject.new(config, telemetry_api, impressions_api) }
 
     it 'record_uniques_key' do
-      stub_request(:post, 'https://telemetry.split.io/api/v1/mtks/ss').to_return(status: 200, body: '')
-      body_expected = '{"mtks":[{"f":"feature-name-1","ks":["key-1","key-2","key-3","key-4"]},{"f":"feature-name-2","ks":["key-1","key-2","key-3","key-4"]},{"f":"feature-name-3","ks":["key-1","key-2","key-3","key-4"]}]}'
+      stub_request(:post, 'https://telemetry.split.io/api/v1/keys/ss').to_return(status: 200, body: '')
+      body_expected = '{"keys":[{"f":"feature-name-1","ks":["key-1","key-2","key-3","key-4"]},{"f":"feature-name-2","ks":["key-1","key-2","key-3","key-4"]},{"f":"feature-name-3","ks":["key-1","key-2","key-3","key-4"]}]}'
 
       uniques = {}
       uniques['feature-name-1'] = Set.new(['key-1', 'key-2', 'key-3', 'key-4'])
@@ -99,15 +99,15 @@ describe SplitIoClient::Cache::Senders::ImpressionsSenderAdapter do
 
       sender.record_uniques_key(uniques)
 
-      expect(a_request(:post, 'https://telemetry.split.io/api/v1/mtks/ss').with(body: body_expected)).to have_been_made.times(1)
+      expect(a_request(:post, 'https://telemetry.split.io/api/v1/keys/ss').with(body: body_expected)).to have_been_made.times(1)
     end
 
     it 'record_uniques_key when uniques is nil or empty' do
       sender.record_uniques_key({})
-      expect(a_request(:post, 'https://telemetry.split.io/api/v1/mtks/ss')).to have_been_made.times(0)
+      expect(a_request(:post, 'https://telemetry.split.io/api/v1/keys/ss')).to have_been_made.times(0)
 
       sender.record_uniques_key(nil)
-      expect(a_request(:post, 'https://telemetry.split.io/api/v1/mtks/ss')).to have_been_made.times(0)
+      expect(a_request(:post, 'https://telemetry.split.io/api/v1/keys/ss')).to have_been_made.times(0)
     end
 
     it 'record_impressions_count' do

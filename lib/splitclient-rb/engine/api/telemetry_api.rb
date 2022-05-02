@@ -18,9 +18,9 @@ module SplitIoClient
       end
 
       def record_unique_keys(uniques)
-        return if uniques[:mtks].empty?
+        return if uniques[:keys].empty?
 
-        post_telemetry("#{@config.telemetry_service_url}/mtks/ss", uniques, 'mtks')
+        post_telemetry("#{@config.telemetry_service_url}/keys/ss", uniques, 'unique_keys')
       rescue StandardError => e
         @config.log_found_exception(__method__.to_s, e)
       end
