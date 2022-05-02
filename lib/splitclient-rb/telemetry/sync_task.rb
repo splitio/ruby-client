@@ -15,21 +15,21 @@ module SplitIoClient
       private
 
       def stats_thread
-        @config.threads[:telemetry_stats_sender] = Thread.new do
-          begin
-            @config.logger.info('Starting Telemetry Sync Task')
+        @config.threads[:telemetry_stats_sender] = Thread.new { telemetry_sync_task }
+      end
 
-            loop do
-              sleep(@config.telemetry_refresh_rate)
+      def telemetry_sync_task
+        @config.logger.info('Starting Telemetry Sync Task')
 
-              @telemetry_synchronizer.synchronize_stats
-            end
-          rescue SplitIoClient::SDKShutdownException
-            @telemetry_synchronizer.synchronize_stats
+        loop do
+          sleep(@config.telemetry_refresh_rate)
 
-            @config.logger.info('Posting Telemetry due to shutdown')
-          end
+          @telemetry_synchronizer.synchronize_stats
         end
+      rescue SplitIoClient::SDKShutdownException
+        @telemetry_synchronizer.synchronize_stats
+
+        @config.logger.info('Posting Telemetry due to shutdown')
       end
     end
   end
