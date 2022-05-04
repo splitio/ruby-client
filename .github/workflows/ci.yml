@@ -8,14 +8,15 @@ jobs:
         image: redis
         ports:
           - 6379:6379
+    strategy:
+      matrix:
+        ruby: [ '2.5.0', '3.1.1' ]
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - strategy:
-          matrix:
-            ruby: [ '2.5.0', '3.1.1' ]
 
       - name: Set up Ruby ${{ matrix.ruby }}
         uses: ruby/setup-ruby@v1
