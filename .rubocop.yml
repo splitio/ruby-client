@@ -52,7 +52,7 @@ Naming/FileName:
     - splitclient-rb.gemspec
 
 AllCops:
-  TargetRubyVersion: 2.3.6
+  TargetRubyVersion: 2.5
   Exclude:
     - gemfiles/* # excluded as appraisal generates them with errors
     - lib/*

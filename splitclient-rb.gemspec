@@ -8,16 +8,15 @@ Gem::Specification.new do |spec|
   spec.name          = 'splitclient-rb'
   spec.version       = SplitIoClient::VERSION
   spec.authors       = ['Split Software']
-  spec.email         = ['pato@split.io']
-
+  spec.email         = ['mauro.sanz@split.io']
   spec.summary       = 'Ruby client for split SDK.'
   spec.description   = 'Ruby client for using split SDK.'
   spec.homepage      = 'https://github.com/splitio/ruby-client'
   spec.license       = 'Apache-2.0'
 
   spec.files         = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(spec|features|ext)/}) }
-
   spec.require_paths = ['lib']
+  spec.required_ruby_version = '>= 2.5.0'
 
   if defined?(JRUBY_VERSION)
     spec.platform = 'java'
@@ -37,7 +36,6 @@ Gem::Specification.new do |spec|
   end
 
   spec.add_development_dependency 'allocation_stats', '~> 0.1'
-  spec.add_development_dependency 'appraisal', '~> 2.4'
   spec.add_development_dependency 'bundler', '~> 2.2'
   spec.add_development_dependency 'pry', '~> 0.14'
   spec.add_development_dependency 'pry-nav', '~> 1.0'
@@ -53,7 +51,7 @@ Gem::Specification.new do |spec|
 
   spec.add_runtime_dependency 'bitarray', '~> 1.3'
   spec.add_runtime_dependency 'concurrent-ruby', '~> 1.0'
-  spec.add_runtime_dependency 'faraday', '>= 0.8', '< 2.0'
+  spec.add_runtime_dependency 'faraday', '>= 1.1', '< 2.0'
   spec.add_runtime_dependency 'json', '>= 1.8', '< 3.0'
   spec.add_runtime_dependency 'jwt', '>= 1.0.0', '< 3.0'
   spec.add_runtime_dependency 'lru_redux', '~> 1.1'
