@@ -39,8 +39,8 @@ module SplitIoClient
             .call(fetch_all_impressions)
 
           impressions_api.post(formatted_impressions)
-        rescue StandardError => error
-          @config.log_found_exception(__method__.to_s, error)
+        rescue StandardError => e
+          @config.log_found_exception(__method__.to_s, e)
         end
 
         def impressions_api

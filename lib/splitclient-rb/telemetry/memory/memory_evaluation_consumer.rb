@@ -2,7 +2,7 @@
 
 module SplitIoClient
   module Telemetry
-    class MemoryEvaluationConsumer < EvaluationConsumer
+    class MemoryEvaluationConsumer
       def initialize(config)
         @config = config
         @adapter = config.telemetry_adapter

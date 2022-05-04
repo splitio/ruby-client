@@ -34,8 +34,8 @@ module SplitIoClient
 
         def post_impressions_count
           @impressions_sender_adapter.record_impressions_count(@impression_counter.pop_all)
-        rescue StandardError => error
-          @config.log_found_exception(__method__.to_s, error)
+        rescue StandardError => e
+          @config.log_found_exception(__method__.to_s, e)
         end
       end
     end

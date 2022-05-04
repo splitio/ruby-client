@@ -96,8 +96,8 @@ module SplitIoClient
         else
           @config.logger.debug("No changes fetched after #{attempts} attempts with CDN bypassed.") if @config.debug_enabled
         end
-      rescue StandardError => error
-        @config.log_found_exception(__method__.to_s, error)
+      rescue StandardError => e
+        @config.log_found_exception(__method__.to_s, e)
       end
 
       def fetch_segment(name, target_change_number)
@@ -132,8 +132,8 @@ module SplitIoClient
         else
           @config.logger.debug("No changes fetched for segment #{name} after #{attempts} attempts with CDN bypassed.") if @config.debug_enabled
         end
-      rescue StandardError => error
-        @config.log_found_exception(__method__.to_s, error)
+      rescue StandardError => e
+        @config.log_found_exception(__method__.to_s, e)
       end
 
       private

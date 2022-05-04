@@ -2,7 +2,7 @@
 
 module SplitIoClient
   module Telemetry
-    class MemorySynchronizer < Synchronizer
+    class MemorySynchronizer
       def initialize(config,
                      telemtry_consumers,
                      repositories,
@@ -37,8 +37,8 @@ module SplitIoClient
                           @telemetry_runtime_consumer.pop_tags)
 
         @telemetry_api.record_stats(format_stats(usage))
-      rescue StandardError => error
-        @config.log_found_exception(__method__.to_s, error)
+      rescue StandardError => e
+        @config.log_found_exception(__method__.to_s, e)
       end
 
       def synchronize_config(active_factories = nil, redundant_active_factories = nil, time_until_ready = nil)
@@ -75,8 +75,8 @@ module SplitIoClient
                                      @telemetry_init_consumer.non_ready_usages)
 
         @telemetry_api.record_init(fornat_init_config(init_config))
-      rescue StandardError => error
-        @config.log_found_exception(__method__.to_s, error)
+      rescue StandardError => e
+        @config.log_found_exception(__method__.to_s, e)
       end
 
       private

@@ -30,16 +30,16 @@ module SplitIoClient
               fetch_segment(name, fetch_options) if change_number == -1
             end
           end
-        rescue StandardError => error
-          @config.log_found_exception(__method__.to_s, error)
+        rescue StandardError => e
+          @config.log_found_exception(__method__.to_s, e)
         end
 
         def fetch_segment(name, fetch_options = { cache_control_headers: false, till: nil })
           @semaphore.synchronize do
             segments_api.fetch_segments_by_names([name], fetch_options)
           end
-        rescue StandardError => error
-          @config.log_found_exception(__method__.to_s, error)
+        rescue StandardError => e
+          @config.log_found_exception(__method__.to_s, e)
         end
 
         def fetch_segments
@@ -48,8 +48,8 @@ module SplitIoClient
 
             true
           end
-        rescue StandardError => error
-          @config.log_found_exception(__method__.to_s, error)
+        rescue StandardError => e
+          @config.log_found_exception(__method__.to_s, e)
           false
         end
 

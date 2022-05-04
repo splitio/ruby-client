@@ -64,8 +64,8 @@ module SplitIoClient
 
         def impression_router
           @impression_router ||= SplitIoClient::ImpressionRouter.new(@config)
-        rescue StandardError => error
-          @config.log_found_exception(__method__.to_s, error)
+        rescue StandardError => e
+          @config.log_found_exception(__method__.to_s, e)
         end
 
         def record_stats(stats)

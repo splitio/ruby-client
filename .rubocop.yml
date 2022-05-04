@@ -27,20 +27,6 @@ Metrics/ParameterLists:
 
 Metrics/LineLength:
   Max: 135
-  Exclude:
-    - spec/sse/**/*
-    - spec/integrations/**/*
-    - spec/engine/sync_manager_spec.rb
-    - spec/engine/auth_api_client_spec.rb
-    - spec/telemetry/synchronizer_spec.rb
-    - spec/splitclient/split_config_spec.rb
-    - spec/engine/push_manager_spec.rb
-    - spec/cache/senders/impressions_sender_adapter_spec.rb
-
-Style/BracesAroundHashParameters:
-  Exclude:
-    - spec/integrations/push_client_spec.rb
-    - spec/engine/synchronizer_spec.rb
 
 Metrics/BlockLength:
   Exclude:
@@ -50,6 +36,22 @@ Metrics/BlockLength:
 Naming/FileName:
   Exclude:
     - splitclient-rb.gemspec
+
+Style/OptionalBooleanParameter:
+  Exclude:
+    - lib/splitclient-rb/engine/matchers/between_matcher.rb
+    - lib/splitclient-rb/engine/matchers/combining_matcher.rb
+    - lib/splitclient-rb/engine/matchers/equal_to_matcher.rb
+    - lib/splitclient-rb/engine/matchers/less_than_or_equal_to_matcher.rb
+    - lib/splitclient-rb/engine/matchers/greater_than_or_equal_to_matcher.rb
+
+Style/HashTransformKeys:
+  Exclude:
+    - lib/splitclient-rb/engine/matchers/combining_matcher.rb
+
+Style/RedundantReturn:
+  Exclude:
+    - lib/splitclient-rb/engine/common/impressions_manager.rb
 
 AllCops:
   TargetRubyVersion: 2.5
@@ -70,3 +72,5 @@ AllCops:
     - lib/splitclient-rb/engine/synchronizer.rb
     - tmp/**/*
     - lib/splitclient-rb/sse/event_source/client.rb
+    - spec/**/*
+    - .simplecov
