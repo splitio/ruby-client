@@ -6,10 +6,6 @@ module SplitIoClient
 
     attr_reader :attribute
 
-    def initialize(attribute, remote_array, logger)
-      super(attribute, remote_array, logger)
-    end
-
     def match?(args)
       @local_set = local_set(args[:attributes], @attribute)
 

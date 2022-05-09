@@ -41,8 +41,8 @@ module SplitIoClient
         attributes: impression[:attributes]
       }
       @queue.push(imp) if @listener
-    rescue StandardError => error
-      @config.log_found_exception(__method__.to_s, error)
+    rescue StandardError => e
+      @config.log_found_exception(__method__.to_s, e)
     end
 
     def router_thread
@@ -50,8 +50,8 @@ module SplitIoClient
         loop do
           begin
             @listener.log(@queue.pop)
-          rescue StandardError => error
-            @config.log_found_exception(__method__.to_s, error)
+          rescue StandardError => e
+            @config.log_found_exception(__method__.to_s, e)
           end
         end
       end

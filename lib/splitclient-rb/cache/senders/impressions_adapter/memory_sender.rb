@@ -40,8 +40,8 @@ module SplitIoClient
           end
 
           to_return
-        rescue StandardError => error
-          @config.log_found_exception(__method__.to_s, error)
+        rescue StandardError => e
+          @config.log_found_exception(__method__.to_s, e)
           nil
         end
 
@@ -61,8 +61,8 @@ module SplitIoClient
           end
 
           formated_counts
-        rescue StandardError => error
-          @config.log_found_exception(__method__.to_s, error)
+        rescue StandardError => e
+          @config.log_found_exception(__method__.to_s, e)
           nil
         end
       end

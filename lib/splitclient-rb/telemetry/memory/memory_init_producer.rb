@@ -2,7 +2,7 @@
 
 module SplitIoClient
   module Telemetry
-    class MemoryInitProducer < InitProducer
+    class MemoryInitProducer
       def initialize(config)
         @config = config
         @adapter = config.telemetry_adapter
@@ -14,14 +14,14 @@ module SplitIoClient
 
       def record_bur_timeout
         find_factory_counters(Domain::Constants::BUR_TIMEOUT)[:counts].increment
-      rescue StandardError => error
-        @config.log_found_exception(__method__.to_s, error)
+      rescue StandardError => e
+        @config.log_found_exception(__method__.to_s, e)
       end
 
       def record_non_ready_usages
         find_factory_counters(Domain::Constants::NON_READY_USAGES)[:counts].increment
-      rescue StandardError => error
-        @config.log_found_exception(__method__.to_s, error)
+      rescue StandardError => e
+        @config.log_found_exception(__method__.to_s, e)
       end
 
       private

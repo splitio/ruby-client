@@ -2,7 +2,7 @@
 
 module SplitIoClient
   module Telemetry
-    class RedisInitProducer < InitProducer
+    class RedisInitProducer
       def initialize(config)
         @config = config
         @adapter = config.telemetry_adapter

@@ -36,8 +36,8 @@ module SplitIoClient
 
             { segment_names: data[:segment_names], success: true }
           end
-        rescue StandardError => error
-          @config.log_found_exception(__method__.to_s, error)
+        rescue StandardError => e
+          @config.log_found_exception(__method__.to_s, e)
           { segment_names: [], success: false }
         end
 
