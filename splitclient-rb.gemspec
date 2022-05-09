@@ -42,7 +42,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rake', '~> 13.0'
   spec.add_development_dependency 'rake-compiler', '~> 1.1'
   spec.add_development_dependency 'rspec', '~> 3.10'
-  spec.add_development_dependency 'rubocop', '~> 1.28', '>= 1.28.2'
+  spec.add_development_dependency 'rubocop', '1.28.2'
   spec.add_development_dependency 'simplecov', '~> 0.20'
   spec.add_development_dependency 'simplecov-json', '~> 0.2'
   spec.add_development_dependency 'timecop', '~> 0.9'
