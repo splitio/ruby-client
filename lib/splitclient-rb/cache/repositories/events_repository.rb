@@ -21,8 +21,8 @@ module SplitIoClient
 
         def post_events
           events_api.post(self.clear)
-        rescue StandardError => error
-          @config.log_found_exception(__method__.to_s, error)
+        rescue StandardError => e
+          @config.log_found_exception(__method__.to_s, e)
         end
 
         protected

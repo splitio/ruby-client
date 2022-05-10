@@ -46,10 +46,10 @@ module SplitIoClient
           end
 
           @status_manager.ready! if @status_manager
-        rescue StandardError => error
+        rescue StandardError => e
           @config.logger.error('Error while parsing the split file. ' \
             'Check that the input file matches the expected format')
-          @config.log_found_exception(__method__.to_s, error)
+          @config.log_found_exception(__method__.to_s, e)
         end
 
         def store_split(split)

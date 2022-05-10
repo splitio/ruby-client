@@ -23,7 +23,7 @@ describe SplitIoClient::SSE::Workers::SegmentsWorker do
   let(:repositories) { { splits: splits_repository, segments: segments_repository } }
   let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
   let(:params) { { split_fetcher: split_fetcher, segment_fetcher: segment_fetcher, imp_counter: impression_counter, telemetry_runtime_producer: telemetry_runtime_producer } }
-  let(:synchronizer) { SplitIoClient::Engine::Synchronizer.new(repositories, api_key, config, params) }
+  let(:synchronizer) { SplitIoClient::Engine::Synchronizer.new(repositories, config, params) }
 
   before do
     mock_split_changes(splits)

@@ -51,7 +51,7 @@ module SplitIoClient
 
       @segments_refresh_rate = opts[:segments_refresh_rate] || SplitConfig.default_segments_refresh_rate
 
-      @impressions_mode = init_impressions_mode(opts[:impressions_mode])
+      @impressions_mode = init_impressions_mode(opts[:impressions_mode], opts[:cache_adapter])
 
       @impressions_refresh_rate = SplitConfig.init_impressions_refresh_rate(@impressions_mode, opts[:impressions_refresh_rate], SplitConfig.default_impressions_refresh_rate)
       @impressions_queue_size = opts[:impressions_queue_size] || SplitConfig.default_impressions_queue_size
@@ -110,6 +110,12 @@ module SplitIoClient
 
       @telemetry_refresh_rate = SplitConfig.init_telemetry_refresh_rate(opts[:telemetry_refresh_rate])
       @telemetry_service_url = opts[:telemetry_service_url] || SplitConfig.default_telemetry_service_url
+
+      @unique_keys_refresh_rate = SplitConfig.default_unique_keys_refresh_rate(@cache_adapter)
+      @unique_keys_cache_max_size = SplitConfig.default_unique_keys_cache_max_size
+      @unique_keys_bulk_size = SplitConfig.default_unique_keys_bulk_size(@cache_adapter)
+
+      @counter_refresh_rate = SplitConfig.default_counter_refresh_rate(@cache_adapter)
 
       @sdk_start_time = Time.now
 
@@ -284,6 +290,18 @@ module SplitIoClient
     attr_accessor :on_demand_fetch_retry_delay_seconds    
     attr_accessor :on_demand_fetch_max_retries
 
+    attr_accessor :unique_keys_refresh_rate
+    attr_accessor :unique_keys_cache_max_size
+    attr_accessor :unique_keys_bulk_size
+
+    attr_accessor :counter_refresh_rate
+
+    def self.default_counter_refresh_rate(adapter)
+      return 300 if adapter == :redis # Send bulk impressions count - Refresh rate: 5 min.
+
+      1800 # Send bulk impressions count - Refresh rate: 30 min.
+    end
+
     def self.default_on_demand_fetch_retry_delay_seconds
       0.05
     end
@@ -296,12 +314,16 @@ module SplitIoClient
       :optimized
     end
 
-    def init_impressions_mode(impressions_mode)
+    def init_impressions_mode(impressions_mode, adapter)
       impressions_mode ||= SplitConfig.default_impressions_mode
+
+      return :debug if adapter == :redis
 
       case impressions_mode
       when :debug
         return :debug
+      # when :none  // we not support :none impression mode yet. Defaulting to :optimized mode
+      #  return :none
       else
         @logger.error('You passed an invalid impressions_mode, impressions_mode should be one of the following values: :debug or :optimized. Defaulting to :optimized mode') unless impressions_mode == :optimized
         return :optimized
@@ -466,6 +488,22 @@ module SplitIoClient
 
     def self.default_telemetry_refresh_rate
       3600      
+    end
+
+    def self.default_unique_keys_refresh_rate(adapter)
+      return 300 if adapter == :redis
+
+      900
+    end
+
+    def self.default_unique_keys_cache_max_size
+      30000
+    end
+
+    def self.default_unique_keys_bulk_size(adapter)
+      return 2000 if adapter == :redis
+
+      5000
     end
 
     def self.default_telemetry_service_url

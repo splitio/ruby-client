@@ -110,8 +110,8 @@ module SplitIoClient
       @events_repository.add(key.to_s, traffic_type_name.downcase, event_type.to_s, (Time.now.to_f * 1000).to_i, value, properties, properties_size)
       record_latency(TRACK, start)
       true
-    rescue StandardError => error
-      @config.log_found_exception(__method__.to_s, error)
+    rescue StandardError => e
+      @config.log_found_exception(__method__.to_s, e)
       record_exception(TRACK)
 
       false
@@ -291,8 +291,8 @@ module SplitIoClient
         
         impression = @impressions_manager.build_impression(matching_key, bucketing_key, split_name, treatment_data, { attributes: attributes, time: nil })
         impressions << impression unless impression.nil?
-      rescue StandardError => error
-        @config.log_found_exception(__method__.to_s, error)
+      rescue StandardError => e
+        @config.log_found_exception(__method__.to_s, e)
 
         record_exception(calling_method)
 

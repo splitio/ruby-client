@@ -2,7 +2,7 @@
 
 module SplitIoClient
   module Telemetry
-    class RedisSynchronizer < Synchronizer
+    class RedisSynchronizer
       def initialize(config,
                      telemetry_init_producer)
         @config = config
@@ -20,8 +20,8 @@ module SplitIoClient
         init_config = ConfigInit.new(@config.mode, 'redis', active_factories, redundant_active_factories, tags)
 
         @telemetry_init_producer.record_config(init_config)
-      rescue StandardError => error
-        @config.log_found_exception(__method__.to_s, error)
+      rescue StandardError => e
+        @config.log_found_exception(__method__.to_s, e)
       end
     end
   end

@@ -41,15 +41,18 @@ describe SplitIoClient::Cache::Senders::EventsSender do
     end
 
     it 'calls #post_events upon destroy' do
-      expect(sender).to receive(:post_events).with(no_args).at_least(:once)
+      stub_request(:post, 'https://events.split.io/api/events/bulk').to_return(status: 200, body: '')
 
-      sender.send(:events_thread)
+      repository.add('key', 'traffic_type', 'event_type', 0, 0.0, { property_value: 'valid' }, 0)
+
+      sender.call
+      sleep 0.1
 
       sender_thread = config.threads[:events_sender]
-
       sender_thread.raise(SplitIoClient::SDKShutdownException)
+      sleep 1
 
-      sender_thread.join
+      expect(a_request(:post, 'https://events.split.io/api/events/bulk')).to have_been_made
     end
   end
 
