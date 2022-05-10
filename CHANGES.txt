@@ -1,7 +1,7 @@
 CHANGES
 
 8.0.0 (May 10, 2022)
-- Deprecated support for ruby 2.3 and 2.4 versions. The minimum ruby version required is 2.5 now.
+- BREAKING CHANGE: Deprecated support for ruby 2.3 and 2.4 versions. The minimum ruby version required is 2.5 now.
 - Updated redis command for config telemetry, using hset instead of rpush now.
 - Updated dependencies:
   - rake to ~> 13.0
