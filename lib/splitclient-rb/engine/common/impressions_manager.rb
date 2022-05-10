@@ -4,65 +4,79 @@ module SplitIoClient
   module Engine
     module Common
       class ImpressionManager
-        def initialize(config, impressions_repository, impression_counter, telemetry_runtime_producer)
+        def initialize(config,
+                       impressions_repository,
+                       impression_counter,
+                       telemetry_runtime_producer,
+                       impression_observer,
+                       unique_keys_tracker)
           @config = config
           @impressions_repository = impressions_repository
           @impression_counter = impression_counter
-          @impression_observer = SplitIoClient::Observers::ImpressionObserver.new
+          @impression_observer = impression_observer
           @telemetry_runtime_producer = telemetry_runtime_producer
+          @unique_keys_tracker = unique_keys_tracker
         end
 
-        # added param time for test
         def build_impression(matching_key, bucketing_key, split_name, treatment, params = {})
           impression_data = impression_data(matching_key, bucketing_key, split_name, treatment, params[:time])
 
-          impression_data[:pt] = @impression_observer.test_and_set(impression_data) unless redis?
-
-          @impression_counter.inc(split_name, impression_data[:m]) if optimized? && !redis?
+          begin
+            case @config.impressions_mode
+            when :debug #  In DEBUG mode we should calculate the pt only.
+              impression_data[:pt] = @impression_observer.test_and_set(impression_data)
+            when :none # In NONE mode we should track the total amount of evaluations and the unique keys.
+              @impression_counter.inc(split_name, impression_data[:m])
+              @unique_keys_tracker.track(split_name, matching_key)
+            else # In OPTIMIZED mode we should track the total amount of evaluations and deduplicate the impressions.
+              impression_data[:pt] = @impression_observer.test_and_set(impression_data)
+              @impression_counter.inc(split_name, impression_data[:m])
+            end
+          rescue StandardError => e
+            @config.log_found_exception(__method__.to_s, e)
+          end
 
           impression(impression_data, params[:attributes])
-        rescue StandardError => e
-          @config.log_found_exception(__method__.to_s, e)
         end
 
         def track(impressions)
           return if impressions.empty?
 
-          impression_router.add_bulk(impressions)
-
-          dropped = 0
-          queued = 0
-          dedupe = 0
-
-          if optimized? && !redis?
-            optimized_impressions = impressions.select { |imp| should_queue_impression?(imp[:i]) }
-
-            unless optimized_impressions.empty?
-              dropped = @impressions_repository.add_bulk(optimized_impressions)
-              dedupe = impressions.length - optimized_impressions.length
-              queued = optimized_impressions.length - dropped
+          stats = { dropped: 0, queued: 0, dedupe: 0 }
+          begin
+            case @config.impressions_mode
+            when :none
+              return
+            when :debug
+              track_debug_mode(impressions, stats)
+            when :optimized
+              track_optimized_mode(impressions, stats)
             end
-          else
-            dropped = @impressions_repository.add_bulk(impressions)
-            queued = impressions.length - dropped
+          rescue StandardError => e
+            @config.log_found_exception(__method__.to_s, e)
+          ensure
+            record_stats(stats)
+            impression_router.add_bulk(impressions)
           end
-
-          record_stats(queued, dropped, dedupe)
-        rescue StandardError => e
-          @config.log_found_exception(__method__.to_s, e)
         end
 
         private
 
-        def record_stats(queued, dropped, dedupe)
+        def impression_router
+          @impression_router ||= SplitIoClient::ImpressionRouter.new(@config)
+        rescue StandardError => e
+          @config.log_found_exception(__method__.to_s, e)
+        end
+
+        def record_stats(stats)
           return if redis?
 
           imp_queued = Telemetry::Domain::Constants::IMPRESSIONS_QUEUED
           imp_dropped = Telemetry::Domain::Constants::IMPRESSIONS_DROPPED
           imp_dedupe = Telemetry::Domain::Constants::IMPRESSIONS_DEDUPE
-          @telemetry_runtime_producer.record_impressions_stats(imp_queued, queued) unless queued.zero?
-          @telemetry_runtime_producer.record_impressions_stats(imp_dropped, dropped) unless dropped.zero?
-          @telemetry_runtime_producer.record_impressions_stats(imp_dedupe, dedupe) unless dedupe.zero?
+          @telemetry_runtime_producer.record_impressions_stats(imp_queued, stats[:queued]) unless stats[:queued].zero?
+          @telemetry_runtime_producer.record_impressions_stats(imp_dropped, stats[:dropped]) unless stats[:dropped].zero?
+          @telemetry_runtime_producer.record_impressions_stats(imp_dedupe, stats[:dedupe]) unless stats[:dedupe].zero?
         end
 
         # added param time for test
@@ -91,10 +105,6 @@ module SplitIoClient
           @config.labels_enabled ? label : nil
         end
 
-        def optimized?
-          @config.impressions_mode == :optimized
-        end
-
         def should_queue_impression?(impression)
           impression[:pt].nil? ||
             (ImpressionCounter.truncate_time_frame(impression[:pt]) != ImpressionCounter.truncate_time_frame(impression[:m]))
@@ -108,10 +118,19 @@ module SplitIoClient
           @config.impressions_adapter.class.to_s == 'SplitIoClient::Cache::Adapters::RedisAdapter'
         end
 
-        def impression_router
-          @impression_router ||= SplitIoClient::ImpressionRouter.new(@config)
-        rescue StandardError => error
-          @config.log_found_exception(__method__.to_s, error)
+        def track_debug_mode(impressions, stats)
+          stats[:dropped] = @impressions_repository.add_bulk(impressions)
+          stats[:queued] = impressions.length - stats[:dropped]
+        end
+
+        def track_optimized_mode(impressions, stats)
+          optimized_impressions = impressions.select { |imp| should_queue_impression?(imp[:i]) }
+
+          return if optimized_impressions.empty?
+
+          stats[:dropped] = @impressions_repository.add_bulk(optimized_impressions)
+          stats[:dedupe] = impressions.length - optimized_impressions.length
+          stats[:queued] = optimized_impressions.length - stats[:dropped]
         end
       end
     end

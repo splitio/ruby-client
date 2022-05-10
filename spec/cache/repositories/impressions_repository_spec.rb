@@ -106,8 +106,27 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
     let(:repository) { described_class.new(config) }
     let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
     let(:runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
+    let(:impression_observer) { SplitIoClient::Observers::ImpressionObserver.new }
+    let(:unique_keys_tracker) do
+      bf = SplitIoClient::Cache::Filter::BloomFilter.new(1_000)
+      filter_adapter = SplitIoClient::Cache::Filter::FilterAdapter.new(config, bf)
+      api_key = 'ImpressionsRepository-memory-key'
+      telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, api_key, runtime_producer)
+      impressions_api = SplitIoClient::Api::Impressions.new(api_key, config, runtime_producer)
+      sender_adapter = SplitIoClient::Cache::Senders::ImpressionsSenderAdapter.new(config, telemetry_api, impressions_api)
+
+      SplitIoClient::Engine::Impressions::UniqueKeysTracker.new(config,
+                                                                filter_adapter,
+                                                                sender_adapter,
+                                                                Concurrent::Hash.new)
+    end
     let(:impressions_manager) do
-      SplitIoClient::Engine::Common::ImpressionManager.new(config, repository, impression_counter, runtime_producer)
+      SplitIoClient::Engine::Common::ImpressionManager.new(config,
+                                                           repository,
+                                                           impression_counter,
+                                                           runtime_producer,
+                                                           impression_observer,
+                                                           unique_keys_tracker)
     end
 
     it_behaves_like 'Impressions Repository'
@@ -144,8 +163,27 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
     let(:repository) { described_class.new(config) }
     let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
     let(:runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
+    let(:impression_observer) { SplitIoClient::Observers::ImpressionObserver.new }
+    let(:unique_keys_tracker) do
+      bf = SplitIoClient::Cache::Filter::BloomFilter.new(1_000)
+      filter_adapter = SplitIoClient::Cache::Filter::FilterAdapter.new(config, bf)
+      api_key = 'ImpressionsRepository-key'
+      telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, api_key, runtime_producer)
+      impressions_api = SplitIoClient::Api::Impressions.new(api_key, config, runtime_producer)
+      sender_adapter = SplitIoClient::Cache::Senders::ImpressionsSenderAdapter.new(config, telemetry_api, impressions_api)
+
+      SplitIoClient::Engine::Impressions::UniqueKeysTracker.new(config,
+                                                                filter_adapter,
+                                                                sender_adapter,
+                                                                Concurrent::Hash.new)
+    end
     let(:impressions_manager) do
-      SplitIoClient::Engine::Common::ImpressionManager.new(config, repository, impression_counter, runtime_producer)
+      SplitIoClient::Engine::Common::ImpressionManager.new(config,
+                                                           repository,
+                                                           impression_counter,
+                                                           runtime_producer,
+                                                           impression_observer,
+                                                           unique_keys_tracker)
     end
 
     it_behaves_like 'Impressions Repository'
@@ -207,7 +245,9 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
       custom_impressions_manager = SplitIoClient::Engine::Common::ImpressionManager.new(custom_config,
                                                                                         custom_repository,
                                                                                         impression_counter,
-                                                                                        custom_runtime_producer)
+                                                                                        custom_runtime_producer,
+                                                                                        impression_observer,
+                                                                                        unique_keys_tracker)
       other_treatment = { treatment: 'on', label: 'sample_rule_2', change_number: 1_533_177_602_748 }
 
       params = { attributes: {}, time: 1_478_113_516_002 }

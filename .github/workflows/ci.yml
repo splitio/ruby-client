@@ -1,10 +1,4 @@
-on:
-  push:
-    branches:
-      - master
-  pull_request:
-    branches:
-      - master
+on: [push, pull_request]
 
 jobs:
   test:
@@ -14,16 +8,20 @@ jobs:
         image: redis
         ports:
           - 6379:6379
+    strategy:
+      matrix:
+        ruby: [ '2.5.0', '3.1.1' ]
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
 
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@477b21f02be01bcb8030d50f37cfec92bfa615b6
+      - name: Set up Ruby ${{ matrix.ruby }}
+        uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 2.5
+          ruby-version: ${{ matrix.ruby }}
 
       - name: Install dependencies
         run: bundle install

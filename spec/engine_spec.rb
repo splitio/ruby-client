@@ -732,11 +732,12 @@ describe SplitIoClient, type: :client do
       end
 
       it 'returns control' do
-        stub_request(:post, 'https://events.split.io/api/testImpressions/bulk')
-          .to_return(status: 200, body: '', headers: {})
+        stub_request(:post, 'https://events.split.io/api/testImpressions/bulk').to_return(status: 200, body: '')
+        stub_request(:get, 'https://sdk.split.io/api/splitChanges?since').to_return(status: 200, body: '')
 
         subject.block_until_ready
         expect(subject.get_treatment('fake_user_id_1', 'test_feature')).to eq 'on'
+        sleep 0.5
         subject.destroy
         expect(subject.get_treatment('fake_user_id_1', 'test_feature')).to eq 'control'
       end

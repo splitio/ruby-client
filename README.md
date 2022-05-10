@@ -1,5 +1,5 @@
 # Split SDK for Ruby
-[![Build Status](https://travis-ci.com/splitio/ruby-client.svg?branch=master)](https://travis-ci.com/splitio/ruby-client)
+![Build Status](https://github.com/splitio/ruby-client/actions/workflows/ci.yml/badge.svg?branch=master)
 
 ## Overview
 This SDK is designed to work with Split, the platform for controlled rollouts, which serves features to your users via a Split feature flag to manage your complete customer experience.
@@ -7,7 +7,7 @@ This SDK is designed to work with Split, the platform for controlled rollouts, w
 [![Twitter Follow](https://img.shields.io/twitter/follow/splitsoftware.svg?style=social&label=Follow&maxAge=1529000)](https://twitter.com/intent/follow?screen_name=splitsoftware)
 
 ## Compatibility
-The Ruby SDK support Ruby version 2.3.0 or later and JRuby or 9.1.17 o later.
+The Ruby SDK support Ruby version 2.5.0 or later and JRuby or 9.1.17 o later.
 
 Also the Ruby SDK has been tested as a standalone app as well as using the following web servers:
  - Puma
