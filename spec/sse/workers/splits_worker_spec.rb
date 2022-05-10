@@ -14,16 +14,28 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
   let(:log) { StringIO.new }
   let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log)) }
   let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config) }
-  let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
-  let(:impressions_repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
   let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
-  let(:events_repository) { SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key, telemetry_runtime_producer) }
   let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, telemetry_runtime_producer) }
-  let(:segment_fetcher) { SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, telemetry_runtime_producer) }
-  let(:repositories) { { splits: splits_repository, segments: segments_repository } }
-  let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
-  let(:params) { { split_fetcher: split_fetcher, segment_fetcher: segment_fetcher, imp_counter: impression_counter, telemetry_runtime_producer: telemetry_runtime_producer } }
-  let(:synchronizer) { SplitIoClient::Engine::Synchronizer.new(repositories, api_key, config, params) }
+  let(:synchronizer) do
+    segments_repository = SplitIoClient::Cache::Repositories::SegmentsRepository.new(config)
+    telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, api_key, telemetry_runtime_producer)
+    impressions_api = SplitIoClient::Api::Impressions.new(api_key, config, telemetry_runtime_producer)
+
+    repositories = {
+      splits: splits_repository,
+      segments: segments_repository
+    }
+
+    params = {
+      split_fetcher: SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, telemetry_runtime_producer),
+      segment_fetcher: SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, telemetry_runtime_producer),
+      imp_counter: SplitIoClient::Engine::Common::ImpressionCounter.new,
+      impressions_sender_adapter: SplitIoClient::Cache::Senders::ImpressionsSenderAdapter.new(config, telemetry_api, impressions_api),
+      impressions_api: SplitIoClient::Api::Impressions.new(api_key, config, telemetry_runtime_producer)
+    }
+
+    SplitIoClient::Engine::Synchronizer.new(repositories, config, params)
+  end
 
   context 'add change number to queue' do
     it 'add change number - must tigger fetch - with retries' do

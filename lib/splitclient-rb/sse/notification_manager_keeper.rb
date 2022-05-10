@@ -61,10 +61,11 @@ module SplitIoClient
       end
 
       def update_publishers(channel, publishers)
-        if channel == Constants::CONTROL_PRI
+        case channel
+        when Constants::CONTROL_PRI
           @telemetry_runtime_producer.record_streaming_event(Telemetry::Domain::Constants::OCCUPANCY_PRI, publishers)
           @publishers_pri.value = publishers
-        elsif channel == Constants::CONTROL_SEC
+        when Constants::CONTROL_SEC
           @telemetry_runtime_producer.record_streaming_event(Telemetry::Domain::Constants::OCCUPANCY_SEC, publishers)
           @publishers_sec.value = publishers
         end

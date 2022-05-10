@@ -2,7 +2,7 @@
 
 module SplitIoClient
   module Telemetry
-    class MemoryRuntimeConsumer < RuntimeConsumer
+    class MemoryRuntimeConsumer
       DEFAULT_VALUE = 0
 
       def initialize(config)

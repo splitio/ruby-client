@@ -18,8 +18,26 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
     let(:treatment1) { { treatment: 'on', label: 'custom_label1', change_number: 123_456 } }
     let(:treatment2) { { treatment: 'off', label: 'custom_label2', change_number: 123_499 } }
     let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
+    let(:impression_observer) { SplitIoClient::Observers::ImpressionObserver.new }
+    let(:unique_keys_tracker) do
+      bf = SplitIoClient::Cache::Filter::BloomFilter.new(1_000)
+      filter_adapter = SplitIoClient::Cache::Filter::FilterAdapter.new(config, bf)
+      api_key = 'ImpressionsSender-key'
+      telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, api_key, telemetry_runtime_producer)
+      sender_adapter = SplitIoClient::Cache::Senders::ImpressionsSenderAdapter.new(config, telemetry_api, impression_api)
+
+      SplitIoClient::Engine::Impressions::UniqueKeysTracker.new(config,
+                                                                filter_adapter,
+                                                                sender_adapter,
+                                                                Concurrent::Hash.new)
+    end
     let(:impressions_manager) do
-      SplitIoClient::Engine::Common::ImpressionManager.new(config, repository, impression_counter, telemetry_runtime_producer)
+      SplitIoClient::Engine::Common::ImpressionManager.new(config,
+                                                           repository,
+                                                           impression_counter,
+                                                           telemetry_runtime_producer,
+                                                           impression_observer,
+                                                           unique_keys_tracker)
     end
 
     before :each do
@@ -80,15 +98,15 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
     end
 
     it 'calls #post_impressions upon destroy' do
-      expect(sender).to receive(:post_impressions).with(no_args)
+      stub_request(:post, 'https://events.split.io/api/testImpressions/bulk').to_return(status: 200, body: '')
 
-      sender.send(:impressions_thread)
-
+      sender.call
+      sleep 0.1
       sender_thread = config.threads[:impressions_sender]
-
       sender_thread.raise(SplitIoClient::SDKShutdownException)
+      sleep 1
 
-      sender_thread.join
+      expect(a_request(:post, 'https://events.split.io/api/testImpressions/bulk')).to have_been_made
     end
   end
 

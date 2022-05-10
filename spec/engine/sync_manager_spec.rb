@@ -35,10 +35,11 @@ describe SplitIoClient::Engine::SyncManager do
       split_fetcher: SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, telemetry_runtime_producer),
       segment_fetcher: SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, telemetry_runtime_producer),
       imp_counter: impression_counter,
-      telemetry_runtime_producer: telemetry_runtime_producer
+      telemetry_runtime_producer: telemetry_runtime_producer,
+      unique_keys_tracker: SplitIoClient::Engine::Impressions::NoopUniqueKeysTracker.new
     }
   end
-  let(:synchronizer) { SplitIoClient::Engine::Synchronizer.new(repositories, api_key, config, sync_params) }
+  let(:synchronizer) { SplitIoClient::Engine::Synchronizer.new(repositories, config, sync_params) }
   let(:init_producer) { SplitIoClient::Telemetry::InitProducer.new(config) }
   let(:init_consumer) { SplitIoClient::Telemetry::InitConsumer.new(config) }
   let(:runtime_consumer) { SplitIoClient::Telemetry::RuntimeConsumer.new(config) }

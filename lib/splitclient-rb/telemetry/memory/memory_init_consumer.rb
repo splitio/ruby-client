@@ -2,7 +2,7 @@
 
 module SplitIoClient
   module Telemetry
-    class MemoryInitConsumer < InitConsumer
+    class MemoryInitConsumer
       DEFAULT_VALUE = 0
 
       def initialize(config)

@@ -19,8 +19,8 @@ module SplitIoClient
             post_events if @size >= EVENTS_MAX_SIZE_BYTES || @adapter.length == @config.events_queue_size
 
             @telemetry_runtime_producer.record_events_stats(Telemetry::Domain::Constants::EVENTS_QUEUED, 1)
-          rescue StandardError => error
-            @config.log_found_exception(__method__.to_s, error)
+          rescue StandardError => e
+            @config.log_found_exception(__method__.to_s, e)
             @telemetry_runtime_producer.record_events_stats(Telemetry::Domain::Constants::EVENTS_DROPPED, 1)
           end
 

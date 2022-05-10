@@ -41,17 +41,20 @@ module SplitIoClient
       private
 
       def schedule_next_token_refresh(time)
-        @config.threads[:schedule_next_token_refresh] = Thread.new do
-          begin
-            @config.logger.debug("schedule_next_token_refresh refresh in #{time} seconds.") if @config.debug_enabled
-            sleep(time)
-            @config.logger.debug('schedule_next_token_refresh starting ...') if @config.debug_enabled
-            @sse_handler.stop
-            start_sse
-          rescue StandardError => e
-            @config.logger.debug("schedule_next_token_refresh error: #{e.inspect}") if @config.debug_enabled
-          end
-        end
+        @config.threads[:schedule_next_token_refresh] = Thread.new { refresh_token_task(time) }
+      end
+
+      def refresh_token_task(time)
+        @config.logger.debug("schedule_next_token_refresh refresh in #{time} seconds.") if @config.debug_enabled
+
+        sleep(time)
+
+        @config.logger.debug('schedule_next_token_refresh starting ...') if @config.debug_enabled
+        @sse_handler.stop
+
+        start_sse
+      rescue StandardError => e
+        @config.logger.debug("schedule_next_token_refresh error: #{e.inspect}") if @config.debug_enabled
       end
 
       def record_telemetry(time)

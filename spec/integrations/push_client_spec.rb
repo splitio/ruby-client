@@ -171,6 +171,7 @@ describe SplitIoClient do
       mock_splits_request(splits, -1)
       mock_splits_request(splits2, 1_585_948_850_109)
       stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
+      stub_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=-1&till=1470947453879').to_return(status: 200, body: '')
       stub_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=-1')
         .to_return({ status: 200, body: segment3 }, { status: 200, body: segment3 }, { status: 200, body: segment3_updated })
 
@@ -352,6 +353,7 @@ describe SplitIoClient do
       mock_splits_request(splits3, 1_585_948_850_110)
       mock_segment_changes('segment3', segment3, '-1')
       stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1585948850111').to_return(status: 200, body: '')
 
       mock_server do |server|
         server.setup_response('/') do |_, res|
