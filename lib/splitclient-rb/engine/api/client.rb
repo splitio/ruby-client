@@ -3,10 +3,10 @@
 module SplitIoClient
   module Api
     class Client
-      RUBY_ENCODING = '1.9'.respond_to?(:force_encoding)
-
       def initialize(config)
-        @config = config        
+        @config = config
+
+        check_faraday_compatibility
       end
 
       def get_api(url, api_key, params = {}, cache_control_headers = false)
@@ -63,6 +63,14 @@ module SplitIoClient
           'Authorization' => "Bearer #{api_key}",
           'SplitSDKVersion' => "#{@config.language}-#{@config.version}",
         }
+      end
+
+      def check_faraday_compatibility
+        version = Faraday::VERSION.split('.')[0]
+
+        require 'faraday/net_http_persistent' if version.to_i >= 2
+      rescue StandardError => e
+        @config.logger.warn(e)
       end
     end
   end
