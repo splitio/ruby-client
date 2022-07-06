@@ -1,5 +1,8 @@
 CHANGES
 
+0.0.1 (Coming soon)
+- Updated dependencies to support faraday > 2.0
+
 8.0.0 (May 10, 2022)
 - BREAKING CHANGE: Deprecated support for ruby 2.3 and 2.4 versions. The minimum ruby version required is 2.5 now.
 - Updated redis command for config telemetry, using hset instead of rpush now.
