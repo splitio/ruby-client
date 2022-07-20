@@ -47,13 +47,13 @@ module SplitIoClient
           connected = false
 
           if @config.streaming_enabled
-            @config.logger.debug('Starting Straming mode ...')
+            @config.logger.debug('Starting Streaming mode ...')
             start_push_status_monitor
             connected = @push_manager.start_sse
           end
 
           unless connected
-            @config.logger.debug('Starting polling mode ...')
+            @config.logger.debug('Starting Polling mode ...')
             @synchronizer.start_periodic_fetch
             record_telemetry(Telemetry::Domain::Constants::SYNC_MODE, SYNC_MODE_POLLING)
           end
