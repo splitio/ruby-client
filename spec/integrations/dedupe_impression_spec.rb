@@ -98,8 +98,8 @@ describe SplitIoClient do
       .with(
         body: {
           pf: [
-            { f: 'FACUNDO_TEST', m: time_frame, rc: 3 },
-            { f: 'Test_Save_1', m: time_frame, rc: 2 }
+            { f: 'FACUNDO_TEST', m: time_frame, rc: 1 },
+            { f: 'Test_Save_1', m: time_frame, rc: 1 }
           ]
         }.to_json
       )).to have_been_made
@@ -120,6 +120,7 @@ describe SplitIoClient do
       client.get_treatments('admin', %w[FACUNDO_TEST MAURO_TEST Test_Save_1])
       client.get_treatments('maldo', %w[FACUNDO_TEST Test_Save_1])
       client.get_treatments('nico_test', %w[FACUNDO_TEST MAURO_TEST Test_Save_1])
+      client.get_treatments('nico_test', %w[FACUNDO_TEST MAURO_TEST Test_Save_1])
 
       time_frame = SplitIoClient::Engine::Common::ImpressionCounter.truncate_time_frame((Time.now.to_f * 1000.0).to_i)
 
@@ -130,9 +131,9 @@ describe SplitIoClient do
       .with(
         body: {
           pf: [
-            { f: 'FACUNDO_TEST', m: time_frame, rc: 4 },
-            { f: 'MAURO_TEST', m: time_frame, rc: 3 },
-            { f: 'Test_Save_1', m: time_frame, rc: 4 }
+            { f: 'FACUNDO_TEST', m: time_frame, rc: 2 },
+            { f: 'MAURO_TEST', m: time_frame, rc: 2 },
+            { f: 'Test_Save_1', m: time_frame, rc: 2 }
           ]
         }.to_json
       )).to have_been_made

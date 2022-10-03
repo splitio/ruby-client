@@ -1,5 +1,8 @@
 CHANGES
 
+8.1.0 (Oct 3, 2022)
+- 
+
 8.0.1 (Jul 20, 2022)
 - Updated dependencies to support faraday > 2.0
 
