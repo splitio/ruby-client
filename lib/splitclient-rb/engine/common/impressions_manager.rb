@@ -31,7 +31,7 @@ module SplitIoClient
             else # In OPTIMIZED mode we should track the total amount of evaluations and deduplicate the impressions.
               impression_data[:pt] = @impression_observer.test_and_set(impression_data)
 
-              @impression_counter.inc(split_name, impression_data[:m]) if impression_data[:pt] != nil
+              @impression_counter.inc(split_name, impression_data[:m]) unless impression_data[:pt].nil?
             end
           rescue StandardError => e
             @config.log_found_exception(__method__.to_s, e)
