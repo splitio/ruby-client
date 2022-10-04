@@ -22,10 +22,18 @@ describe SplitIoClient::Cache::Senders::ImpressionsSenderAdapter do
       sender.record_uniques_key(uniques)
 
       result = config.cache_adapter.get_from_queue(unique_keys_key, 0)
-      expect(result.size).to eq(3)
-      expect(result[0]).to eq('{:f=>"feature-name-1", :k=>["key-1", "key-2", "key-3", "key-4"]}')
-      expect(result[1]).to eq('{:f=>"feature-name-2", :k=>["key-1", "key-2", "key-3", "key-4"]}')
-      expect(result[2]).to eq('{:f=>"feature-name-3", :k=>["key-1", "key-2", "key-3", "key-4"]}')
+
+      expect(result.size).to eq(1)
+      data = JSON.parse(result[0], symbolize_names: true)
+
+      expect(data[0][:f]).to eq('feature-name-1')
+      expect(data[0][:k].to_s).to eq('["key-1", "key-2", "key-3", "key-4"]')
+
+      expect(data[1][:f]).to eq('feature-name-2')
+      expect(data[1][:k].to_s).to eq('["key-1", "key-2", "key-3", "key-4"]')
+
+      expect(data[2][:f]).to eq('feature-name-3')
+      expect(data[2][:k].to_s).to eq('["key-1", "key-2", "key-3", "key-4"]')
     end
 
     it 'record_uniques_key when uniques is nil or empty' do

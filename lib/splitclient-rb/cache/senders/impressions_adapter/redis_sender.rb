@@ -12,7 +12,9 @@ module SplitIoClient
         end
 
         def record_uniques_key(uniques)
-          formatted = uniques_formatter(uniques)
+          return if uniques.nil? || uniques == {}
+
+          formatted = uniques_formatter(uniques).to_json
 
           unless formatted.nil?
             size = @adapter.add_to_queue(unique_keys_key, formatted)
