@@ -311,31 +311,17 @@ module SplitIoClient
     end
 
     def init_impressions_mode(impressions_mode, adapter)
-      if adapter == :redis
-        impressions_mode ||= :debug
-
-        case impressions_mode
-        when :optimized
-          return :optimized
-        when :none
-         return :none
-        else
-          @logger.error('You passed an invalid impressions_mode, impressions_mode should be one of the following values: :debug or :optimized. Defaulting to :optimized mode') unless impressions_mode == :optimized
-          return :debug
-        end
-      end
-
-      return :debug if adapter == :redis
-
-      impressions_mode ||= :optimized
       case impressions_mode
-      when :debug
-        return :debug
+      when :optimized
+        return :optimized
       when :none
        return :none
+      when :debug
+        return :debug
       else
-        @logger.error('You passed an invalid impressions_mode, impressions_mode should be one of the following values: :debug or :optimized. Defaulting to :optimized mode') unless impressions_mode == :optimized
-        return :optimized
+        default = adapter == :redis ? :debug : :optimized
+        @logger.error("You passed an invalid impressions_mode, impressions_mode should be one of the following values: :debug, :optimized or :none. Defaulting to #{default} mode")
+        return default
       end
     end
 

@@ -113,6 +113,16 @@ describe SplitIoClient do
       configs3 = SplitIoClient::SplitConfig.new(options3)
 
       expect(configs3.impressions_mode).to eq(:optimized)
+
+      options4 = { impressions_mode: :sarasa, cache_adapter: :redis }
+      configs4 = SplitIoClient::SplitConfig.new(options4)
+
+      expect(configs4.impressions_mode).to eq(:debug)
+
+      options5 = { impressions_mode: :optimized, cache_adapter: :redis }
+      configs5 = SplitIoClient::SplitConfig.new(options5)
+
+      expect(configs5.impressions_mode).to eq(:optimized)
     end
 
     it 'set impressions refresh rate with impressions optimized mode' do
