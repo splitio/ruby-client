@@ -1,6 +1,6 @@
 CHANGES
 
-8.1.0 (Oct 3, 2022)
+8.1.0 (Oct 4, 2022)
 - Added a new impressions mode for the SDK called NONE , to be used in factory when there is no desire to capture impressions on an SDK factory to feed Split's analytics engine. Running NONE mode, the SDK will only capture unique keys evaluated for a particular feature flag instead of full blown impressions.
 
 8.0.1 (Jul 20, 2022)
