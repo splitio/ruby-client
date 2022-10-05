@@ -310,23 +310,18 @@ module SplitIoClient
       10
     end
 
-    def self.default_impressions_mode
-      :optimized
-    end
-
     def init_impressions_mode(impressions_mode, adapter)
-      impressions_mode ||= SplitConfig.default_impressions_mode
-
-      return :debug if adapter == :redis
-
       case impressions_mode
+      when :optimized
+        return :optimized
+      when :none
+       return :none
       when :debug
         return :debug
-      # when :none  // we not support :none impression mode yet. Defaulting to :optimized mode
-      #  return :none
       else
-        @logger.error('You passed an invalid impressions_mode, impressions_mode should be one of the following values: :debug or :optimized. Defaulting to :optimized mode') unless impressions_mode == :optimized
-        return :optimized
+        default = adapter == :redis ? :debug : :optimized
+        @logger.error("You passed an invalid impressions_mode, impressions_mode should be one of the following values: :debug, :optimized or :none. Defaulting to #{default} mode")
+        return default
       end
     end
 
@@ -455,7 +450,7 @@ module SplitIoClient
     end
 
     def self.default_features_refresh_rate
-      5
+      60
     end
 
     def self.default_segments_refresh_rate

@@ -35,7 +35,13 @@ describe SplitIoClient::Engine::Impressions::UniqueKeysTracker do
       expect(tracker.track("feature-test-#{i}", 'key_test-2')).to eq(true)
     end
 
-    expect(config.cache_adapter.get_from_queue(key, 0).size).to eq(20)
+    result = config.cache_adapter.get_from_queue(key, 0)
+    expect(result.size).to eq(10)
+
+    10.times do |i|
+      data = JSON.parse(result[i], symbolize_names: true)
+      expect(data.size).to eq(2)
+    end
 
     cache.clear
   end
@@ -56,7 +62,13 @@ describe SplitIoClient::Engine::Impressions::UniqueKeysTracker do
 
     sleep 1
 
-    expect(config.cache_adapter.get_from_queue(key, 0).size).to eq(10)
+    result = config.cache_adapter.get_from_queue(key, 0)
+    expect(result.size).to eq(1)
+
+    10.times do |i|
+      data = JSON.parse(result[0], symbolize_names: true)
+      expect(data.size).to eq(10)
+    end
 
     cache.clear
   end
