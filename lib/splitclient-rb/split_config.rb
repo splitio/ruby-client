@@ -450,7 +450,7 @@ module SplitIoClient
     end
 
     def self.default_features_refresh_rate
-      5
+      60
     end
 
     def self.default_segments_refresh_rate
