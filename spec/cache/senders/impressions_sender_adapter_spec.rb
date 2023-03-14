@@ -23,17 +23,19 @@ describe SplitIoClient::Cache::Senders::ImpressionsSenderAdapter do
 
       result = config.cache_adapter.get_from_queue(unique_keys_key, 0)
 
-      expect(result.size).to eq(1)
+      expect(result.size).to eq(3)
+
       data = JSON.parse(result[0], symbolize_names: true)
+      expect(data[:f]).to eq('feature-name-1')
+      expect(data[:ks].to_s).to eq('["key-1", "key-2", "key-3", "key-4"]')
 
-      expect(data[0][:f]).to eq('feature-name-1')
-      expect(data[0][:k].to_s).to eq('["key-1", "key-2", "key-3", "key-4"]')
+      data1 = JSON.parse(result[1], symbolize_names: true)
+      expect(data1[:f]).to eq('feature-name-2')
+      expect(data1[:ks].to_s).to eq('["key-1", "key-2", "key-3", "key-4"]')
 
-      expect(data[1][:f]).to eq('feature-name-2')
-      expect(data[1][:k].to_s).to eq('["key-1", "key-2", "key-3", "key-4"]')
-
-      expect(data[2][:f]).to eq('feature-name-3')
-      expect(data[2][:k].to_s).to eq('["key-1", "key-2", "key-3", "key-4"]')
+      data2 = JSON.parse(result[2], symbolize_names: true)
+      expect(data2[:f]).to eq('feature-name-3')
+      expect(data2[:ks].to_s).to eq('["key-1", "key-2", "key-3", "key-4"]')
     end
 
     it 'record_uniques_key when uniques is nil or empty' do
