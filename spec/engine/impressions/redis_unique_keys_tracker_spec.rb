@@ -36,7 +36,7 @@ describe SplitIoClient::Engine::Impressions::UniqueKeysTracker do
     end
 
     result = config.cache_adapter.get_from_queue(key, 0)
-    expect(result.size).to eq(10)
+    expect(result.size).to eq(20)
 
     10.times do |i|
       data = JSON.parse(result[i], symbolize_names: true)
@@ -63,11 +63,11 @@ describe SplitIoClient::Engine::Impressions::UniqueKeysTracker do
     sleep 1
 
     result = config.cache_adapter.get_from_queue(key, 0)
-    expect(result.size).to eq(1)
+    expect(result.size).to eq(10)
 
     10.times do |i|
-      data = JSON.parse(result[0], symbolize_names: true)
-      expect(data.size).to eq(10)
+      data = JSON.parse(result[i], symbolize_names: true)
+      expect(data[:ks].size).to eq(2)
     end
 
     cache.clear

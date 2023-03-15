@@ -14,12 +14,12 @@ module SplitIoClient
         def record_uniques_key(uniques)
           return if uniques.nil? || uniques == {}
 
-          formatted = uniques_formatter(uniques).to_json
-
-          unless formatted.nil?
-            size = @adapter.add_to_queue(unique_keys_key, formatted)
-            @adapter.expire(unique_keys_key, EXPIRE_SECONDS) if formatted.size == size
+          size = 0
+          uniques.each do |key, value|
+            size = @adapter.add_to_queue(unique_keys_key, { f: key, ks: value.to_a }.to_json)
           end
+
+          @adapter.expire(unique_keys_key, EXPIRE_SECONDS) if uniques.length == size
         rescue StandardError => e
           @config.log_found_exception(__method__.to_s, e)
         end
@@ -53,23 +53,6 @@ module SplitIoClient
 
         def unique_keys_key
           "#{@config.redis_namespace}.uniquekeys"
-        end
-
-        def uniques_formatter(uniques)
-          return if uniques.nil? || uniques.empty?
-
-          to_return = []
-          uniques.each do |key, value|
-            to_return << {
-              f: key,
-              k: value.to_a
-            }
-          end
-
-          to_return
-        rescue StandardError => e
-          @config.log_found_exception(__method__.to_s, e)
-          nil
         end
       end
     end
