@@ -22,7 +22,7 @@ describe SplitIoClient::Engine::AuthApiClient do
 
     expect(response[:push_enabled]).to eq(true)
     expect(response[:channels]).to eq('xxxx_xxxx_segments%2Cxxxx_xxxx_splits%2C%5B%3Foccupancy%3Dmetrics.publishers%5Dcontrol_pri%2C%5B%3Foccupancy%3Dmetrics.publishers%5Dcontrol_sec')
-    expect(response[:retry]).to eq(false)
+    expect(response[:retry]).to eq(true)
   end
 
   it 'auth server return 500' do
