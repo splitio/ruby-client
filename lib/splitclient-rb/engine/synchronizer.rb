@@ -6,8 +6,6 @@ module SplitIoClient
       include SplitIoClient::Cache::Fetchers
       include SplitIoClient::Cache::Senders
 
-      ON_DEMAND_FETCH_BACKOFF_BASE_SECONDS = 10
-      ON_DEMAND_FETCH_BACKOFF_MAX_WAIT_SECONDS = 60
       ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES = 10
 
       def initialize(
@@ -27,6 +25,9 @@ module SplitIoClient
         @telemetry_synchronizer = params[:telemetry_synchronizer]
         @impressions_sender_adapter = params[:impressions_sender_adapter]
         @unique_keys_tracker = params[:unique_keys_tracker]
+
+        @splits_sync_backoff = Engine::BackOff.new(10, 0, 60)
+        @segments_sync_backoff = Engine::BackOff.new(10, 0, 60)
       end
 
       def sync_all(asynchronous = true)
@@ -140,7 +141,7 @@ module SplitIoClient
 
       def attempt_segment_sync(name, target_cn, fetch_options, max_retries, retry_delay_seconds, with_backoff)
         remaining_attempts = max_retries
-        backoff = Engine::BackOff.new(ON_DEMAND_FETCH_BACKOFF_BASE_SECONDS, 0, ON_DEMAND_FETCH_BACKOFF_MAX_WAIT_SECONDS) if with_backoff
+        @segments_sync_backoff.reset
 
         loop do
           remaining_attempts -= 1
@@ -150,14 +151,14 @@ module SplitIoClient
           return sync_result(true, remaining_attempts) if target_cn <= @segments_repository.get_change_number(name).to_i
           return sync_result(false, remaining_attempts) if remaining_attempts <= 0
 
-          delay = with_backoff ? backoff.interval : retry_delay_seconds
+          delay = with_backoff ? @segments_sync_backoff.interval : retry_delay_seconds
           sleep(delay)
         end
       end
 
       def attempt_splits_sync(target_cn, fetch_options, max_retries, retry_delay_seconds, with_backoff)
         remaining_attempts = max_retries
-        backoff = Engine::BackOff.new(ON_DEMAND_FETCH_BACKOFF_BASE_SECONDS, 0, ON_DEMAND_FETCH_BACKOFF_MAX_WAIT_SECONDS) if with_backoff
+        @splits_sync_backoff.reset
 
         loop do
           remaining_attempts -= 1
@@ -167,7 +168,7 @@ module SplitIoClient
           return sync_result(true, remaining_attempts, result[:segment_names]) if target_cn <= @splits_repository.get_change_number
           return sync_result(false, remaining_attempts, result[:segment_names]) if remaining_attempts <= 0
 
-          delay = with_backoff ? backoff.interval : retry_delay_seconds
+          delay = with_backoff ? @splits_sync_backoff.interval : retry_delay_seconds
           sleep(delay)
         end
       end
