@@ -75,8 +75,6 @@ module SplitIoClient
                                      @telemetry_init_consumer.bur_timeouts,
                                      @telemetry_init_consumer.non_ready_usages)
 
-        print init_config
-
         @telemetry_api.record_init(fornat_init_config(init_config))
       rescue StandardError => e
         @config.log_found_exception(__method__.to_s, e)
