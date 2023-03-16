@@ -15,7 +15,8 @@ module SplitIoClient
 
     # om: operationMode, st: storage, af: activeFactories, rf: redundantActiveFactories, t: tags, se: streamingEnabled,
     # rr: refreshRate, uo: urlOverrides, iq: impressionsQueueSize, eq: eventsQueueSize, im: impressionsMode,
-    # il: impressionListenerEnabled, hp: httpProxyDetected, tr: timeUntilSdkReady, bt: burTimeouts, nr: sdkNotReadyUsage, i: integrations
+    # il: impressionListenerEnabled, hp: httpProxyDetected, tr: timeUntilSdkReady, bt: burTimeouts,
+    # nr: sdkNotReadyUsage, i: integrations
     ConfigInit = Struct.new(:om, :st, :af, :rf, :t, :se, :rr, :uo, :iq, :eq, :im, :il, :hp, :tr, :bt, :nr, :i)
 
     # ls: lastSynchronization, ml: clientMethodLatencies, me: clientMethodExceptions, he: httpErros, hl: httpLatencies,
