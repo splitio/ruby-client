@@ -14,12 +14,13 @@ module SplitIoClient
         def record_uniques_key(uniques)
           return if uniques.nil? || uniques == {}
 
-          size = 0
-          uniques.each do |key, value|
-            size = @adapter.add_to_queue(unique_keys_key, { f: key, ks: value.to_a }.to_json)
+          size = @adapter.redis.pipelined do |pipeline|
+            uniques.each do |key, value|
+              pipeline.rpush(unique_keys_key, { f: key, ks: value.to_a }.to_json)
+            end
           end
 
-          @adapter.expire(unique_keys_key, EXPIRE_SECONDS) if uniques.length == size
+          @adapter.expire(unique_keys_key, EXPIRE_SECONDS) if uniques.length == size.last
         rescue StandardError => e
           @config.log_found_exception(__method__.to_s, e)
         end
