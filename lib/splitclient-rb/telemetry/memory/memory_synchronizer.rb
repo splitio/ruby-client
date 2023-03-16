@@ -56,6 +56,7 @@ module SplitIoClient
 
         active_factories ||= SplitIoClient.split_factory_registry.active_factories
         redundant_active_factories ||= SplitIoClient.split_factory_registry.redundant_active_factories
+        time_until_ready ||= ((Time.now.to_f - @config.sdk_start_time) * 1000.0).to_i
 
         init_config = ConfigInit.new(mode,
                                      'memory',
@@ -70,9 +71,11 @@ module SplitIoClient
                                      impressions_mode,
                                      !@config.impression_listener.nil?,
                                      http_proxy_detected?,
-                                     time_until_ready || Time.now.to_i - @config.sdk_start_time.to_i,
+                                     time_until_ready,
                                      @telemetry_init_consumer.bur_timeouts,
                                      @telemetry_init_consumer.non_ready_usages)
+
+        print init_config
 
         @telemetry_api.record_init(fornat_init_config(init_config))
       rescue StandardError => e
