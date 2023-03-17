@@ -12,13 +12,9 @@ module SplitIoClient
         end
 
         def record_uniques_key(uniques)
-          return if uniques.nil? || uniques == {}
+          return if uniques.nil? || uniques.empty?
 
-          size = @adapter.redis.pipelined do |pipeline|
-            uniques.each do |key, value|
-              pipeline.rpush(unique_keys_key, { f: key, ks: value.to_a }.to_json)
-            end
-          end
+          size = @adapter.add_to_queue(unique_keys_key, uniques_formatter(uniques))
 
           @adapter.expire(unique_keys_key, EXPIRE_SECONDS) if uniques.length == size.last
         rescue StandardError => e
@@ -46,6 +42,18 @@ module SplitIoClient
           hlen = pipeline_result.last
 
           @adapter.expire(impressions_count_key, EXPIRE_SECONDS) if impressions_count.size == hlen && (pipeline_result.sum - hlen) == total_count
+        end
+
+        def uniques_formatter(uniques)
+          to_return = []
+          uniques.each do |key, value|
+            to_return << {
+              f: key,
+              ks: value.to_a
+            }.to_json
+          end
+
+          to_return
         end
 
         def impressions_count_key
