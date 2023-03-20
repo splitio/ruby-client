@@ -16,7 +16,7 @@ module SplitIoClient
 
           size = @adapter.add_to_queue(unique_keys_key, uniques_formatter(uniques))
 
-          @adapter.expire(unique_keys_key, EXPIRE_SECONDS) if uniques.length == size.last
+          @adapter.expire(unique_keys_key, EXPIRE_SECONDS) if uniques.length == size
         rescue StandardError => e
           @config.log_found_exception(__method__.to_s, e)
         end
