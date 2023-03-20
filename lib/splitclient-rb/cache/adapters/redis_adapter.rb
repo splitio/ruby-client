@@ -99,7 +99,7 @@ module SplitIoClient
         alias find_sets_by_prefix find_strings_by_prefix
 
         def add_to_set(key, val)
-          @redis.sadd(key, val)
+          @redis.sadd?(key, val)
         end
 
         def delete_from_set(key, val)

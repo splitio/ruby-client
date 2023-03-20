@@ -59,11 +59,7 @@ module SplitIoClient
 
       def process_success(response, start)
         @config.logger.debug("Success connection to: #{@config.auth_service_url}") if @config.debug_enabled
-
-        bucket = BinarySearchLatencyTracker.get_bucket((Time.now - start) * 1000.0)
-        @telemetry_runtime_producer.record_sync_latency(Telemetry::Domain::Constants::TOKEN_SYNC, bucket)
-        timestamp = (Time.now.to_f * 1000.0).to_i
-        @telemetry_runtime_producer.record_successful_sync(Telemetry::Domain::Constants::TOKEN_SYNC, timestamp)
+        record_telemetry(start)
 
         body_json = JSON.parse(response.body, symbolize_names: true)
         push_enabled = body_json[:pushEnabled]
@@ -77,7 +73,7 @@ module SplitIoClient
           @telemetry_runtime_producer.record_token_refreshes
         end
 
-        { push_enabled: push_enabled, token: token, channels: channels, exp: exp, retry: false }
+        { push_enabled: push_enabled, token: token, channels: channels, exp: exp, retry: true }
       end
 
       def control_channels(channels_string)
@@ -87,6 +83,13 @@ module SplitIoClient
         channels_string = channels_string.gsub(control_pri, "#{prefix}#{control_pri}")
 
         channels_string.gsub(control_sec, "#{prefix}#{control_sec}")
+      end
+
+      def record_telemetry(start)
+        bucket = BinarySearchLatencyTracker.get_bucket((Time.now - start) * 1000.0)
+        @telemetry_runtime_producer.record_sync_latency(Telemetry::Domain::Constants::TOKEN_SYNC, bucket)
+        timestamp = (Time.now.to_f * 1000.0).to_i
+        @telemetry_runtime_producer.record_successful_sync(Telemetry::Domain::Constants::TOKEN_SYNC, timestamp)
       end
     end
   end

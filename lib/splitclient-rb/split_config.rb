@@ -117,7 +117,7 @@ module SplitIoClient
 
       @counter_refresh_rate = SplitConfig.default_counter_refresh_rate(@cache_adapter)
 
-      @sdk_start_time = Time.now
+      @sdk_start_time = Time.now.to_f
 
       @on_demand_fetch_retry_delay_seconds = SplitConfig.default_on_demand_fetch_retry_delay_seconds
       @on_demand_fetch_max_retries = SplitConfig.default_on_demand_fetch_max_retries

@@ -2,7 +2,7 @@
 
 module SplitIoClient
   module Engine
-    BACKOFF_MAX_ALLOWED = 1.8
+    BACKOFF_MAX_ALLOWED = 1800
     class BackOff
       def initialize(back_off_base, attempt = 0, max_allowed = BACKOFF_MAX_ALLOWED)
         @attempt = attempt

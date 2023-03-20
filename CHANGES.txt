@@ -1,5 +1,10 @@
 CHANGES
 
+8.1.1 (Mar 17, 2023)
+- Added retries with backoff when the sdk tries to connect to the Streaming service and it is not available.
+- Updated the way that the sdk write mtks in redis.
+- Fixed calculation of timeUntilReady in telemetry.
+
 8.1.0 (Oct 5, 2022)
 - Added a new impressions mode for the SDK called NONE , to be used in factory when there is no desire to capture impressions on an SDK factory to feed Split's analytics engine. Running NONE mode, the SDK will only capture unique keys evaluated for a particular feature flag instead of full blown impressions.
 

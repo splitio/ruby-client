@@ -14,7 +14,6 @@ module SplitIoClient
 
       def start_sse
         response = @auth_api_client.authenticate(@api_key)
-
         @config.logger.debug("Auth service response push_enabled: #{response[:push_enabled]}") if @config.debug_enabled
 
         if response[:push_enabled] && @sse_handler.start(response[:token], response[:channels])
@@ -26,7 +25,6 @@ module SplitIoClient
         end
 
         stop_sse
-
         schedule_next_token_refresh(@back_off.interval) if response[:retry]
         false
       rescue StandardError => e
@@ -35,7 +33,8 @@ module SplitIoClient
 
       def stop_sse
         @sse_handler.stop
-        SplitIoClient::Helpers::ThreadHelper.stop(:schedule_next_token_refresh, @config)
+      rescue StandardError => e
+        @config.logger.error(e.inspect)
       end
 
       private
