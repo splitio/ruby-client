@@ -54,3 +54,5 @@ dump.rdb
 /gemfiles/*.gemfile.lock
 
 release.sh
+
+.scannerwork
