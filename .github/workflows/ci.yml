@@ -1,7 +1,21 @@
-on: [push, pull_request]
+name: ci
+on:
+  pull_request:
+    branches:
+      - development
+      - master
+  push:
+    branches:
+      - development
+      - master
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
   test:
+    name: Test
     runs-on: ubuntu-latest
     services:
       redis:
@@ -9,16 +23,19 @@ jobs:
         ports:
           - 6379:6379
     strategy:
+      fail-fast: false
       matrix:
-        ruby: [ '2.5.0', '3.1.1' ]
+        ruby:
+          - '2.5.0'
+          - '3.1.1'
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      - name: Set up Ruby ${{ matrix.ruby }}
+      - name: Setup Ruby ${{ matrix.ruby }}
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
@@ -30,47 +47,37 @@ jobs:
         run: bundle exec rake
 
       - name: Fix code coverage paths
-        working-directory: ./coverage
+        working-directory: coverage
         run: |
           sed -i 's@'$GITHUB_WORKSPACE'@/github/workspace/@g' .resultset.json
           ruby -rjson -e 'sqube = JSON.load(File.read(".resultset.json"))["RSpec"]["coverage"].transform_values {|lines| lines["lines"]}; total = { "RSpec" => { "coverage" => sqube, "timestamp" => Time.now.to_i }}; puts JSON.dump(total)' > .resultset.sonarqube.json
 
+      - name: Set VERSION env
+        run: echo "VERSION=$(cat lib/splitclient-rb/version.rb | grep VERSION | awk -F "'" '{print $2}')" >> $GITHUB_ENV
 
       - name: SonarQube Scan (Push)
-        if: github.event_name == 'push'
-        uses: SonarSource/sonarcloud-github-action@v1.5
+        if: matrix.version == '3.1.1' && github.event_name == 'push'
+        uses: SonarSource/sonarcloud-github-action@v1.9
         env:
           SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           projectBaseDir: .
           args: >
             -Dsonar.host.url=${{ secrets.SONARQUBE_HOST }}
-            -Dsonar.projectName=${{ github.event.repository.name }}
-            -Dsonar.projectKey=${{ github.event.repository.name }}
-            -Dsonar.ruby.coverage.reportPaths=coverage/.resultset.sonarqube.json
-            -Dsonar.c.file.suffixes=-
-            -Dsonar.cpp.file.suffixes=-
-            -Dsonar.objc.file.suffixes=-
-            -Dsonar.links.ci="https://github.com/splitio/${{ github.event.repository.name }}/actions"
-            -Dsonar.links.scm="https://github.com/splitio/${{ github.event.repository.name }}"
+            -Dsonar.projectVersion=${{ env.VERSION }}
 
       - name: SonarQube Scan (Pull Request)
-        if: github.event_name == 'pull_request'
-        uses: SonarSource/sonarcloud-github-action@v1.5
+        if: matrix.version == '3.1.1' && github.event_name == 'pull_request'
+        uses: SonarSource/sonarcloud-github-action@v1.9
         env:
           SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           projectBaseDir: .
           args: >
             -Dsonar.host.url=${{ secrets.SONARQUBE_HOST }}
-            -Dsonar.projectName=${{ github.event.repository.name }}
-            -Dsonar.projectKey=${{ github.event.repository.name }}
-            -Dsonar.ruby.coverage.reportPaths=coverage/.resultset.sonarqube.json
-            -Dsonar.c.file.suffixes=-
-            -Dsonar.cpp.file.suffixes=-
-            -Dsonar.objc.file.suffixes=-
-            -Dsonar.links.ci="https://github.com/splitio/${{ github.event.repository.name }}/actions"
-            -Dsonar.links.scm="https://github.com/splitio/${{ github.event.repository.name }}"
+            -Dsonar.projectVersion=${{ env.VERSION }}
             -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
             -Dsonar.pullrequest.branch=${{ github.event.pull_request.head.ref }}
             -Dsonar.pullrequest.base=${{ github.event.pull_request.base.ref }}
