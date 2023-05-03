@@ -21,13 +21,13 @@ describe SplitIoClient::MatchesStringMatcher do
     expect(described_class.new('value', 'foo', @split_logger).match?(value: 'bar')).to eq(false)
   end
 
-  # it 'matches sample regexps from file' do
-  #   regexp_file.split("\n").each do |str|
-  #     regexp_str, test_str, result_str = str.split('#')
+  it 'matches sample regexps from file' do
+    regexp_file.split("\n").each do |str|
+      regexp_str, test_str, result_str = str.split('#')
 
-  #     expect(
-  #       described_class.new('key', Regexp.new(regexp_str), @split_logger).match?(attributes: { key: test_str })
-  #     ).to eq(result_str == 'true')
-  #   end
-  # end
+      expect(
+        described_class.new('key', Regexp.new(regexp_str), @split_logger).match?(attributes: { key: test_str })
+      ).to eq(result_str == 'true')
+    end
+  end
 end
