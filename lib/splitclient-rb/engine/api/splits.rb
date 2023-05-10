@@ -20,9 +20,9 @@ module SplitIoClient
           result = splits_with_segment_names(response.body)
 
           unless result[:splits].empty?
-            @config.split_logger.log_if_debug("#{result[:splits].length} splits retrieved. since=#{since}")
+            @config.split_logger.log_if_debug("#{result[:splits].length} feature flags retrieved. since=#{since}")
           end
-          @config.split_logger.log_if_transport("Split changes response: #{result.to_s}")
+          @config.split_logger.log_if_transport("Feature flag changes response: #{result.to_s}")
 
           bucket = BinarySearchLatencyTracker.get_bucket((Time.now - start) * 1000.0)
           @telemetry_runtime_producer.record_sync_latency(Telemetry::Domain::Constants::SPLIT_SYNC, bucket)
@@ -32,10 +32,10 @@ module SplitIoClient
         else
           @telemetry_runtime_producer.record_sync_error(Telemetry::Domain::Constants::SPLIT_SYNC, response.status)
 
-          @config.logger.error("Unexpected status code while fetching splits: #{response.status}. " \
+          @config.logger.error("Unexpected status code while fetching feature flags: #{response.status}. " \
           'Check your API key and base URI')
 
-          raise 'Split SDK failed to connect to backend to fetch split definitions'
+          raise 'Split SDK failed to connect to backend to fetch feature flags definitions'
         end
       end
 
