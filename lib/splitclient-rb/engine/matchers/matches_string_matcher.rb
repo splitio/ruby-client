@@ -17,7 +17,7 @@ module SplitIoClient
         args[:attributes][a.to_s] || args[:attributes][a.to_sym]
       end
 
-      matches = !(value =~ @regexp_string).nil?
+      matches = !!(value =~ @regexp_string)
       @logger.log_if_debug("[MatchesStringMatcher] #{value} matches #{@regexp_string} -> #{matches}")
       matches
     end
