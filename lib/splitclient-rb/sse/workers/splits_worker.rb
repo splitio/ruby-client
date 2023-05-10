@@ -14,7 +14,7 @@ module SplitIoClient
 
         def start
           if @running.value
-            @config.logger.debug('splits worker already running.')
+            @config.logger.debug('feature_flags_worker already running.')
             return
           end
 
@@ -24,7 +24,7 @@ module SplitIoClient
 
         def stop
           unless @running.value
-            @config.logger.debug('splits worker not running.')
+            @config.logger.debug('feature_flags_worker not running.')
             return
           end
 
@@ -33,14 +33,14 @@ module SplitIoClient
         end
 
         def add_to_queue(change_number)
-          @config.logger.debug("SplitsWorker add to queue #{change_number}")
+          @config.logger.debug("feature_flags_worker add to queue #{change_number}")
           @queue.push(change_number)
         end
 
         def kill_split(change_number, split_name, default_treatment)
           return if @splits_repository.get_change_number.to_i > change_number
 
-          @config.logger.debug("SplitsWorker kill #{split_name}, #{change_number}")
+          @config.logger.debug("feature_flags_worker kill #{split_name}, #{change_number}")
           @splits_repository.kill(change_number, split_name, default_treatment)
           add_to_queue(change_number)
         end
@@ -49,14 +49,14 @@ module SplitIoClient
 
         def perform
           while (change_number = @queue.pop)
-            @config.logger.debug("SplitsWorker change_number dequeue #{change_number}")
+            @config.logger.debug("feature_flags_worker change_number dequeue #{change_number}")
             @synchronizer.fetch_splits(change_number)
           end
         end
 
         def perform_thread
           @config.threads[:split_update_worker] = Thread.new do
-            @config.logger.debug('Starting splits worker ...') if @config.debug_enabled
+            @config.logger.debug('starting feature_flags_worker ...') if @config.debug_enabled
             perform
           end
         end
