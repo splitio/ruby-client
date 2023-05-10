@@ -50,31 +50,31 @@ module SplitIoClient
     # method to get a split view
     #
     # @returns a split view
-    def split(split_name)
-      return unless @config.valid_mode && @splits_repository && @config.split_validator.valid_split_parameters(split_name)
+    def split(feature_flag_name)
+      return unless @config.valid_mode && @splits_repository && @config.split_validator.valid_split_parameters(feature_flag_name)
 
       if !ready?
         @config.logger.error("split: the SDK is not ready, the operation cannot be executed")
         return
       end
 
-      sanitized_split_name= split_name.to_s.strip
+      sanitized_feature_flag_name = feature_flag_name.to_s.strip
 
-      if split_name.to_s != sanitized_split_name
-        @config.logger.warn("split: split_name #{split_name} has extra whitespace, trimming")
-        split_name = sanitized_split_name
+      if feature_flag_name.to_s != sanitized_feature_flag_name
+        @config.logger.warn("split: feature_flag_name #{feature_flag_name} has extra whitespace, trimming")
+        feature_flag_name = sanitized_feature_flag_name
       end
 
-      split = @splits_repository.get_split(split_name)
+      split = @splits_repository.get_split(feature_flag_name)
 
       if ready? && split.nil?
-        @config.logger.warn("split: you passed #{split_name} " \
-          'that does not exist in this environment, please double check what Splits exist in the web console')
+        @config.logger.warn("split: you passed #{feature_flag_name} " \
+          'that does not exist in this environment, please double check what feature flags exist in the Split user interface')
       end
 
       return if split.nil? || Engine::Models::Split.archived?(split)
 
-      build_split_view(split_name, split)
+      build_split_view(feature_flag_name, split)
     end
 
     def block_until_ready(time = nil)
