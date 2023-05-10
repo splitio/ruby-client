@@ -282,7 +282,7 @@ describe SplitIoClient, type: :client do
       it 'trims split_name and logs warning when extra whitespaces' do
         split_name = ' test_feature  '
         expect(subject.get_treatment('fake_user_id_1', split_name)).to eq 'on'
-        expect(log.string).to include "get_treatment: split_name #{split_name} has extra whitespace, trimming"
+        expect(log.string).to include "get_treatment: feature_flag_name #{split_name} has extra whitespace, trimming"
       end
 
       it 'returns CONTROL when non Hash attributes' do
@@ -295,8 +295,8 @@ describe SplitIoClient, type: :client do
         expect(subject.get_treatment('random_user_id', 'non_existing_feature'))
           .to eq SplitIoClient::Engine::Models::Treatment::CONTROL
         expect(log.string).to include 'get_treatment: you passed non_existing_feature ' \
-          'that does not exist in this environment, please double check what Splits exist ' \
-          'in the web console'
+          'that does not exist in this environment, please double check what feature flags exist ' \
+          'in the Split user interface'
       end
 
       it 'returns CONTROL with NOT_READY label when not ready' do
@@ -366,17 +366,17 @@ describe SplitIoClient, type: :client do
 
       it 'returns empty hash on nil split_names' do
         expect(subject.get_treatments('random_user_id', nil)).to be_nil
-        expect(log.string).to include 'get_treatments: split_names must be a non-empty Array'
+        expect(log.string).to include 'get_treatments: feature_flag_names must be a non-empty Array'
       end
 
       it 'returns empty hash when no Array split_names' do
         expect(subject.get_treatments('random_user_id', Object.new)).to be_nil
-        expect(log.string).to include 'get_treatments: split_names must be a non-empty Array'
+        expect(log.string).to include 'get_treatments: feature_flag_names must be a non-empty Array'
       end
 
       it 'returns empty hash on empty array split_names' do
         expect(subject.get_treatments('random_user_id', [])).to eq({})
-        expect(log.string).to include 'get_treatments: split_names must be a non-empty Array'
+        expect(log.string).to include 'get_treatments: feature_flag_names must be a non-empty Array'
       end
 
       it 'sanitizes split_names removing repeating and nil split_names' do
@@ -386,14 +386,14 @@ describe SplitIoClient, type: :client do
 
       it 'warns when non string split_names' do
         expect(subject.get_treatments('random_user_id', [Object.new, Object.new])).to eq({})
-        expect(log.string).to include 'get_treatments: you passed an invalid split_name, ' \
-          'split_name must be a non-empty String or a Symbol'
+        expect(log.string).to include 'get_treatments: you passed an invalid feature_flag_name, ' \
+          'flag name must be a non-empty String or a Symbol'
       end
 
       it 'warns when empty split_names' do
         expect(subject.get_treatments('random_user_id', [''])).to eq({})
-        expect(log.string).to include 'get_treatments: you passed an empty split_name, ' \
-          'split_name must be a non-empty String or a Symbol'
+        expect(log.string).to include 'get_treatments: you passed an empty feature_flag_name, ' \
+          'flag name must be a non-empty String or a Symbol'
       end
     end
 
@@ -953,8 +953,8 @@ describe SplitIoClient, type: :client do
 
         expect(subject.track('123', traffic_type_name, 'event_type', 123)).to be true
         expect(log.string).to include "track: Traffic Type #{traffic_type_name} " \
-          "does not have any corresponding Splits in this environment, make sure you're tracking " \
-          'your events to a valid traffic type defined in the Split console'
+          "does not have any corresponding feature flags in this environment, make sure you're tracking " \
+          'your events to a valid traffic type defined in the Split user interface'
       end
     end
   end
