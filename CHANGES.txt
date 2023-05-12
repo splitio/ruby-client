@@ -1,5 +1,8 @@
 CHANGES
 
+8.1.2 (May 15, 2023)
+- Updated terminology on the SDKs codebase to be more aligned with current standard without causing a breaking change. The core change is the term split for feature flag on things like logs and intensense comments.
+
 8.1.1 (Mar 17, 2023)
 - Added retries with backoff when the sdk tries to connect to the Streaming service and it is not available.
 - Updated the way that the sdk write mtks in redis.
