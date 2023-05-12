@@ -43,7 +43,7 @@ describe SplitIoClient::Api::Splits do
       returned_splits = splits_api.since(-1)
       expect(returned_splits[:segment_names]).to eq(Set.new(%w[demo employees]))
 
-      expect(log.string).to include '2 splits retrieved. since=-1'
+      expect(log.string).to include '2 feature flags retrieved. since=-1'
       expect(log.string).to include returned_splits.to_s
     end
 
@@ -63,7 +63,7 @@ describe SplitIoClient::Api::Splits do
       returned_splits = splits_api.since(-1, fetch_options)
       expect(returned_splits[:segment_names]).to eq(Set.new(%w[demo employees]))
 
-      expect(log.string).to include '2 splits retrieved. since=-1'
+      expect(log.string).to include '2 feature flags retrieved. since=-1'
       expect(log.string).to include returned_splits.to_s
     end
 
@@ -84,7 +84,7 @@ describe SplitIoClient::Api::Splits do
       returned_splits = splits_api.since(-1, fetch_options)
       expect(returned_splits[:segment_names]).to eq(Set.new(%w[demo employees]))
 
-      expect(log.string).to include '2 splits retrieved. since=-1'
+      expect(log.string).to include '2 feature flags retrieved. since=-1'
       expect(log.string).to include returned_splits.to_s
     end
 
@@ -93,9 +93,9 @@ describe SplitIoClient::Api::Splits do
         .to_return(status: 404)
 
       expect { splits_api.since(-1) }.to raise_error(
-        'Split SDK failed to connect to backend to fetch split definitions'
+        'Split SDK failed to connect to backend to fetch feature flags definitions'
       )
-      expect(log.string).to include 'Unexpected status code while fetching splits'
+      expect(log.string).to include 'Unexpected status code while fetching feature flags'
     end
 
     it 'throws exception if request to get splits from API fails' do

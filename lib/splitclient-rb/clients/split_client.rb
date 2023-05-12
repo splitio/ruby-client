@@ -11,11 +11,11 @@ module SplitIoClient
     #
     # Creates a new split client instance that connects to split.io API.
     #
-    # @param api_key [String] the API key for your split account
+    # @param sdk_key [String] the SDK key for your split account
     #
     # @return [SplitIoClient] split.io client instance
-    def initialize(api_key, repositories, status_manager, config, impressions_manager, telemetry_evaluation_producer)
-      @api_key = api_key
+    def initialize(sdk_key, repositories, status_manager, config, impressions_manager, telemetry_evaluation_producer)
+      @api_key = sdk_key
       @splits_repository = repositories[:splits]
       @segments_repository = repositories[:segments]
       @impressions_repository = repositories[:impressions]
@@ -103,8 +103,8 @@ module SplitIoClient
 
       if ready? && !@config.localhost_mode && !@splits_repository.traffic_type_exists(traffic_type_name)
         @config.logger.warn("track: Traffic Type #{traffic_type_name} " \
-          "does not have any corresponding Splits in this environment, make sure you're tracking " \
-          'your events to a valid traffic type defined in the Split console')
+          "does not have any corresponding feature flags in this environment, make sure you're tracking " \
+          'your events to a valid traffic type defined in the Split user interface')
       end
 
       @events_repository.add(key.to_s, traffic_type_name.downcase, event_type.to_s, (Time.now.to_f * 1000).to_i, value, properties, properties_size)
@@ -147,10 +147,10 @@ module SplitIoClient
         if (split_name.is_a?(String) || split_name.is_a?(Symbol)) && !split_name.empty?
           true
         elsif split_name.is_a?(String) && split_name.empty?
-          @config.logger.warn("#{calling_method}: you passed an empty split_name, split_name must be a non-empty String or a Symbol")
+          @config.logger.warn("#{calling_method}: you passed an empty feature_flag_name, flag name must be a non-empty String or a Symbol")
           false
         else
-          @config.logger.warn("#{calling_method}: you passed an invalid split_name, split_name must be a non-empty String or a Symbol")
+          @config.logger.warn("#{calling_method}: you passed an invalid feature_flag_name, flag name must be a non-empty String or a Symbol")
           false
         end
       end
@@ -200,7 +200,7 @@ module SplitIoClient
       sanitized_split_names = sanitize_split_names(calling_method, split_names)
 
       if sanitized_split_names.empty?
-        @config.logger.error("#{calling_method}: split_names must be a non-empty Array")
+        @config.logger.error("#{calling_method}: feature_flag_names must be a non-empty Array")
         return {}
       end
 
@@ -258,7 +258,7 @@ module SplitIoClient
       sanitized_split_name = split_name.to_s.strip
 
       if split_name.to_s != sanitized_split_name
-        @config.logger.warn("#{calling_method}: split_name #{split_name} has extra whitespace, trimming")
+        @config.logger.warn("#{calling_method}: feature_flag_name #{split_name} has extra whitespace, trimming")
         split_name = sanitized_split_name
       end
 
@@ -271,7 +271,7 @@ module SplitIoClient
 
         if split.nil? && ready?
           @config.logger.warn("#{calling_method}: you passed #{split_name} that " \
-            'does not exist in this environment, please double check what Splits exist in the web console')
+            'does not exist in this environment, please double check what feature flags exist in the Split user interface')
 
           return parsed_treatment(multiple, control_treatment.merge({ label: Engine::Models::Label::NOT_FOUND }))
         end

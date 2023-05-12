@@ -201,7 +201,7 @@ module SplitIoClient
       end
 
       def sync_splits_and_segments
-        @config.logger.debug('Synchronizing Splits and Segments ...') if @config.debug_enabled
+        @config.logger.debug('Synchronizing feature flags and segments ...') if @config.debug_enabled
         splits_result = @split_fetcher.fetch_splits
         
         splits_result[:success] && @segment_fetcher.fetch_segments
