@@ -156,7 +156,7 @@ module SplitIoClient
 
     def valid_split_names?(method, split_names)
       unless !split_names.nil? && split_names.is_a?(Array)
-        @config.logger.error("#{method}: split_names must be a non-empty Array")
+        @config.logger.error("#{method}: feature_flag_names must be a non-empty Array")
         return false
       end
 

@@ -31,7 +31,7 @@ module SplitIoClient
 
         def splits_thread
           @config.threads[:split_store] = Thread.new do
-            @config.logger.info('Starting splits fetcher service')
+            @config.logger.info('Starting feature flags fetcher service')
             loop do
               store_splits
 
@@ -53,7 +53,7 @@ module SplitIoClient
         end
 
         def store_split(split)
-          @config.logger.debug("storing split (#{split[:name]})") if @config.debug_enabled
+          @config.logger.debug("storing feature flag (#{split[:name]})") if @config.debug_enabled
 
           @splits_repository.add_split(split)
         end
