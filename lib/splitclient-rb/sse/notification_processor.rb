@@ -26,7 +26,7 @@ module SplitIoClient
 
       def process_split_update(notification)
         @config.logger.debug("SPLIT UPDATE notification received: #{notification}") if @config.debug_enabled
-        @splits_worker.add_to_queue(notification.data['changeNumber'])
+        @splits_worker.split_update(notification)
       end
 
       def process_split_kill(notification)
