@@ -26,16 +26,12 @@ module SplitIoClient
 
       def process_split_update(notification)
         @config.logger.debug("SPLIT UPDATE notification received: #{notification}") if @config.debug_enabled
-        @splits_worker.split_update(notification)
+        @splits_worker.add_to_queue(notification)
       end
 
       def process_split_kill(notification)
         @config.logger.debug("SPLIT KILL notification received: #{notification}") if @config.debug_enabled
-        change_number = notification.data['changeNumber']
-        default_treatment = notification.data['defaultTreatment']
-        split_name = notification.data['splitName']
-
-        @splits_worker.kill_split(change_number, split_name, default_treatment)
+        @splits_worker.add_to_queue(notification)
       end
 
       def process_segment_update(notification)

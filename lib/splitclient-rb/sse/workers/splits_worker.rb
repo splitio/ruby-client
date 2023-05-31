@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+require 'byebug'
 
 module SplitIoClient
   module SSE
@@ -33,9 +34,10 @@ module SplitIoClient
         end
 
         def split_update(notification)
+#          byebug
           if @splits_repository.get_change_number() == notification.data['pcn']
             begin
-              @new_split = JSON.parse(get_encoded_definition(notification), symbolize_names: true)
+              @new_split = JSON.parse(SplitIoClient::Helpers::DecryptionHelper.get_encoded_definition(notification.data['c'], notification.data['d']), symbolize_names: true)
               @splits_repository.add_split(@new_split)
               @splits_repository.set_change_number(notification.data['changeNumber'])
               return
@@ -43,40 +45,33 @@ module SplitIoClient
               @config.logger.debug("Failed to update Split: #{e.inspect}") if @config.debug_enabled
             end
           end
-          add_to_queue(notification.data['changeNumber'])
+          @synchronizer.fetch_splits(notification.data['changeNumber'])
         end
 
-        def add_to_queue(change_number)
-          @config.logger.debug("feature_flags_worker add to queue #{change_number}")
-          @queue.push(change_number)
+        def add_to_queue(notification)
+          @config.logger.debug("feature_flags_worker add to queue #{notification.data['changeNumber']}")
+          @queue.push(notification)
         end
 
-        def kill_split(change_number, split_name, default_treatment)
-          return if @splits_repository.get_change_number.to_i > change_number
+        def kill_split(notification)
+          return if @splits_repository.get_change_number.to_i > notification.data['changeNumber']
 
-          @config.logger.debug("feature_flags_worker kill #{split_name}, #{change_number}")
-          @splits_repository.kill(change_number, split_name, default_treatment)
-          add_to_queue(change_number)
+          @config.logger.debug("feature_flags_worker kill #{notification.data['splitName']}, #{notification.data['changeNumber']}")
+          @splits_repository.kill(notification.data['changeNumber'], notification.data['splitName'], notification.data['defaultTreatment'])
+          @synchronizer.fetch_splits(notification.data['changeNumber'])
         end
 
         private
 
-        def get_encoded_definition(notification)
-          case notification.data[:c]
-          when 0
-            return Base64.decode64(notification.data[:d])
-          when 1
-            gz = Zlib::GzipReader.new(StringIO.new(Base64.decode64(notification.data[:d])))
-            return gz.read
-          when 2
-            return Zlib::Inflate.inflate(Base64.decode64(notification.data[:d]))
-          end
-        end
-
         def perform
-          while (change_number = @queue.pop)
-            @config.logger.debug("feature_flags_worker change_number dequeue #{change_number}")
-            @synchronizer.fetch_splits(change_number)
+          while (notification = @queue.pop)
+            @config.logger.debug("feature_flags_worker change_number dequeue #{notification.data['changeNumber']}")
+            case notification.data['type']
+            when SSE::EventSource::EventTypes::SPLIT_UPDATE
+              split_update(notification)
+            when SSE::EventSource::EventTypes::SPLIT_KILL
+              kill_split(notification)
+            end
           end
         end
 
