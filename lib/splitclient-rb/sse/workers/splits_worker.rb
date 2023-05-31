@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-require 'byebug'
 
 module SplitIoClient
   module SSE
@@ -34,7 +33,6 @@ module SplitIoClient
         end
 
         def split_update(notification)
-#          byebug
           if @splits_repository.get_change_number() == notification.data['pcn']
             begin
               @new_split = JSON.parse(SplitIoClient::Helpers::DecryptionHelper.get_encoded_definition(notification.data['c'], notification.data['d']), symbolize_names: true)
