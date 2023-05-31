@@ -59,6 +59,8 @@ module SplitIoClient
           add_to_queue(change_number)
         end
 
+        private
+
         def get_encoded_definition(notification)
           case notification.data[:c]
           when 0
@@ -70,8 +72,6 @@ module SplitIoClient
             return Zlib::Inflate.inflate(Base64.decode64(notification.data[:d]))
           end
         end
-
-        private
 
         def perform
           while (change_number = @queue.pop)
