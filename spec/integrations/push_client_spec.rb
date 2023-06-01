@@ -4,6 +4,11 @@ require 'spec_helper'
 require 'http_server_mock'
 
 describe SplitIoClient do
+  let(:event_split_iff_update_no_compression) { "fb\r\nid: 123\nevent: message\ndata: {\"id\":\"1\",\"clientId\":\"emptyClientId\",\"connectionId\":\"1\",\"timestamp\":1582045421733,\"channel\":\"mauroc\",\"data\":\"{\\\"type\\\" : \\\"SPLIT_UPDATE\\\",\\\"changeNumber\\\": 1585948850111, \\\"pcn\\\":1585948850110,\\\"c\\\": 0,\\\"d\\\":\\\"eyJ0cmFmZmljVHlwZU5hbWUiOiJ1c2VyIiwiaWQiOiIzM2VhZmE1MC0xYTY1LTExZWQtOTBkZi1mYTMwZDk2OTA0NDUiLCJuYW1lIjoiYmlsYWxfc3BsaXQiLCJ0cmFmZmljQWxsb2NhdGlvbiI6MTAwLCJ0cmFmZmljQWxsb2NhdGlvblNlZWQiOi0xMzY0MTE5MjgyLCJzZWVkIjotNjA1OTM4ODQzLCJzdGF0dXMiOiJBQ1RJVkUiLCJraWxsZWQiOmZhbHNlLCJkZWZhdWx0VHJlYXRtZW50Ijoib2ZmIiwiY2hhbmdlTnVtYmVyIjoxNjg0MzQwOTA4NDc1LCJhbGdvIjoyLCJjb25maWd1cmF0aW9ucyI6e30sImNvbmRpdGlvbnMiOlt7ImNvbmRpdGlvblR5cGUiOiJST0xMT1VUIiwibWF0Y2hlckdyb3VwIjp7ImNvbWJpbmVyIjoiQU5EIiwibWF0Y2hlcnMiOlt7ImtleVNlbGVjdG9yIjp7InRyYWZmaWNUeXBlIjoidXNlciJ9LCJtYXRjaGVyVHlwZSI6IklOX1NFR01FTlQiLCJuZWdhdGUiOmZhbHNlLCJ1c2VyRGVmaW5lZFNlZ21lbnRNYXRjaGVyRGF0YSI6eyJzZWdtZW50TmFtZSI6ImJpbGFsX3NlZ21lbnQifX1dfSwicGFydGl0aW9ucyI6W3sidHJlYXRtZW50Ijoib24iLCJzaXplIjowfSx7InRyZWF0bWVudCI6Im9mZiIsInNpemUiOjEwMH1dLCJsYWJlbCI6ImluIHNlZ21lbnQgYmlsYWxfc2VnbWVudCJ9LHsiY29uZGl0aW9uVHlwZSI6IlJPTExPVVQiLCJtYXRjaGVyR3JvdXAiOnsiY29tYmluZXIiOiJBTkQiLCJtYXRjaGVycyI6W3sia2V5U2VsZWN0b3IiOnsidHJhZmZpY1R5cGUiOiJ1c2VyIn0sIm1hdGNoZXJUeXBlIjoiQUxMX0tFWVMiLCJuZWdhdGUiOmZhbHNlfV19LCJwYXJ0aXRpb25zIjpbeyJ0cmVhdG1lbnQiOiJvbiIsInNpemUiOjB9LHsidHJlYXRtZW50Ijoib2ZmIiwic2l6ZSI6MTAwfV0sImxhYmVsIjoiZGVmYXVsdCBydWxlIn1dfQ==\\\"}\",\"name\":\"asdasd\"}\n\n\r\n" }
+  let(:event_split_iff_update_incorrect_pcn) { "fb\r\nid: 123\nevent: message\ndata: {\"id\":\"1\",\"clientId\":\"emptyClientId\",\"connectionId\":\"1\",\"timestamp\":1582045421733,\"channel\":\"mauroc\",\"data\":\"{\\\"type\\\" : \\\"SPLIT_UPDATE\\\",\\\"changeNumber\\\": 1585948850111, \\\"pcn\\\":1234,\\\"c\\\": 0,\\\"d\\\":\\\"eyJ0cmFmZmljVHlwZU5hbWUiOiJ1c2VyIiwiaWQiOiIzM2VhZmE1MC0xYTY1LTExZWQtOTBkZi1mYTMwZDk2OTA0NDUiLCJuYW1lIjoiYmlsYWxfc3BsaXQiLCJ0cmFmZmljQWxsb2NhdGlvbiI6MTAwLCJ0cmFmZmljQWxsb2NhdGlvblNlZWQiOi0xMzY0MTE5MjgyLCJzZWVkIjotNjA1OTM4ODQzLCJzdGF0dXMiOiJBQ1RJVkUiLCJraWxsZWQiOmZhbHNlLCJkZWZhdWx0VHJlYXRtZW50Ijoib2ZmIiwiY2hhbmdlTnVtYmVyIjoxNjg0MzQwOTA4NDc1LCJhbGdvIjoyLCJjb25maWd1cmF0aW9ucyI6e30sImNvbmRpdGlvbnMiOlt7ImNvbmRpdGlvblR5cGUiOiJST0xMT1VUIiwibWF0Y2hlckdyb3VwIjp7ImNvbWJpbmVyIjoiQU5EIiwibWF0Y2hlcnMiOlt7ImtleVNlbGVjdG9yIjp7InRyYWZmaWNUeXBlIjoidXNlciJ9LCJtYXRjaGVyVHlwZSI6IklOX1NFR01FTlQiLCJuZWdhdGUiOmZhbHNlLCJ1c2VyRGVmaW5lZFNlZ21lbnRNYXRjaGVyRGF0YSI6eyJzZWdtZW50TmFtZSI6ImJpbGFsX3NlZ21lbnQifX1dfSwicGFydGl0aW9ucyI6W3sidHJlYXRtZW50Ijoib24iLCJzaXplIjowfSx7InRyZWF0bWVudCI6Im9mZiIsInNpemUiOjEwMH1dLCJsYWJlbCI6ImluIHNlZ21lbnQgYmlsYWxfc2VnbWVudCJ9LHsiY29uZGl0aW9uVHlwZSI6IlJPTExPVVQiLCJtYXRjaGVyR3JvdXAiOnsiY29tYmluZXIiOiJBTkQiLCJtYXRjaGVycyI6W3sia2V5U2VsZWN0b3IiOnsidHJhZmZpY1R5cGUiOiJ1c2VyIn0sIm1hdGNoZXJUeXBlIjoiQUxMX0tFWVMiLCJuZWdhdGUiOmZhbHNlfV19LCJwYXJ0aXRpb25zIjpbeyJ0cmVhdG1lbnQiOiJvbiIsInNpemUiOjB9LHsidHJlYXRtZW50Ijoib2ZmIiwic2l6ZSI6MTAwfV0sImxhYmVsIjoiZGVmYXVsdCBydWxlIn1dfQ==\\\"}\",\"name\":\"asdasd\"}\n\n\r\n" }
+  let(:event_split_iff_update_missing_definition) { "fb\r\nid: 123\nevent: message\ndata: {\"id\":\"1\",\"clientId\":\"emptyClientId\",\"connectionId\":\"1\",\"timestamp\":1582045421733,\"channel\":\"mauroc\",\"data\":\"{\\\"type\\\" : \\\"SPLIT_UPDATE\\\",\\\"changeNumber\\\": 1585948850111, \\\"pcn\\\":1585948850110,\\\"c\\\": 0,\\\"d\\\":\\\"\\\"}\",\"name\":\"asdasd\"}\n\n\r\n" }
+  let(:event_split_iff_update_incorrect_compression) { "fb\r\nid: 123\nevent: message\ndata: {\"id\":\"1\",\"clientId\":\"emptyClientId\",\"connectionId\":\"1\",\"timestamp\":1582045421733,\"channel\":\"mauroc\",\"data\":\"{\\\"type\\\" : \\\"SPLIT_UPDATE\\\",\\\"changeNumber\\\": 1585948850111, \\\"pcn\\\":1585948850110,\\\"c\\\": 4,\\\"d\\\":\\\"eyJ0cmFmZmljVHlwZU5hbWUiOiJ1c2VyIiwiaWQiOiIzM2VhZmE1MC0xYTY1LTExZWQtOTBkZi1mYTMwZDk2OTA0NDUiLCJuYW1lIjoiYmlsYWxfc3BsaXQiLCJ0cmFmZmljQWxsb2NhdGlvbiI6MTAwLCJ0cmFmZmljQWxsb2NhdGlvblNlZWQiOi0xMzY0MTE5MjgyLCJzZWVkIjotNjA1OTM4ODQzLCJzdGF0dXMiOiJBQ1RJVkUiLCJraWxsZWQiOmZhbHNlLCJkZWZhdWx0VHJlYXRtZW50Ijoib2ZmIiwiY2hhbmdlTnVtYmVyIjoxNjg0MzQwOTA4NDc1LCJhbGdvIjoyLCJjb25maWd1cmF0aW9ucyI6e30sImNvbmRpdGlvbnMiOlt7ImNvbmRpdGlvblR5cGUiOiJST0xMT1VUIiwibWF0Y2hlckdyb3VwIjp7ImNvbWJpbmVyIjoiQU5EIiwibWF0Y2hlcnMiOlt7ImtleVNlbGVjdG9yIjp7InRyYWZmaWNUeXBlIjoidXNlciJ9LCJtYXRjaGVyVHlwZSI6IklOX1NFR01FTlQiLCJuZWdhdGUiOmZhbHNlLCJ1c2VyRGVmaW5lZFNlZ21lbnRNYXRjaGVyRGF0YSI6eyJzZWdtZW50TmFtZSI6ImJpbGFsX3NlZ21lbnQifX1dfSwicGFydGl0aW9ucyI6W3sidHJlYXRtZW50Ijoib24iLCJzaXplIjowfSx7InRyZWF0bWVudCI6Im9mZiIsInNpemUiOjEwMH1dLCJsYWJlbCI6ImluIHNlZ21lbnQgYmlsYWxfc2VnbWVudCJ9LHsiY29uZGl0aW9uVHlwZSI6IlJPTExPVVQiLCJtYXRjaGVyR3JvdXAiOnsiY29tYmluZXIiOiJBTkQiLCJtYXRjaGVycyI6W3sia2V5U2VsZWN0b3IiOnsidHJhZmZpY1R5cGUiOiJ1c2VyIn0sIm1hdGNoZXJUeXBlIjoiQUxMX0tFWVMiLCJuZWdhdGUiOmZhbHNlfV19LCJwYXJ0aXRpb25zIjpbeyJ0cmVhdG1lbnQiOiJvbiIsInNpemUiOjB9LHsidHJlYXRtZW50Ijoib2ZmIiwic2l6ZSI6MTAwfV0sImxhYmVsIjoiZGVmYXVsdCBydWxlIn1dfQ==\\\"}\",\"name\":\"asdasd\"}\n\n\r\n" }
+  let(:event_split_update_missing_change_number) { "fb\r\nid: 123\nevent: message\ndata: {\"id\":\"1\",\"clientId\":\"emptyClientId\",\"connectionId\":\"1\",\"timestamp\":1582045421733,\"channel\":\"mauroc\",\"data\":\"{\\\"type\\\" : \\\"SPLIT_UPDATE\\\"}\",\"name\":\"asdasd\"}\n\n\r\n" }
   let(:event_split_update_must_fetch) { "fb\r\nid: 123\nevent: message\ndata: {\"id\":\"1\",\"clientId\":\"emptyClientId\",\"connectionId\":\"1\",\"timestamp\":1582045421733,\"channel\":\"mauroc\",\"data\":\"{\\\"type\\\" : \\\"SPLIT_UPDATE\\\",\\\"changeNumber\\\": 1585948850111}\",\"name\":\"asdasd\"}\n\n\r\n" }
   let(:event_split_update_must_not_fetch) { "fb\r\nid: 123\nevent: message\ndata: {\"id\":\"1\",\"clientId\":\"emptyClientId\",\"connectionId\":\"1\",\"timestamp\":1582045421733,\"channel\":\"mauroc\",\"data\":\"{\\\"type\\\" : \\\"SPLIT_UPDATE\\\",\\\"changeNumber\\\": 1585948850100}\",\"name\":\"asdasd\"}\n\n\r\n" }
   let(:event_split_kill_must_fetch) { "fb\r\nid: 123\nevent: message\ndata: {\"id\":\"1\",\"clientId\":\"emptyClientId\",\"connectionId\":\"1\",\"timestamp\":1582045421733,\"channel\":\"mauroc\",\"data\":\"{\\\"type\\\" : \\\"SPLIT_KILL\\\",\\\"changeNumber\\\": 1585948850111, \\\"defaultTreatment\\\" : \\\"off_kill\\\", \\\"splitName\\\" : \\\"push_test\\\"}\",\"name\":\"asdasd\"}\n\n\r\n" }
@@ -97,6 +102,151 @@ describe SplitIoClient do
         expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.times(1)
         expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1585948850109')).to have_been_made.times(1)
         expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1585948850110')).to have_been_made.times(0)
+      end
+    end
+
+    it 'processing split update missing change number' do
+      mock_splits_request(splits, -1)
+      mock_splits_request(splits2, 1_585_948_850_109)
+      mock_segment_changes('segment3', segment3, '-1')
+      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
+
+      mock_server do |server|
+        server.setup_response('/') do |_, res|
+          send_content(res, event_split_update_missing_change_number)
+        end
+
+        stub_request(:get, auth_service_url).to_return(status: 200, body: auth_body_response)
+
+        streaming_service_url = server.base_uri
+        factory = SplitIoClient::SplitFactory.new(
+          'test_api_key',
+          streaming_enabled: true,
+          streaming_service_url: streaming_service_url,
+          auth_service_url: auth_service_url
+        )
+
+        client = factory.client
+        client.block_until_ready(1)
+        sleep(1)
+        expect(client.get_treatment('admin', 'push_test')).to eq('on')
+        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.times(1)
+        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1585948850109')).to have_been_made.times(1)
+        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1585948850110')).to have_been_made.times(0)
+      end
+    end
+
+    it 'processing split iff update event' do
+      mock_splits_request(splits, -1)
+      mock_splits_request(splits2, '1585948850109')
+      mock_splits_request(splits3, '1585948850110')
+      mock_segment_changes('segment3', segment3, '-1')
+      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
+      mock_server do |server|
+        server.setup_response('/') do |_, res|
+          send_content(res, event_split_iff_update_no_compression)
+        end
+
+        stub_request(:get, auth_service_url).to_return(status: 200, body: auth_body_response)
+
+        streaming_service_url = server.base_uri
+        factory = SplitIoClient::SplitFactory.new(
+          'test_api_key',
+          streaming_service_url: streaming_service_url,
+          auth_service_url: auth_service_url
+        )
+
+        client = factory.client
+        client.block_until_ready
+        sleep(2)
+        expect(client.get_treatment('admin', 'bilal_split')).to eq('off')
+      end
+    end
+
+    it 'processing incorrect split iff update event' do
+      mock_splits_request(splits, -1)
+      mock_splits_request(splits2, '1585948850109')
+      mock_splits_request(splits3, '1585948850110')
+      mock_segment_changes('segment3', segment3, '-1')
+      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1585948850111').to_return(status: 200, body: '')
+      mock_server do |server|
+        server.setup_response('/') do |_, res|
+          send_content(res, event_split_iff_update_incorrect_pcn)
+        end
+
+        stub_request(:get, auth_service_url).to_return(status: 200, body: auth_body_response)
+
+        streaming_service_url = server.base_uri
+        factory = SplitIoClient::SplitFactory.new(
+          'test_api_key',
+          streaming_service_url: streaming_service_url,
+          auth_service_url: auth_service_url
+        )
+
+        client = factory.client
+        client.block_until_ready
+        sleep(2)
+        expect(client.get_treatment('admin', 'bilal_split')).to eq('control')
+        expect(client.get_treatment('admin', 'push_test')).to eq('after_fetch')
+      end
+    end
+
+    it 'processing split iff update event missing definition' do
+      mock_splits_request(splits, -1)
+      mock_splits_request(splits2, '1585948850109')
+      mock_splits_request(splits3, '1585948850110')
+      mock_segment_changes('segment3', segment3, '-1')
+      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1585948850111').to_return(status: 200, body: '')
+      mock_server do |server|
+        server.setup_response('/') do |_, res|
+          send_content(res, event_split_iff_update_missing_definition)
+        end
+
+        stub_request(:get, auth_service_url).to_return(status: 200, body: auth_body_response)
+
+        streaming_service_url = server.base_uri
+        factory = SplitIoClient::SplitFactory.new(
+          'test_api_key',
+          streaming_service_url: streaming_service_url,
+          auth_service_url: auth_service_url
+        )
+
+        client = factory.client
+        client.block_until_ready
+        sleep(2)
+        expect(client.get_treatment('admin', 'bilal_split')).to eq('control')
+        expect(client.get_treatment('admin', 'push_test')).to eq('after_fetch')
+      end
+    end
+
+    it 'processing split iff update event incorrect compression' do
+      mock_splits_request(splits, -1)
+      mock_splits_request(splits2, '1585948850109')
+      mock_splits_request(splits3, '1585948850110')
+      mock_segment_changes('segment3', segment3, '-1')
+      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1585948850111').to_return(status: 200, body: '')
+      mock_server do |server|
+        server.setup_response('/') do |_, res|
+          send_content(res, event_split_iff_update_incorrect_compression)
+        end
+
+        stub_request(:get, auth_service_url).to_return(status: 200, body: auth_body_response)
+
+        streaming_service_url = server.base_uri
+        factory = SplitIoClient::SplitFactory.new(
+          'test_api_key',
+          streaming_service_url: streaming_service_url,
+          auth_service_url: auth_service_url
+        )
+
+        client = factory.client
+        client.block_until_ready
+        sleep(2)
+        expect(client.get_treatment('admin', 'bilal_split')).to eq('control')
+        expect(client.get_treatment('admin', 'push_test')).to eq('after_fetch')
       end
     end
   end
