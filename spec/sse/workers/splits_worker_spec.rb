@@ -106,7 +106,7 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
 
       worker = subject.new(synchronizer, config, splits_repository)
       worker.start
-      worker.kill_split(SplitIoClient::SSE::EventSource::StreamData.new("SPLIT_KILL", 123, JSON.parse('{"splitName":"FACUNDO_TEST", "defaultTreatment":"on", "type":"SPLIT_KILL","changeNumber":1506703262918}'), 'test'))
+      worker.send :kill_feature_flag, SplitIoClient::SSE::EventSource::StreamData.new("SPLIT_KILL", 123, JSON.parse('{"splitName":"FACUNDO_TEST", "defaultTreatment":"on", "type":"SPLIT_KILL","changeNumber":1506703262918}'), 'test')
 
       sleep(1)
 
@@ -121,7 +121,7 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
       worker = subject.new(synchronizer, config, splits_repository)
 
       worker.start
-      worker.kill_split(SplitIoClient::SSE::EventSource::StreamData.new("SPLIT_KILL", 123, JSON.parse('{"splitName":"FACUNDO_TEST", "defaultTreatment":"on", "type":"SPLIT_KILL","changeNumber":1506703262916}'), 'test'))
+      worker.send :kill_feature_flag, SplitIoClient::SSE::EventSource::StreamData.new("SPLIT_KILL", 123, JSON.parse('{"splitName":"FACUNDO_TEST", "defaultTreatment":"on", "type":"SPLIT_KILL","changeNumber":1506703262916}'), 'test')
 
       sleep(1)
 
