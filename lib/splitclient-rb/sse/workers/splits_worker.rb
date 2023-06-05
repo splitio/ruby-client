@@ -33,13 +33,22 @@ module SplitIoClient
         end
 
         def split_update(notification)
-          if @splits_repository.get_change_number() == notification.data['pcn']
+          return if @splits_repository.get_change_number.to_i > notification.data['changeNumber']
+
+          if @splits_repository.get_change_number == notification.data['pcn']
             begin
-              @new_split = JSON.parse(SplitIoClient::Helpers::DecryptionHelper.get_encoded_definition(notification.data['c'], notification.data['d']), symbolize_names: true)
-              @splits_repository.add_split(@new_split)
+              @splits_repository.add_split(
+                JSON.parse(
+                  SplitIoClient::Helpers::DecryptionHelper.get_encoded_definition(
+                    notification.data['c'],
+                    notification.data['d']
+                  ),
+                  symbolize_names: true
+                )
+              )
               @splits_repository.set_change_number(notification.data['changeNumber'])
               return
-            rescue Exception => e
+            rescue StandardError => e
               @config.logger.debug("Failed to update Split: #{e.inspect}") if @config.debug_enabled
             end
           end
@@ -55,7 +64,11 @@ module SplitIoClient
           return if @splits_repository.get_change_number.to_i > notification.data['changeNumber']
 
           @config.logger.debug("feature_flags_worker kill #{notification.data['splitName']}, #{notification.data['changeNumber']}")
-          @splits_repository.kill(notification.data['changeNumber'], notification.data['splitName'], notification.data['defaultTreatment'])
+          @splits_repository.kill(
+            notification.data['changeNumber'],
+            notification.data['splitName'],
+            notification.data['defaultTreatment']
+          )
           @synchronizer.fetch_splits(notification.data['changeNumber'])
         end
 
