@@ -44,15 +44,18 @@ module SplitIoClient
 
           if @feature_flags_repository.get_change_number == notification.data['pcn']
             begin
-              @feature_flags_repository.add_split(
-                JSON.parse(
-                  SplitIoClient::Helpers::DecryptionHelper.get_encoded_definition(
-                    notification.data['c'],
-                    notification.data['d']
-                  ),
-                  symbolize_names: true
-                )
+              new_split = JSON.parse(
+                SplitIoClient::Helpers::DecryptionHelper.get_encoded_definition(
+                  notification.data['c'],
+                  notification.data['d']
+                ),
+                symbolize_names: true
               )
+              if SplitIoClient::Engine::Models::Split.matchable?(new_split)
+                @feature_flags_repository.add_split(new_split)
+              else
+                @feature_flags_repository.remove_split(new_split)
+              end
               @feature_flags_repository.set_change_number(notification.data['changeNumber'])
               return
             rescue StandardError => e
