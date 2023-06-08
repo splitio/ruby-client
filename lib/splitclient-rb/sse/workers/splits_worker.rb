@@ -39,20 +39,27 @@ module SplitIoClient
 
         private
 
+        def return_split_from_json(notification)
+          JSON.parse(
+            SplitIoClient::Helpers::DecryptionHelper.get_encoded_definition(
+              notification.data['c'],
+              notification.data['d']
+            ),
+            symbolize_names: true
+          )
+        end
+
         def update_feature_flag(notification)
           return if @feature_flags_repository.get_change_number.to_i > notification.data['changeNumber']
 
-          if @feature_flags_repository.get_change_number == notification.data['pcn']
+          if @feature_flags_repository.get_change_number == notification.data['pcn'] && !notification.data['d'].nil?
             begin
-              @feature_flags_repository.add_split(
-                JSON.parse(
-                  SplitIoClient::Helpers::DecryptionHelper.get_encoded_definition(
-                    notification.data['c'],
-                    notification.data['d']
-                  ),
-                  symbolize_names: true
-                )
-              )
+              new_split = return_split_from_json(notification)
+              if SplitIoClient::Engine::Models::Split.archived?(new_split)
+                @feature_flags_repository.remove_split(new_split)
+              else
+                @feature_flags_repository.add_split(new_split)
+              end
               @feature_flags_repository.set_change_number(notification.data['changeNumber'])
               return
             rescue StandardError => e
