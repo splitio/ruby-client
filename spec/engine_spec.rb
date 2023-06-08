@@ -12,6 +12,8 @@ describe SplitIoClient, type: :client do
                                       cache_adapter: cache_adapter,
                                       redis_namespace: 'test',
                                       mode: @mode,
+                                      features_refresh_rate: 9999,
+                                      telemetry_refresh_rate: 99999,
                                       impressions_refresh_rate: 1,
                                       impression_listener: customer_impression_listener,
                                       streaming_enabled: false,
@@ -69,12 +71,10 @@ describe SplitIoClient, type: :client do
 
     before do
       @mode = cache_adapter.equal?(:memory) ? :standalone : :consumer
-
-      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/usage')
-        .to_return(status: 200, body: 'ok')
-
-      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
-        .to_return(status: 200, body: 'ok')
+      stub_request(:any, /https:\/\/telemetry.*/).to_return(status: 200, body: 'ok')
+      stub_request(:any, /https:\/\/events.*/).to_return(status: 200, body: '')
+      stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?since/)
+      .to_return(status: 200, body: '')
     end
 
     before :each do
@@ -83,15 +83,7 @@ describe SplitIoClient, type: :client do
 
     context '#equal_to_set_matcher and get_treatment validation attributes' do
       before do
-        stub_request(:post, 'https://events.split.io/api/testImpressions/bulk')
-          .to_return(status: 200, body: '')
-
-        stub_request(:get, 'https://sdk.split.io/api/splitChanges?since')
-          .to_return(status: 200, body: '')
-
-        stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
-          .to_return(status: 200, body: '')
-
+        sleep 1
         load_splits(equal_to_set_matcher_json)
         subject.block_until_ready
       end
@@ -132,9 +124,7 @@ describe SplitIoClient, type: :client do
 
     context '#get_treatment' do
       before do
-        stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
-        stub_request(:get, 'https://sdk.split.io/api/splitChanges?since').to_return(status: 200, body: '')
-        stub_request(:post, 'https://events.split.io/api/testImpressions/bulk').to_return(status: 200, body: '')
+        stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?since/).to_return(status: 200, body: '')
 
         load_splits(all_keys_matcher_json)
         subject.block_until_ready
@@ -312,6 +302,7 @@ describe SplitIoClient, type: :client do
       before do
         load_splits(configurations_json)
         subject.block_until_ready
+        sleep 1
       end
 
       it 'returns the config' do
@@ -649,6 +640,7 @@ describe SplitIoClient, type: :client do
     describe 'impressions' do
       before do
         load_splits(impressions_test_json)
+        stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?since/).to_return(status: 200, body: '')
       end
 
       it 'returns correct impressions for get_treatments checking ' do
@@ -732,8 +724,8 @@ describe SplitIoClient, type: :client do
       end
 
       it 'returns control' do
-        stub_request(:post, 'https://events.split.io/api/testImpressions/bulk').to_return(status: 200, body: '')
-        stub_request(:get, 'https://sdk.split.io/api/splitChanges?since').to_return(status: 200, body: '')
+        stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?since/)
+          .to_return(status: 200, body: all_keys_matcher_json)
 
         subject.block_until_ready
         expect(subject.get_treatment('fake_user_id_1', 'test_feature')).to eq 'on'
@@ -745,7 +737,7 @@ describe SplitIoClient, type: :client do
 
     describe 'redis outage' do
       before do
-        stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+        stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?since/)
           .to_return(status: 200, body: all_keys_matcher_json)
       end
 
@@ -757,7 +749,7 @@ describe SplitIoClient, type: :client do
 
     describe 'events' do
       before do
-        stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+        stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?since/)
           .to_return(status: 200, body: all_keys_matcher_json)
       end
 
@@ -785,9 +777,9 @@ describe SplitIoClient, type: :client do
 
     context '#track' do
       before do
-        stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+        stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?since/)
           .to_return(status: 200, body: all_keys_matcher_json)
-      end
+        end
 
       it 'event is not added when nil key' do
         expect(subject.instance_variable_get(:@events_repository)).not_to receive(:add)
@@ -955,6 +947,7 @@ describe SplitIoClient, type: :client do
         expect(log.string).to include "track: Traffic Type #{traffic_type_name} " \
           "does not have any corresponding feature flags in this environment, make sure you're tracking " \
           'your events to a valid traffic type defined in the Split user interface'
+        subject.destroy
       end
     end
   end
@@ -965,8 +958,8 @@ describe SplitIoClient, type: :client do
     end
 
     before do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
-        .to_return(status: 200, body: all_keys_matcher_json)
+      stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?since.*/)
+      .to_return(status: 200, body: all_keys_matcher_json)
     end
 
     context 'standalone mode' do
@@ -975,13 +968,13 @@ describe SplitIoClient, type: :client do
                                         logger: Logger.new('/dev/null'),
                                         cache_adapter: :memory,
                                         mode: :standalone,
+                                        features_refresh_rate: 9999,
+                                        telemetry_refresh_rate: 99999,
+                                        impressions_refresh_rate: 99999,
                                         streaming_enabled: false).client
       end
 
       it 'fetch splits' do
-        stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
-          .to_return(status: 200, body: 'ok')
-
         subject.block_until_ready
         expect(subject.instance_variable_get(:@splits_repository).splits.size).to eq(1)
       end
@@ -1003,6 +996,9 @@ describe SplitIoClient, type: :client do
                                         redis_namespace: 'test',
                                         max_cache_size: 1,
                                         mode: :consumer,
+                                        features_refresh_rate: 9999,
+                                        telemetry_refresh_rate: 99999,
+                                        impressions_refresh_rate: 99999,
                                         streaming_enabled: false).client
       end
 
@@ -1037,8 +1033,8 @@ private
 
 def load_splits(splits_json)
   if @mode.equal?(:standalone)
-    stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
-      .to_return(status: 200, body: splits_json)
+    stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?since.*/)
+    .to_return(status: 200, body: splits_json)
   else
     add_splits_to_repository(splits_json)
   end

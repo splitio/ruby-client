@@ -217,6 +217,8 @@ describe SplitIoClient::Engine::Synchronizer do
     expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=111333')).to have_been_made.times(10)
     expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=111333&till=111555')).to have_been_made.once
     expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=111555&till=111555')).to have_been_made.once
+    synchronizer.stop_periodic_fetch
+    config.threads.values.each { |thread| Thread.kill(thread) }
   end
 end
 

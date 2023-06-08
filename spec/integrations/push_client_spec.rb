@@ -36,9 +36,13 @@ describe SplitIoClient do
     File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/auth_body_response.json'))
   end
 
+  before do
+    stub_request(:any, /https:\/\/events.*/).to_return(status: 200, body: '')
+    stub_request(:any, /https:\/\/telemetry.*/).to_return(status: 200, body: 'ok')
+  end
+
   context 'SPLIT_UPDATE' do
     it 'processing split update event' do
-      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
       mock_splits_request(splits, '-1')
       mock_splits_request(splits2, '1585948850109')
       mock_splits_request(splits3, '1585948850110')
@@ -56,7 +60,10 @@ describe SplitIoClient do
         factory = SplitIoClient::SplitFactory.new(
           'test_api_key',
           streaming_service_url: streaming_service_url,
-          auth_service_url: auth_service_url
+          auth_service_url: auth_service_url,
+#          features_refresh_rate: 9999,
+          telemetry_refresh_rate: 99999,
+          impressions_refresh_rate: 99999
         )
 
         client = factory.client
@@ -66,6 +73,7 @@ describe SplitIoClient do
         expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.at_least_times(1)
         expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1585948850109')).to have_been_made.times(1)
         expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1585948850110')).to have_been_made.times(1)
+        client.destroy
       end
     end
 
@@ -73,7 +81,6 @@ describe SplitIoClient do
       mock_splits_request(splits, -1)
       mock_splits_request(splits2, 1_585_948_850_109)
       mock_segment_changes('segment3', segment3, '-1')
-      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
 
       mock_server do |server|
         server.setup_response('/') do |_, res|
@@ -97,6 +104,7 @@ describe SplitIoClient do
         expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.times(1)
         expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1585948850109')).to have_been_made.times(1)
         expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1585948850110')).to have_been_made.times(0)
+        client.destroy
       end
     end
   end
@@ -107,7 +115,6 @@ describe SplitIoClient do
       mock_splits_request(splits2, '1585948850109')
       mock_splits_request(splits3, '1585948850110')
       mock_segment_changes('segment3', segment3, '-1')
-      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
 
       mock_server do |server|
         server.setup_response('/') do |_, res|
@@ -130,6 +137,7 @@ describe SplitIoClient do
         expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.times(1)
         expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1585948850109')).to have_been_made.times(1)
         expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1585948850110')).to have_been_made.at_least_times(1)
+        client.destroy
       end
     end
 
@@ -137,7 +145,6 @@ describe SplitIoClient do
       mock_splits_request(splits, -1)
       mock_splits_request(splits2, 1_585_948_850_109)
       mock_segment_changes('segment3', segment3, '-1')
-      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1585948850110').to_return(status: 200, body: '')
 
       mock_server do |server|
@@ -162,6 +169,7 @@ describe SplitIoClient do
         expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.times(1)
         expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1585948850109')).to have_been_made.times(1)
         expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1585948850110')).to have_been_made.times(0)
+        client.destroy
       end
     end
   end
@@ -170,7 +178,6 @@ describe SplitIoClient do
     it 'processing segment update event with fetch' do
       mock_splits_request(splits, -1)
       mock_splits_request(splits2, 1_585_948_850_109)
-      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
       stub_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=-1&till=1470947453879').to_return(status: 200, body: '')
       stub_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=-1')
         .to_return({ status: 200, body: segment3 }, { status: 200, body: segment3 }, { status: 200, body: segment3_updated })
@@ -194,13 +201,13 @@ describe SplitIoClient do
         client.block_until_ready(1)
         sleep(2)
         expect(client.get_treatment('test_in_segment', 'feature_segment')).to eq('def_test')
+        client.destroy
       end
     end
 
     it 'processing segment update event without fetch' do
       mock_splits_request(splits, -1)
       mock_splits_request(splits2, 1_585_948_850_109)
-      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
       stub_request(:get, 'https://sdk.split.io/api/segmentChanges/segment3?since=-1')
         .to_return(status: 200, body: segment3)
 
@@ -223,13 +230,13 @@ describe SplitIoClient do
         client.block_until_ready(1)
         sleep(2)
         expect(client.get_treatment('test_in_segment', 'feature_segment')).to eq('on')
+        client.destroy
       end
     end
   end
 
   context 'OCCUPANCY' do
     it 'occupancy event with publishers available' do
-      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
       mock_splits_request(splits, -1)
       mock_splits_request(splits2, 1_585_948_850_109)
       mock_splits_request(splits3, 1_585_948_850_110)
@@ -255,6 +262,7 @@ describe SplitIoClient do
         client.block_until_ready(1)
         sleep(3)
         expect(client.get_treatment('admin', 'push_test')).to eq('after_fetch')
+        client.destroy
       end
     end
 
@@ -263,7 +271,6 @@ describe SplitIoClient do
       mock_splits_request(splits2, 1_585_948_850_109)
       mock_splits_request(splits3, 1_585_948_850_110)
       mock_segment_changes('segment3', segment3, '-1')
-      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
 
       mock_server do |server|
         server.setup_response('/') do |_, res|
@@ -284,6 +291,7 @@ describe SplitIoClient do
         client.block_until_ready(1)
         sleep(2)
         expect(client.get_treatment('admin', 'push_test')).to eq('after_fetch')
+        client.destroy
       end
     end
   end
@@ -294,7 +302,6 @@ describe SplitIoClient do
       mock_splits_request(splits2, 1_585_948_850_109)
       mock_splits_request(splits3, 1_585_948_850_110)
       mock_segment_changes('segment3', segment3, '-1')
-      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
 
       mock_server do |server|
         server.setup_response('/') do |_, res|
@@ -315,6 +322,7 @@ describe SplitIoClient do
         client.block_until_ready(1)
         sleep(2)
         expect(client.get_treatment('admin', 'push_test')).to eq('after_fetch')
+        client.destroy
       end
     end
 
@@ -323,7 +331,6 @@ describe SplitIoClient do
       mock_splits_request(splits2, 1_585_948_850_109)
       mock_splits_request(splits3, 1_585_948_850_110)
       mock_segment_changes('segment3', segment3, '-1')
-      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
 
       mock_server do |server|
         server.setup_response('/') do |_, res|
@@ -344,6 +351,7 @@ describe SplitIoClient do
         client.block_until_ready(1)
         sleep(2)
         expect(client.get_treatment('admin', 'push_test')).to eq('after_fetch')
+        client.destroy
       end
     end
 
@@ -352,7 +360,6 @@ describe SplitIoClient do
       mock_splits_request(splits2, 1_585_948_850_109)
       mock_splits_request(splits3, 1_585_948_850_110)
       mock_segment_changes('segment3', segment3, '-1')
-      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1585948850111').to_return(status: 200, body: '')
 
       mock_server do |server|
@@ -374,6 +381,7 @@ describe SplitIoClient do
         client.block_until_ready(1)
         sleep(2)
         expect(client.get_treatment('admin', 'push_test')).to eq('after_fetch')
+        client.destroy
       end
     end
   end
