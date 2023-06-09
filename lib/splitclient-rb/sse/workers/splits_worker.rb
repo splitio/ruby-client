@@ -49,10 +49,14 @@ module SplitIoClient
           )
         end
 
+        def check_update(notification)
+          @feature_flags_repository.get_change_number == notification.data['pcn'] && !notification.data['d'].nil?
+        end
+
         def update_feature_flag(notification)
           return if @feature_flags_repository.get_change_number.to_i > notification.data['changeNumber']
 
-          if @feature_flags_repository.get_change_number == notification.data['pcn'] && !notification.data['d'].nil?
+          if check_update(notification)
             begin
               new_split = return_split_from_json(notification)
               if SplitIoClient::Engine::Models::Split.archived?(new_split)
