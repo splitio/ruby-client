@@ -49,12 +49,12 @@ module SplitIoClient
 
         def splits_thread
           @config.threads[:split_fetcher] = Thread.new do
-            @config.logger.info('Starting splits fetcher service') if @config.debug_enabled
+            @config.logger.info('Starting feature flags fetcher service') if @config.debug_enabled
             loop do
               fetch_splits
 
               sleep_for = SplitIoClient::Cache::Stores::StoreUtils.random_interval(@config.features_refresh_rate)
-              @config.logger.debug("Splits fetcher is sleeping for: #{sleep_for} seconds") if @config.debug_enabled
+              @config.logger.debug("Feature flags fetcher is sleeping for: #{sleep_for} seconds") if @config.debug_enabled
               sleep(sleep_for)
             end
           end
@@ -66,7 +66,7 @@ module SplitIoClient
 
         def add_split_unless_archived(split)
           if Engine::Models::Split.archived?(split)
-            @config.logger.debug("Seeing archived split #{split[:name]}") if @config.debug_enabled
+            @config.logger.debug("Seeing archived feature flag #{split[:name]}") if @config.debug_enabled
 
             remove_archived_split(split)
           else
@@ -75,13 +75,13 @@ module SplitIoClient
         end
 
         def remove_archived_split(split)
-          @config.logger.debug("removing split from store(#{split})") if @config.debug_enabled
+          @config.logger.debug("removing feature flag from store(#{split})") if @config.debug_enabled
 
           @splits_repository.remove_split(split)
         end
 
         def store_split(split)
-          @config.logger.debug("storing split (#{split[:name]})") if @config.debug_enabled
+          @config.logger.debug("storing feature flag (#{split[:name]})") if @config.debug_enabled
 
           @splits_repository.add_split(split)
         end

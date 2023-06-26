@@ -4,7 +4,7 @@ require 'spec_helper'
 
 describe SplitIoClient::WhitelistMatcher do
   subject do
-    SplitIoClient::SplitFactory.new('test_api_key', logger: Logger.new('/dev/null'), streaming_enabled: false).client
+    SplitIoClient::SplitFactory.new('test_api_key', {logger: Logger.new('/dev/null'), streaming_enabled: false, impressions_refresh_rate: 9999, impressions_mode: :none, features_refresh_rate: 9999, telemetry_refresh_rate: 99999}).client
   end
 
   let(:splits_json) do
@@ -20,8 +20,12 @@ describe SplitIoClient::WhitelistMatcher do
   let(:nil_attributes) { nil }
 
   before do
-    stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+    stub_request(:any, /https:\/\/telemetry.*/)
+      .to_return(status: 200, body: 'ok')
+    stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?since/)
       .to_return(status: 200, body: splits_json)
+    stub_request(:any, /https:\/\/events.*/)
+      .to_return(status: 200, body: "", headers: {})
   end
 
   it 'validates the treatment is ON for correct attribute value' do
@@ -34,5 +38,7 @@ describe SplitIoClient::WhitelistMatcher do
     expect(subject.get_treatment(user, feature, non_matching_value_attributes)).to eq 'default'
     expect(subject.get_treatment(user, feature, missing_key_attributes)).to eq 'default'
     expect(subject.get_treatment(user, feature, nil_attributes)).to eq 'default'
+    sleep 1
+    subject.destroy()
   end
 end

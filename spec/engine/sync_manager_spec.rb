@@ -85,6 +85,7 @@ describe SplitIoClient::Engine::SyncManager do
       expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.once
 
       expect(config.threads.size).to eq(11)
+      config.threads.values.each { |thread| Thread.kill(thread) }
     end
   end
 
@@ -104,6 +105,7 @@ describe SplitIoClient::Engine::SyncManager do
       expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.once
 
       expect(config.threads.size).to eq(8)
+      config.threads.values.each { |thread| Thread.kill(thread) }
     end
   end
 
@@ -125,6 +127,7 @@ describe SplitIoClient::Engine::SyncManager do
 
       sse_handler = sync_manager.instance_variable_get(:@sse_handler)
       expect(sse_handler.connected?).to eq(false)
+      config.threads.values.each { |thread| Thread.kill(thread) }
     end
   end
 

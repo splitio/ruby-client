@@ -24,6 +24,9 @@ describe SplitIoClient do
 
     stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
       .to_return(status: 200, body: 'ok')
+    
+    stub_request(:get, "https://sdk.split.io/api/splitChanges?since=1473413807667")
+      .to_return(status: 200, body: "", headers: {})
   end
 
   context '#split' do
@@ -47,15 +50,15 @@ describe SplitIoClient do
       subject.block_until_ready
       split_name = '  test_1_ruby '
       expect(subject.split(split_name)).not_to be_nil
-      expect(log.string).to include "split: split_name #{split_name} has extra whitespace, trimming"
+      expect(log.string).to include "split: feature_flag_name #{split_name} has extra whitespace, trimming"
     end
 
     it 'returns and logs warning when ready and split does not exist' do
       subject.block_until_ready
       expect(subject.split('non_existing_feature')).to be_nil
       expect(log.string).to include 'split: you passed non_existing_feature ' \
-        'that does not exist in this environment, please double check what Splits exist ' \
-        'in the web console'
+        'that does not exist in this environment, please double check what feature flags exist ' \
+        'in the Split user interface'
     end
 
     it 'returns and logs error when not ready' do
@@ -82,6 +85,9 @@ describe SplitIoClient do
 
   context '#splits' do
     it 'returns empty array and logs error  when not ready' do
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?since=-1")
+        .to_return(status: 200, body: "", headers: {})
+
       allow(subject).to receive(:ready?).and_return(false)
 
       expect(subject.splits).to be_empty
@@ -95,6 +101,9 @@ describe SplitIoClient do
     before do
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
         .to_return(status: 200, body: splits3)
+      
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?since=1473863097220")
+        .to_return(status: 200, body: "", headers: {})
     end
 
     it 'returns configurations' do
@@ -119,6 +128,9 @@ describe SplitIoClient do
     before do
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
         .to_return(status: 200, body: splits4)
+
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?since")
+        .to_return(status: 200, body: "", headers: {})
     end
 
     it 'returns expected treatments' do
