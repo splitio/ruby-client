@@ -97,7 +97,7 @@ module SplitIoClient
       def pop_updates_from_sse
         splits = @adapter.updates_from_sse[Domain::Constants::SPLITS]
         @adapter.updates_from_sse[Domain::Constants::SPLITS] = 0
-        
+
         UpdatesFromSSE.new(splits)
       end
 

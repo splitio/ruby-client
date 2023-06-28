@@ -37,7 +37,7 @@ module SplitIoClient
         TREATMENTS_WITH_CONFIG = 'treatmentsWithConfig'
         TRACK = 'track'
 
-        SPLITS = "splits"
+        SPLITS = 'splits'
       end
     end
   end

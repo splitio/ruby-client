@@ -4,13 +4,14 @@ module SplitIoClient
   module SSE
     module Workers
       class SplitsWorker
-        def initialize(synchronizer, config, feature_flags_repository, telemetry_runtime_producer)
+        def initialize(synchronizer, config, feature_flags_repository, telemetry_runtime_producer, segment_fetcher)
           @synchronizer = synchronizer
           @config = config
           @feature_flags_repository = feature_flags_repository
           @queue = Queue.new
           @running = Concurrent::AtomicBoolean.new(false)
           @telemetry_runtime_producer = telemetry_runtime_producer
+          @segment_fetcher = segment_fetcher
         end
 
         def start
@@ -69,9 +70,8 @@ module SplitIoClient
             @feature_flags_repository.remove_split(new_split)
           else
             @feature_flags_repository.add_split(new_split)
-            segment_names = Helpers::Util.segment_names_by_split(new_split)
 
-            @feature_flags_repository.set_segment_names(segment_names) unless segment_names.nil?
+            fetch_segments_if_not_exists(new_split)
           end
 
           @feature_flags_repository.set_change_number(notification.data['changeNumber'])
@@ -100,6 +100,14 @@ module SplitIoClient
           split_json = Helpers::DecryptionHelper.get_encoded_definition(notification.data['c'], notification.data['d'])
 
           JSON.parse(split_json, symbolize_names: true)
+        end
+
+        def fetch_segments_if_not_exists(feature_flag)
+          segment_names = Helpers::Util.segment_names_by_feature_flag(feature_flag)
+          return if segment_names.nil?
+
+          @feature_flags_repository.set_segment_names(segment_names)
+          @segment_fetcher.fetch_segments_if_not_exists(segment_names)
         end
       end
     end
