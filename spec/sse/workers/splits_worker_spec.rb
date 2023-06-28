@@ -22,8 +22,9 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
   let(:event_split_update_zlib_compression)  { SplitIoClient::SSE::EventSource::StreamData.new("data", 123, JSON.parse('{"type":"SPLIT_UPDATE","changeNumber":5564531221,"pcn":1234,"c": 2,"d":"eJzEUtFq20AQ/JUwz2c4WZZr3ZupTQh1FKjcQinGrKU95cjpZE6nh9To34ssJ3FNX0sfd3Zm53b2TgietDbF9vXIGdUMha5lDwFTQiGOmTQlchLRPJlEEZeTVJZ6oimWZTpP5WyWQMCNyoOxZPft0ZoA8TZ5aW1TUDCNg4qk/AueM5dQkyiez6IonS6mAu0IzWWSxovFLBZoA4WuhcLy8/bh+xoCL8bagaXJtixQsqbOhq1nCjW7AIVGawgUz+Qqzrr6wB4qmi9m00/JIk7TZCpAtmqgpgJF47SpOn9+UQt16s9YaS71z9NHOYQFha9Pm83Tty0EagrFM/t733RHqIFZH4wb7LDMVh+Ecc4Lv+ZsuQiNH8hXF3hLv39XXNCHbJ+v7x/X2eDmuKLA74sPihVr47jMuRpWfxy1Kwo0GLQjmv1xpBFD3+96gSP5cLVouM7QQaA1vxhK9uKmd853bEZS9jsBSwe2UDDu7mJxd2Mo/muQy81m/2X9I7+N8R/FcPmUd76zjH7X/w4AAP//90glTw=="}'), 'test') }
   let(:event_split_archived_no_compression)  { SplitIoClient::SSE::EventSource::StreamData.new("data", 123, JSON.parse('{"type":"SPLIT_UPDATE","changeNumber":5564531221,"pcn":1234,"c": 0,"d":"eyJ0cmFmZmljVHlwZU5hbWUiOiAidXNlciIsICJpZCI6ICIzM2VhZmE1MC0xYTY1LTExZWQtOTBkZi1mYTMwZDk2OTA0NDUiLCAibmFtZSI6ICJiaWxhbF9zcGxpdCIsICJ0cmFmZmljQWxsb2NhdGlvbiI6IDEwMCwgInRyYWZmaWNBbGxvY2F0aW9uU2VlZCI6IC0xMzY0MTE5MjgyLCAic2VlZCI6IC02MDU5Mzg4NDMsICJzdGF0dXMiOiAiQVJDSElWRUQiLCAia2lsbGVkIjogZmFsc2UsICJkZWZhdWx0VHJlYXRtZW50IjogIm9mZiIsICJjaGFuZ2VOdW1iZXIiOiAxNjg0Mjc1ODM5OTUyLCAiYWxnbyI6IDIsICJjb25maWd1cmF0aW9ucyI6IHt9LCAiY29uZGl0aW9ucyI6IFt7ImNvbmRpdGlvblR5cGUiOiAiUk9MTE9VVCIsICJtYXRjaGVyR3JvdXAiOiB7ImNvbWJpbmVyIjogIkFORCIsICJtYXRjaGVycyI6IFt7ImtleVNlbGVjdG9yIjogeyJ0cmFmZmljVHlwZSI6ICJ1c2VyIn0sICJtYXRjaGVyVHlwZSI6ICJJTl9TRUdNRU5UIiwgIm5lZ2F0ZSI6IGZhbHNlLCAidXNlckRlZmluZWRTZWdtZW50TWF0Y2hlckRhdGEiOiB7InNlZ21lbnROYW1lIjogImJpbGFsX3NlZ21lbnQifX1dfSwgInBhcnRpdGlvbnMiOiBbeyJ0cmVhdG1lbnQiOiAib24iLCAic2l6ZSI6IDB9LCB7InRyZWF0bWVudCI6ICJvZmYiLCAic2l6ZSI6IDEwMH1dLCAibGFiZWwiOiAiaW4gc2VnbWVudCBiaWxhbF9zZWdtZW50In0sIHsiY29uZGl0aW9uVHlwZSI6ICJST0xMT1VUIiwgIm1hdGNoZXJHcm91cCI6IHsiY29tYmluZXIiOiAiQU5EIiwgIm1hdGNoZXJzIjogW3sia2V5U2VsZWN0b3IiOiB7InRyYWZmaWNUeXBlIjogInVzZXIifSwgIm1hdGNoZXJUeXBlIjogIkFMTF9LRVlTIiwgIm5lZ2F0ZSI6IGZhbHNlfV19LCAicGFydGl0aW9ucyI6IFt7InRyZWF0bWVudCI6ICJvbiIsICJzaXplIjogMH0sIHsidHJlYXRtZW50IjogIm9mZiIsICJzaXplIjogMTAwfV0sICJsYWJlbCI6ICJkZWZhdWx0IHJ1bGUifV19"}'), 'test') }
   let(:event_split_update_no_definition)  { SplitIoClient::SSE::EventSource::StreamData.new("data", 123, JSON.parse('{"type":"SPLIT_UPDATE","changeNumber":5564531221,"pcn":1234,"c": 0, "d":null}'), 'test') }
+  let(:event_split_update_segments) { SplitIoClient::SSE::EventSource::StreamData.new("data", 123, JSON.parse('{"type":"SPLIT_UPDATE","changeNumber":5564531221,"pcn":1234,"c":2,"d":"eJzcVFtr20wQ/SvhPK9AsnzTvpnPJp+po0DlppRgzFga2dusJLNapaRG/73Id7sOoU+FvmluZ3TOGXYDayhNVTx9W3NIGUOiKtlAQCWQSNq+FyeJ6yzcBTuex+T0qe86XrfrUkJBzH4AgXw3mVFlivl3eiWIA/BA6yImq4oc0nPdG/mIOYF0gpYfeO3AEyh3Ca/XDfxer+u2BUpLtiohMfhvOn4aQeBFad20paRLFkg4pUrbqWGyGecWEvbwPQ9cCMQrypccVtmCDaTX7feCnu+7nY7nCZBeFpAtgbjIU7WszPbPSshNvc0lah8/b05hoxkkvv4/no4m42gKgYxsvGJzb4pqDdn0ZguVNwsxCIenhh3SPriBk/OSLB/Z/Vgpy1qV9mE3MSRLDfwxD/kMSjKVb1dUpmgwVFxgVtezWmBNxp5RsDdlavkdCJTqJ2+tqmcCmhasIU+LOEEtftfg8+Nk8vjlzxV44beINce2ME3z2TEeDrEWVzKNw3k0un8YhTd0aiaGnKqck4iXDakrwcpdNjzdq9PChxIV+VEXt2F/UUvTC9Guyk/t90dfO+/Xro73w65z7y6cU/ndnvTdge7f9W8wmcw/jb5F1+79yybsX6c7U2lGPat/BQAA//9ygdKB"}'), 'test') }
+  let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
   let(:synchronizer) do
-    segments_repository = SplitIoClient::Cache::Repositories::SegmentsRepository.new(config)
     telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, api_key, telemetry_runtime_producer)
     impressions_api = SplitIoClient::Api::Impressions.new(api_key, config, telemetry_runtime_producer)
 
@@ -136,7 +137,6 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
   end
 
   context 'instant ff update split notification' do
-
     it 'decode and decompress split update data' do
       worker = subject.new(synchronizer, config, splits_repository, telemetry_runtime_producer)
       worker.start
@@ -163,6 +163,19 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
       worker.add_to_queue(event_split_archived_no_compression)
       sleep 1
       expect(splits_repository.exists?('bilal_split') == false)
+    end
+
+    it 'test' do
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1234').to_return(status: 200, body: '{"splits": [],"since": 1234,"till": 1234}')
+
+      worker = subject.new(synchronizer, config, splits_repository, telemetry_runtime_producer)
+      worker.start
+
+      splits_repository.set_change_number(1234)
+      worker.add_to_queue(event_split_update_segments)
+      sleep 1
+
+      expect(segments_repository.used_segment_names[0]).to eq('maur-2')
     end
 
     it 'should not update if definition is nil' do
