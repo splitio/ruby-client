@@ -4,12 +4,13 @@ module SplitIoClient
   module SSE
     module Workers
       class SplitsWorker
-        def initialize(synchronizer, config, feature_flags_repository)
+        def initialize(synchronizer, config, feature_flags_repository, telemetry_runtime_producer)
           @synchronizer = synchronizer
           @config = config
           @feature_flags_repository = feature_flags_repository
           @queue = Queue.new
           @running = Concurrent::AtomicBoolean.new(false)
+          @telemetry_runtime_producer = telemetry_runtime_producer
         end
 
         def start
@@ -29,7 +30,7 @@ module SplitIoClient
           end
 
           @running.make_false
-          SplitIoClient::Helpers::ThreadHelper.stop(:split_update_worker, @config)
+          Helpers::ThreadHelper.stop(:split_update_worker, @config)
         end
 
         def add_to_queue(notification)
@@ -39,38 +40,48 @@ module SplitIoClient
 
         private
 
-        def return_split_from_json(notification)
-          JSON.parse(
-            SplitIoClient::Helpers::DecryptionHelper.get_encoded_definition(
-              notification.data['c'],
-              notification.data['d']
-            ),
-            symbolize_names: true
-          )
+        def perform_thread
+          @config.threads[:split_update_worker] = Thread.new do
+            @config.logger.debug('starting feature_flags_worker ...') if @config.debug_enabled
+            perform
+          end
         end
 
-        def check_update(notification)
-          @feature_flags_repository.get_change_number == notification.data['pcn'] && !notification.data['d'].nil?
+        def perform
+          while (notification = @queue.pop)
+            @config.logger.debug("feature_flags_worker change_number dequeue #{notification.data['changeNumber']}")
+            case notification.data['type']
+            when SSE::EventSource::EventTypes::SPLIT_UPDATE
+              success = update_feature_flag(notification)
+              @synchronizer.fetch_splits(notification.data['changeNumber']) unless success
+            when SSE::EventSource::EventTypes::SPLIT_KILL
+              kill_feature_flag(notification)
+            end
+          end
         end
 
         def update_feature_flag(notification)
-          return if @feature_flags_repository.get_change_number.to_i > notification.data['changeNumber']
+          return true if @feature_flags_repository.get_change_number.to_i >= notification.data['changeNumber']
+          return false unless !notification.data['d'].nil? && @feature_flags_repository.get_change_number == notification.data['pcn']
 
-          if check_update(notification)
-            begin
-              new_split = return_split_from_json(notification)
-              if SplitIoClient::Engine::Models::Split.archived?(new_split)
-                @feature_flags_repository.remove_split(new_split)
-              else
-                @feature_flags_repository.add_split(new_split)
-              end
-              @feature_flags_repository.set_change_number(notification.data['changeNumber'])
-              return
-            rescue StandardError => e
-              @config.logger.debug("Failed to update Split: #{e.inspect}") if @config.debug_enabled
-            end
+          new_split = return_split_from_json(notification)
+          if Engine::Models::Split.archived?(new_split)
+            @feature_flags_repository.remove_split(new_split)
+          else
+            @feature_flags_repository.add_split(new_split)
+            segment_names = Helpers::Util.segment_names_by_split(new_split)
+
+            @feature_flags_repository.set_segment_names(segment_names) unless segment_names.nil?
           end
-          @synchronizer.fetch_splits(notification.data['changeNumber'])
+
+          @feature_flags_repository.set_change_number(notification.data['changeNumber'])
+          @telemetry_runtime_producer.record_updates_from_sse(Telemetry::Domain::Constants::SPLITS)
+
+          true
+        rescue StandardError => e
+          @config.logger.debug("Failed to update Split: #{e.inspect}") if @config.debug_enabled
+
+          false
         end
 
         def kill_feature_flag(notification)
@@ -85,23 +96,10 @@ module SplitIoClient
           @synchronizer.fetch_splits(notification.data['changeNumber'])
         end
 
-        def perform
-          while (notification = @queue.pop)
-            @config.logger.debug("feature_flags_worker change_number dequeue #{notification.data['changeNumber']}")
-            case notification.data['type']
-            when SSE::EventSource::EventTypes::SPLIT_UPDATE
-              update_feature_flag(notification)
-            when SSE::EventSource::EventTypes::SPLIT_KILL
-              kill_feature_flag(notification)
-            end
-          end
-        end
+        def return_split_from_json(notification)
+          split_json = Helpers::DecryptionHelper.get_encoded_definition(notification.data['c'], notification.data['d'])
 
-        def perform_thread
-          @config.threads[:split_update_worker] = Thread.new do
-            @config.logger.debug('starting feature_flags_worker ...') if @config.debug_enabled
-            perform
-          end
+          JSON.parse(split_json, symbolize_names: true)
         end
       end
     end

@@ -49,7 +49,7 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262918').to_return(status: 200, body: '{"splits": [],"since": 1506703262918,"till": 1506703262918}')
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262918&till=1506703262919').to_return(status: 200, body: '{"splits": [],"since": 1506703262919,"till": 1506703262919}')
 
-      worker = subject.new(synchronizer, config, splits_repository)
+      worker = subject.new(synchronizer, config, splits_repository, telemetry_runtime_producer)
       worker.start
       worker.add_to_queue(SplitIoClient::SSE::EventSource::StreamData.new("SPLIT_UPDATE", 123, JSON.parse('{"type":"SPLIT_UPDATE","changeNumber":1506703262919}'), 'test'))
 
@@ -64,7 +64,7 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1').to_return(status: 200, body: '{"splits": [],"since": -1,"till": 1506703262916}')
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262916').to_return(status: 200, body: '{"splits": [],"since": 1506703262916,"till": 1506703262918}')
 
-      worker = subject.new(synchronizer, config, splits_repository)
+      worker = subject.new(synchronizer, config, splits_repository, telemetry_runtime_producer)
       worker.start
       worker.add_to_queue(SplitIoClient::SSE::EventSource::StreamData.new("SPLIT_UPDATE", 123, JSON.parse('{"type":"SPLIT_UPDATE","changeNumber":1506703262918}'), 'test'))
       sleep 1
@@ -75,7 +75,7 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
     it 'must not trigger fetch' do
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1').to_return(status: 200, body: '{"splits": [],"since": -1,"till": 1506703262916}')
 
-      worker = subject.new(synchronizer, config, splits_repository)
+      worker = subject.new(synchronizer, config, splits_repository, telemetry_runtime_producer)
       worker.start
       worker.add_to_queue(SplitIoClient::SSE::EventSource::StreamData.new("SPLIT_UPDATE", 123, JSON.parse('{"type":"SPLIT_UPDATE","changeNumber":1506703262916}'), 'test'))
       sleep 1
@@ -84,7 +84,7 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
     end
 
     it 'without start, must not fetch' do
-      worker = subject.new(synchronizer, config, splits_repository)
+      worker = subject.new(synchronizer, config, splits_repository, telemetry_runtime_producer)
       worker.add_to_queue(SplitIoClient::SSE::EventSource::StreamData.new("SPLIT_UPDATE", 123, JSON.parse('{"type":"SPLIT_UPDATE","changeNumber":1506703262918}'), 'test'))
 
       expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262916')).to have_been_made.times(0)
@@ -106,7 +106,7 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
     it 'must kill split and trigger fetch' do
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262916').to_return(status: 200, body: '{"splits": [],"since": 1506703262916,"till": 1506703262918}')
 
-      worker = subject.new(synchronizer, config, splits_repository)
+      worker = subject.new(synchronizer, config, splits_repository, telemetry_runtime_producer)
       worker.start
       worker.send :kill_feature_flag, SplitIoClient::SSE::EventSource::StreamData.new("SPLIT_KILL", 123, JSON.parse('{"splitName":"FACUNDO_TEST", "defaultTreatment":"on", "type":"SPLIT_KILL","changeNumber":1506703262918}'), 'test')
 
@@ -120,7 +120,7 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
     end
 
     it 'must kill split and must not trigger fetch' do
-      worker = subject.new(synchronizer, config, splits_repository)
+      worker = subject.new(synchronizer, config, splits_repository, telemetry_runtime_producer)
 
       worker.start
       worker.send :kill_feature_flag, SplitIoClient::SSE::EventSource::StreamData.new("SPLIT_KILL", 123, JSON.parse('{"splitName":"FACUNDO_TEST", "defaultTreatment":"on", "type":"SPLIT_KILL","changeNumber":1506703262916}'), 'test')
@@ -138,7 +138,7 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
   context 'instant ff update split notification' do
 
     it 'decode and decompress split update data' do
-      worker = subject.new(synchronizer, config, splits_repository)
+      worker = subject.new(synchronizer, config, splits_repository, telemetry_runtime_producer)
       worker.start
 
       splits_repository.set_change_number(1234)
@@ -167,7 +167,7 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
 
     it 'should not update if definition is nil' do
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1234').to_return(status: 200, body: '{"splits": [],"since": -1,"till": 1506703262918}')
-      worker = subject.new(synchronizer, config, splits_repository)
+      worker = subject.new(synchronizer, config, splits_repository, telemetry_runtime_producer)
       worker.start
 
       splits_repository.set_change_number(1234)

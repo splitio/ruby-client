@@ -16,7 +16,8 @@ module SplitIoClient
                     :auth_rejections,
                     :token_refreshes,
                     :streaming_events,
-                    :session_length
+                    :session_length,
+                    :updates_from_sse
 
         def initialize
           init_latencies
@@ -32,6 +33,7 @@ module SplitIoClient
           init_streaming_events
           init_session_length
           init_tags
+          init_updates_from_sse
         end
 
         def init_latencies
@@ -132,6 +134,12 @@ module SplitIoClient
 
         def init_session_length
           @session_length = Concurrent::AtomicFixnum.new(0)
+        end
+
+        def init_updates_from_sse
+          @updates_from_sse = Concurrent::Hash.new
+
+          @updates_from_sse[Domain::Constants::SPLITS] = 0
         end
       end
     end
