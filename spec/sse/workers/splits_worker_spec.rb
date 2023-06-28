@@ -166,7 +166,7 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
       expect(splits_repository.exists?('bilal_split') == false)
     end
 
-    it 'test' do
+    it 'instant ff update split notification with segment matcher.' do
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1234').to_return(status: 200, body: '{"splits": [],"since": 1234,"till": 1234}')
       stub_request(:get, 'https://sdk.split.io/api/segmentChanges/maur-2?since=-1').to_return(status: 200, body: '{"name":"maur-2","added":["admin"],"removed":[],"since":-1,"till":-1}')
       worker = subject.new(synchronizer, config, splits_repository, telemetry_runtime_producer, segment_fetcher)
