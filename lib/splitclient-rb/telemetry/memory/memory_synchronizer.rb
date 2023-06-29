@@ -34,7 +34,8 @@ module SplitIoClient
                           @telemetry_runtime_consumer.events_stats(Domain::Constants::EVENTS_QUEUED),
                           @telemetry_runtime_consumer.events_stats(Domain::Constants::EVENTS_DROPPED),
                           @telemetry_runtime_consumer.pop_streaming_events,
-                          @telemetry_runtime_consumer.pop_tags)
+                          @telemetry_runtime_consumer.pop_tags,
+                          @telemetry_runtime_consumer.pop_updates_from_sse)
 
         @telemetry_api.record_stats(format_stats(usage))
       rescue StandardError => e
@@ -163,7 +164,8 @@ module SplitIoClient
           eQ: usage.eq,
           eD: usage.ed,
           sE: usage.se,
-          t: usage.t
+          t: usage.t,
+          ufs: usage.ufs.to_h
         }
       end
 

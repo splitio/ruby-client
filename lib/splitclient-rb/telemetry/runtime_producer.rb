@@ -14,7 +14,8 @@ module SplitIoClient
                      :record_auth_rejections,
                      :record_token_refreshes,
                      :record_streaming_event,
-                     :record_session_length
+                     :record_session_length,
+                     :record_updates_from_sse
 
       def initialize(config)
         @runtime = SplitIoClient::Telemetry::MemoryRuntimeProducer.new(config)

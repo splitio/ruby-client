@@ -22,11 +22,14 @@ module SplitIoClient
     # ls: lastSynchronization, ml: clientMethodLatencies, me: clientMethodExceptions, he: httpErros, hl: httpLatencies,
     # tr: tokenRefreshes, ar: authRejections, iq: impressionsQueued, ide: impressionsDeduped, idr: impressionsDropped,
     # spc: splitsCount, sec: segmentCount, skc: segmentKeyCount, sl: sessionLengthMs, eq: eventsQueued, ed: eventsDropped,
-    # se: streamingEvents, t: tags
-    Usage = Struct.new(:ls, :ml, :me, :he, :hl, :tr, :ar, :iq, :ide, :idr, :spc, :sec, :skc, :sl, :eq, :ed, :se, :t)
+    # se: streamingEvents, t: tags, ufs: updates from sse
+    Usage = Struct.new(:ls, :ml, :me, :he, :hl, :tr, :ar, :iq, :ide, :idr, :spc, :sec, :skc, :sl, :eq, :ed, :se, :t, :ufs)
 
     # t: treatment, ts: treatments, tc: treatmentWithConfig, tcs: treatmentsWithConfig, tr: track
     ClientMethodLatencies = Struct.new(:t, :ts, :tc, :tcs, :tr)
     ClientMethodExceptions = Struct.new(:t, :ts, :tc, :tcs, :tr)
+
+    # sp: splits
+    UpdatesFromSSE = Struct.new(:sp)
   end
 end
