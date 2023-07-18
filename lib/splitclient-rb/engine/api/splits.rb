@@ -46,20 +46,10 @@ module SplitIoClient
 
         parsed_splits[:segment_names] =
           parsed_splits[:splits].each_with_object(Set.new) do |split, splits|
-            splits << segment_names(split)
+            splits << Helpers::Util.segment_names_by_feature_flag(split)
           end.flatten
 
         parsed_splits
-      end
-
-      def segment_names(split)
-        split[:conditions].each_with_object(Set.new) do |condition, names|
-          condition[:matcherGroup][:matchers].each do |matcher|
-            next if matcher[:userDefinedSegmentMatcherData].nil?
-
-            names << matcher[:userDefinedSegmentMatcherData][:segmentName]
-          end
-        end
       end
     end
   end

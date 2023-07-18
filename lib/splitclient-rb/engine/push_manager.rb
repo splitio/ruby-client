@@ -33,6 +33,7 @@ module SplitIoClient
 
       def stop_sse
         @sse_handler.stop
+        SplitIoClient::Helpers::ThreadHelper.stop(:schedule_next_token_refresh, @config)
       rescue StandardError => e
         @config.logger.error(e.inspect)
       end

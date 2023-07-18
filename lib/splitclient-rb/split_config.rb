@@ -320,7 +320,7 @@ module SplitIoClient
         return :debug
       else
         default = adapter == :redis ? :debug : :optimized
-        @logger.error("You passed an invalid impressions_mode, impressions_mode should be one of the following values: :debug, :optimized or :none. Defaulting to #{default} mode")
+        @logger.error("You passed an invalid impressions_mode, impressions_mode should be one of the following values: :debug, :optimized or :none. Defaulting to #{default} mode") unless impressions_mode.nil?
         return default
       end
     end

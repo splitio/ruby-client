@@ -37,6 +37,7 @@ Gem::Specification.new do |spec|
 
   spec.add_development_dependency 'allocation_stats', '~> 0.1'
   spec.add_development_dependency 'bundler', '~> 2.2'
+  spec.add_development_dependency 'byebug', '~> 11.1'
   spec.add_development_dependency 'pry', '~> 0.14'
   spec.add_development_dependency 'pry-nav', '~> 1.0'
   spec.add_development_dependency 'rake', '~> 13.0'

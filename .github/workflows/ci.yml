@@ -27,7 +27,7 @@ jobs:
       matrix:
         version:
           - '2.5.0'
-          - '3.1.1'
+          - '3.2.2'
 
     steps:
       - name: Checkout code
@@ -56,7 +56,7 @@ jobs:
         run: echo "VERSION=$(cat lib/splitclient-rb/version.rb | grep VERSION | awk -F "'" '{print $2}')" >> $GITHUB_ENV
 
       - name: SonarQube Scan (Push)
-        if: matrix.version == '3.1.1' && github.event_name == 'push'
+        if: matrix.version == '3.2.2' && github.event_name == 'push'
         uses: SonarSource/sonarcloud-github-action@v1.9
         env:
           SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
@@ -68,7 +68,7 @@ jobs:
             -Dsonar.projectVersion=${{ env.VERSION }}
 
       - name: SonarQube Scan (Pull Request)
-        if: matrix.version == '3.1.1' && github.event_name == 'pull_request'
+        if: matrix.version == '3.2.2' && github.event_name == 'pull_request'
         uses: SonarSource/sonarcloud-github-action@v1.9
         env:
           SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}

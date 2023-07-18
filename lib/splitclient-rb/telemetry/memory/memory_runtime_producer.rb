@@ -76,6 +76,12 @@ module SplitIoClient
       rescue StandardError => e
         @config.log_found_exception(__method__.to_s, e)
       end
+
+      def record_updates_from_sse(event)
+        @adapter.updates_from_sse[event] += 1
+      rescue StandardError => e
+        @config.log_found_exception(__method__.to_s, e)
+      end
     end
   end
 end
