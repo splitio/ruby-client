@@ -14,7 +14,8 @@ module SplitIoClient
                      :pop_auth_rejections,
                      :pop_token_refreshes,
                      :pop_streaming_events,
-                     :session_length
+                     :session_length,
+                     :pop_updates_from_sse
 
       def initialize(config)
         @runtime = SplitIoClient::Telemetry::MemoryRuntimeConsumer.new(config)

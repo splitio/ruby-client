@@ -4,7 +4,7 @@ require 'spec_helper'
 
 describe SplitIoClient::EqualToMatcher do
   subject do
-    SplitIoClient::SplitFactory.new('test_api_key', logger: Logger.new('/dev/null'), streaming_enabled: false).client
+    SplitIoClient::SplitFactory.new('test_api_key', {logger: Logger.new('/dev/null'), streaming_enabled: false, impressions_refresh_rate: 9999, impressions_mode: :none, features_refresh_rate: 9999, telemetry_refresh_rate: 99999}).client
   end
 
   let(:date_splits_json) do
@@ -35,8 +35,13 @@ describe SplitIoClient::EqualToMatcher do
     let(:matching_attributes) { { age: 30 } }
 
     before do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+      stub_request(:any, /https:\/\/telemetry.*/)
+        .to_return(status: 200, body: 'ok')
+      stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?since/)
         .to_return(status: 200, body: splits_json)
+      stub_request(:any, /https:\/\/events.*/)
+        .to_return(status: 200, body: 'ok')
+      sleep 1
     end
 
     it 'validates the treatment is ON for correct attribute value' do
@@ -57,8 +62,13 @@ describe SplitIoClient::EqualToMatcher do
     let(:matching_negative_zero_attributes) { { age: -0 } }
 
     before do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+      stub_request(:any, /https:\/\/telemetry.*/)
+        .to_return(status: 200, body: 'ok')
+      stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?since/)
         .to_return(status: 200, body: zero_splits_json)
+      stub_request(:any, /https:\/\/events.*/)
+        .to_return(status: 200, body: 'ok')
+      sleep 1
     end
 
     it 'validates the treatment is ON for 0 and -0 attribute values' do
@@ -78,8 +88,13 @@ describe SplitIoClient::EqualToMatcher do
     let(:non_matching_negative_attributes) { { age: -10 } }
 
     before do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+      stub_request(:any, /https:\/\/telemetry.*/)
+        .to_return(status: 200, body: 'ok')
+      stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?since/)
         .to_return(status: 200, body: negative_splits_json)
+      stub_request(:any, /https:\/\/events.*/)
+        .to_return(status: 200, body: 'ok')
+      sleep 1
     end
 
     it 'validates the treatment is on for negative attribute value' do
@@ -100,8 +115,13 @@ describe SplitIoClient::EqualToMatcher do
     let(:non_matching_low_value_attributes) { { created: Time.parse('2016/03/31T23:59Z').to_i } }
 
     before do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+      stub_request(:any, /https:\/\/telemetry.*/)
+          .to_return(status: 200, body: 'ok')
+      stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?since/)
         .to_return(status: 200, body: date_splits_json)
+      stub_request(:any, /https:\/\/events.*/)
+        .to_return(status: 200, body: 'ok')
+      sleep 1
     end
 
     it 'validates the treatment is ON for correct number attribute value' do
@@ -116,6 +136,8 @@ describe SplitIoClient::EqualToMatcher do
       expect(subject.get_treatment(user, feature, non_matching_high_value_attributes)).to eq 'default'
       expect(subject.get_treatment(user, feature, missing_key_attributes)).to eq 'default'
       expect(subject.get_treatment(user, feature, nil_attributes)).to eq 'default'
+      sleep 1
+      subject.destroy()
     end
   end
 end

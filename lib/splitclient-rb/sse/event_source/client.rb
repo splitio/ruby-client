@@ -92,7 +92,7 @@ module SplitIoClient
 
               raise 'eof exception' if partial_data == :eof
             rescue Errno::EBADF, IOError => e
-              @config.logger.error(e.inspect)
+              @config.logger.error(e.inspect) if @config.debug_enabled
               return nil
             rescue StandardError => e
               return nil if ENV['SPLITCLIENT_ENV'] == 'test'

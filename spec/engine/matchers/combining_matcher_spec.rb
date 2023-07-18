@@ -4,7 +4,7 @@ require 'spec_helper'
 
 describe SplitIoClient::CombiningMatcher do
   subject do
-    SplitIoClient::SplitFactory.new('test_api_key', logger: Logger.new('/dev/null'), streaming_enabled: false).client
+    SplitIoClient::SplitFactory.new('test_api_key', {logger: Logger.new('/dev/null'), streaming_enabled: false, impressions_refresh_rate: 9999, impressions_mode: :none, features_refresh_rate: 9999, telemetry_refresh_rate: 99999}).client
   end
 
   let(:splits_json) do
@@ -19,8 +19,13 @@ describe SplitIoClient::CombiningMatcher do
   before do
     stub_request(:get, 'https://sdk.split.io/api/segmentChanges/employees?since=-1')
       .to_return(status: 200, body: segments_json)
-    stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+    stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?since/)
       .to_return(status: 200, body: splits_json)
+    stub_request(:any, /https:\/\/telemetry.*/)
+      .to_return(status: 200, body: 'ok')
+    stub_request(:any, /https:\/\/events.*/)
+      .to_return(status: 200, body: 'ok')
+    sleep 1
   end
 
   describe 'anding' do
@@ -33,6 +38,8 @@ describe SplitIoClient::CombiningMatcher do
                'join' => 1_461_283_200,
                'custom_attribute' => 'usa'
              )).to eq('V-YZKS')
+      sleep 1
+      subject.destroy()
     end
   end
 end

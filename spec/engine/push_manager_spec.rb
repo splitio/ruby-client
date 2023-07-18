@@ -15,7 +15,7 @@ describe SplitIoClient::Engine::PushManager do
   let(:runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
   let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, runtime_producer) }
   let(:segment_fetcher) { SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, runtime_producer) }
-  let(:splits_worker) { SplitIoClient::SSE::Workers::SplitsWorker.new(split_fetcher, config, splits_repository) }
+  let(:splits_worker) { SplitIoClient::SSE::Workers::SplitsWorker.new(split_fetcher, config, splits_repository, runtime_producer, segment_fetcher) }
   let(:segments_worker) { SplitIoClient::SSE::Workers::SegmentsWorker.new(segment_fetcher, config, segments_repository) }
   let(:push_status_queue) { Queue.new }
   let(:notification_manager_keeper) { SplitIoClient::SSE::NotificationManagerKeeper.new(config, runtime_producer, push_status_queue) }

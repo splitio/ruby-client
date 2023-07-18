@@ -48,7 +48,7 @@ describe SplitIoClient::Engine::SyncManager do
   let(:telemetry_api) { SplitIoClient::Api::TelemetryApi.new(config, api_key, telemetry_runtime_producer) }
   let(:telemetry_synchronizer) { SplitIoClient::Telemetry::Synchronizer.new(config, telemetry_consumers, init_producer, repositories, telemetry_api) }
   let(:status_manager) { SplitIoClient::Engine::StatusManager.new(config) }
-  let(:splits_worker) { SplitIoClient::SSE::Workers::SplitsWorker.new(synchronizer, config, splits_repository) }
+  let(:splits_worker) { SplitIoClient::SSE::Workers::SplitsWorker.new(synchronizer, config, splits_repository, telemetry_runtime_producer, sync_params[:segment_fetcher]) }
   let(:segments_worker) { SplitIoClient::SSE::Workers::SegmentsWorker.new(synchronizer, config, segments_repository) }
   let(:notification_processor) { SplitIoClient::SSE::NotificationProcessor.new(config, splits_worker, segments_worker) }
   let(:event_parser) { SplitIoClient::SSE::EventSource::EventParser.new(config) }
@@ -85,6 +85,7 @@ describe SplitIoClient::Engine::SyncManager do
       expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.once
 
       expect(config.threads.size).to eq(11)
+      config.threads.values.each { |thread| Thread.kill(thread) }
     end
   end
 
@@ -104,6 +105,7 @@ describe SplitIoClient::Engine::SyncManager do
       expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.once
 
       expect(config.threads.size).to eq(8)
+      config.threads.values.each { |thread| Thread.kill(thread) }
     end
   end
 
@@ -125,6 +127,7 @@ describe SplitIoClient::Engine::SyncManager do
 
       sse_handler = sync_manager.instance_variable_get(:@sse_handler)
       expect(sse_handler.connected?).to eq(false)
+      config.threads.values.each { |thread| Thread.kill(thread) }
     end
   end
 
