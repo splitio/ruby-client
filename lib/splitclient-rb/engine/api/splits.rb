@@ -10,15 +10,16 @@ module SplitIoClient
         @telemetry_runtime_producer = telemetry_runtime_producer
       end
 
-      def since(since, fetch_options = { cache_control_headers: false, till: nil })
+      def since(since, fetch_options = { cache_control_headers: false, till: nil, sets: nil })
         start = Time.now
-        
+
         params = { since: since }
         params[:till] = fetch_options[:till] unless fetch_options[:till].nil?
+        params[:sets] = fetch_options[:sets].join(",") unless fetch_options[:sets].nil?
         response = get_api("#{@config.base_uri}/splitChanges", @api_key, params, fetch_options[:cache_control_headers])
         if response.success?
-          result = splits_with_segment_names(response.body)
 
+          result = splits_with_segment_names(response.body)
           unless result[:splits].empty?
             @config.split_logger.log_if_debug("#{result[:splits].length} feature flags retrieved. since=#{since}")
           end
