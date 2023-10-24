@@ -12,10 +12,9 @@ module SplitIoClient
         end
 
         def flag_set_exist?(flag_set)
-          if not @should_filter
-            return true
-          end
-          if not flag_set.respond_to?(:lstrip!) or flag_set.empty?
+          return true unless @should_filter
+
+          if not flag_set.is_a?(String) or flag_set.empty?
             return false
           end
 
@@ -23,10 +22,9 @@ module SplitIoClient
         end
 
         def intersect?(flag_sets)
-          if not @should_filter
-            return true
-          end
-          if not flag_sets.respond_to?(:each) or flag_sets.empty?
+          return true unless @should_filter
+
+          if not flag_sets.is_a?(Array) or flag_sets.empty?
             return false
           end
 
