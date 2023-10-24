@@ -4,7 +4,7 @@ require 'set'
 module SplitIoClient
   class Validators
 
-    Flagset_regex = /^[a-zA-Z0-9][-_.:a-zA-Z0-9]{0,79}$/
+    Flagset_regex = /^[a-z0-9][_a-z0-9]{0,49}$/
 
     def initialize(config)
       @config = config
@@ -42,9 +42,8 @@ module SplitIoClient
     end
 
     def valid_flag_sets(method, flag_sets)
-      if flag_sets.nil? || !flag_sets.is_a?(Array)
-        return nil
-      end
+      return Set[] if flag_sets.nil? || !flag_sets.is_a?(Array)
+
       valid_flag_sets = SortedSet[]
       flag_sets.compact.uniq.select do |flag_set|
         if !flag_set.is_a?(String)
@@ -57,7 +56,7 @@ module SplitIoClient
           @config.logger.warn("#{method}: you passed an invalid flag set, flag set name must be a non-empty String")
         end
       end
-      !valid_flag_sets.empty? ? valid_flag_sets :  nil
+      !valid_flag_sets.empty? ? valid_flag_sets :  Set[]
     end
 
     private
