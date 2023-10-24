@@ -35,6 +35,10 @@ module SplitIoClient
         TREATMENTS = 'treatments'
         TREATMENT_WITH_CONFIG = 'treatmentWithConfig'
         TREATMENTS_WITH_CONFIG = 'treatmentsWithConfig'
+        TREATMENTS_BY_FLAG_SET = 'treatmentsByFlagSet'
+        TREATMENTS_BY_FLAG_SETS = 'treatmentsByFlagSets'
+        TREATMENTS_WITH_CONFIG_BY_FLAG_SET = 'treatmentWithConfigByFlagSet'
+        TREATMENTS_WITH_CONFIG_BY_FLAG_SETS = 'treatmentsWithConfigByFlagSets'
         TRACK = 'track'
 
         SPLITS = 'splits'

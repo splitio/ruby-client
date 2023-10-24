@@ -61,7 +61,7 @@ describe SplitIoClient::Telemetry::InitConsumer do
     it 'record config_init' do
       adapter.redis.del(telemetry_config_key)
 
-      config_init = SplitIoClient::Telemetry::ConfigInit.new('CONSUMER', 'REDIS', 1, 0, %w[t1 t2])
+      config_init = SplitIoClient::Telemetry::ConfigInit.new('CONSUMER', 'REDIS', 1, 0, %w[t1 t2], 1, 0)
 
       init_producer.record_config(config_init)
 
@@ -73,6 +73,8 @@ describe SplitIoClient::Telemetry::InitConsumer do
       expect(result[:t][:aF]).to eq(1)
       expect(result[:t][:rF]).to eq(0)
       expect(result[:t][:t]).to eq(%w[t1 t2])
+      expect(result[:t][:fsT]).to eq(1)
+      expect(result[:t][:fsI]).to eq(0)
 
       adapter.redis.del(telemetry_config_key)
     end
