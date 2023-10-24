@@ -99,7 +99,8 @@
                   }
                ]
             }
-         ]
+         ],
+         "sets":["set_1"]
       },
       {
          "trafficTypeName":"user",
@@ -256,7 +257,8 @@
                   }
                ]
             }
-         ]
+         ],
+         "sets":["set_1","set_2"]
       }
    ],
    "since":-1,

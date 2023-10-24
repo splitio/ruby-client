@@ -27,6 +27,72 @@ describe SplitIoClient::Api::Splits do
     end
   end
 
+  context '#sets' do
+    it 'returns the splits - with sets param' do
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1&sets=set_1')
+        .with(headers: {
+                'Accept' => '*/*',
+                'Accept-Encoding' => 'gzip',
+                'Authorization' => 'Bearer',
+                'Connection' => 'keep-alive',
+                'Keep-Alive' => '30',
+                'Splitsdkversion' => "#{config.language}-#{config.version}"
+              })
+        .to_return(status: 200, body: splits)
+
+      fetch_options = { cache_control_headers: false, till: nil, sets: ['set_1'] }
+      returned_splits = splits_api.since(-1, fetch_options)
+      expect(returned_splits[:segment_names]).to eq(Set.new(%w[demo employees]))
+
+      expect(log.string).to include '2 feature flags retrieved. since=-1'
+      expect(log.string).to include returned_splits.to_s
+    end
+
+    it 'returns the splits - with 2 sets param' do
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1&sets=set_1,set_2')
+        .with(headers: {
+                'Accept' => '*/*',
+                'Accept-Encoding' => 'gzip',
+                'Authorization' => 'Bearer',
+                'Connection' => 'keep-alive',
+                'Keep-Alive' => '30',
+                'Splitsdkversion' => "#{config.language}-#{config.version}"
+              })
+        .to_return(status: 200, body: splits)
+
+      fetch_options = { cache_control_headers: false, till: nil, sets: ['set_1','set_2'] }
+      returned_splits = splits_api.since(-1, fetch_options)
+      expect(returned_splits[:segment_names]).to eq(Set.new(%w[demo employees]))
+
+      expect(log.string).to include '2 feature flags retrieved. since=-1'
+      expect(log.string).to include returned_splits.to_s
+    end
+
+    it 'raise api exception when status 409' do
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1&sets=set_1,set_2')
+        .with(headers: {
+                'Accept' => '*/*',
+                'Accept-Encoding' => 'gzip',
+                'Authorization' => 'Bearer',
+                'Connection' => 'keep-alive',
+                'Keep-Alive' => '30',
+                'Splitsdkversion' => "#{config.language}-#{config.version}"
+              })
+        .to_return(status: 409, body: splits)
+
+      fetch_options = { cache_control_headers: false, till: nil, sets: ['set_1','set_2'] }
+      captured = 0
+      begin
+        returned_splits = splits_api.since(-1, fetch_options)
+      rescue SplitIoClient::ApiException => e
+        captured = e.exception_code
+      end
+      expect(captured).to eq(409)
+    end
+
+
+  end
+
   context '#since' do
     it 'returns the splits - checking headers when cache_control_headers is false' do
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
@@ -59,7 +125,7 @@ describe SplitIoClient::Api::Splits do
               })
         .to_return(status: 200, body: splits)
 
-      fetch_options = { cache_control_headers: false, till: 123_123 }
+      fetch_options = { cache_control_headers: false, till: 123_123, sets: nil }
       returned_splits = splits_api.since(-1, fetch_options)
       expect(returned_splits[:segment_names]).to eq(Set.new(%w[demo employees]))
 
@@ -80,7 +146,7 @@ describe SplitIoClient::Api::Splits do
               })
         .to_return(status: 200, body: splits)
 
-      fetch_options = { cache_control_headers: true, till: nil }
+      fetch_options = { cache_control_headers: true, till: nil, sets: nil }
       returned_splits = splits_api.since(-1, fetch_options)
       expect(returned_splits[:segment_names]).to eq(Set.new(%w[demo employees]))
 
