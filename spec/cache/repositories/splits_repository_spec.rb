@@ -6,7 +6,8 @@ require 'set'
 describe SplitIoClient::Cache::Repositories::SplitsRepository do
   RSpec.shared_examples 'Splits Repository' do |cache_adapter|
     let(:config) { SplitIoClient::SplitConfig.new(cache_adapter: cache_adapter) }
-    let(:repository) { described_class.new(config) }
+    let(:repository) { described_class.new(config, []) }
+    let(:repository2) { described_class.new(config, ['set_1', 'set_2']) }
 
     before :all do
       redis = Redis.new
@@ -101,6 +102,59 @@ describe SplitIoClient::Cache::Repositories::SplitsRepository do
         'baz' => { name: 'baz', trafficTypeName: 'tt_name_1' }
       )
     end
+
+    it 'check without flagset filter' do
+      repository.add_split(name: 'split1', trafficTypeName: 'tt_name_1', sets: ['set_1'])
+      repository.add_split(name: 'split2', trafficTypeName: 'tt_name_2')
+      repository.add_split(name: 'split3', trafficTypeName: 'tt_name_1', sets: ['set_2'])
+
+      expect(repository.is_flag_set_exist('set_1')).to be true
+      expect(repository.is_flag_set_exist('set_2')).to be true
+      expect(repository.is_flag_set_exist('set_3')).to be false
+      expect(repository.get_feature_flags_by_sets(['set_3'])).to eq([])
+      expect(repository.get_feature_flags_by_sets(['set_1'])).to eq(['split1'])
+      expect(repository.get_feature_flags_by_sets(['set_2'])).to eq(['split3'])
+      expect(repository.get_feature_flags_by_sets(['set_2', 'set_1']).sort).to eq(['split1', 'split3'])
+
+      repository.add_split(name: 'split4', trafficTypeName: 'tt_name_1', sets: ['set_1'])
+      expect(repository.get_feature_flags_by_sets(['set_1'])).to eq(['split1', 'split4'])
+
+      repository.remove_split(name: 'split1', trafficTypeName: 'tt_name_1', sets: ['set_1'])
+      expect(repository.is_flag_set_exist('set_1')).to be true
+      expect(repository.get_feature_flags_by_sets(['set_1'])).to eq(['split4'])
+
+      repository.remove_split(name: 'split4', trafficTypeName: 'tt_name_1', sets: ['set_1'])
+      expect(repository.is_flag_set_exist('set_1')).to be false
+      expect(repository.get_feature_flags_by_sets(['set_1'])).to eq([])
+      expect(repository.get_feature_flags_by_sets(['set_2', 'set_1']).sort).to eq(['split3'])
+    end
+
+    it 'check with flagset filter' do
+      repository2.add_split(name: 'split1', trafficTypeName: 'tt_name_1', sets: ['set_1'])
+      repository2.add_split(name: 'split2', trafficTypeName: 'tt_name_2', sets: ['set_3'])
+      repository2.add_split(name: 'split3', trafficTypeName: 'tt_name_1', sets: ['set_2'])
+
+      expect(repository2.is_flag_set_exist('set_1')).to be true
+      expect(repository2.is_flag_set_exist('set_2')).to be true
+      expect(repository2.is_flag_set_exist('set_3')).to be false
+      expect(repository2.get_feature_flags_by_sets(['set_3'])).to eq([])
+      expect(repository2.get_feature_flags_by_sets(['set_1'])).to eq(['split1'])
+      expect(repository2.get_feature_flags_by_sets(['set_2'])).to eq(['split3'])
+      expect(repository2.get_feature_flags_by_sets(['set_2', 'set_1']).sort).to eq(['split1', 'split3'])
+
+      repository2.add_split(name: 'split4', trafficTypeName: 'tt_name_1', sets: ['set_1'])
+      expect(repository2.get_feature_flags_by_sets(['set_1'])).to eq(['split1', 'split4'])
+
+      repository2.remove_split(name: 'split1', trafficTypeName: 'tt_name_1', sets: ['set_1'])
+      expect(repository2.is_flag_set_exist('set_1')).to be true
+      expect(repository2.get_feature_flags_by_sets(['set_1'])).to eq(['split4'])
+
+      repository2.remove_split(name: 'split4', trafficTypeName: 'tt_name_1', sets: ['set_1'])
+      expect(repository2.is_flag_set_exist('set_1')).to be true
+      expect(repository2.get_feature_flags_by_sets(['set_1'])).to eq([])
+      expect(repository2.get_feature_flags_by_sets(['set_2', 'set_1']).sort).to eq(['split3'])
+    end
+
   end
 
   describe 'with Memory Adapter' do

@@ -6,7 +6,7 @@ module SplitIoClient
       class SplitsRepository < Repository
         attr_reader :adapter
 
-        def initialize(config)
+        def initialize(config, flag_sets = [])
           super(config)
           @tt_cache = {}
           @adapter = case @config.cache_adapter.class.to_s
@@ -15,6 +15,8 @@ module SplitIoClient
           else
             @config.cache_adapter
           end
+          @flag_sets = SplitIoClient::Cache::Repositories::FlagSets.new(flag_sets)
+          @flag_set_filter = SplitIoClient::Cache::Filter::FlagSetsFilter.new(flag_sets)
           unless @config.mode.equal?(:consumer)
             @adapter.set_string(namespace_key('.splits.till'), '-1')
             @adapter.initialize_map(namespace_key('.segments.registered'))
@@ -30,6 +32,19 @@ module SplitIoClient
           elsif(existing_split[:trafficTypeName] != split[:trafficTypeName])
             increase_tt_name_count(split[:trafficTypeName])
             decrease_tt_name_count(existing_split[:trafficTypeName])
+            remove_from_flag_sets(existing_split)
+          end
+
+          if !split[:sets].nil?
+            for flag_set in split[:sets]
+              if !@flag_sets.flag_set_exist?(flag_set)
+                if @flag_set_filter.should_filter?
+                  next
+                end
+                @flag_sets.add_flag_set(flag_set)
+              end
+              @flag_sets.add_feature_flag_to_flag_set(flag_set, split[:name])
+            end
           end
 
           @adapter.set_string(namespace_key(".split.#{split[:name]}"), split.to_json)
@@ -39,7 +54,7 @@ module SplitIoClient
           tt_name = split[:trafficTypeName]
 
           decrease_tt_name_count(split[:trafficTypeName])
-
+          remove_from_flag_sets(split)
           @adapter.delete(namespace_key(".split.#{split[:name]}"))
         end
 
@@ -144,7 +159,37 @@ module SplitIoClient
           split_names.length
         end
 
+        def get_feature_flags_by_sets(flag_sets)
+          sets_to_fetch = Array.new
+          for flag_set in flag_sets
+            if !@flag_sets.flag_set_exist?(flag_set)
+              @config.logger.warn("Flag set #{flag_set} is not part of the configured flag set list, ignoring it.")
+              next
+            end
+            sets_to_fetch.push(flag_set)
+          end
+
+          to_return = Array.new
+          sets_to_fetch.each { |flag_set| to_return.concat(@flag_sets.get_flag_set(flag_set).to_a)}
+          to_return.uniq
+        end
+
+        def is_flag_set_exist(flag_set)
+          @flag_sets.flag_set_exist?(flag_set)
+        end
+
         private
+
+        def remove_from_flag_sets(feature_flag)
+          if !feature_flag[:sets].nil?
+            for flag_set in feature_flag[:sets]
+              @flag_sets.remove_feature_flag_to_flag_set(flag_set, feature_flag[:name])
+              if is_flag_set_exist(flag_set) && @flag_sets.get_flag_set(flag_set).length == 0 && !@flag_set_filter.should_filter?
+                  @flag_sets.remove_flag_set(flag_set)
+              end
+            end
+          end
+        end
 
         def increase_tt_name_count(tt_name)
           return unless tt_name
