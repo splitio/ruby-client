@@ -44,6 +44,10 @@ module SplitIoClient
           @latencies << { method: Domain::Constants::TREATMENTS, latencies: Concurrent::Array.new(array_size, 0) }
           @latencies << { method: Domain::Constants::TREATMENT_WITH_CONFIG, latencies: Concurrent::Array.new(array_size, 0) }
           @latencies << { method: Domain::Constants::TREATMENTS_WITH_CONFIG, latencies: Concurrent::Array.new(array_size, 0) }
+          @latencies << { method: Domain::Constants::TREATMENTS_BY_FLAG_SET, latencies: Concurrent::Array.new(array_size, 0) }
+          @latencies << { method: Domain::Constants::TREATMENTS_BY_FLAG_SETS, latencies: Concurrent::Array.new(array_size, 0) }
+          @latencies << { method: Domain::Constants::TREATMENTS_WITH_CONFIG_BY_FLAG_SET, latencies: Concurrent::Array.new(array_size, 0) }
+          @latencies << { method: Domain::Constants::TREATMENTS_WITH_CONFIG_BY_FLAG_SETS, latencies: Concurrent::Array.new(array_size, 0) }
           @latencies << { method: Domain::Constants::TRACK, latencies: Concurrent::Array.new(array_size, 0) }
         end
 
@@ -54,6 +58,10 @@ module SplitIoClient
           @exceptions << { method: Domain::Constants::TREATMENTS, exceptions: Concurrent::AtomicFixnum.new(0) }
           @exceptions << { method: Domain::Constants::TREATMENT_WITH_CONFIG, exceptions: Concurrent::AtomicFixnum.new(0) }
           @exceptions << { method: Domain::Constants::TREATMENTS_WITH_CONFIG, exceptions: Concurrent::AtomicFixnum.new(0) }
+          @exceptions << { method: Domain::Constants::TREATMENTS_BY_FLAG_SET, exceptions: Concurrent::AtomicFixnum.new(0) }
+          @exceptions << { method: Domain::Constants::TREATMENTS_BY_FLAG_SETS, exceptions: Concurrent::AtomicFixnum.new(0) }
+          @exceptions << { method: Domain::Constants::TREATMENTS_WITH_CONFIG_BY_FLAG_SET, exceptions: Concurrent::AtomicFixnum.new(0) }
+          @exceptions << { method: Domain::Constants::TREATMENTS_WITH_CONFIG_BY_FLAG_SETS, exceptions: Concurrent::AtomicFixnum.new(0) }
           @exceptions << { method: Domain::Constants::TRACK, exceptions: Concurrent::AtomicFixnum.new(0) }
         end
 

@@ -16,8 +16,8 @@ module SplitIoClient
     # om: operationMode, st: storage, af: activeFactories, rf: redundantActiveFactories, t: tags, se: streamingEnabled,
     # rr: refreshRate, uo: urlOverrides, iq: impressionsQueueSize, eq: eventsQueueSize, im: impressionsMode,
     # il: impressionListenerEnabled, hp: httpProxyDetected, tr: timeUntilSdkReady, bt: burTimeouts,
-    # nr: sdkNotReadyUsage, i: integrations
-    ConfigInit = Struct.new(:om, :st, :af, :rf, :t, :se, :rr, :uo, :iq, :eq, :im, :il, :hp, :tr, :bt, :nr, :i)
+    # nr: sdkNotReadyUsage, i: integrations, fsT: Total flagsets, fsI: Invalid flagsets
+    ConfigInit = Struct.new(:om, :st, :af, :rf, :t, :fsT, :fsI, :se, :rr, :uo, :iq, :eq, :im, :il, :hp, :tr, :bt, :nr, :i)
 
     # ls: lastSynchronization, ml: clientMethodLatencies, me: clientMethodExceptions, he: httpErros, hl: httpLatencies,
     # tr: tokenRefreshes, ar: authRejections, iq: impressionsQueued, ide: impressionsDeduped, idr: impressionsDropped,
@@ -26,8 +26,8 @@ module SplitIoClient
     Usage = Struct.new(:ls, :ml, :me, :he, :hl, :tr, :ar, :iq, :ide, :idr, :spc, :sec, :skc, :sl, :eq, :ed, :se, :t, :ufs)
 
     # t: treatment, ts: treatments, tc: treatmentWithConfig, tcs: treatmentsWithConfig, tr: track
-    ClientMethodLatencies = Struct.new(:t, :ts, :tc, :tcs, :tr)
-    ClientMethodExceptions = Struct.new(:t, :ts, :tc, :tcs, :tr)
+    ClientMethodLatencies = Struct.new(:t, :ts, :tc, :tcs, :tf, :tfs, :tcf, :tcfs, :tr)
+    ClientMethodExceptions = Struct.new(:t, :ts, :tc, :tcs, :tf, :tfs, :tcf, :tcfs, :tr)
 
     # sp: splits
     UpdatesFromSSE = Struct.new(:sp)

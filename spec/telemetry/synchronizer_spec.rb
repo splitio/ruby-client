@@ -8,9 +8,9 @@ describe SplitIoClient::Telemetry::Synchronizer do
   context 'Redis' do
     let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log), cache_adapter: :redis, mode: :consumer, redis_namespace: 'synch-test') }
     let(:adapter) { config.telemetry_adapter }
-    let(:init_producer) { SplitIoClient::Telemetry::InitProducer.new(config) }    
+    let(:init_producer) { SplitIoClient::Telemetry::InitProducer.new(config) }
     let(:synchronizer) { SplitIoClient::Telemetry::Synchronizer.new(config, nil, init_producer, nil, nil) }
-    let(:config_key) { 'synch-test.SPLITIO.telemetry.init' }    
+    let(:config_key) { 'synch-test.SPLITIO.telemetry.init' }
 
     it 'synchronize_config with data' do
       adapter.redis.del(config_key)
@@ -42,11 +42,11 @@ describe SplitIoClient::Telemetry::Synchronizer do
     let(:init_producer) { SplitIoClient::Telemetry::InitProducer.new(config) }
     let(:telemetry_api) { SplitIoClient::Api::TelemetryApi.new(config, api_key, runtime_producer) }
     let(:telemetry_consumers) { { init: init_consumer, runtime: runtime_consumer, evaluation: evaluation_consumer } }
-    let(:body_usage) { "{\"lS\":{\"sp\":111111222,\"se\":111111222,\"im\":111111222,\"ic\":111111222,\"ev\":111111222,\"te\":111111222,\"to\":111111222},\"mL\":{\"t\":[0,2,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"ts\":[0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"tc\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"tcs\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"tr\":[0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},\"mE\":{\"t\":2,\"ts\":1,\"tc\":1,\"tcs\":0,\"tr\":1},\"hE\":{\"sp\":{},\"se\":{\"400\":1},\"im\":{},\"ic\":{},\"ev\":{\"500\":2,\"501\":1},\"te\":{},\"to\":{}},\"hL\":{\"sp\":[0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"se\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"im\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"ic\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"ev\":[0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"te\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"to\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},\"tR\":1,\"aR\":1,\"iQ\":3,\"iDe\":1,\"iDr\":2,\"spC\":3,\"seC\":3,\"skC\":7,\"sL\":444555,\"eQ\":4,\"eD\":1,\"sE\":[{\"e\":50,\"d\":222222333,\"t\":222222333},{\"e\":70,\"d\":0,\"t\":222222333},{\"e\":70,\"d\":1,\"t\":222222333}],\"t\":[\"tag-1\",\"tag-2\"],\"ufs\":{\"sp\":5}}" }
-    let(:empty_body_usage) { "{\"lS\":{\"sp\":0,\"se\":0,\"im\":0,\"ic\":0,\"ev\":0,\"te\":0,\"to\":0},\"mL\":{\"t\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"ts\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"tc\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"tcs\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"tr\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},\"mE\":{\"t\":0,\"ts\":0,\"tc\":0,\"tcs\":0,\"tr\":0},\"hE\":{\"sp\":{},\"se\":{},\"im\":{},\"ic\":{},\"ev\":{},\"te\":{},\"to\":{}},\"hL\":{\"sp\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"se\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"im\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"ic\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"ev\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"te\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"to\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},\"tR\":0,\"aR\":0,\"iQ\":0,\"iDe\":0,\"iDr\":0,\"spC\":0,\"seC\":0,\"skC\":0,\"sL\":0,\"eQ\":0,\"eD\":0,\"sE\":[],\"t\":[],\"ufs\":{\"sp\":0}}" }
-    let(:body_custom_config)  { "{\"oM\":0,\"sE\":true,\"st\":\"memory\",\"rR\":{\"sp\":100,\"se\":110,\"im\":120,\"ev\":130,\"te\":140},\"iQ\":5000,\"eQ\":500,\"iM\":0,\"uO\":{\"s\":true,\"e\":true,\"a\":true,\"st\":false,\"t\":false},\"iL\":false,\"hP\":false,\"aF\":1,\"rF\":1,\"tR\":100,\"bT\":2,\"nR\":1,\"t\":[],\"i\":null}" }
-    let(:body_default_config) { "{\"oM\":0,\"sE\":true,\"st\":\"memory\",\"rR\":{\"sp\":60,\"se\":60,\"im\":300,\"ev\":60,\"te\":3600},\"iQ\":5000,\"eQ\":500,\"iM\":0,\"uO\":{\"s\":false,\"e\":false,\"a\":false,\"st\":false,\"t\":false},\"iL\":false,\"hP\":false,\"aF\":1,\"rF\":1,\"tR\":500,\"bT\":0,\"nR\":0,\"t\":[],\"i\":null}" }
-    let(:body_proxy_config)   { "{\"oM\":0,\"sE\":true,\"st\":\"memory\",\"rR\":{\"sp\":60,\"se\":60,\"im\":300,\"ev\":60,\"te\":3600},\"iQ\":5000,\"eQ\":500,\"iM\":0,\"uO\":{\"s\":false,\"e\":false,\"a\":false,\"st\":false,\"t\":false},\"iL\":false,\"hP\":true,\"aF\":1,\"rF\":1,\"tR\":500,\"bT\":0,\"nR\":0,\"t\":[],\"i\":null}" }
+    let(:body_usage) { "{\"lS\":{\"sp\":111111222,\"se\":111111222,\"im\":111111222,\"ic\":111111222,\"ev\":111111222,\"te\":111111222,\"to\":111111222},\"mL\":{\"t\":[0,2,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"ts\":[0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"tc\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"tcs\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"tf\":[0,2,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"tfs\":[0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"tcf\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"tcfs\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"tr\":[0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},\"mE\":{\"t\":2,\"ts\":1,\"tc\":1,\"tcs\":0,\"tf\":2,\"tfs\":1,\"tcf\":1,\"tcfs\":0,\"tr\":1},\"hE\":{\"sp\":{},\"se\":{\"400\":1},\"im\":{},\"ic\":{},\"ev\":{\"500\":2,\"501\":1},\"te\":{},\"to\":{}},\"hL\":{\"sp\":[0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"se\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"im\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"ic\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"ev\":[0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"te\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"to\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},\"tR\":1,\"aR\":1,\"iQ\":3,\"iDe\":1,\"iDr\":2,\"spC\":3,\"seC\":3,\"skC\":7,\"sL\":444555,\"eQ\":4,\"eD\":1,\"sE\":[{\"e\":50,\"d\":222222333,\"t\":222222333},{\"e\":70,\"d\":0,\"t\":222222333},{\"e\":70,\"d\":1,\"t\":222222333}],\"t\":[\"tag-1\",\"tag-2\"],\"ufs\":{\"sp\":5}}" }
+    let(:empty_body_usage) { "{\"lS\":{\"sp\":0,\"se\":0,\"im\":0,\"ic\":0,\"ev\":0,\"te\":0,\"to\":0},\"mL\":{\"t\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"ts\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"tc\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"tcs\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"tf\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"tfs\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"tcf\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"tcfs\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"tr\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},\"mE\":{\"t\":0,\"ts\":0,\"tc\":0,\"tcs\":0,\"tf\":0,\"tfs\":0,\"tcf\":0,\"tcfs\":0,\"tr\":0},\"hE\":{\"sp\":{},\"se\":{},\"im\":{},\"ic\":{},\"ev\":{},\"te\":{},\"to\":{}},\"hL\":{\"sp\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"se\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"im\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"ic\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"ev\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"te\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"to\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},\"tR\":0,\"aR\":0,\"iQ\":0,\"iDe\":0,\"iDr\":0,\"spC\":0,\"seC\":0,\"skC\":0,\"sL\":0,\"eQ\":0,\"eD\":0,\"sE\":[],\"t\":[],\"ufs\":{\"sp\":0}}" }
+    let(:body_custom_config)  { "{\"oM\":0,\"sE\":true,\"st\":\"memory\",\"rR\":{\"sp\":100,\"se\":110,\"im\":120,\"ev\":130,\"te\":140},\"iQ\":5000,\"eQ\":500,\"iM\":0,\"uO\":{\"s\":true,\"e\":true,\"a\":true,\"st\":false,\"t\":false},\"iL\":false,\"hP\":false,\"aF\":1,\"rF\":1,\"tR\":100,\"bT\":2,\"nR\":1,\"t\":[],\"i\":null,\"fsT\":1,\"fsI\":0}" }
+    let(:body_default_config) { "{\"oM\":0,\"sE\":true,\"st\":\"memory\",\"rR\":{\"sp\":60,\"se\":60,\"im\":300,\"ev\":60,\"te\":3600},\"iQ\":5000,\"eQ\":500,\"iM\":0,\"uO\":{\"s\":false,\"e\":false,\"a\":false,\"st\":false,\"t\":false},\"iL\":false,\"hP\":false,\"aF\":1,\"rF\":1,\"tR\":500,\"bT\":0,\"nR\":0,\"t\":[],\"i\":null,\"fsT\":1,\"fsI\":0}" }
+    let(:body_proxy_config)   { "{\"oM\":0,\"sE\":true,\"st\":\"memory\",\"rR\":{\"sp\":60,\"se\":60,\"im\":300,\"ev\":60,\"te\":3600},\"iQ\":5000,\"eQ\":500,\"iM\":0,\"uO\":{\"s\":false,\"e\":false,\"a\":false,\"st\":false,\"t\":false},\"iL\":false,\"hP\":true,\"aF\":1,\"rF\":1,\"tR\":500,\"bT\":0,\"nR\":0,\"t\":[],\"i\":null,\"fsT\":1,\"fsI\":0}" }
 
     context 'synchronize_stats' do
       before do
@@ -111,12 +111,22 @@ describe SplitIoClient::Telemetry::Synchronizer do
         evaluation_producer.record_latency(SplitIoClient::Telemetry::Domain::Constants::TREATMENT, 1)
         evaluation_producer.record_latency(SplitIoClient::Telemetry::Domain::Constants::TREATMENTS, 2)
         evaluation_producer.record_latency(SplitIoClient::Telemetry::Domain::Constants::TREATMENTS, 3)
+        evaluation_producer.record_latency(SplitIoClient::Telemetry::Domain::Constants::TREATMENTS_BY_FLAG_SET, 1)
+        evaluation_producer.record_latency(SplitIoClient::Telemetry::Domain::Constants::TREATMENTS_BY_FLAG_SET, 3)
+        evaluation_producer.record_latency(SplitIoClient::Telemetry::Domain::Constants::TREATMENTS_BY_FLAG_SET, 2)
+        evaluation_producer.record_latency(SplitIoClient::Telemetry::Domain::Constants::TREATMENTS_BY_FLAG_SET, 1)
+        evaluation_producer.record_latency(SplitIoClient::Telemetry::Domain::Constants::TREATMENTS_BY_FLAG_SETS, 2)
+        evaluation_producer.record_latency(SplitIoClient::Telemetry::Domain::Constants::TREATMENTS_BY_FLAG_SETS, 3)
         evaluation_producer.record_latency(SplitIoClient::Telemetry::Domain::Constants::TRACK, 3)
         evaluation_producer.record_exception(SplitIoClient::Telemetry::Domain::Constants::TREATMENT)
         evaluation_producer.record_exception(SplitIoClient::Telemetry::Domain::Constants::TREATMENT)
         evaluation_producer.record_exception(SplitIoClient::Telemetry::Domain::Constants::TREATMENTS)
+        evaluation_producer.record_exception(SplitIoClient::Telemetry::Domain::Constants::TREATMENTS_BY_FLAG_SET)
+        evaluation_producer.record_exception(SplitIoClient::Telemetry::Domain::Constants::TREATMENTS_BY_FLAG_SET)
+        evaluation_producer.record_exception(SplitIoClient::Telemetry::Domain::Constants::TREATMENTS_BY_FLAG_SETS)
         evaluation_producer.record_exception(SplitIoClient::Telemetry::Domain::Constants::TRACK)
         evaluation_producer.record_exception(SplitIoClient::Telemetry::Domain::Constants::TREATMENT_WITH_CONFIG)
+        evaluation_producer.record_exception(SplitIoClient::Telemetry::Domain::Constants::TREATMENTS_WITH_CONFIG_BY_FLAG_SET)
 
         synchronizer.synchronize_stats
 
@@ -136,10 +146,10 @@ describe SplitIoClient::Telemetry::Synchronizer do
       before do
         stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
           .to_return(status: 200, body: 'ok')
-        
+
         SplitIoClient.load_factory_registry
       end
-      
+
       it 'with custom data' do
         config.features_refresh_rate = 100
         config.segments_refresh_rate = 110
@@ -160,7 +170,7 @@ describe SplitIoClient::Telemetry::Synchronizer do
                                                                   { splits: splits_repository, segments: segments_repository },
                                                                   telemetry_api)
 
-        synchronizer.synchronize_config(1, 1, 100)
+        synchronizer.synchronize_config(1, 1, 100, 1, 0)
 
         expect(a_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
           .with(body: body_custom_config)).to have_been_made
@@ -172,14 +182,14 @@ describe SplitIoClient::Telemetry::Synchronizer do
                                                                   init_producer,
                                                                   { splits: splits_repository, segments: segments_repository },
                                                                   telemetry_api)
-        
-        synchronizer.synchronize_config(1, 1, 500)
-  
+
+        synchronizer.synchronize_config(1, 1, 500, 1, 0)
+
         expect(a_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
           .with(body: body_default_config)).to have_been_made
       end
 
-      it 'with proxy' do        
+      it 'with proxy' do
         ENV['HTTPS_PROXY'] = 'https://proxy.test.io/api/v1/metrics/config'
 
         synchronizer = SplitIoClient::Telemetry::Synchronizer.new(config,
@@ -188,7 +198,7 @@ describe SplitIoClient::Telemetry::Synchronizer do
                                                                   { splits: splits_repository, segments: segments_repository },
                                                                   telemetry_api)
 
-        synchronizer.synchronize_config(1, 1, 500)
+        synchronizer.synchronize_config(1, 1, 500, 1, 0)
 
         expect(a_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
           .with(body: body_proxy_config)).to have_been_made

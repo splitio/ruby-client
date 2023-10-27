@@ -42,7 +42,7 @@ module SplitIoClient
         @config.log_found_exception(__method__.to_s, e)
       end
 
-      def synchronize_config(active_factories = nil, redundant_active_factories = nil, time_until_ready = nil)
+      def synchronize_config(active_factories = nil, redundant_active_factories = nil, time_until_ready = nil, flag_sets = nil, flag_sets_invalid = nil)
         rates = Rates.new(@config.features_refresh_rate,
                           @config.segments_refresh_rate,
                           @config.impressions_refresh_rate,
@@ -64,6 +64,8 @@ module SplitIoClient
                                      active_factories,
                                      redundant_active_factories,
                                      @telemetry_runtime_consumer.pop_tags,
+                                     flag_sets,
+                                     flag_sets_invalid,
                                      @config.streaming_enabled,
                                      rates,
                                      url_overrides,
@@ -113,7 +115,9 @@ module SplitIoClient
           bT: init.bt,
           nR: init.nr,
           t: init.t,
-          i: init.i
+          i: init.i,
+          fsT: init.fsT,
+          fsI: init.fsI
         }
       end
 
@@ -125,6 +129,10 @@ module SplitIoClient
             ts: usage.ml[Telemetry::Domain::Constants::TREATMENTS],
             tc: usage.ml[Telemetry::Domain::Constants::TREATMENT_WITH_CONFIG],
             tcs: usage.ml[Telemetry::Domain::Constants::TREATMENTS_WITH_CONFIG],
+            tf: usage.ml[Telemetry::Domain::Constants::TREATMENTS_BY_FLAG_SET],
+            tfs: usage.ml[Telemetry::Domain::Constants::TREATMENTS_BY_FLAG_SETS],
+            tcf: usage.ml[Telemetry::Domain::Constants::TREATMENTS_WITH_CONFIG_BY_FLAG_SET],
+            tcfs: usage.ml[Telemetry::Domain::Constants::TREATMENTS_WITH_CONFIG_BY_FLAG_SETS],
             tr: usage.ml[Telemetry::Domain::Constants::TRACK]
           },
           mE: {
@@ -132,6 +140,10 @@ module SplitIoClient
             ts: usage.me[Telemetry::Domain::Constants::TREATMENTS],
             tc: usage.me[Telemetry::Domain::Constants::TREATMENT_WITH_CONFIG],
             tcs: usage.me[Telemetry::Domain::Constants::TREATMENTS_WITH_CONFIG],
+            tf: usage.me[Telemetry::Domain::Constants::TREATMENTS_BY_FLAG_SET],
+            tfs: usage.me[Telemetry::Domain::Constants::TREATMENTS_BY_FLAG_SETS],
+            tcf: usage.me[Telemetry::Domain::Constants::TREATMENTS_WITH_CONFIG_BY_FLAG_SET],
+            tcfs: usage.me[Telemetry::Domain::Constants::TREATMENTS_WITH_CONFIG_BY_FLAG_SETS],
             tr: usage.me[Telemetry::Domain::Constants::TRACK]
           },
           hE: {
