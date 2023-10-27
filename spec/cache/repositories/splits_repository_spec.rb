@@ -14,6 +14,11 @@ describe SplitIoClient::Cache::Repositories::SplitsRepository do
       redis.flushall
     end
 
+    after :all do
+      redis = Redis.new
+      redis.flushall
+    end
+
     before do
       # in memory setup
       repository.update([{name: 'foo', trafficTypeName: 'tt_name_1'},
@@ -36,7 +41,9 @@ describe SplitIoClient::Cache::Repositories::SplitsRepository do
                           {name: 'qux', trafficTypeName: 'tt_name_3'},
                           {name: 'quux', trafficTypeName: 'tt_name_4'},
                           {name: 'corge', trafficTypeName: 'tt_name_5'},
-                          {name: 'corge', trafficTypeName: 'tt_name_6'}], 1)
+                          {name: 'corge', trafficTypeName: 'tt_name_6'},
+                        {name: 'split2', trafficTypeName: 'tt_name_2', sets: ['set_3']},
+                        {name: 'split3', trafficTypeName: 'tt_name_1', sets: ['set_2']}], 1)
     end
 
     it 'returns splits names' do
