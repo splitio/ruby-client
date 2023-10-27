@@ -11,6 +11,10 @@ module SplitIoClient
           @should_filter = @flag_sets.any?
         end
 
+        def should_filter?
+          @should_filter
+        end
+
         def flag_set_exist?(flag_set)
           return true unless @should_filter
 
