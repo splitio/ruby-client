@@ -1,7 +1,10 @@
 # frozen_string_literal: true
+require 'set'
 
 module SplitIoClient
   class Validators
+
+    Flagset_regex = /^[a-z0-9][_a-z0-9]{0,49}$/
 
     def initialize(config)
       @config = config
@@ -38,6 +41,24 @@ module SplitIoClient
       true
     end
 
+    def valid_flag_sets(method, flag_sets)
+      return Set[] if flag_sets.nil? || !flag_sets.is_a?(Array)
+
+      valid_flag_sets = SortedSet[]
+      flag_sets.compact.uniq.select do |flag_set|
+        if !flag_set.is_a?(String)
+          log_invalid_type(:flag_set, method)
+        elsif flag_set.is_a?(String) && flag_set.empty?
+          log_nil(:flag_set, method)
+        elsif !flag_set.empty? && string_match?(flag_set.strip, method)
+          valid_flag_sets.add(flag_set.strip.downcase)
+        else
+          @config.logger.warn("#{method}: you passed an invalid flag set, flag set name must be a non-empty String")
+        end
+      end
+      !valid_flag_sets.empty? ? valid_flag_sets :  Set[]
+    end
+
     private
 
     def string?(value)
@@ -50,6 +71,21 @@ module SplitIoClient
 
     def number_or_string?(value)
       (value.is_a?(Numeric) && !value.to_f.nan?) || string?(value)
+    end
+
+    def string_match?(value, method)
+      if Flagset_regex.match(value) == nil
+        log_invalid_match(value, method)
+        false
+      else
+        true
+      end
+    end
+
+    def log_invalid_match(key, method)
+      @config.logger.error("#{method}: you passed #{key}, flag set must adhere to the regular expression #{Flagset_regex}. " +
+      "This means flag set must be alphanumeric, cannot be more than 50 characters long, and can only include a dash, underscore, " +
+      "period, or colon as separators of alphanumeric characters.")
     end
 
     def log_nil(key, method)
