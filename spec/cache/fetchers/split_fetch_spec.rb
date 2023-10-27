@@ -23,7 +23,7 @@ describe SplitIoClient::Cache::Fetchers::SplitFetcher do
         cache_adapter: :memory
       )
     end
-    let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config) }
+    let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, []) }
     let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
     let(:store) { described_class.new(splits_repository, '', config, telemetry_runtime_producer) }
 
@@ -71,19 +71,17 @@ describe SplitIoClient::Cache::Fetchers::SplitFetcher do
         cache_adapter: :redis
       )
     end
-    let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config) }
+    let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, []) }
     let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
     let(:store) { described_class.new(splits_repository, '', config, telemetry_runtime_producer) }
 
     it 'returns splits since' do
       splits = store.send(:splits_since, -1)
-
       expect(splits[:splits].count).to eq(2)
     end
 
     it 'fetch data in the cache' do
       store.send(:fetch_splits)
-
       expect(store.splits_repository.splits.size).to eq(2)
       expect(store.splits_repository.get_change_number).to eq(store.send(:splits_since, -1)[:till].to_s)
     end
