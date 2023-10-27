@@ -23,55 +23,10 @@ module SplitIoClient
           end
         end
 
-        def add_split(split)
-          return unless split[:name]
-          existing_split = get_split(split[:name])
-
-          if(!existing_split)
-            increase_tt_name_count(split[:trafficTypeName])
-          elsif(existing_split[:trafficTypeName] != split[:trafficTypeName])
-            increase_tt_name_count(split[:trafficTypeName])
-            decrease_tt_name_count(existing_split[:trafficTypeName])
-            remove_from_flag_sets(existing_split)
-          end
-
-          if !split[:sets].nil?
-            for flag_set in split[:sets]
-              if !@flag_sets.flag_set_exist?(flag_set)
-                if @flag_set_filter.should_filter?
-                  next
-                end
-                @flag_sets.add_flag_set(flag_set)
-              end
-              @flag_sets.add_feature_flag_to_flag_set(flag_set, split[:name])
-            end
-          end
-
-          @adapter.set_string(namespace_key(".split.#{split[:name]}"), split.to_json)
-        end
-
-        def remove_split(split)
-          tt_name = split[:trafficTypeName]
-
-          decrease_tt_name_count(split[:trafficTypeName])
-          remove_from_flag_sets(split)
-          @adapter.delete(namespace_key(".split.#{split[:name]}"))
-        end
-
-        def get_splits(names, symbolize_names = true)
-          splits = {}
-          split_names = names.map { |name| namespace_key(".split.#{name}") }
-          splits.merge!(
-            @adapter
-              .multiple_strings(split_names)
-              .map { |name, data| [name.gsub(namespace_key('.split.'), ''), data] }.to_h
-          )
-
-          splits.map do |name, data|
-            parsed_data = data ? JSON.parse(data, symbolize_names: true) : nil
-            split_name = symbolize_names ? name.to_sym : name
-            [split_name, parsed_data]
-          end.to_h
+        def update(to_add, to_delete, new_change_number)
+          to_add.each{ |feature_flag| add_feature_flag(feature_flag) }
+          to_delete.each{ |feature_flag| remove_feature_flag(feature_flag) }
+          set_change_number(new_change_number)
         end
 
         def get_split(name)
@@ -179,6 +134,57 @@ module SplitIoClient
         end
 
         private
+
+        def add_feature_flag(split)
+          return unless split[:name]
+          existing_split = get_split(split[:name])
+
+          if(!existing_split)
+            increase_tt_name_count(split[:trafficTypeName])
+          elsif(existing_split[:trafficTypeName] != split[:trafficTypeName])
+            increase_tt_name_count(split[:trafficTypeName])
+            decrease_tt_name_count(existing_split[:trafficTypeName])
+            remove_from_flag_sets(existing_split)
+          end
+
+          if !split[:sets].nil?
+            for flag_set in split[:sets]
+              if !@flag_sets.flag_set_exist?(flag_set)
+                if @flag_set_filter.should_filter?
+                  next
+                end
+                @flag_sets.add_flag_set(flag_set)
+              end
+              @flag_sets.add_feature_flag_to_flag_set(flag_set, split[:name])
+            end
+          end
+
+          @adapter.set_string(namespace_key(".split.#{split[:name]}"), split.to_json)
+        end
+
+        def remove_feature_flag(split)
+          tt_name = split[:trafficTypeName]
+
+          decrease_tt_name_count(split[:trafficTypeName])
+          remove_from_flag_sets(split)
+          @adapter.delete(namespace_key(".split.#{split[:name]}"))
+        end
+
+        def get_splits(names, symbolize_names = true)
+          splits = {}
+          split_names = names.map { |name| namespace_key(".split.#{name}") }
+          splits.merge!(
+            @adapter
+              .multiple_strings(split_names)
+              .map { |name, data| [name.gsub(namespace_key('.split.'), ''), data] }.to_h
+          )
+
+          splits.map do |name, data|
+            parsed_data = data ? JSON.parse(data, symbolize_names: true) : nil
+            split_name = symbolize_names ? name.to_sym : name
+            [split_name, parsed_data]
+          end.to_h
+        end
 
         def remove_from_flag_sets(feature_flag)
           if !feature_flag[:sets].nil?

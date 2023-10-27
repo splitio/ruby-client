@@ -16,9 +16,9 @@ describe SplitIoClient::Cache::Repositories::SplitsRepository do
 
     before do
       # in memory setup
-      repository.add_split(name: 'foo', trafficTypeName: 'tt_name_1')
-      repository.add_split(name: 'bar', trafficTypeName: 'tt_name_2')
-      repository.add_split(name: 'baz', trafficTypeName: 'tt_name_1')
+      repository.update([{name: 'foo', trafficTypeName: 'tt_name_1'},
+                        {name: 'bar', trafficTypeName: 'tt_name_2'},
+                        {name: 'baz', trafficTypeName: 'tt_name_1'}], [], -1)
 
       # redis setup
       repository.instance_variable_get(:@adapter).set_string(
@@ -30,13 +30,13 @@ describe SplitIoClient::Cache::Repositories::SplitsRepository do
     end
 
     after do
-      repository.remove_split(name: 'foo', trafficTypeName: 'tt_name_1')
-      repository.remove_split(name: 'bar', trafficTypeName: 'tt_name_2')
-      repository.remove_split(name: 'bar', trafficTypeName: 'tt_name_2')
-      repository.remove_split(name: 'qux', trafficTypeName: 'tt_name_3')
-      repository.remove_split(name: 'quux', trafficTypeName: 'tt_name_4')
-      repository.remove_split(name: 'corge', trafficTypeName: 'tt_name_5')
-      repository.remove_split(name: 'corge', trafficTypeName: 'tt_name_6')
+      repository.update([], [{name: 'foo', trafficTypeName: 'tt_name_1'},
+                          {name: 'bar', trafficTypeName: 'tt_name_2'},
+                          {name: 'bar', trafficTypeName: 'tt_name_2'},
+                          {name: 'qux', trafficTypeName: 'tt_name_3'},
+                          {name: 'quux', trafficTypeName: 'tt_name_4'},
+                          {name: 'corge', trafficTypeName: 'tt_name_5'},
+                          {name: 'corge', trafficTypeName: 'tt_name_6'}], 1)
     end
 
     it 'returns splits names' do
@@ -53,8 +53,8 @@ describe SplitIoClient::Cache::Repositories::SplitsRepository do
 
       split = { name: 'qux', trafficTypeName: 'tt_name_3' }
 
-      repository.add_split(split)
-      repository.remove_split(split)
+      repository.update([split], [], 2)
+      repository.update([], [split], 3)
 
       expect(repository.traffic_type_exists('tt_name_3')).to be false
     end
@@ -62,9 +62,8 @@ describe SplitIoClient::Cache::Repositories::SplitsRepository do
     it 'does not increment traffic type count when adding same split twice' do
       split = { name: 'quux', trafficTypeName: 'tt_name_4' }
 
-      repository.add_split(split)
-      repository.add_split(split)
-      repository.remove_split(split)
+      repository.update([split, split], [], 4)
+      repository.update([], [split], 5)
 
       expect(repository.traffic_type_exists('tt_name_4')).to be false
     end
@@ -72,7 +71,7 @@ describe SplitIoClient::Cache::Repositories::SplitsRepository do
     it 'updates traffic type count accordingly when split changes traffic type' do
       split = { name: 'corge', trafficTypeName: 'tt_name_5' }
 
-      repository.add_split(split)
+      repository.update([split], [], 6)
       repository.instance_variable_get(:@adapter).set_string(
         repository.send(:namespace_key, '.trafficType.tt_name_5'), '1'
       )
@@ -81,7 +80,7 @@ describe SplitIoClient::Cache::Repositories::SplitsRepository do
 
       split = { name: 'corge', trafficTypeName: 'tt_name_6' }
 
-      repository.add_split(split)
+      repository.update([split], [], 7)
 
       # mimicing synchronizer internals
       repository.instance_variable_get(:@adapter).set_string(
@@ -104,9 +103,10 @@ describe SplitIoClient::Cache::Repositories::SplitsRepository do
     end
 
     it 'check without flagset filter' do
-      repository.add_split(name: 'split1', trafficTypeName: 'tt_name_1', sets: ['set_1'])
-      repository.add_split(name: 'split2', trafficTypeName: 'tt_name_2')
-      repository.add_split(name: 'split3', trafficTypeName: 'tt_name_1', sets: ['set_2'])
+      repository.update([{name: 'split1', trafficTypeName: 'tt_name_1', sets: ['set_1']},
+                        {name: 'split2', trafficTypeName: 'tt_name_2'},
+                        {name: 'split3', trafficTypeName: 'tt_name_1', sets: ['set_2']}],
+                        [], 8)
 
       expect(repository.is_flag_set_exist('set_1')).to be true
       expect(repository.is_flag_set_exist('set_2')).to be true
@@ -116,23 +116,24 @@ describe SplitIoClient::Cache::Repositories::SplitsRepository do
       expect(repository.get_feature_flags_by_sets(['set_2'])).to eq(['split3'])
       expect(repository.get_feature_flags_by_sets(['set_2', 'set_1']).sort).to eq(['split1', 'split3'])
 
-      repository.add_split(name: 'split4', trafficTypeName: 'tt_name_1', sets: ['set_1'])
+      repository.update([{name: 'split4', trafficTypeName: 'tt_name_1', sets: ['set_1']}], [], 9)
       expect(repository.get_feature_flags_by_sets(['set_1'])).to eq(['split1', 'split4'])
 
-      repository.remove_split(name: 'split1', trafficTypeName: 'tt_name_1', sets: ['set_1'])
+      repository.update([], [{name: 'split1', trafficTypeName: 'tt_name_1', sets: ['set_1']}], 10)
       expect(repository.is_flag_set_exist('set_1')).to be true
       expect(repository.get_feature_flags_by_sets(['set_1'])).to eq(['split4'])
 
-      repository.remove_split(name: 'split4', trafficTypeName: 'tt_name_1', sets: ['set_1'])
+      repository.update([], [{name: 'split4', trafficTypeName: 'tt_name_1', sets: ['set_1']}], 10)
       expect(repository.is_flag_set_exist('set_1')).to be false
       expect(repository.get_feature_flags_by_sets(['set_1'])).to eq([])
       expect(repository.get_feature_flags_by_sets(['set_2', 'set_1']).sort).to eq(['split3'])
     end
 
     it 'check with flagset filter' do
-      repository2.add_split(name: 'split1', trafficTypeName: 'tt_name_1', sets: ['set_1'])
-      repository2.add_split(name: 'split2', trafficTypeName: 'tt_name_2', sets: ['set_3'])
-      repository2.add_split(name: 'split3', trafficTypeName: 'tt_name_1', sets: ['set_2'])
+      repository2.update([{name: 'split1', trafficTypeName: 'tt_name_1', sets: ['set_1']},
+                        {name: 'split2', trafficTypeName: 'tt_name_2', sets: ['set_3']},
+                        {name: 'split3', trafficTypeName: 'tt_name_1', sets: ['set_2']}],
+                        [], 11)
 
       expect(repository2.is_flag_set_exist('set_1')).to be true
       expect(repository2.is_flag_set_exist('set_2')).to be true
@@ -142,14 +143,14 @@ describe SplitIoClient::Cache::Repositories::SplitsRepository do
       expect(repository2.get_feature_flags_by_sets(['set_2'])).to eq(['split3'])
       expect(repository2.get_feature_flags_by_sets(['set_2', 'set_1']).sort).to eq(['split1', 'split3'])
 
-      repository2.add_split(name: 'split4', trafficTypeName: 'tt_name_1', sets: ['set_1'])
+      repository2.update([{name: 'split4', trafficTypeName: 'tt_name_1', sets: ['set_1']}], [], 12)
       expect(repository2.get_feature_flags_by_sets(['set_1'])).to eq(['split1', 'split4'])
 
-      repository2.remove_split(name: 'split1', trafficTypeName: 'tt_name_1', sets: ['set_1'])
+      repository2.update([], [{name: 'split1', trafficTypeName: 'tt_name_1', sets: ['set_1']}], 13)
       expect(repository2.is_flag_set_exist('set_1')).to be true
       expect(repository2.get_feature_flags_by_sets(['set_1'])).to eq(['split4'])
 
-      repository2.remove_split(name: 'split4', trafficTypeName: 'tt_name_1', sets: ['set_1'])
+      repository2.update([], [{name: 'split4', trafficTypeName: 'tt_name_1', sets: ['set_1']}], 14)
       expect(repository2.is_flag_set_exist('set_1')).to be true
       expect(repository2.get_feature_flags_by_sets(['set_1'])).to eq([])
       expect(repository2.get_feature_flags_by_sets(['set_2', 'set_1']).sort).to eq(['split3'])
