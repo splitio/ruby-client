@@ -634,7 +634,7 @@ def load_splits_redis(splits_json, cli)
   splits_repository = cli.instance_variable_get(:@splits_repository)
 
   splits.each do |split|
-    splits_repository.add_split(split)
+    splits_repository.update([split], [], -1)
   end
 end
 

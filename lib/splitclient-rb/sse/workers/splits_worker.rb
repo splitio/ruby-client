@@ -66,15 +66,17 @@ module SplitIoClient
           return false unless !notification.data['d'].nil? && @feature_flags_repository.get_change_number == notification.data['pcn']
 
           new_split = return_split_from_json(notification)
+          to_add = []
+          to_delete = []
           if Engine::Models::Split.archived?(new_split)
-            @feature_flags_repository.remove_split(new_split)
+            to_delete.push(new_split)
           else
-            @feature_flags_repository.add_split(new_split)
+            to_add.push(new_split)
 
             fetch_segments_if_not_exists(new_split)
           end
 
-          @feature_flags_repository.set_change_number(notification.data['changeNumber'])
+          @feature_flags_repository.update(to_add, to_delete, notification.data['changeNumber'])
           @telemetry_runtime_producer.record_updates_from_sse(Telemetry::Domain::Constants::SPLITS)
 
           true

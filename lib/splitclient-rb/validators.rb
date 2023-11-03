@@ -56,7 +56,7 @@ module SplitIoClient
           @config.logger.warn("#{method}: you passed an invalid flag set, flag set name must be a non-empty String")
         end
       end
-      !valid_flag_sets.empty? ? valid_flag_sets :  Set[]
+      !valid_flag_sets.empty? ? valid_flag_sets.to_a :  []
     end
 
     private

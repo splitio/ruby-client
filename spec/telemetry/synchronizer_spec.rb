@@ -63,9 +63,9 @@ describe SplitIoClient::Telemetry::Synchronizer do
       end
 
       it 'with data' do
-        splits_repository.add_split(name: 'foo', trafficTypeName: 'tt_name_1')
-        splits_repository.add_split(name: 'bar', trafficTypeName: 'tt_name_2')
-        splits_repository.add_split(name: 'baz', trafficTypeName: 'tt_name_1')
+        splits_repository.update([{name: 'foo', trafficTypeName: 'tt_name_1'},
+                                  {name: 'bar', trafficTypeName: 'tt_name_2'},
+                                  {name: 'baz', trafficTypeName: 'tt_name_1'}], [], -1)
 
         segments_repository.add_to_segment(name: 'foo-1', added: [1, 2, 3], removed: [])
         segments_repository.add_to_segment(name: 'foo-2', added: [1, 2, 3, 4], removed: [])
