@@ -35,6 +35,7 @@ module SplitIoClient
       register_factory
 
       build_telemetry_components
+      build_flag_sets_filter
       build_repositories
       build_telemetry_synchronizer
       build_impressions_sender_adapter
@@ -55,11 +56,11 @@ module SplitIoClient
       if @config.consumer?
         build_synchronizer
         build_sync_manager
-        
+
         @sync_manager.start_consumer
         return
       end
-      
+
       build_fetchers
       build_synchronizer
       build_streaming_components
@@ -135,7 +136,7 @@ module SplitIoClient
     end
 
     def repositories
-      { 
+      {
         splits: @splits_repository,
         segments: @segments_repository,
         impressions: @impressions_repository,
@@ -188,7 +189,7 @@ module SplitIoClient
       segments_worker = SSE::Workers::SegmentsWorker.new(@synchronizer, @config, @segments_repository)
       notification_manager_keeper = SSE::NotificationManagerKeeper.new(@config, @runtime_producer, @push_status_queue)
       notification_processor = SSE::NotificationProcessor.new(@config, splits_worker, segments_worker)
-      event_parser = SSE::EventSource::EventParser.new(config)      
+      event_parser = SSE::EventSource::EventParser.new(config)
       sse_client = SSE::EventSource::Client.new(@config, @api_key, @runtime_producer, event_parser, notification_manager_keeper, notification_processor, @push_status_queue)
       @sse_handler = SSE::SSEHandler.new(@config, splits_worker, segments_worker, sse_client)
       @push_manager = Engine::PushManager.new(@config, @sse_handler, @api_key, @runtime_producer)
@@ -199,7 +200,8 @@ module SplitIoClient
     end
 
     def build_repositories
-      @splits_repository = SplitsRepository.new(@config)
+      @flag_sets_repository = SplitIoClient::Cache::Repositories::FlagSetsRepository.new(@config.flag_sets_filter)
+      @splits_repository = SplitsRepository.new(@config, @flag_sets_repository, @flag_sets_filter)
       @segments_repository = SegmentsRepository.new(@config)
       @impressions_repository = ImpressionsRepository.new(@config)
       @events_repository = EventsRepository.new(@config, @api_key, @runtime_producer)
@@ -250,6 +252,10 @@ module SplitIoClient
       build_impression_counter
 
       @impressions_manager = Engine::Common::ImpressionManager.new(@config, @impressions_repository, @impression_counter, @runtime_producer, @impression_observer, @unique_keys_tracker)
+    end
+
+    def build_flag_sets_filter
+      @flag_set_filter = SplitIoClient::Cache::Filter::FlagSetsFilter.new(@config.flag_sets_filter)
     end
   end
 end

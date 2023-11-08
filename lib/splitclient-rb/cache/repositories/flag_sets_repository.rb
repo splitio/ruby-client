@@ -3,7 +3,7 @@ require 'concurrent'
 module SplitIoClient
   module Cache
     module Repositories
-      class FlagSets
+      class FlagSetsRepository
         def initialize(flag_sets = [])
           @sets_feature_flag_map = {}
           flag_sets.each{ |flag_set| @sets_feature_flag_map[flag_set] = Set[] }

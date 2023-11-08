@@ -325,7 +325,6 @@ module SplitIoClient
         end
 
         record_latency(calling_method, start) unless multiple
-
         impression = @impressions_manager.build_impression(matching_key, bucketing_key, split_name, treatment_data, { attributes: attributes, time: nil })
         impressions << impression unless impression.nil?
       rescue StandardError => e

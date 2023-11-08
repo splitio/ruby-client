@@ -42,7 +42,7 @@ module SplitIoClient
     end
 
     def valid_flag_sets(method, flag_sets)
-      return Set[] if flag_sets.nil? || !flag_sets.is_a?(Array)
+      return [] if flag_sets.nil? || !flag_sets.is_a?(Array)
 
       valid_flag_sets = SortedSet[]
       flag_sets.compact.uniq.select do |flag_set|
@@ -50,7 +50,7 @@ module SplitIoClient
           log_invalid_type(:flag_set, method)
         elsif flag_set.is_a?(String) && flag_set.empty?
           log_nil(:flag_set, method)
-        elsif !flag_set.empty? && string_match?(flag_set.strip, method)
+        elsif !flag_set.empty? && string_match?(flag_set.strip.downcase, method)
           valid_flag_sets.add(flag_set.strip.downcase)
         else
           @config.logger.warn("#{method}: you passed an invalid flag set, flag set name must be a non-empty String")

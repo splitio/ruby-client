@@ -6,7 +6,9 @@ require 'set'
 describe SplitIoClient::Cache::Repositories::SplitsRepository do
   RSpec.shared_examples 'Splits Repository' do |cache_adapter|
     let(:config) { SplitIoClient::SplitConfig.new(cache_adapter: cache_adapter) }
-    let(:repository) { described_class.new(config) }
+    let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::FlagSetsRepository.new([])}
+    let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([])}
+    let(:repository) { described_class.new(config, flag_sets_repository, flag_set_filter) }
 
     before :all do
       redis = Redis.new

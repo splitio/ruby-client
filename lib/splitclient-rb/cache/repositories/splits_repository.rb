@@ -6,7 +6,7 @@ module SplitIoClient
       class SplitsRepository < Repository
         attr_reader :adapter
 
-        def initialize(config, flag_sets = [])
+        def initialize(config, flag_sets_repositry, flag_set_filter)
           super(config)
           @tt_cache = {}
           @adapter = case @config.cache_adapter.class.to_s
@@ -15,8 +15,8 @@ module SplitIoClient
           else
             @config.cache_adapter
           end
-          @flag_sets = SplitIoClient::Cache::Repositories::FlagSets.new(flag_sets)
-          @flag_set_filter = SplitIoClient::Cache::Filter::FlagSetsFilter.new(flag_sets)
+          @flag_sets = flag_sets_repositry
+          @flag_set_filter = flag_set_filter
           unless @config.mode.equal?(:consumer)
             @adapter.set_string(namespace_key('.splits.till'), '-1')
             @adapter.initialize_map(namespace_key('.segments.registered'))
@@ -35,8 +35,13 @@ module SplitIoClient
           JSON.parse(split, symbolize_names: true) if split
         end
 
-        def splits(split_names)
-          get_splits(split_names, false)
+        def splits(filtered_names=nil)
+          symbolize = true
+          if filtered_names.nil?
+            filtered_names = split_names
+            symbolize = false
+          end
+          get_splits(filtered_names, symbolize)
         end
 
         def traffic_type_exists(tt_name)
