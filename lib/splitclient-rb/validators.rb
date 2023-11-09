@@ -18,8 +18,12 @@ module SplitIoClient
         valid_attributes?(method, attributes)
     end
 
-    def valid_get_treatments_parameters(method, split_names)
-      valid_split_names?(method, split_names)
+    def valid_get_treatments_parameters(method, key, split_names, matching_key, bucketing_key, attributes)
+      valid_key?(method, key) &&
+        valid_split_names?(method, split_names)
+        valid_matching_key?(method, matching_key) &&
+        valid_bucketing_key?(method, key, bucketing_key) &&
+        valid_attributes?(method, attributes)
     end
 
     def valid_track_parameters(key, traffic_type_name, event_type, value, properties)

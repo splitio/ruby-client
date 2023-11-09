@@ -332,9 +332,9 @@ describe SplitIoClient do
     it 'returns treatments and check impressions' do
       result = client.get_treatments('nico_test', %w[FACUNDO_TEST MAURO_TEST Test_Save_1])
 
-      expect(result["FACUNDO_TEST"]).to eq 'on'
-      expect(result["MAURO_TEST"]).to eq 'off'
-      expect(result["Test_Save_1"]).to eq 'off'
+      expect(result[:FACUNDO_TEST]).to eq 'on'
+      expect(result[:MAURO_TEST]).to eq 'off'
+      expect(result[:Test_Save_1]).to eq 'off'
 
       sleep 0.5
       impressions = custom_impression_listener.queue
@@ -342,19 +342,19 @@ describe SplitIoClient do
       expect(impressions.size).to eq 3
 
       expect(impressions[0][:matching_key]).to eq('nico_test')
-      expect(impressions[0][:split_name]).to eq("FACUNDO_TEST")
+      expect(impressions[0][:split_name]).to eq(:FACUNDO_TEST)
       expect(impressions[0][:treatment][:treatment]).to eq('on')
       expect(impressions[0][:treatment][:label]).to eq('whitelisted')
       expect(impressions[0][:treatment][:change_number]).to eq(1_506_703_262_916)
 
       expect(impressions[1][:matching_key]).to eq('nico_test')
-      expect(impressions[1][:split_name]).to eq("MAURO_TEST")
+      expect(impressions[1][:split_name]).to eq(:MAURO_TEST)
       expect(impressions[1][:treatment][:treatment]).to eq('off')
       expect(impressions[1][:treatment][:label]).to eq('not in split')
       expect(impressions[1][:treatment][:change_number]).to eq(1_506_703_262_966)
 
       expect(impressions[2][:matching_key]).to eq('nico_test')
-      expect(impressions[2][:split_name]).to eq("Test_Save_1")
+      expect(impressions[2][:split_name]).to eq(:Test_Save_1)
       expect(impressions[2][:treatment][:treatment]).to eq('off')
       expect(impressions[2][:treatment][:label]).to eq('in segment all')
       expect(impressions[2][:treatment][:change_number]).to eq(1_503_956_389_520)
@@ -365,18 +365,18 @@ describe SplitIoClient do
       result2 = client.get_treatments('', ['', 'MAURO_TEST', 'Test_Save_1'])
       result3 = client.get_treatments(nil, ['', 'MAURO_TEST', 'Test_Save_1'])
 
-      expect(result1["FACUNDO_TEST"]).to eq 'on'
-      expect(result2["MAURO_TEST"]).to eq 'control'
-      expect(result2["Test_Save_1"]).to eq 'control'
-      expect(result3["MAURO_TEST"]).to eq 'control'
-      expect(result3["Test_Save_1"]).to eq 'control'
+      expect(result1[:FACUNDO_TEST]).to eq 'on'
+      expect(result2[:MAURO_TEST]).to eq 'control'
+      expect(result2[:Test_Save_1]).to eq 'control'
+      expect(result3[:MAURO_TEST]).to eq 'control'
+      expect(result3[:Test_Save_1]).to eq 'control'
 
       sleep 0.5
       impressions = custom_impression_listener.queue
 
       expect(impressions.size).to eq 1
       expect(impressions[0][:matching_key]).to eq('nico_test')
-      expect(impressions[0][:split_name]).to eq("FACUNDO_TEST")
+      expect(impressions[0][:split_name]).to eq(:FACUNDO_TEST)
       expect(impressions[0][:treatment][:treatment]).to eq('on')
       expect(impressions[0][:treatment][:label]).to eq('whitelisted')
       expect(impressions[0][:treatment][:change_number]).to eq(1_506_703_262_916)
@@ -385,15 +385,15 @@ describe SplitIoClient do
     it 'returns CONTROL with treatment doesnt exist' do
       result = client.get_treatments('nico_test', %w[FACUNDO_TEST random_treatment])
 
-      expect(result["FACUNDO_TEST"]).to eq 'on'
-      expect(result["random_treatment"]).to eq 'control'
+      expect(result[:FACUNDO_TEST]).to eq 'on'
+      expect(result[:random_treatment]).to eq 'control'
 
       sleep 0.5
       impressions = custom_impression_listener.queue
 
       expect(impressions.size).to eq 1
       expect(impressions[0][:matching_key]).to eq('nico_test')
-      expect(impressions[0][:split_name]).to eq("FACUNDO_TEST")
+      expect(impressions[0][:split_name]).to eq(:FACUNDO_TEST)
       expect(impressions[0][:treatment][:treatment]).to eq('on')
       expect(impressions[0][:treatment][:label]).to eq('whitelisted')
       expect(impressions[0][:treatment][:change_number]).to eq(1_506_703_262_916)
@@ -403,15 +403,15 @@ describe SplitIoClient do
   context '#get_treatments_with_config' do
     it 'returns treatments and check impressions' do
       result = client.get_treatments_with_config('nico_test', %w[FACUNDO_TEST MAURO_TEST Test_Save_1])
-      expect(result["FACUNDO_TEST"]).to eq(
+      expect(result[:FACUNDO_TEST]).to eq(
         treatment: 'on',
         config: '{"color":"green"}'
       )
-      expect(result["MAURO_TEST"]).to eq(
+      expect(result[:MAURO_TEST]).to eq(
         treatment: 'off',
         config: '{"version":"v1"}'
       )
-      expect(result["Test_Save_1"]).to eq(
+      expect(result[:Test_Save_1]).to eq(
         treatment: 'off',
         config: nil
       )
@@ -421,19 +421,19 @@ describe SplitIoClient do
 
       expect(impressions.size).to eq 3
       expect(impressions[0][:matching_key]).to eq('nico_test')
-      expect(impressions[0][:split_name]).to eq("FACUNDO_TEST")
+      expect(impressions[0][:split_name]).to eq(:FACUNDO_TEST)
       expect(impressions[0][:treatment][:treatment]).to eq('on')
       expect(impressions[0][:treatment][:label]).to eq('whitelisted')
       expect(impressions[0][:treatment][:change_number]).to eq(1_506_703_262_916)
 
       expect(impressions[1][:matching_key]).to eq('nico_test')
-      expect(impressions[1][:split_name]).to eq("MAURO_TEST")
+      expect(impressions[1][:split_name]).to eq(:MAURO_TEST)
       expect(impressions[1][:treatment][:treatment]).to eq('off')
       expect(impressions[1][:treatment][:label]).to eq('not in split')
       expect(impressions[1][:treatment][:change_number]).to eq(1_506_703_262_966)
 
       expect(impressions[2][:matching_key]).to eq('nico_test')
-      expect(impressions[2][:split_name]).to eq("Test_Save_1")
+      expect(impressions[2][:split_name]).to eq(:Test_Save_1)
       expect(impressions[2][:treatment][:treatment]).to eq('off')
       expect(impressions[2][:treatment][:label]).to eq('in segment all')
       expect(impressions[2][:treatment][:change_number]).to eq(1_503_956_389_520)
@@ -444,23 +444,23 @@ describe SplitIoClient do
       result2 = client.get_treatments_with_config('', %w["" MAURO_TEST Test_Save_1])
       result3 = client.get_treatments_with_config(nil, %w["" MAURO_TEST Test_Save_1])
 
-      expect(result1["FACUNDO_TEST"]).to eq(
+      expect(result1[:FACUNDO_TEST]).to eq(
         treatment: 'on',
         config: '{"color":"green"}'
       )
-      expect(result2["MAURO_TEST"]).to eq(
+      expect(result2[:MAURO_TEST]).to eq(
         treatment: 'control',
         config: nil
       )
-      expect(result2["Test_Save_1"]).to eq(
+      expect(result2[:Test_Save_1]).to eq(
         treatment: 'control',
         config: nil
       )
-      expect(result3["MAURO_TEST"]).to eq(
+      expect(result3[:MAURO_TEST]).to eq(
         treatment: 'control',
         config: nil
       )
-      expect(result3["Test_Save_1"]).to eq(
+      expect(result3[:Test_Save_1]).to eq(
         treatment: 'control',
         config: nil
       )
@@ -470,7 +470,7 @@ describe SplitIoClient do
 
       expect(impressions.size).to eq 1
       expect(impressions[0][:matching_key]).to eq('nico_test')
-      expect(impressions[0][:split_name]).to eq("FACUNDO_TEST")
+      expect(impressions[0][:split_name]).to eq(:FACUNDO_TEST)
       expect(impressions[0][:treatment][:treatment]).to eq('on')
       expect(impressions[0][:treatment][:label]).to eq('whitelisted')
       expect(impressions[0][:treatment][:change_number]).to eq(1_506_703_262_916)
@@ -479,11 +479,11 @@ describe SplitIoClient do
     it 'returns CONTROL with treatment doesnt exist' do
       result = client.get_treatments_with_config('nico_test', %w[FACUNDO_TEST random_treatment])
 
-      expect(result["FACUNDO_TEST"]).to eq(
+      expect(result[:FACUNDO_TEST]).to eq(
         treatment: 'on',
         config: '{"color":"green"}'
       )
-      expect(result["random_treatment"]).to eq(
+      expect(result[:random_treatment]).to eq(
         treatment: 'control',
         config: nil
       )
@@ -493,7 +493,7 @@ describe SplitIoClient do
 
       expect(impressions.size).to eq 1
       expect(impressions[0][:matching_key]).to eq('nico_test')
-      expect(impressions[0][:split_name]).to eq("FACUNDO_TEST")
+      expect(impressions[0][:split_name]).to eq(:FACUNDO_TEST)
       expect(impressions[0][:treatment][:treatment]).to eq('on')
       expect(impressions[0][:treatment][:label]).to eq('whitelisted')
       expect(impressions[0][:treatment][:change_number]).to eq(1_506_703_262_916)
@@ -554,15 +554,15 @@ describe SplitIoClient do
       result2 = client2.get_treatments_with_config('nico_test', %w[MAURO_TEST])
       result3 = client3.get_treatments_with_config('nico_test', %w[FACUNDO_TEST])
 
-      expect(result1["MAURO_TEST"]).to eq(
+      expect(result1[:MAURO_TEST]).to eq(
         treatment: 'off',
         config: '{"version":"v1"}'
       )
-      expect(result2["MAURO_TEST"]).to eq(
+      expect(result2[:MAURO_TEST]).to eq(
         treatment: 'off',
         config: '{"version":"v1"}'
       )
-      expect(result3["FACUNDO_TEST"]).to eq(
+      expect(result3[:FACUNDO_TEST]).to eq(
         treatment: 'on',
         config: '{"color":"green"}'
       )
@@ -578,6 +578,64 @@ describe SplitIoClient do
 
       expect(local_log.string)
         .to include 'Factory instantiation: You already have 1 factories with this API Key.'
+    end
+  end
+
+  context '#get_treatments_by_flag_set' do
+    it 'returns treatments and check impressions' do
+      result = client.get_treatments_by_flag_set('nico_test', 'set_3')
+
+      expect(result[:FACUNDO_TEST]).to eq 'on'
+
+      sleep 0.5
+      impressions = custom_impression_listener.queue
+
+      expect(impressions.size).to eq 1
+
+      expect(impressions[0][:matching_key]).to eq('nico_test')
+      expect(impressions[0][:split_name]).to eq(:FACUNDO_TEST)
+      expect(impressions[0][:treatment][:treatment]).to eq('on')
+      expect(impressions[0][:treatment][:label]).to eq('whitelisted')
+      expect(impressions[0][:treatment][:change_number]).to eq(1_506_703_262_916)
+    end
+
+    it 'returns treatments with input validation' do
+      result1 = client.get_treatments_by_flag_set('nico_test', 'SET_3')
+      result2 = client.get_treatments_by_flag_set('', 'set_3')
+      result3 = client.get_treatments_by_flag_set(nil, 'set_3')
+      result4 = client.get_treatments_by_flag_set('nico_test', 'set@3')
+
+      expect(result1[:FACUNDO_TEST]).to eq 'on'
+      expect(result2[:FACUNDO_TEST]).to eq 'control'
+      expect(result3[:FACUNDO_TEST]).to eq 'control'
+      expect(result4).to eq Hash.new
+
+      sleep 0.5
+      impressions = custom_impression_listener.queue
+
+      expect(impressions.size).to eq 1
+      expect(impressions[0][:matching_key]).to eq('nico_test')
+      expect(impressions[0][:split_name]).to eq(:FACUNDO_TEST)
+      expect(impressions[0][:treatment][:treatment]).to eq('on')
+      expect(impressions[0][:treatment][:label]).to eq('whitelisted')
+      expect(impressions[0][:treatment][:change_number]).to eq(1_506_703_262_916)
+    end
+
+    it 'returns CONTROL with treatment doesnt exist' do
+      result = client.get_treatments('nico_test', %w[FACUNDO_TEST random_treatment])
+
+      expect(result[:FACUNDO_TEST]).to eq 'on'
+      expect(result[:random_treatment]).to eq 'control'
+
+      sleep 0.5
+      impressions = custom_impression_listener.queue
+
+      expect(impressions.size).to eq 1
+      expect(impressions[0][:matching_key]).to eq('nico_test')
+      expect(impressions[0][:split_name]).to eq(:FACUNDO_TEST)
+      expect(impressions[0][:treatment][:treatment]).to eq('on')
+      expect(impressions[0][:treatment][:label]).to eq('whitelisted')
+      expect(impressions[0][:treatment][:change_number]).to eq(1_506_703_262_916)
     end
   end
 

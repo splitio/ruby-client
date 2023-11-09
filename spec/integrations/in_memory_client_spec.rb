@@ -422,7 +422,6 @@ describe SplitIoClient do
 
       sleep 0.5
       impressions = custom_impression_listener.queue
-
       expect(impressions.size).to eq 1
       expect(impressions[0][:matching_key]).to eq('nico_test')
       expect(impressions[0][:split_name]).to eq(:FACUNDO_TEST)
@@ -440,6 +439,7 @@ describe SplitIoClient do
 
       sleep 0.5
       impressions = custom_impression_listener.queue
+      puts impressions
 
       expect(impressions.size).to eq 1
       expect(impressions[0][:matching_key]).to eq('nico_test')
@@ -587,7 +587,7 @@ describe SplitIoClient do
       result = client.get_treatments_with_config('nico_test', %w[FACUNDO_TEST MAURO_TEST Test_Save_1])
       expect(result[:FACUNDO_TEST]).to eq(
         treatment: 'control',
-        config: nil
+        config: nil,
       )
       expect(result[:MAURO_TEST]).to eq(
         treatment: 'control',
