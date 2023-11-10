@@ -1054,9 +1054,7 @@ def add_splits_to_repository(splits_json)
 
   splits_repository = subject.instance_variable_get(:@splits_repository)
 
-  splits.each do |split|
-    splits_repository.add_split(split)
-  end
+  splits_repository.update(splits, [], -1)
 end
 
 def add_segments_to_repository(segments_json)

@@ -5,6 +5,10 @@ module SplitIoClient
   GET_TREATMENTS = 'get_treatments'
   GET_TREATMENT_WITH_CONFIG = 'get_treatment_with_config'
   GET_TREATMENTS_WITH_CONFIG = 'get_treatments_with_config'
+  GET_TREATMENTS_BY_FLAG_SET = 'get_treatments_by_flag_set'
+  GET_TREATMENTS_BY_FLAG_SETS = 'get_treatments_by_flag_sets'
+  GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SET = 'get_treatments_with_config_by_flag_set'
+  GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SETS = 'get_treatments_with_config_by_flag_sets'
   TRACK = 'track'
 
   class SplitClient
@@ -25,6 +29,7 @@ module SplitIoClient
       @config = config
       @impressions_manager = impressions_manager
       @telemetry_evaluation_producer = telemetry_evaluation_producer
+      @split_validator = SplitIoClient::Validators.new(self)
     end
 
     def get_treatment(
@@ -63,6 +68,38 @@ module SplitIoClient
 
     def get_treatments_with_config(key, split_names, attributes = {})
       treatments(key, split_names, attributes, GET_TREATMENTS_WITH_CONFIG)
+    end
+
+    def get_treatments_by_flag_set(key, flag_set, attributes = {})
+      valid_flag_set = @split_validator.valid_flag_sets(:get_treatments_by_flag_set, [flag_set])
+      split_names = @splits_repository.get_feature_flags_by_sets(valid_flag_set)
+      treatments = treatments(key, split_names, attributes, GET_TREATMENTS_BY_FLAG_SET)
+      return treatments if treatments.nil?
+      keys = treatments.keys
+      treats = treatments.map { |_,t| t[:treatment]  }
+      Hash[keys.zip(treats)]
+    end
+
+    def get_treatments_by_flag_sets(key, flag_sets, attributes = {})
+      valid_flag_set = @split_validator.valid_flag_sets(:get_treatments_by_flag_sets, flag_sets)
+      split_names = @splits_repository.get_feature_flags_by_sets(valid_flag_set)
+      treatments = treatments(key, split_names, attributes, GET_TREATMENTS_BY_FLAG_SETS)
+      return treatments if treatments.nil?
+      keys = treatments.keys
+      treats = treatments.map { |_,t| t[:treatment]  }
+      Hash[keys.zip(treats)]
+    end
+
+    def get_treatments_with_config_by_flag_set(key, flag_set, attributes = {})
+      valid_flag_set = @split_validator.valid_flag_sets(:get_treatments_with_config_by_flag_set, [flag_set])
+      split_names = @splits_repository.get_feature_flags_by_sets(valid_flag_set)
+      treatments(key, split_names, attributes, GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SET)
+    end
+
+    def get_treatments_with_config_by_flag_sets(key, flag_sets, attributes = {})
+      valid_flag_set = @split_validator.valid_flag_sets(:get_treatments_with_config_by_flag_sets, flag_sets)
+      split_names = @splits_repository.get_feature_flags_by_sets(valid_flag_set)
+      treatments(key, split_names, attributes, GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SETS)
     end
 
     def destroy
@@ -206,13 +243,13 @@ module SplitIoClient
 
       bucketing_key, matching_key = keys_from_key(key)
       bucketing_key = bucketing_key ? bucketing_key.to_s : nil
-      matching_key = matching_key ? matching_key.to_s : nil     
+      matching_key = matching_key ? matching_key.to_s : nil
 
       evaluator = Engine::Parser::Evaluator.new(@segments_repository, @splits_repository, @config, true)
       start = Time.now
       impressions = []
       treatments_labels_change_numbers =
-        @splits_repository.get_splits(sanitized_split_names).each_with_object({}) do |(name, data), memo|
+        @splits_repository.splits(sanitized_split_names).each_with_object({}) do |(name, data), memo|
           memo.merge!(name => treatment(key, name, attributes, data, false, true, evaluator, calling_method, impressions))
         end
 
@@ -288,7 +325,7 @@ module SplitIoClient
         end
 
         record_latency(calling_method, start) unless multiple
-        
+
         impression = @impressions_manager.build_impression(matching_key, bucketing_key, split_name, treatment_data, { attributes: attributes, time: nil })
         impressions << impression unless impression.nil?
       rescue StandardError => e
@@ -320,7 +357,7 @@ module SplitIoClient
 
     def record_latency(method, start)
       bucket = BinarySearchLatencyTracker.get_bucket((Time.now - start) * 1000.0)
-      
+
       case method
       when GET_TREATMENT
         @telemetry_evaluation_producer.record_latency(Telemetry::Domain::Constants::TREATMENT, bucket)
@@ -330,9 +367,17 @@ module SplitIoClient
         @telemetry_evaluation_producer.record_latency(Telemetry::Domain::Constants::TREATMENT_WITH_CONFIG, bucket)
       when GET_TREATMENTS_WITH_CONFIG
         @telemetry_evaluation_producer.record_latency(Telemetry::Domain::Constants::TREATMENTS_WITH_CONFIG, bucket)
+      when GET_TREATMENTS_BY_FLAG_SET
+        @telemetry_evaluation_producer.record_latency(Telemetry::Domain::Constants::TREATMENTS_BY_FLAG_SET, bucket)
+      when GET_TREATMENTS_BY_FLAG_SETS
+        @telemetry_evaluation_producer.record_latency(Telemetry::Domain::Constants::TREATMENTS_BY_FLAG_SETS, bucket)
+      when GET_TREATMENT_WITH_CONFIG
+        @telemetry_evaluation_producer.record_latency(Telemetry::Domain::Constants::TREATMENT_WITH_CONFIG, bucket)
+      when GET_TREATMENTS_WITH_CONFIG
+        @telemetry_evaluation_producer.record_latency(Telemetry::Domain::Constants::TREATMENTS_WITH_CONFIG, bucket)
       when TRACK
         @telemetry_evaluation_producer.record_latency(Telemetry::Domain::Constants::TRACK, bucket)
-      end      
+      end
     end
 
     def record_exception(method)
@@ -345,6 +390,14 @@ module SplitIoClient
         @telemetry_evaluation_producer.record_exception(Telemetry::Domain::Constants::TREATMENT_WITH_CONFIG)
       when GET_TREATMENTS_WITH_CONFIG
         @telemetry_evaluation_producer.record_exception(Telemetry::Domain::Constants::TREATMENTS_WITH_CONFIG)
+      when GET_TREATMENTS_BY_FLAG_SET
+        @telemetry_evaluation_producer.record_exception(Telemetry::Domain::Constants::TREATMENTS_BY_FLAG_SET)
+      when GET_TREATMENTS_BY_FLAG_SETS
+        @telemetry_evaluation_producer.record_exception(Telemetry::Domain::Constants::TREATMENTS_BY_FLAG_SETS)
+      when GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SET
+        @telemetry_evaluation_producer.record_exception(Telemetry::Domain::Constants::TREATMENTS_WITH_CONFIG_BY_FLAG_SET)
+      when GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SETS
+        @telemetry_evaluation_producer.record_exception(Telemetry::Domain::Constants::TREATMENTS_WITH_CONFIG_BY_FLAG_SETS)
       when TRACK
         @telemetry_evaluation_producer.record_exception(Telemetry::Domain::Constants::TRACK)
       end

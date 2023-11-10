@@ -6,7 +6,9 @@ require 'set'
 describe SplitIoClient::Cache::Repositories::SplitsRepository do
   RSpec.shared_examples 'Splits Repository' do |cache_adapter|
     let(:config) { SplitIoClient::SplitConfig.new(cache_adapter: cache_adapter) }
-    let(:repository) { described_class.new(config) }
+    let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::FlagSetsRepository.new([])}
+    let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([])}
+    let(:repository) { described_class.new(config, flag_sets_repository, flag_set_filter) }
 
     before :all do
       redis = Redis.new
@@ -15,9 +17,9 @@ describe SplitIoClient::Cache::Repositories::SplitsRepository do
 
     before do
       # in memory setup
-      repository.add_split(name: 'foo', trafficTypeName: 'tt_name_1')
-      repository.add_split(name: 'bar', trafficTypeName: 'tt_name_2')
-      repository.add_split(name: 'baz', trafficTypeName: 'tt_name_1')
+      repository.update([{name: 'foo', trafficTypeName: 'tt_name_1'},
+                        {name: 'bar', trafficTypeName: 'tt_name_2'},
+                        {name: 'baz', trafficTypeName: 'tt_name_1'}], [], -1)
 
       # redis setup
       repository.instance_variable_get(:@adapter).set_string(
@@ -29,13 +31,13 @@ describe SplitIoClient::Cache::Repositories::SplitsRepository do
     end
 
     after do
-      repository.remove_split(name: 'foo', trafficTypeName: 'tt_name_1')
-      repository.remove_split(name: 'bar', trafficTypeName: 'tt_name_2')
-      repository.remove_split(name: 'bar', trafficTypeName: 'tt_name_2')
-      repository.remove_split(name: 'qux', trafficTypeName: 'tt_name_3')
-      repository.remove_split(name: 'quux', trafficTypeName: 'tt_name_4')
-      repository.remove_split(name: 'corge', trafficTypeName: 'tt_name_5')
-      repository.remove_split(name: 'corge', trafficTypeName: 'tt_name_6')
+      repository.update([], [{name: 'foo', trafficTypeName: 'tt_name_1'},
+                            {name: 'bar', trafficTypeName: 'tt_name_2'},
+                            {name: 'bar', trafficTypeName: 'tt_name_2'},
+                            {name: 'qux', trafficTypeName: 'tt_name_3'},
+                            {name: 'quux', trafficTypeName: 'tt_name_4'},
+                            {name: 'corge', trafficTypeName: 'tt_name_5'},
+                            {name: 'corge', trafficTypeName: 'tt_name_6'}], -1)
     end
 
     it 'returns splits names' do
@@ -52,8 +54,8 @@ describe SplitIoClient::Cache::Repositories::SplitsRepository do
 
       split = { name: 'qux', trafficTypeName: 'tt_name_3' }
 
-      repository.add_split(split)
-      repository.remove_split(split)
+      repository.update([split], [], -1)
+      repository.update([], [split], -1)
 
       expect(repository.traffic_type_exists('tt_name_3')).to be false
     end
@@ -61,9 +63,8 @@ describe SplitIoClient::Cache::Repositories::SplitsRepository do
     it 'does not increment traffic type count when adding same split twice' do
       split = { name: 'quux', trafficTypeName: 'tt_name_4' }
 
-      repository.add_split(split)
-      repository.add_split(split)
-      repository.remove_split(split)
+      repository.update([split, split], [], -1)
+      repository.update([], [split], -1)
 
       expect(repository.traffic_type_exists('tt_name_4')).to be false
     end
@@ -71,7 +72,7 @@ describe SplitIoClient::Cache::Repositories::SplitsRepository do
     it 'updates traffic type count accordingly when split changes traffic type' do
       split = { name: 'corge', trafficTypeName: 'tt_name_5' }
 
-      repository.add_split(split)
+      repository.update([split], [], -1)
       repository.instance_variable_get(:@adapter).set_string(
         repository.send(:namespace_key, '.trafficType.tt_name_5'), '1'
       )
@@ -80,7 +81,7 @@ describe SplitIoClient::Cache::Repositories::SplitsRepository do
 
       split = { name: 'corge', trafficTypeName: 'tt_name_6' }
 
-      repository.add_split(split)
+      repository.update([split], [], -1)
 
       # mimicing synchronizer internals
       repository.instance_variable_get(:@adapter).set_string(
@@ -95,7 +96,7 @@ describe SplitIoClient::Cache::Repositories::SplitsRepository do
     end
 
     it 'returns splits data' do
-      expect(repository.splits).to eq(
+      expect(repository.splits(repository.split_names)).to eq(
         'foo' => { name: 'foo', trafficTypeName: 'tt_name_1' },
         'bar' => { name: 'bar', trafficTypeName: 'tt_name_2' },
         'baz' => { name: 'baz', trafficTypeName: 'tt_name_1' }
