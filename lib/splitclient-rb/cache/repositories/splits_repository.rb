@@ -6,7 +6,7 @@ module SplitIoClient
       class SplitsRepository < Repository
         attr_reader :adapter
 
-        def initialize(config, flag_sets_repositry, flag_set_filter)
+        def initialize(config, flag_sets_repository, flag_set_filter)
           super(config)
           @tt_cache = {}
           @adapter = case @config.cache_adapter.class.to_s
@@ -15,7 +15,7 @@ module SplitIoClient
           else
             @config.cache_adapter
           end
-          @flag_sets = flag_sets_repositry
+          @flag_sets = flag_sets_repository
           @flag_set_filter = flag_set_filter
           unless @config.mode.equal?(:consumer)
             @adapter.set_string(namespace_key('.splits.till'), '-1')
