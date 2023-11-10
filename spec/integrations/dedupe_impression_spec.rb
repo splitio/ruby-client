@@ -42,11 +42,11 @@ describe SplitIoClient do
       sleep 1
 
       expect(debug_client.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
-      treatments = {"FACUNDO_TEST"=>"on"}
+      treatments = {:FACUNDO_TEST=>"on"}
       expect(debug_client.get_treatments_by_flag_set('nico_test', 'set_3')).to eq treatments
-      treatments = {"FACUNDO_TEST"=>"off"}
+      treatments = {:FACUNDO_TEST=>"off"}
       expect(debug_client.get_treatments_by_flag_sets('admin', ['set_3'])).to eq treatments
-      treatments = {"FACUNDO_TEST"=>{:treatment=>"off", :config=>nil}}
+      treatments = {:FACUNDO_TEST=>{:treatment=>"off", :config=>nil}}
       expect(debug_client.get_treatments_with_config_by_flag_set('admin', 'set_3')).to eq treatments
       expect(debug_client.get_treatments_with_config_by_flag_sets('admin', ['set_3'])).to eq treatments
       expect(debug_client.get_treatment('24', 'Test_Save_1')).to eq 'off'

@@ -42,6 +42,7 @@ describe SplitIoClient do
     mock_segment_changes('segment3', segment3, '-1')
     stub_request(:any, /https:\/\/events.*/).to_return(status: 200, body: '')
     stub_request(:any, /https:\/\/telemetry.*/).to_return(status: 200, body: 'ok')
+    stub_request(:post, "https://events.split.io/api/testImpressions/bulk").to_return(status: 200, body: 'ok')
 #    sleep 1
   end
 
@@ -124,6 +125,7 @@ describe SplitIoClient do
 
     it 'returns CONTROL with treatment doesnt exist' do
       stub_request(:get, "https://sdk.split.io/api/splitChanges?since=1506703262916").to_return(status: 200, body: 'ok')
+      stub_request(:post, "https://events.split.io/api/testImpressions/bulk").to_return(status: 200, body: 'ok')
       expect(client.get_treatment('nico_test', 'random_treatment')).to eq 'control'
 
       impressions = custom_impression_listener.queue
@@ -131,7 +133,6 @@ describe SplitIoClient do
     end
 
     it 'returns CONTROL when server return 500' do
-      stub_request(:get, "https://sdk.split.io/api/splitChanges?since=1506703262916").to_return(status: 200, body: 'ok')
       mock_split_changes_error
 
       expect(client.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'control'
@@ -225,7 +226,6 @@ describe SplitIoClient do
       client4.destroy()
     end
   end
-
   context '#get_treatment_with_config' do
     it 'returns treatments and configs with FACUNDO_TEST treatment and check impressions' do
       stub_request(:get, "https://sdk.split.io/api/splitChanges?since=1506703262916").to_return(status: 200, body: 'ok')
@@ -372,7 +372,8 @@ describe SplitIoClient do
 
   context '#get_treatments' do
     before do
-      stub_request(:get, "https://sdk.split.io/api/splitChanges?since=1506703262916").to_return(status: 200, body: 'ok')
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?since=-1").to_return(status: 200, body: splits)
+#      stub_request(:any, /https:\/\/sdk.*/).to_return(status: 200, body: splits)
     end
 
     it 'returns treatments and check impressions' do
@@ -421,7 +422,6 @@ describe SplitIoClient do
 
       sleep 0.5
       impressions = custom_impression_listener.queue
-
       expect(impressions.size).to eq 1
       expect(impressions[0][:matching_key]).to eq('nico_test')
       expect(impressions[0][:split_name]).to eq(:FACUNDO_TEST)
@@ -439,6 +439,7 @@ describe SplitIoClient do
 
       sleep 0.5
       impressions = custom_impression_listener.queue
+      puts impressions
 
       expect(impressions.size).to eq 1
       expect(impressions[0][:matching_key]).to eq('nico_test')
@@ -586,7 +587,7 @@ describe SplitIoClient do
       result = client.get_treatments_with_config('nico_test', %w[FACUNDO_TEST MAURO_TEST Test_Save_1])
       expect(result[:FACUNDO_TEST]).to eq(
         treatment: 'control',
-        config: nil
+        config: nil,
       )
       expect(result[:MAURO_TEST]).to eq(
         treatment: 'control',

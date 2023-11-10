@@ -139,12 +139,13 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
 
   context 'instant ff update split notification' do
     it 'decode and decompress split update data' do
+      stub_request(:get, "https://sdk.split.io/api/segmentChanges/bilal_segment?since=-1").to_return(status: 200, body: "")
       worker = subject.new(synchronizer, config, splits_repository, telemetry_runtime_producer, segment_fetcher)
       worker.start
 
       splits_repository.set_change_number(1234)
       worker.add_to_queue(event_split_update_no_compression)
-      sleep 1
+      sleep 2
       split = splits_repository.get_split('bilal_split')
       expect(split[:name] == 'bilal_split')
 

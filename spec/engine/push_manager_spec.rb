@@ -10,7 +10,9 @@ describe SplitIoClient::Engine::PushManager do
   let(:api_key) { 'PushManager-key' }
   let(:log) { StringIO.new }
   let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log)) }
-  let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config) }
+  let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::FlagSetsRepository.new([])}
+  let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([])}
+  let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
   let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
   let(:runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
   let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, runtime_producer) }
