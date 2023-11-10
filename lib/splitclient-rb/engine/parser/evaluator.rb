@@ -2,40 +2,59 @@ module SplitIoClient
   module Engine
     module Parser
       class Evaluator
-        def initialize(segments_repository, splits_repository, config, multiple = false)
+        def initialize(segments_repository, splits_repository, config)
           @splits_repository = splits_repository
           @segments_repository = segments_repository
-          @multiple = multiple
           @config = config
           @cache = {}
         end
 
-        def call(keys, split, attributes = nil)
+        def evaluate_feature_flag(keys, feature_flag, attributes = nil)
           # DependencyMatcher here, split is actually a split_name in this case
-          cache_result = split.is_a? String
-          split = @splits_repository.get_split(split) if cache_result
-          digest = Digest::MD5.hexdigest("#{{matching_key: keys[:matching_key]}}#{split}#{attributes}")
+          cache_result = feature_flag.is_a? String
+          evaluate_treatment(keys, feature_flag, cache_result, attributes)
+        end
 
-          if Models::Split.archived?(split)
-            return treatment_hash(Models::Label::ARCHIVED, Models::Treatment::CONTROL, split[:changeNumber])
+        def evaluate_feature_flags(keys, feature_flag_names, attributes = nil, calling_method)
+          # DependencyMatcher here, split is actually a split_name in this case
+          feature_flags = @splits_repository.splits(feature_flag_names)
+          treatments = Hash.new
+          invalid_treatments = Hash.new
+          feature_flags.each do |key, feature_flag|
+            if feature_flag.nil?
+              @config.logger.warn("#{calling_method}: you passed #{key} that " \
+                'does not exist in this environment, please double check what feature flags exist in the Split user interface')
+                invalid_treatments[key] = {
+                  treatment: "control",
+                  config: nil,
+                  label: Engine::Models::Label::NOT_FOUND
+                }
+                next
+            end
+
+            treatments[key] = evaluate_treatment(keys, feature_flag, feature_flag[:name], attributes)
+          end
+          treatments.merge(invalid_treatments)
+        end
+
+        private
+
+        def evaluate_treatment(keys, feature_flag, cache_result, attributes)
+          digest = Digest::MD5.hexdigest("#{{matching_key: keys[:matching_key]}}#{feature_flag}#{attributes}")
+          if Models::Split.archived?(feature_flag)
+            return treatment_hash(Models::Label::ARCHIVED, Models::Treatment::CONTROL, feature_flag[:changeNumber])
           end
 
-          treatment = if Models::Split.matchable?(split)
-            if @multiple && @cache[digest]
-              @cache[digest]
-            else
-              match(split, keys, attributes)
-            end
+          treatment = if Models::Split.matchable?(feature_flag)
+            match(feature_flag, keys, attributes)
           else
-            treatment_hash(Models::Label::KILLED, split[:defaultTreatment], split[:changeNumber], split_configurations(split[:defaultTreatment], split))
+            treatment_hash(Models::Label::KILLED, feature_flag[:defaultTreatment], feature_flag[:changeNumber], split_configurations(feature_flag[:defaultTreatment], feature_flag))
           end
 
           @cache[digest] = treatment if cache_result
 
           treatment
         end
-
-        private
 
         def split_configurations(treatment, split)
           return nil if split[:configurations].nil?

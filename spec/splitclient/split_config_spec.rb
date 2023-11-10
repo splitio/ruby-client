@@ -34,7 +34,7 @@ describe SplitIoClient do
       expect(configs.machine_ip).to eq SplitIoClient::SplitConfig.machine_ip(default_ip, nil, :redis)
       expect(configs.on_demand_fetch_retry_delay_seconds).to eq SplitIoClient::SplitConfig.default_on_demand_fetch_retry_delay_seconds
       expect(configs.on_demand_fetch_max_retries).to eq SplitIoClient::SplitConfig.default_on_demand_fetch_max_retries
-      expect(configs.flag_sets_filter).to eq nil
+      expect(configs.flag_sets_filter).to eq []
     end
 
     it 'stores and retrieves correctly the customized values' do
@@ -49,7 +49,7 @@ describe SplitIoClient do
       expect(configs.impressions_refresh_rate).to eq custom_options[:impressions_refresh_rate]
       expect(configs.impressions_queue_size).to eq custom_options[:impressions_queue_size]
       expect(configs.debug_enabled).to eq custom_options[:debug_enabled]
-      expect(configs.flag_sets_filter).to eq Set["set_1"]
+      expect(configs.flag_sets_filter).to eq ["set_1"]
     end
 
     it 'has the current default values for timeouts and intervals, with impressions_mode in :optimized' do
@@ -154,31 +154,31 @@ describe SplitIoClient do
 
     it 'test flag sets filter validations' do
       configs = SplitIoClient::SplitConfig.new(flag_sets_filter: 0)
-      expect(configs.flag_sets_filter).to eq nil
+      expect(configs.flag_sets_filter).to eq []
 
       configs = SplitIoClient::SplitConfig.new(flag_sets_filter: [])
-      expect(configs.flag_sets_filter).to eq nil
+      expect(configs.flag_sets_filter).to eq []
 
       configs = SplitIoClient::SplitConfig.new(flag_sets_filter: ['set2 ', ' set1', 'set3'])
-      expect(configs.flag_sets_filter).to eq Set['set1', 'set2', 'set3']
+      expect(configs.flag_sets_filter).to eq ['set1', 'set2', 'set3']
 
       configs = SplitIoClient::SplitConfig.new(flag_sets_filter: ['1set', '_set2'])
-      expect(configs.flag_sets_filter).to eq Set['1set']
+      expect(configs.flag_sets_filter).to eq ['1set']
 
       configs = SplitIoClient::SplitConfig.new(flag_sets_filter: ['Set1', 'SET2'])
-      expect(configs.flag_sets_filter).to eq Set['set1', 'set2']
+      expect(configs.flag_sets_filter).to eq ['set1', 'set2']
 
       configs = SplitIoClient::SplitConfig.new(flag_sets_filter: ['se\t1', 's/et2', 's*et3', 's!et4', 'se@t5', 'se#t5', 'se$t5', 'se^t5', 'se%t5', 'se&t5'])
-      expect(configs.flag_sets_filter).to eq nil
+      expect(configs.flag_sets_filter).to eq []
 
       configs = SplitIoClient::SplitConfig.new(flag_sets_filter: ['set4', 'set1', 'set3', 'set1'])
-      expect(configs.flag_sets_filter).to eq Set['set1', 'set3', 'set4']
+      expect(configs.flag_sets_filter).to eq ['set1', 'set3', 'set4']
 
       configs = SplitIoClient::SplitConfig.new(flag_sets_filter: '1set')
-      expect(configs.flag_sets_filter).to eq nil
+      expect(configs.flag_sets_filter).to eq []
 
       configs = SplitIoClient::SplitConfig.new(flag_sets_filter: ['1set', 12])
-      expect(configs.flag_sets_filter).to eq Set['1set']
+      expect(configs.flag_sets_filter).to eq ['1set']
     end
   end
 end
