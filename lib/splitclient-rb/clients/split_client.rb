@@ -37,20 +37,15 @@ module SplitIoClient
         key, split_name, attributes = {}, split_data = nil, store_impressions = true,
         multiple = false, evaluator = nil
       )
-      result = treatment(key, split_name, attributes, split_data, store_impressions, multiple, GET_TREATMENT)
-
-      if multiple
-        result.tap { |t| t.delete(:config) }
-      else
-        result[:treatment]
-      end
+      result = treatment(key, split_name, attributes, split_data, store_impressions, GET_TREATMENT)
+      result[:treatment]
     end
 
     def get_treatment_with_config(
         key, split_name, attributes = {}, split_data = nil, store_impressions = true,
         multiple = false, evaluator = nil
       )
-      treatment(key, split_name, attributes, split_data, store_impressions, multiple, GET_TREATMENT_WITH_CONFIG)
+      treatment(key, split_name, attributes, split_data, store_impressions, GET_TREATMENT_WITH_CONFIG)
     end
 
     def get_treatments(key, split_names, attributes = {})
@@ -150,6 +145,12 @@ module SplitIoClient
       false
     end
 
+    def block_until_ready(time = nil)
+      @status_manager.wait_until_ready(time) if @status_manager
+    end
+
+    private
+
     def keys_from_key(key)
       case key
       when Hash
@@ -159,20 +160,11 @@ module SplitIoClient
       end
     end
 
-    def parsed_treatment(multiple, treatment_data)
-      if multiple
+    def parsed_treatment(treatment_data)
       {
         treatment: treatment_data[:treatment],
-        label: treatment_data[:label],
-        change_number: treatment_data[:change_number],
-        config: treatment_data[:config]
+        config: treatment_data[:config],
       }
-      else
-        {
-          treatment: treatment_data[:treatment],
-          config: treatment_data[:config],
-        }
-      end
     end
 
     def sanitize_split_names(calling_method, split_names)
@@ -191,12 +183,6 @@ module SplitIoClient
         end
       end
     end
-
-    def block_until_ready(time = nil)
-      @status_manager.wait_until_ready(time) if @status_manager
-    end
-
-    private
 
     def validate_properties(properties)
       properties_count = 0
@@ -305,16 +291,15 @@ module SplitIoClient
     # @param attributes [Hash] attributes to pass to the treatment class
     # @param split_data [Hash] split data, when provided this method doesn't fetch splits_repository for the data
     # @param store_impressions [Boolean] impressions aren't stored if this flag is false
-    # @param multiple [Hash] internal flag to signal if method is called by get_treatments
     # @return [String/Hash] Treatment as String or Hash of treatments in case of array of features
     def treatment(key, feature_flag_name, attributes = {}, split_data = nil, store_impressions = true,
-                  multiple = false, calling_method = 'get_treatment')
+                   calling_method = 'get_treatment')
       impressions = []
       bucketing_key, matching_key = keys_from_key(key)
 
       attributes = parsed_attributes(attributes)
 
-      return parsed_treatment(multiple, control_treatment) unless valid_client && @config.split_validator.valid_get_treatment_parameters(calling_method, key, feature_flag_name, matching_key, bucketing_key, attributes)
+      return parsed_treatment(control_treatment) unless valid_client && @config.split_validator.valid_get_treatment_parameters(calling_method, key, feature_flag_name, matching_key, bucketing_key, attributes)
 
       bucketing_key = bucketing_key ? bucketing_key.to_s : nil
       matching_key = matching_key.to_s
@@ -340,9 +325,8 @@ module SplitIoClient
           @config.logger.warn("#{calling_method}: you passed #{feature_flag_name} that " \
             'does not exist in this environment, please double check what feature flags exist in the Split user interface')
 
-          return parsed_treatment(false, control_treatment.merge({ label: Engine::Models::Label::NOT_FOUND })), nil
+          return parsed_treatment(control_treatment.merge({ label: Engine::Models::Label::NOT_FOUND })), nil
         end
-
         treatment_data =
         if !feature_flag.nil? && ready?
           @evaluator.evaluate_feature_flag(
@@ -364,10 +348,10 @@ module SplitIoClient
         impression = @impressions_manager.build_impression(matching_key, bucketing_key, feature_flag_name, control_treatment, { attributes: attributes, time: nil })
         impressions << impression unless impression.nil?
 
-        return parsed_treatment(false, control_treatment.merge({ label: Engine::Models::Label::EXCEPTION })), impressions
+        return parsed_treatment(control_treatment.merge({ label: Engine::Models::Label::EXCEPTION })), impressions
       end
 
-      return parsed_treatment(false, treatment_data), impressions
+      return parsed_treatment(treatment_data), impressions
     end
 
     def control_treatment
