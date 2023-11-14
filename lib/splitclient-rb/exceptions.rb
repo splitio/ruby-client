@@ -1,7 +1,9 @@
 module SplitIoClient
   class SplitIoError < StandardError; end
 
-  class SDKShutdownException < SplitIoError; end
+  # We are deliberatly not inheriting from SplitIoError so that
+  # `rescue StandardError` won't catch and prevent shutdown.
+  class SDKShutdownException < Exception; end
 
   class SDKBlockerTimeoutExpiredException < SplitIoError; end
 
