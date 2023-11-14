@@ -18,7 +18,7 @@ module SplitIoClient
     # @param sdk_key [String] the SDK key for your split account
     #
     # @return [SplitIoClient] split.io client instance
-    def initialize(sdk_key, repositories, status_manager, config, impressions_manager, telemetry_evaluation_producer)
+    def initialize(sdk_key, repositories, status_manager, config, impressions_manager, telemetry_evaluation_producer, evaluator, split_validator)
       @api_key = sdk_key
       @splits_repository = repositories[:splits]
       @segments_repository = repositories[:segments]
@@ -29,8 +29,8 @@ module SplitIoClient
       @config = config
       @impressions_manager = impressions_manager
       @telemetry_evaluation_producer = telemetry_evaluation_producer
-      @split_validator = SplitIoClient::Validators.new(@config)
-      @evaluator = Engine::Parser::Evaluator.new(@segments_repository, @splits_repository, @config)
+      @split_validator = split_validator
+      @evaluator = evaluator
     end
 
     def get_treatment(
@@ -168,9 +168,8 @@ module SplitIoClient
     end
 
     def sanitize_split_names(calling_method, split_names)
-      if split_names.nil?
-        return nil
-      end
+      return nil if split_names.nil?
+
       split_names.compact.uniq.select do |split_name|
         if (split_name.is_a?(String) || split_name.is_a?(Symbol)) && !split_name.empty?
           true

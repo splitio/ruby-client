@@ -6,7 +6,9 @@ module SplitIoClient
       def initialize(config,
                      telemtry_consumers,
                      repositories,
-                     telemetry_api)
+                     telemetry_api,
+                     flag_sets,
+                     flag_sets_invalid)
         @config = config
         @telemetry_init_consumer = telemtry_consumers[:init]
         @telemetry_runtime_consumer = telemtry_consumers[:runtime]
@@ -14,6 +16,8 @@ module SplitIoClient
         @splits_repository = repositories[:splits]
         @segments_repository = repositories[:segments]
         @telemetry_api = telemetry_api
+        @flag_sets = flag_sets
+        @flag_sets_invalid = flag_sets_invalid
       end
 
       def synchronize_stats
@@ -42,7 +46,7 @@ module SplitIoClient
         @config.log_found_exception(__method__.to_s, e)
       end
 
-      def synchronize_config(active_factories = nil, redundant_active_factories = nil, time_until_ready = nil, flag_sets = nil, flag_sets_invalid = nil)
+      def synchronize_config(active_factories = nil, redundant_active_factories = nil, time_until_ready = nil)
         rates = Rates.new(@config.features_refresh_rate,
                           @config.segments_refresh_rate,
                           @config.impressions_refresh_rate,
@@ -64,8 +68,8 @@ module SplitIoClient
                                      active_factories,
                                      redundant_active_factories,
                                      @telemetry_runtime_consumer.pop_tags,
-                                     flag_sets,
-                                     flag_sets_invalid,
+                                     @flag_sets,
+                                     @flag_sets_invalid,
                                      @config.streaming_enabled,
                                      rates,
                                      url_overrides,

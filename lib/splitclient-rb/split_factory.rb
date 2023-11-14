@@ -26,7 +26,17 @@ module SplitIoClient
       end
 
       @api_key = api_key
+
+      store_flag_sets = config_hash[:flag_set_filter] if config_hash.key?(:flag_set_filter)
+      flag_sets = 0
+      flag_sets_invalid = 0
+
       @config = SplitConfig.new(config_hash.merge(localhost_mode: @api_key == LOCALHOST_API_KEY ))
+
+      if @config.key?(:flag_set_filter)
+        flag_sets = @config[:flag_set_filter].length()
+        flag_sets_invalid = store_flag_sets[:flag_set_filter].length() - valid_flag_sets
+      end
 
       raise 'Invalid SDK mode' unless valid_mode
 
@@ -37,16 +47,18 @@ module SplitIoClient
       build_telemetry_components
       build_flag_sets_filter
       build_repositories
-      build_telemetry_synchronizer
+      build_telemetry_synchronizer(flag_sets, flag_sets_invalid)
       build_impressions_sender_adapter
       build_unique_keys_tracker
       build_impressions_components
 
       @status_manager = Engine::StatusManager.new(@config)
+      @split_validator = SplitIoClient::Validators.new(@config)
+      @evaluator = Engine::Parser::Evaluator.new(@segments_repository, @splits_repository, @config)
 
       start!
 
-      @client = SplitClient.new(@api_key, repositories, @status_manager, @config, @impressions_manager, @evaluation_producer)
+      @client = SplitClient.new(@api_key, repositories, @status_manager, @config, @impressions_manager, @evaluation_producer, @evaluator, @split_validator)
       @manager = SplitManager.new(@splits_repository, @status_manager, @config)
     end
 
@@ -207,9 +219,9 @@ module SplitIoClient
       @events_repository = EventsRepository.new(@config, @api_key, @runtime_producer)
     end
 
-    def build_telemetry_synchronizer
+    def build_telemetry_synchronizer(flag_sets, flag_sets_invalid)
       @telemetry_api = Api::TelemetryApi.new(@config, @api_key, @runtime_producer)
-      @telemetry_synchronizer = Telemetry::Synchronizer.new(@config, @telemetry_consumers, @init_producer, repositories, @telemetry_api)
+      @telemetry_synchronizer = Telemetry::Synchronizer.new(@config, @telemetry_consumers, @init_producer, repositories, @telemetry_api, flag_sets, flag_sets_invalid)
     end
 
     def build_unique_keys_tracker

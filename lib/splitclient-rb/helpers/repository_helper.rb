@@ -6,7 +6,7 @@ module SplitIoClient
       def self.update_feature_flag_repository(feature_flag_repository, feature_flags, change_number, config)
         to_add = []
         to_delete = []
-        for feature_flag in feature_flags
+        feature_flags.each do |feature_flag|
           if Engine::Models::Split.archived?(feature_flag) || !feature_flag_repository.flag_set_filter.intersect?(feature_flag[:sets])
             config.logger.debug("removing feature flag from store(#{feature_flag})") if config.debug_enabled
             to_delete.push(feature_flag)
