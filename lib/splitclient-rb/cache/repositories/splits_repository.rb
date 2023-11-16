@@ -35,8 +35,13 @@ module SplitIoClient
           JSON.parse(split, symbolize_names: true) if split
         end
 
-        def splits(split_names)
-          get_splits(split_names, false)
+        def splits(filtered_names=nil)
+          symbolize = true
+          if filtered_names.nil?
+            filtered_names = split_names
+            symbolize = false
+          end
+          get_splits(filtered_names, symbolize)
         end
 
         def traffic_type_exists(tt_name)

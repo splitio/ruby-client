@@ -18,8 +18,12 @@ module SplitIoClient
         valid_attributes?(method, attributes)
     end
 
-    def valid_get_treatments_parameters(method, split_names)
-      valid_split_names?(method, split_names)
+    def valid_get_treatments_parameters(method, key, split_names, matching_key, bucketing_key, attributes)
+      valid_key?(method, key) &&
+        valid_split_names?(method, split_names)
+        valid_matching_key?(method, matching_key) &&
+        valid_bucketing_key?(method, key, bucketing_key) &&
+        valid_attributes?(method, attributes)
     end
 
     def valid_track_parameters(key, traffic_type_name, event_type, value, properties)
@@ -42,7 +46,7 @@ module SplitIoClient
     end
 
     def valid_flag_sets(method, flag_sets)
-      return Set[] if flag_sets.nil? || !flag_sets.is_a?(Array)
+      return [] if flag_sets.nil? || !flag_sets.is_a?(Array)
 
       valid_flag_sets = SortedSet[]
       flag_sets.compact.uniq.select do |flag_set|
@@ -50,7 +54,7 @@ module SplitIoClient
           log_invalid_type(:flag_set, method)
         elsif flag_set.is_a?(String) && flag_set.empty?
           log_nil(:flag_set, method)
-        elsif !flag_set.empty? && string_match?(flag_set.strip, method)
+        elsif !flag_set.empty? && string_match?(flag_set.strip.downcase, method)
           valid_flag_sets.add(flag_set.strip.downcase)
         else
           @config.logger.warn("#{method}: you passed an invalid flag set, flag set name must be a non-empty String")

@@ -12,7 +12,9 @@ module SplitIoClient
                      telemtry_consumers,
                      telemetry_init_producer,
                      repositories,
-                     telemetry_api)
+                     telemetry_api,
+                     flag_sets,
+                     flag_sets_invalid)
         @synchronizer = case config.telemetry_adapter.class.to_s
                         when 'SplitIoClient::Cache::Adapters::RedisAdapter'
                           SplitIoClient::Telemetry::RedisSynchronizer.new(config,
@@ -21,7 +23,9 @@ module SplitIoClient
                           SplitIoClient::Telemetry::MemorySynchronizer.new(config,
                                                                            telemtry_consumers,
                                                                            repositories,
-                                                                           telemetry_api)
+                                                                           telemetry_api,
+                                                                           flag_sets,
+                                                                           flag_sets_invalid)
                         end
       end
     end

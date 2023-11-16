@@ -13,11 +13,11 @@ module SplitIoClient
         # No-op
       end
 
-      def synchronize_config(active_factories = nil, redundant_active_factories = nil, tags = nil, flag_sets = nil, flag_sets_invalid = nil)
+      def synchronize_config(active_factories = nil, redundant_active_factories = nil, tags = nil)
         active_factories ||= SplitIoClient.split_factory_registry.active_factories
         redundant_active_factories ||= SplitIoClient.split_factory_registry.redundant_active_factories
 
-        init_config = ConfigInit.new(@config.mode, 'redis', active_factories, redundant_active_factories, tags, flag_sets, flag_sets_invalid)
+        init_config = ConfigInit.new(@config.mode, 'redis', active_factories, redundant_active_factories, tags)
 
         @telemetry_init_producer.record_config(init_config)
       rescue StandardError => e
