@@ -18,7 +18,6 @@ module SplitIoClient
         redundant_active_factories ||= SplitIoClient.split_factory_registry.redundant_active_factories
 
         init_config = ConfigInit.new(@config.mode, 'redis', active_factories, redundant_active_factories, tags)
-
         @telemetry_init_producer.record_config(init_config)
       rescue StandardError => e
         @config.log_found_exception(__method__.to_s, e)

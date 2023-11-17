@@ -13,9 +13,11 @@ describe SplitIoClient::SSE::EventSource::Client do
   let(:api_token) { 'api-token-test' }
   let(:api_key) { 'client-spec-key' }
   let(:event_parser) { SplitIoClient::SSE::EventSource::EventParser.new(config) }
+  let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::FlagSetsRepository.new([])}
+  let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([])}
   let(:repositories) do
     {
-      splits: SplitIoClient::Cache::Repositories::SplitsRepository.new(config),
+      splits: SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter),
       segments: SplitIoClient::Cache::Repositories::SegmentsRepository.new(config),
       impressions: SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config),
       events: SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key, telemetry_runtime_producer)

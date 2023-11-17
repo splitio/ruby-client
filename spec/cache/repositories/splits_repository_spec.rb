@@ -96,7 +96,7 @@ describe SplitIoClient::Cache::Repositories::SplitsRepository do
     end
 
     it 'returns splits data' do
-      expect(repository.splits(repository.split_names)).to eq(
+      expect(repository.splits).to eq(
         'foo' => { name: 'foo', trafficTypeName: 'tt_name_1' },
         'bar' => { name: 'bar', trafficTypeName: 'tt_name_2' },
         'baz' => { name: 'baz', trafficTypeName: 'tt_name_1' }

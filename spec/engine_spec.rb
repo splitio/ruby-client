@@ -135,8 +135,10 @@ describe SplitIoClient, type: :client do
           .to eq SplitIoClient::Engine::Models::Treatment::CONTROL
       end
 
-      it 'returns CONTROL and label for random key' do
-        expect(subject.get_treatment('random_user_id', 'test_feature', nil, nil, false, true)).to eq(
+      it 'returns CONTROL and label for incorrect feature name' do
+        treatment = subject.get_treatment('random_user_id', 'test_featur', nil, nil, false, true)
+        puts treatment
+        expect(treatment).to eq(
           treatment: SplitIoClient::Engine::Models::Treatment::CONTROL,
           label: SplitIoClient::Engine::Models::Label::NOT_FOUND,
           change_number: nil
@@ -210,6 +212,7 @@ describe SplitIoClient, type: :client do
         expect(log.string).to include "get_treatment: bucketing_key \"#{value}\" is not of type String, converting"
       end
 
+      #TODO We will remove multiple param in the future.
       it 'returns CONTROL and label on nil key' do
         expect(subject.get_treatment(nil, 'test_feature', nil, nil, false, true)).to eq(
           treatment: SplitIoClient::Engine::Models::Treatment::CONTROL,
@@ -261,6 +264,7 @@ describe SplitIoClient, type: :client do
           'split_name must be a non-empty String or a Symbol'
       end
 
+      #TODO We will remove multiple param in the future.
       it 'returns CONTROL and label on nil split_name' do
         expect(subject.get_treatment('random_user_id', nil, nil, nil, false, true)).to eq(
           treatment: SplitIoClient::Engine::Models::Treatment::CONTROL,
