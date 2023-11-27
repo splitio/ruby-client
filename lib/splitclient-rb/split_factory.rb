@@ -213,7 +213,11 @@ module SplitIoClient
     end
 
     def build_repositories
-      @flag_sets_repository = SplitIoClient::Cache::Repositories::FlagSetsRepository.new(@config.flag_sets_filter)
+      if @config.cache_adapter.is_a? SplitIoClient::Cache::Adapters::RedisAdapter
+        @flag_sets_repository = SplitIoClient::Cache::Repositories::RedisFlagSetsRepository.new(@config)
+      else
+        @flag_sets_repository = SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new(@config.flag_sets_filter)
+      end
       @splits_repository = SplitsRepository.new(@config, @flag_sets_repository, @flag_sets_filter)
       @segments_repository = SegmentsRepository.new(@config)
       @impressions_repository = ImpressionsRepository.new(@config)

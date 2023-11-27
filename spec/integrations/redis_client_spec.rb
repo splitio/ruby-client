@@ -36,6 +36,10 @@ describe SplitIoClient do
     File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/segment3.json'))
   end
 
+  let(:flag_sets) do
+    File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/flag_sets.json'))
+  end
+
   let(:client) { factory.client }
   let(:config) { client.instance_variable_get(:@config) }
 
@@ -44,6 +48,7 @@ describe SplitIoClient do
     load_segment_redis(segment1, client)
     load_segment_redis(segment2, client)
     load_segment_redis(segment3, client)
+    load_flag_sets_redis(flag_sets, client)
   end
 
   after do
@@ -601,17 +606,17 @@ describe SplitIoClient do
       expect(impressions[0][:treatment][:label]).to eq('whitelisted')
       expect(impressions[0][:treatment][:change_number]).to eq(1_506_703_262_916)
 
-      expect(impressions[1][:matching_key]).to eq('nico_test')
-      expect(impressions[1][:split_name]).to eq(:testing)
-      expect(impressions[1][:treatment][:treatment]).to eq('off')
-      expect(impressions[1][:treatment][:label]).to eq('in split test_definition_as_of treatment [off]')
-      expect(impressions[1][:treatment][:change_number]).to eq(1_506_440_189_077)
-
       expect(impressions[2][:matching_key]).to eq('nico_test')
-      expect(impressions[2][:split_name]).to eq(:testing222)
+      expect(impressions[2][:split_name]).to eq(:testing)
       expect(impressions[2][:treatment][:treatment]).to eq('off')
-      expect(impressions[2][:treatment][:label]).to eq('in segment all')
-      expect(impressions[2][:treatment][:change_number]).to eq(1_505_162_627_437)
+      expect(impressions[2][:treatment][:label]).to eq('in split test_definition_as_of treatment [off]')
+      expect(impressions[2][:treatment][:change_number]).to eq(1_506_440_189_077)
+
+      expect(impressions[1][:matching_key]).to eq('nico_test')
+      expect(impressions[1][:split_name]).to eq(:testing222)
+      expect(impressions[1][:treatment][:treatment]).to eq('off')
+      expect(impressions[1][:treatment][:label]).to eq('in segment all')
+      expect(impressions[1][:treatment][:change_number]).to eq(1_505_162_627_437)
     end
 
     it 'returns treatments with input validation' do
@@ -695,17 +700,17 @@ describe SplitIoClient do
       expect(impressions[2][:treatment][:label]).to eq('whitelisted')
       expect(impressions[2][:treatment][:change_number]).to eq(1_506_703_262_916)
 
-      expect(impressions[0][:matching_key]).to eq('nico_test')
-      expect(impressions[0][:split_name]).to eq(:testing)
-      expect(impressions[0][:treatment][:treatment]).to eq('off')
-      expect(impressions[0][:treatment][:label]).to eq('in split test_definition_as_of treatment [off]')
-      expect(impressions[0][:treatment][:change_number]).to eq(1_506_440_189_077)
-
       expect(impressions[1][:matching_key]).to eq('nico_test')
-      expect(impressions[1][:split_name]).to eq(:testing222)
+      expect(impressions[1][:split_name]).to eq(:testing)
       expect(impressions[1][:treatment][:treatment]).to eq('off')
-      expect(impressions[1][:treatment][:label]).to eq('in segment all')
-      expect(impressions[1][:treatment][:change_number]).to eq(1_505_162_627_437)
+      expect(impressions[1][:treatment][:label]).to eq('in split test_definition_as_of treatment [off]')
+      expect(impressions[1][:treatment][:change_number]).to eq(1_506_440_189_077)
+
+      expect(impressions[0][:matching_key]).to eq('nico_test')
+      expect(impressions[0][:split_name]).to eq(:testing222)
+      expect(impressions[0][:treatment][:treatment]).to eq('off')
+      expect(impressions[0][:treatment][:label]).to eq('in segment all')
+      expect(impressions[0][:treatment][:change_number]).to eq(1_505_162_627_437)
     end
 
     it 'returns treatments with input validation' do
@@ -787,17 +792,17 @@ describe SplitIoClient do
       expect(impressions[0][:treatment][:label]).to eq('whitelisted')
       expect(impressions[0][:treatment][:change_number]).to eq(1_506_703_262_916)
 
-      expect(impressions[1][:matching_key]).to eq('nico_test')
-      expect(impressions[1][:split_name]).to eq(:testing)
-      expect(impressions[1][:treatment][:treatment]).to eq('off')
-      expect(impressions[1][:treatment][:label]).to eq('in split test_definition_as_of treatment [off]')
-      expect(impressions[1][:treatment][:change_number]).to eq(1_506_440_189_077)
-
       expect(impressions[2][:matching_key]).to eq('nico_test')
-      expect(impressions[2][:split_name]).to eq(:testing222)
+      expect(impressions[2][:split_name]).to eq(:testing)
       expect(impressions[2][:treatment][:treatment]).to eq('off')
-      expect(impressions[2][:treatment][:label]).to eq('in segment all')
-      expect(impressions[2][:treatment][:change_number]).to eq(1_505_162_627_437)
+      expect(impressions[2][:treatment][:label]).to eq('in split test_definition_as_of treatment [off]')
+      expect(impressions[2][:treatment][:change_number]).to eq(1_506_440_189_077)
+
+      expect(impressions[1][:matching_key]).to eq('nico_test')
+      expect(impressions[1][:split_name]).to eq(:testing222)
+      expect(impressions[1][:treatment][:treatment]).to eq('off')
+      expect(impressions[1][:treatment][:label]).to eq('in segment all')
+      expect(impressions[1][:treatment][:change_number]).to eq(1_505_162_627_437)
     end
 
     it 'returns treatments with input validation' do
@@ -881,17 +886,17 @@ describe SplitIoClient do
       expect(impressions[2][:treatment][:label]).to eq('whitelisted')
       expect(impressions[2][:treatment][:change_number]).to eq(1_506_703_262_916)
 
-      expect(impressions[0][:matching_key]).to eq('nico_test')
-      expect(impressions[0][:split_name]).to eq(:testing)
-      expect(impressions[0][:treatment][:treatment]).to eq('off')
-      expect(impressions[0][:treatment][:label]).to eq('in split test_definition_as_of treatment [off]')
-      expect(impressions[0][:treatment][:change_number]).to eq(1_506_440_189_077)
-
       expect(impressions[1][:matching_key]).to eq('nico_test')
-      expect(impressions[1][:split_name]).to eq(:testing222)
+      expect(impressions[1][:split_name]).to eq(:testing)
       expect(impressions[1][:treatment][:treatment]).to eq('off')
-      expect(impressions[1][:treatment][:label]).to eq('in segment all')
-      expect(impressions[1][:treatment][:change_number]).to eq(1_505_162_627_437)
+      expect(impressions[1][:treatment][:label]).to eq('in split test_definition_as_of treatment [off]')
+      expect(impressions[1][:treatment][:change_number]).to eq(1_506_440_189_077)
+
+      expect(impressions[0][:matching_key]).to eq('nico_test')
+      expect(impressions[0][:split_name]).to eq(:testing222)
+      expect(impressions[0][:treatment][:treatment]).to eq('off')
+      expect(impressions[0][:treatment][:label]).to eq('in segment all')
+      expect(impressions[0][:treatment][:change_number]).to eq(1_505_162_627_437)
     end
 
     it 'returns treatments with input validation' do
@@ -1005,4 +1010,14 @@ def load_segment_redis(segment_json, cli)
   segments_repository = cli.instance_variable_get(:@segments_repository)
 
   segments_repository.add_to_segment(JSON.parse(segment_json, symbolize_names: true))
+end
+
+def load_flag_sets_redis(flag_sets_json, client)
+  repository = client.instance_variable_get(:@splits_repository)
+  adapter = repository.instance_variable_get(:@adapter)
+  JSON.parse(flag_sets_json, symbolize_names: true).each do |key, values|
+    values.each { |value|
+      adapter.add_to_set("test.SPLITIO.flagSet." + key.to_s, value)
+    }
+  end
 end

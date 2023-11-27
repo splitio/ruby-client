@@ -7,7 +7,7 @@ describe SplitIoClient::Helpers::RepositoryHelper do
     it 'with flag set filter' do
       config = SplitIoClient::SplitConfig.new(cache_adapter: :memory)
       flag_set_filter = SplitIoClient::Cache::Filter::FlagSetsFilter.new(['set_1', 'set_2'])
-      flag_sets_repository = SplitIoClient::Cache::Repositories::FlagSetsRepository.new(['set_1', 'set_2'])
+      flag_sets_repository = SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new(['set_1', 'set_2'])
       feature_flag_repository = SplitIoClient::Cache::Repositories::SplitsRepository.new(
         config,
         flag_sets_repository,
@@ -29,7 +29,7 @@ describe SplitIoClient::Helpers::RepositoryHelper do
     it 'without flag set filter' do
       config = SplitIoClient::SplitConfig.new(cache_adapter: :memory)
       flag_set_filter = SplitIoClient::Cache::Filter::FlagSetsFilter.new([])
-      flag_sets_repository = SplitIoClient::Cache::Repositories::FlagSetsRepository.new([])
+      flag_sets_repository = SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new([])
       feature_flag_repository = SplitIoClient::Cache::Repositories::SplitsRepository.new(
         config,
         flag_sets_repository,

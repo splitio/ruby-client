@@ -5,7 +5,7 @@ require 'spec_helper'
 describe SplitIoClient::SplitClient do
   let(:config) { SplitIoClient::SplitConfig.new(cache_adapter: :memory, impressions_mode: :debug) }
   let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
-  let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::FlagSetsRepository.new([]) }
+  let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new([]) }
   let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([]) }
   let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
   let(:impressions_repository) {SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }

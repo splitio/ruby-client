@@ -4,7 +4,7 @@ require 'spec_helper'
 
 describe SplitIoClient::Engine::Parser::Evaluator do
   let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(@default_config) }
-  let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::FlagSetsRepository.new([])}
+  let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new([])}
   let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([])}
   let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(@default_config, flag_sets_repository, flag_set_filter) }
   let(:evaluator) { described_class.new(segments_repository, splits_repository, true) }
