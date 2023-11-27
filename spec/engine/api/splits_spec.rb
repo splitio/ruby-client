@@ -68,7 +68,7 @@ describe SplitIoClient::Api::Splits do
       expect(log.string).to include returned_splits.to_s
     end
 
-    it 'raise api exception when status 409' do
+    it 'raise api exception when status 414' do
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1&sets=set_1,set_2')
         .with(headers: {
                 'Accept' => '*/*',
@@ -78,7 +78,7 @@ describe SplitIoClient::Api::Splits do
                 'Keep-Alive' => '30',
                 'Splitsdkversion' => "#{config.language}-#{config.version}"
               })
-        .to_return(status: 409, body: splits)
+        .to_return(status: 414, body: splits)
 
       fetch_options = { cache_control_headers: false, till: nil, sets: ['set_1','set_2'] }
       captured = 0
@@ -87,7 +87,7 @@ describe SplitIoClient::Api::Splits do
       rescue SplitIoClient::ApiException => e
         captured = e.exception_code
       end
-      expect(captured).to eq(409)
+      expect(captured).to eq(414)
     end
 
 

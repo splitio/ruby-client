@@ -10,6 +10,8 @@ module SplitIoClient
 
         def evaluate_feature_flag(keys, feature_flag, attributes = nil)
           # DependencyMatcher here, split is actually a split_name in this case
+          cache_result = feature_flag.is_a? String
+          feature_flag = @splits_repository.get_split(feature_flag) if cache_result
           evaluate_treatment(keys, feature_flag, attributes)
         end
 

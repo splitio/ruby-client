@@ -23,7 +23,9 @@ describe SplitIoClient::Cache::Fetchers::SplitFetcher do
         cache_adapter: :memory
       )
     end
-    let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config) }
+    let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::FlagSetsRepository.new([]) }
+    let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([]) }
+    let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
     let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
     let(:store) { described_class.new(splits_repository, '', config, telemetry_runtime_producer) }
 
@@ -63,15 +65,18 @@ describe SplitIoClient::Cache::Fetchers::SplitFetcher do
     end
   end
 
-  context 'redis adapter' do
+  context 'memory adapter with flag sets' do
     let(:log) { StringIO.new }
     let(:config) do
       SplitIoClient::SplitConfig.new(
         logger: Logger.new(log),
-        cache_adapter: :redis
+        cache_adapter: :memory,
+        flag_sets_filter: ['set_2']
       )
     end
-    let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config) }
+    let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::FlagSetsRepository.new(['set_2']) }
+    let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new(['set_2']) }
+    let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
     let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
     let(:store) { described_class.new(splits_repository, '', config, telemetry_runtime_producer) }
 
@@ -84,6 +89,51 @@ describe SplitIoClient::Cache::Fetchers::SplitFetcher do
     it 'fetch data in the cache' do
       store.send(:fetch_splits)
 
+      expect(store.splits_repository.splits.size).to eq(1)
+      expect(store.splits_repository.get_change_number).to eq(store.send(:splits_since, -1)[:till])
+    end
+
+    it 'refreshes splits' do
+      store.send(:fetch_splits)
+      expect(store.splits_repository.get_split('sample_feature')[:name]).to eq('sample_feature')
+      expect(store.splits_repository.get_split('test_1_ruby')).to eq(nil)
+
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1473413807667')
+        .to_return(status: 200, body: archived_splits_json)
+
+      store.send(:fetch_splits)
+      expect(store.splits_repository.get_split('sample_feature')).to eq(nil)
+
+      store.splits_repository.set_change_number(-1)
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+        .to_return(status: 200, body: active_splits_json)
+
+      store.send(:fetch_splits)
+      expect(store.splits_repository.get_split('sample_feature')[:name]).to eq('sample_feature')
+    end
+  end
+
+  context 'redis adapter' do
+    let(:log) { StringIO.new }
+    let(:config) do
+      SplitIoClient::SplitConfig.new(
+        logger: Logger.new(log),
+        cache_adapter: :redis
+      )
+    end
+    let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::FlagSetsRepository.new([]) }
+    let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([]) }
+    let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
+    let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
+    let(:store) { described_class.new(splits_repository, '', config, telemetry_runtime_producer) }
+
+    it 'returns splits since' do
+      splits = store.send(:splits_since, -1)
+      expect(splits[:splits].count).to eq(2)
+    end
+
+    it 'fetch data in the cache' do
+      store.send(:fetch_splits)
       expect(store.splits_repository.splits.size).to eq(2)
       expect(store.splits_repository.get_change_number).to eq(store.send(:splits_since, -1)[:till].to_s)
     end

@@ -581,6 +581,369 @@ describe SplitIoClient do
     end
   end
 
+  context '#get_treatments_by_flag_set' do
+    it 'returns treatments and check impressions' do
+      result = client.get_treatments_by_flag_set('nico_test', 'set_3')
+      expect(result[:FACUNDO_TEST]).to eq 'on'
+
+      result = client.get_treatments_by_flag_set('nico_test', 'set_2')
+      expect(result[:testing]).to eq 'off'
+      expect(result[:testing222]).to eq 'off'
+
+      sleep 0.5
+      impressions = custom_impression_listener.queue
+
+      expect(impressions.size).to eq 3
+
+      expect(impressions[0][:matching_key]).to eq('nico_test')
+      expect(impressions[0][:split_name]).to eq(:FACUNDO_TEST)
+      expect(impressions[0][:treatment][:treatment]).to eq('on')
+      expect(impressions[0][:treatment][:label]).to eq('whitelisted')
+      expect(impressions[0][:treatment][:change_number]).to eq(1_506_703_262_916)
+
+      expect(impressions[1][:matching_key]).to eq('nico_test')
+      expect(impressions[1][:split_name]).to eq(:testing)
+      expect(impressions[1][:treatment][:treatment]).to eq('off')
+      expect(impressions[1][:treatment][:label]).to eq('in split test_definition_as_of treatment [off]')
+      expect(impressions[1][:treatment][:change_number]).to eq(1_506_440_189_077)
+
+      expect(impressions[2][:matching_key]).to eq('nico_test')
+      expect(impressions[2][:split_name]).to eq(:testing222)
+      expect(impressions[2][:treatment][:treatment]).to eq('off')
+      expect(impressions[2][:treatment][:label]).to eq('in segment all')
+      expect(impressions[2][:treatment][:change_number]).to eq(1_505_162_627_437)
+    end
+
+    it 'returns treatments with input validation' do
+      result1 = client.get_treatments_with_config_by_flag_set('nico_test', 'set_3 ')
+      result2 = client.get_treatments_with_config_by_flag_set('', 'set_2')
+      result3 = client.get_treatments_with_config_by_flag_set(nil, 'set_1')
+
+      expect(result1[:FACUNDO_TEST]).to eq(
+        treatment: 'on',
+        config: '{"color":"green"}'
+      )
+      expect(result2[:testing]).to eq(
+        treatment: 'control',
+        config: nil
+      )
+      expect(result2[:testing222]).to eq(
+        treatment: 'control',
+        config: nil
+      )
+      expect(result2[:testing222]).to eq(
+        treatment: 'control',
+        config: nil
+      )
+
+      sleep 0.5
+      impressions = custom_impression_listener.queue
+
+      expect(impressions.size).to eq 1
+      expect(impressions[0][:matching_key]).to eq('nico_test')
+      expect(impressions[0][:split_name]).to eq(:FACUNDO_TEST)
+      expect(impressions[0][:treatment][:treatment]).to eq('on')
+      expect(impressions[0][:treatment][:label]).to eq('whitelisted')
+      expect(impressions[0][:treatment][:change_number]).to eq(1_506_703_262_916)
+    end
+
+    it 'returns CONTROL with treatment doesnt exist' do
+      result = client.get_treatments_with_config_by_flag_set('nico_test', 'invalid_set')
+      expect(result).to eq({})
+      result = client.get_treatments_with_config_by_flag_set('nico_test', 'set_3')
+      expect(result[:FACUNDO_TEST]).to eq(
+        treatment: 'on',
+        config: '{"color":"green"}'
+      )
+
+      sleep 0.5
+      impressions = custom_impression_listener.queue
+
+      expect(impressions.size).to eq 1
+      expect(impressions[0][:matching_key]).to eq('nico_test')
+      expect(impressions[0][:split_name]).to eq(:FACUNDO_TEST)
+      expect(impressions[0][:treatment][:treatment]).to eq('on')
+      expect(impressions[0][:treatment][:label]).to eq('whitelisted')
+      expect(impressions[0][:treatment][:change_number]).to eq(1_506_703_262_916)
+    end
+  end
+
+  context '#get_treatments_by_flag_sets' do
+    it 'returns treatments and check impressions' do
+      result = client.get_treatments_with_config_by_flag_sets('nico_test', ['set_3', 'set_2'])
+      expect(result[:FACUNDO_TEST]).to eq(
+        treatment: 'on',
+        config: '{"color":"green"}'
+      )
+      expect(result[:testing]).to eq(
+        treatment: 'off',
+        config: nil
+      )
+      expect(result[:testing222]).to eq(
+        treatment: 'off',
+        config: nil
+      )
+
+      sleep 0.5
+      impressions = custom_impression_listener.queue
+
+      expect(impressions.size).to eq 3
+
+      expect(impressions[2][:matching_key]).to eq('nico_test')
+      expect(impressions[2][:split_name]).to eq(:FACUNDO_TEST)
+      expect(impressions[2][:treatment][:treatment]).to eq('on')
+      expect(impressions[2][:treatment][:label]).to eq('whitelisted')
+      expect(impressions[2][:treatment][:change_number]).to eq(1_506_703_262_916)
+
+      expect(impressions[0][:matching_key]).to eq('nico_test')
+      expect(impressions[0][:split_name]).to eq(:testing)
+      expect(impressions[0][:treatment][:treatment]).to eq('off')
+      expect(impressions[0][:treatment][:label]).to eq('in split test_definition_as_of treatment [off]')
+      expect(impressions[0][:treatment][:change_number]).to eq(1_506_440_189_077)
+
+      expect(impressions[1][:matching_key]).to eq('nico_test')
+      expect(impressions[1][:split_name]).to eq(:testing222)
+      expect(impressions[1][:treatment][:treatment]).to eq('off')
+      expect(impressions[1][:treatment][:label]).to eq('in segment all')
+      expect(impressions[1][:treatment][:change_number]).to eq(1_505_162_627_437)
+    end
+
+    it 'returns treatments with input validation' do
+      result1 = client.get_treatments_with_config_by_flag_sets('nico_test', ['set_3 ', 'invalid', ''])
+      result2 = client.get_treatments_with_config_by_flag_sets('', ['set_2', 123, 'se@t', '//s'])
+      result3 = client.get_treatments_with_config_by_flag_sets(nil, ['set_1'])
+
+      expect(result1[:FACUNDO_TEST]).to eq(
+        treatment: 'on',
+        config: '{"color":"green"}'
+      )
+      expect(result2[:testing]).to eq(
+        treatment: 'control',
+        config: nil
+      )
+      expect(result2[:testing222]).to eq(
+        treatment: 'control',
+        config: nil
+      )
+      expect(result2[:testing222]).to eq(
+        treatment: 'control',
+        config: nil
+      )
+
+      sleep 0.5
+      impressions = custom_impression_listener.queue
+
+      expect(impressions.size).to eq 1
+      expect(impressions[0][:matching_key]).to eq('nico_test')
+      expect(impressions[0][:split_name]).to eq(:FACUNDO_TEST)
+      expect(impressions[0][:treatment][:treatment]).to eq('on')
+      expect(impressions[0][:treatment][:label]).to eq('whitelisted')
+      expect(impressions[0][:treatment][:change_number]).to eq(1_506_703_262_916)
+    end
+
+    it 'returns CONTROL with treatment doesnt exist' do
+      result = client.get_treatments_with_config_by_flag_sets('nico_test', ['invalid_set'])
+      expect(result).to eq({})
+      result = client.get_treatments_with_config_by_flag_sets('nico_test', ['set_3'])
+
+      sleep 0.5
+      impressions = custom_impression_listener.queue
+
+      expect(impressions.size).to eq 1
+      expect(impressions[0][:matching_key]).to eq('nico_test')
+      expect(impressions[0][:split_name]).to eq(:FACUNDO_TEST)
+      expect(impressions[0][:treatment][:treatment]).to eq('on')
+      expect(impressions[0][:treatment][:label]).to eq('whitelisted')
+      expect(impressions[0][:treatment][:change_number]).to eq(1_506_703_262_916)
+    end
+  end
+
+  context '#get_treatments_with_config_by_flag_set' do
+    it 'returns treatments and check impressions' do
+      result = client.get_treatments_with_config_by_flag_set('nico_test', 'set_3')
+      expect(result[:FACUNDO_TEST]).to eq(
+        treatment: 'on',
+        config: '{"color":"green"}'
+      )
+
+      result = client.get_treatments_with_config_by_flag_set('nico_test', 'set_2')
+      expect(result[:testing]).to eq(
+        treatment: 'off',
+        config: nil
+      )
+      expect(result[:testing222]).to eq(
+        treatment: 'off',
+        config: nil
+      )
+
+      sleep 0.5
+      impressions = custom_impression_listener.queue
+
+      expect(impressions.size).to eq 3
+
+      expect(impressions[0][:matching_key]).to eq('nico_test')
+      expect(impressions[0][:split_name]).to eq(:FACUNDO_TEST)
+      expect(impressions[0][:treatment][:treatment]).to eq('on')
+      expect(impressions[0][:treatment][:label]).to eq('whitelisted')
+      expect(impressions[0][:treatment][:change_number]).to eq(1_506_703_262_916)
+
+      expect(impressions[1][:matching_key]).to eq('nico_test')
+      expect(impressions[1][:split_name]).to eq(:testing)
+      expect(impressions[1][:treatment][:treatment]).to eq('off')
+      expect(impressions[1][:treatment][:label]).to eq('in split test_definition_as_of treatment [off]')
+      expect(impressions[1][:treatment][:change_number]).to eq(1_506_440_189_077)
+
+      expect(impressions[2][:matching_key]).to eq('nico_test')
+      expect(impressions[2][:split_name]).to eq(:testing222)
+      expect(impressions[2][:treatment][:treatment]).to eq('off')
+      expect(impressions[2][:treatment][:label]).to eq('in segment all')
+      expect(impressions[2][:treatment][:change_number]).to eq(1_505_162_627_437)
+    end
+
+    it 'returns treatments with input validation' do
+      result1 = client.get_treatments_with_config_by_flag_set('nico_test', 'set_3 ')
+      result2 = client.get_treatments_with_config_by_flag_set('', 'set_2')
+      result3 = client.get_treatments_with_config_by_flag_set(nil, 'set_1')
+
+      expect(result1[:FACUNDO_TEST]).to eq(
+        treatment: 'on',
+        config: '{"color":"green"}'
+      )
+      expect(result2[:testing]).to eq(
+        treatment: 'control',
+        config: nil
+      )
+      expect(result2[:testing222]).to eq(
+        treatment: 'control',
+        config: nil
+      )
+      expect(result2[:testing222]).to eq(
+        treatment: 'control',
+        config: nil
+      )
+
+      sleep 0.5
+      impressions = custom_impression_listener.queue
+
+      expect(impressions.size).to eq 1
+      expect(impressions[0][:matching_key]).to eq('nico_test')
+      expect(impressions[0][:split_name]).to eq(:FACUNDO_TEST)
+      expect(impressions[0][:treatment][:treatment]).to eq('on')
+      expect(impressions[0][:treatment][:label]).to eq('whitelisted')
+      expect(impressions[0][:treatment][:change_number]).to eq(1_506_703_262_916)
+    end
+
+    it 'returns CONTROL with treatment doesnt exist' do
+      result = client.get_treatments_with_config_by_flag_set('nico_test', 'invalid_set')
+      expect(result).to eq({})
+      result = client.get_treatments_with_config_by_flag_set('nico_test', 'set_3')
+      expect(result[:FACUNDO_TEST]).to eq(
+        treatment: 'on',
+        config: '{"color":"green"}'
+      )
+
+      sleep 0.5
+      impressions = custom_impression_listener.queue
+
+      expect(impressions.size).to eq 1
+      expect(impressions[0][:matching_key]).to eq('nico_test')
+      expect(impressions[0][:split_name]).to eq(:FACUNDO_TEST)
+      expect(impressions[0][:treatment][:treatment]).to eq('on')
+      expect(impressions[0][:treatment][:label]).to eq('whitelisted')
+      expect(impressions[0][:treatment][:change_number]).to eq(1_506_703_262_916)
+    end
+  end
+
+  context '#get_treatments_with_config_by_flag_sets' do
+    it 'returns treatments and check impressions' do
+      result = client.get_treatments_with_config_by_flag_sets('nico_test', ['set_3', 'set_2'])
+      expect(result[:FACUNDO_TEST]).to eq(
+        treatment: 'on',
+        config: '{"color":"green"}'
+      )
+      expect(result[:testing]).to eq(
+        treatment: 'off',
+        config: nil
+      )
+      expect(result[:testing222]).to eq(
+        treatment: 'off',
+        config: nil
+      )
+
+      sleep 0.5
+      impressions = custom_impression_listener.queue
+
+      expect(impressions.size).to eq 3
+
+      expect(impressions[2][:matching_key]).to eq('nico_test')
+      expect(impressions[2][:split_name]).to eq(:FACUNDO_TEST)
+      expect(impressions[2][:treatment][:treatment]).to eq('on')
+      expect(impressions[2][:treatment][:label]).to eq('whitelisted')
+      expect(impressions[2][:treatment][:change_number]).to eq(1_506_703_262_916)
+
+      expect(impressions[0][:matching_key]).to eq('nico_test')
+      expect(impressions[0][:split_name]).to eq(:testing)
+      expect(impressions[0][:treatment][:treatment]).to eq('off')
+      expect(impressions[0][:treatment][:label]).to eq('in split test_definition_as_of treatment [off]')
+      expect(impressions[0][:treatment][:change_number]).to eq(1_506_440_189_077)
+
+      expect(impressions[1][:matching_key]).to eq('nico_test')
+      expect(impressions[1][:split_name]).to eq(:testing222)
+      expect(impressions[1][:treatment][:treatment]).to eq('off')
+      expect(impressions[1][:treatment][:label]).to eq('in segment all')
+      expect(impressions[1][:treatment][:change_number]).to eq(1_505_162_627_437)
+    end
+
+    it 'returns treatments with input validation' do
+      result1 = client.get_treatments_with_config_by_flag_sets('nico_test', ['set_3 ', 'invalid', ''])
+      result2 = client.get_treatments_with_config_by_flag_sets('', ['set_2', 123, 'se@t', '//s'])
+      result3 = client.get_treatments_with_config_by_flag_sets(nil, ['set_1'])
+
+      expect(result1[:FACUNDO_TEST]).to eq(
+        treatment: 'on',
+        config: '{"color":"green"}'
+      )
+      expect(result2[:testing]).to eq(
+        treatment: 'control',
+        config: nil
+      )
+      expect(result2[:testing222]).to eq(
+        treatment: 'control',
+        config: nil
+      )
+      expect(result2[:testing222]).to eq(
+        treatment: 'control',
+        config: nil
+      )
+
+      sleep 0.5
+      impressions = custom_impression_listener.queue
+
+      expect(impressions.size).to eq 1
+      expect(impressions[0][:matching_key]).to eq('nico_test')
+      expect(impressions[0][:split_name]).to eq(:FACUNDO_TEST)
+      expect(impressions[0][:treatment][:treatment]).to eq('on')
+      expect(impressions[0][:treatment][:label]).to eq('whitelisted')
+      expect(impressions[0][:treatment][:change_number]).to eq(1_506_703_262_916)
+    end
+
+    it 'returns CONTROL with treatment doesnt exist' do
+      result = client.get_treatments_with_config_by_flag_sets('nico_test', ['invalid_set'])
+      expect(result).to eq({})
+      result = client.get_treatments_with_config_by_flag_sets('nico_test', ['set_3'])
+
+      sleep 0.5
+      impressions = custom_impression_listener.queue
+
+      expect(impressions.size).to eq 1
+      expect(impressions[0][:matching_key]).to eq('nico_test')
+      expect(impressions[0][:split_name]).to eq(:FACUNDO_TEST)
+      expect(impressions[0][:treatment][:treatment]).to eq('on')
+      expect(impressions[0][:treatment][:label]).to eq('whitelisted')
+      expect(impressions[0][:treatment][:change_number]).to eq(1_506_703_262_916)
+    end
+  end
+
   context '#track' do
     it 'returns true' do
       properties = {

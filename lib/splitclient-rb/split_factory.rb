@@ -27,15 +27,16 @@ module SplitIoClient
 
       @api_key = api_key
 
-      store_flag_sets = config_hash[:flag_set_filter] if config_hash.key?(:flag_set_filter)
-      flag_sets = 0
+      store_flag_sets = config_hash.key?(:flag_sets_filter) ? config_hash[:flag_sets_filter] : []
+      store_flag_sets = [] if !store_flag_sets.is_a?(Array)
+      flag_sets_count = 0
       flag_sets_invalid = 0
 
       @config = SplitConfig.new(config_hash.merge(localhost_mode: @api_key == LOCALHOST_API_KEY ))
 
-      if @config.key?(:flag_set_filter)
-        flag_sets = @config[:flag_set_filter].length()
-        flag_sets_invalid = store_flag_sets[:flag_set_filter].length() - valid_flag_sets
+      if config_hash.key?(:flag_sets_filter)
+        flag_sets_count = store_flag_sets.length()
+        flag_sets_invalid = flag_sets_count - @config.flag_sets_filter.length()
       end
 
       raise 'Invalid SDK mode' unless valid_mode
@@ -47,7 +48,7 @@ module SplitIoClient
       build_telemetry_components
       build_flag_sets_filter
       build_repositories
-      build_telemetry_synchronizer(flag_sets, flag_sets_invalid)
+      build_telemetry_synchronizer(flag_sets_count, flag_sets_invalid)
       build_impressions_sender_adapter
       build_unique_keys_tracker
       build_impressions_components
@@ -267,7 +268,7 @@ module SplitIoClient
     end
 
     def build_flag_sets_filter
-      @flag_set_filter = SplitIoClient::Cache::Filter::FlagSetsFilter.new(@config.flag_sets_filter)
+      @flag_sets_filter = SplitIoClient::Cache::Filter::FlagSetsFilter.new(@config.flag_sets_filter)
     end
   end
 end

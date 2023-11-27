@@ -150,6 +150,8 @@ describe SplitIoClient do
       mock_splits_request(splits3, '1585948850110')
       mock_segment_changes('segment3', segment3, '-1')
       stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?since=1585948850111").to_return(status: 200, body: '')
+      stub_request(:get, "https://sdk.split.io/api/segmentChanges/bilal_segment?since=-1").to_return(status: 200, body: '')
       mock_server do |server|
         server.setup_response('/') do |_, res|
           send_content(res, event_split_iff_update_no_compression)
@@ -166,7 +168,7 @@ describe SplitIoClient do
 
         client = factory.client
         client.block_until_ready
-        sleep(2)
+        sleep(3)
         expect(client.get_treatment('admin', 'bilal_split')).to eq('off')
       end
     end

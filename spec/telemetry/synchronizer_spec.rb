@@ -9,7 +9,7 @@ describe SplitIoClient::Telemetry::Synchronizer do
     let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log), cache_adapter: :redis, mode: :consumer, redis_namespace: 'synch-test') }
     let(:adapter) { config.telemetry_adapter }
     let(:init_producer) { SplitIoClient::Telemetry::InitProducer.new(config) }
-    let(:synchronizer) { SplitIoClient::Telemetry::Synchronizer.new(config, nil, init_producer, nil, nil) }
+    let(:synchronizer) { SplitIoClient::Telemetry::Synchronizer.new(config, nil, init_producer, nil, nil, nil, nil) }
     let(:config_key) { 'synch-test.SPLITIO.telemetry.init' }
 
     it 'synchronize_config with data' do
@@ -34,7 +34,9 @@ describe SplitIoClient::Telemetry::Synchronizer do
     let(:evaluation_consumer) { SplitIoClient::Telemetry::EvaluationConsumer.new(config) }
     let(:init_consumer) { SplitIoClient::Telemetry::InitConsumer.new(config) }
     let(:runtime_consumer) { SplitIoClient::Telemetry::RuntimeConsumer.new(config) }
-    let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config) }
+    let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::FlagSetsRepository.new([])}
+    let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([])}
+    let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
     let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
     let(:api_key) { 'Synchronizer-key' }
     let(:runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
@@ -59,7 +61,7 @@ describe SplitIoClient::Telemetry::Synchronizer do
                                                    telemetry_consumers,
                                                    init_producer,
                                                    { splits: splits_repository, segments: segments_repository },
-                                                   telemetry_api)
+                                                   telemetry_api, 0, 0)
       end
 
       it 'with data' do
@@ -168,9 +170,9 @@ describe SplitIoClient::Telemetry::Synchronizer do
                                                                   telemetry_consumers,
                                                                   init_producer,
                                                                   { splits: splits_repository, segments: segments_repository },
-                                                                  telemetry_api)
+                                                                  telemetry_api, 1, 0)
 
-        synchronizer.synchronize_config(1, 1, 100, 1, 0)
+        synchronizer.synchronize_config(1, 1, 100)
 
         expect(a_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
           .with(body: body_custom_config)).to have_been_made
@@ -181,9 +183,9 @@ describe SplitIoClient::Telemetry::Synchronizer do
                                                                   telemetry_consumers,
                                                                   init_producer,
                                                                   { splits: splits_repository, segments: segments_repository },
-                                                                  telemetry_api)
+                                                                  telemetry_api, 1, 0)
 
-        synchronizer.synchronize_config(1, 1, 500, 1, 0)
+        synchronizer.synchronize_config(1, 1, 500)
 
         expect(a_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
           .with(body: body_default_config)).to have_been_made
@@ -196,9 +198,9 @@ describe SplitIoClient::Telemetry::Synchronizer do
                                                                   telemetry_consumers,
                                                                   init_producer,
                                                                   { splits: splits_repository, segments: segments_repository },
-                                                                  telemetry_api)
+                                                                  telemetry_api, 1, 0)
 
-        synchronizer.synchronize_config(1, 1, 500, 1, 0)
+        synchronizer.synchronize_config(1, 1, 500)
 
         expect(a_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
           .with(body: body_proxy_config)).to have_been_made

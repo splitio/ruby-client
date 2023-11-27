@@ -227,4 +227,93 @@ describe SplitIoClient::SplitFactory do
       expect(SplitIoClient.split_factory_registry.redundant_active_factories).to be(6)
     end
   end
+
+  context 'when using flagsets' do
+    let(:cache_adapter) { :memory }
+    let(:mode) { :standalone }
+
+    it 'no flagsets used' do
+      factory = described_class.new('apikey', options)
+
+      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/usage')
+        .to_return(status: 200, body: 'ok')
+      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
+        .to_return(status: 200, body: 'ok')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+        .to_return(status: 200, body: [])
+      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
+        .to_return(status: 200, body: '')
+
+      tel_sync = factory.instance_variable_get(:@telemetry_synchronizer)
+      tel_mem_sync = tel_sync.instance_variable_get(:@synchronizer)
+
+      expect(tel_mem_sync.instance_variable_get(:@flag_sets)).to eq(0)
+      expect(tel_mem_sync.instance_variable_get(:@flag_sets_invalid)).to eq(0)
+
+      factory.client.destroy
+    end
+
+    it 'no invalid flagsets used' do
+      factory = described_class.new('apikey', options.merge({:flag_sets_filter => ['set1', 'set2']}))
+
+      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/usage')
+        .to_return(status: 200, body: 'ok')
+      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
+        .to_return(status: 200, body: 'ok')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+        .to_return(status: 200, body: [])
+      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
+        .to_return(status: 200, body: '')
+
+      tel_sync = factory.instance_variable_get(:@telemetry_synchronizer)
+      tel_mem_sync = tel_sync.instance_variable_get(:@synchronizer)
+
+      expect(tel_mem_sync.instance_variable_get(:@flag_sets)).to eq(2)
+      expect(tel_mem_sync.instance_variable_get(:@flag_sets_invalid)).to eq(0)
+
+      factory.client.destroy
+    end
+
+    it 'have invalid flagsets used' do
+      factory = described_class.new('apikey', options.merge({:flag_sets_filter => ['set1', 'se$t2', 'set3', 123, nil, '@@']}))
+
+      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/usage')
+        .to_return(status: 200, body: 'ok')
+      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
+        .to_return(status: 200, body: 'ok')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+        .to_return(status: 200, body: [])
+      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
+        .to_return(status: 200, body: '')
+
+      tel_sync = factory.instance_variable_get(:@telemetry_synchronizer)
+      tel_mem_sync = tel_sync.instance_variable_get(:@synchronizer)
+
+      expect(tel_mem_sync.instance_variable_get(:@flag_sets)).to eq(6)
+      expect(tel_mem_sync.instance_variable_get(:@flag_sets_invalid)).to eq(4)
+
+      factory.client.destroy
+    end
+
+    it 'have invalid value for param flagsets used' do
+      factory = described_class.new('apikey', options.merge({:flag_sets_filter => 'set1'}))
+
+      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/usage')
+        .to_return(status: 200, body: 'ok')
+      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
+        .to_return(status: 200, body: 'ok')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+        .to_return(status: 200, body: [])
+      stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
+        .to_return(status: 200, body: '')
+
+      tel_sync = factory.instance_variable_get(:@telemetry_synchronizer)
+      tel_mem_sync = tel_sync.instance_variable_get(:@synchronizer)
+
+      expect(tel_mem_sync.instance_variable_get(:@flag_sets)).to eq(0)
+      expect(tel_mem_sync.instance_variable_get(:@flag_sets_invalid)).to eq(0)
+
+      factory.client.destroy
+    end
+  end
 end

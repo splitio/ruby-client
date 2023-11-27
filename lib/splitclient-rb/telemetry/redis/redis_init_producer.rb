@@ -12,8 +12,6 @@ module SplitIoClient
         return if config_data.nil?
 
         data = { t: { oM: config_data.om, st: config_data.st, aF: config_data.af, rF: config_data.rf, t: config_data.t } }
-        data['t']['fsT'] = config_data.fsT
-        data['t']['fsI'] = config_data.fsI
         field = "#{@config.language}-#{@config.version}/#{@config.machine_name}/#{@config.machine_ip}"
 
         @adapter.add_to_map(config_key, field, data.to_json)
