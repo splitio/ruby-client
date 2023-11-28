@@ -1138,7 +1138,7 @@ describe SplitIoClient do
         telemetry_refresh_rate: 99999,
         impressions_refresh_rate: 99999,
         streaming_enabled: false,
-        flag_sets_filter: ['set_3'])
+        flag_sets_filter: ['set_3', '@3we'])
     end
       before do
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')

@@ -128,9 +128,7 @@ module SplitIoClient
             end
             sets_to_fetch.push(flag_set)
           end
-          to_return = Array.new
-          sets_to_fetch.each { |flag_set| to_return.concat(@flag_sets.get_flag_set(flag_set).to_a)}
-          to_return.uniq
+          @flag_sets.get_flag_sets(flag_sets)
         end
 
         def is_flag_set_exist(flag_set)
@@ -198,7 +196,7 @@ module SplitIoClient
           if !feature_flag[:sets].nil?
             for flag_set in feature_flag[:sets]
               @flag_sets.remove_feature_flag_from_flag_set(flag_set, feature_flag[:name])
-              if is_flag_set_exist(flag_set) && @flag_sets.get_flag_set(flag_set).length == 0 && !@flag_set_filter.should_filter?
+              if is_flag_set_exist(flag_set) && @flag_sets.get_flag_sets([flag_set]).length == 0 && !@flag_set_filter.should_filter?
                   @flag_sets.remove_flag_set(flag_set)
               end
             end
