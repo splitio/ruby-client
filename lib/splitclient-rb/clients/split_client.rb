@@ -282,7 +282,7 @@ module SplitIoClient
             { bucketing_key: bucketing_key, matching_key: matching_key }, split, attributes
           )
         else
-          @config.logger.error("#{calling_method}: the SDK is not ready, the operation cannot be executed")
+          @config.logger.error("#{calling_method}: the SDK is not ready, results may be incorrect for feature flag #{split_name}. Make sure to wait for SDK readiness before using this method.")
 
           control_treatment.merge({ label: Engine::Models::Label::NOT_READY })
         end

@@ -1,5 +1,8 @@
 CHANGES
 
+x.x.x (coming soon)
+- Added `default_treatment` property to the `split_view` object returned by the `split` and `splits` methods of the SDK manager.
+
 8.2.0 (Jul 18, 2023)
 - Improved streaming architecture implementation to apply feature flag updates from the notification received which is now enhanced, improving efficiency and reliability of the whole update system.
 
