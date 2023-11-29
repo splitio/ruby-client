@@ -122,7 +122,7 @@ module SplitIoClient
       @on_demand_fetch_retry_delay_seconds = SplitConfig.default_on_demand_fetch_retry_delay_seconds
       @on_demand_fetch_max_retries = SplitConfig.default_on_demand_fetch_max_retries
 
-      @flag_sets_filter = SplitConfig.sanitize_flag_set_filter(opts[:flag_sets_filter], @split_validator)
+      @flag_sets_filter = SplitConfig.sanitize_flag_set_filter(opts[:flag_sets_filter], @split_validator, opts[:cache_adapter], @logger)
       startup_log
     end
 
@@ -520,7 +520,12 @@ module SplitIoClient
       5
     end
 
-    def self.sanitize_flag_set_filter(flag_sets, validator)
+    def self.sanitize_flag_set_filter(flag_sets, validator, adapter, logger)
+      return [] if flag_sets.nil?
+      if adapter == :redis
+        logger.warn("config: : flag_sets_filter is not applicable for Consumer modes where the SDK does not keep rollout data in sync. FlagSet filter was discarded")
+        return []
+      end
       return validator.valid_flag_sets(:config, flag_sets)
     end
 

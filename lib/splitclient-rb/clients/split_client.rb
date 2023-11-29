@@ -63,7 +63,7 @@ module SplitIoClient
     end
 
     def get_treatments_by_flag_set(key, flag_set, attributes = {})
-      valid_flag_set = @split_validator.valid_flag_sets(:get_treatments_by_flag_set, [flag_set])
+      valid_flag_set = @split_validator.valid_flag_sets(GET_TREATMENTS_BY_FLAG_SET, [flag_set])
       split_names = @splits_repository.get_feature_flags_by_sets(valid_flag_set)
       treatments = treatments(key, split_names, attributes, GET_TREATMENTS_BY_FLAG_SET)
       return treatments if treatments.nil?
@@ -73,7 +73,7 @@ module SplitIoClient
     end
 
     def get_treatments_by_flag_sets(key, flag_sets, attributes = {})
-      valid_flag_set = @split_validator.valid_flag_sets(:get_treatments_by_flag_sets, flag_sets)
+      valid_flag_set = @split_validator.valid_flag_sets(GET_TREATMENTS_BY_FLAG_SETS, flag_sets)
       split_names = @splits_repository.get_feature_flags_by_sets(valid_flag_set)
       treatments = treatments(key, split_names, attributes, GET_TREATMENTS_BY_FLAG_SETS)
       return treatments if treatments.nil?
@@ -83,13 +83,13 @@ module SplitIoClient
     end
 
     def get_treatments_with_config_by_flag_set(key, flag_set, attributes = {})
-      valid_flag_set = @split_validator.valid_flag_sets(:get_treatments_with_config_by_flag_set, [flag_set])
+      valid_flag_set = @split_validator.valid_flag_sets(GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SET, [flag_set])
       split_names = @splits_repository.get_feature_flags_by_sets(valid_flag_set)
       treatments(key, split_names, attributes, GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SET)
     end
 
     def get_treatments_with_config_by_flag_sets(key, flag_sets, attributes = {})
-      valid_flag_set = @split_validator.valid_flag_sets(:get_treatments_with_config_by_flag_sets, flag_sets)
+      valid_flag_set = @split_validator.valid_flag_sets(GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SETS, flag_sets)
       split_names = @splits_repository.get_feature_flags_by_sets(valid_flag_set)
       treatments(key, split_names, attributes, GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SETS)
     end

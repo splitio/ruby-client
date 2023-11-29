@@ -13,7 +13,7 @@ describe SplitIoClient::SSE::EventSource::Client do
   let(:api_token) { 'api-token-test' }
   let(:api_key) { 'client-spec-key' }
   let(:event_parser) { SplitIoClient::SSE::EventSource::EventParser.new(config) }
-  let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::FlagSetsRepository.new([])}
+  let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new([])}
   let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([])}
   let(:repositories) do
     {

@@ -46,18 +46,33 @@ module SplitIoClient
     end
 
     def valid_flag_sets(method, flag_sets)
-      return [] if flag_sets.nil? || !flag_sets.is_a?(Array)
-
+      if flag_sets.nil? || !flag_sets.is_a?(Array)
+        @config.logger.error("#{method}: FlagSets must be a non-empty list.")
+        return []
+      end
+      if flag_sets.empty?
+        @config.logger.error("#{method}: FlagSets must be a non-empty list.")
+        return []
+      end
+      without_nil = Array.new
+      flag_sets.each { |flag_set|
+        without_nil.push(flag_set) if !flag_set.nil?
+        log_nil("flag set", method) if flag_set.nil?
+      }
+      if without_nil.length() == 0
+        log_invalid_flag_set_type(method)
+        return []
+      end
       valid_flag_sets = SortedSet[]
-      flag_sets.compact.uniq.select do |flag_set|
-        if !flag_set.is_a?(String)
-          log_invalid_type(:flag_set, method)
+      without_nil.compact.uniq.select do |flag_set|
+        if flag_set.nil? || !flag_set.is_a?(String)
+          log_invalid_flag_set_type(method)
         elsif flag_set.is_a?(String) && flag_set.empty?
-          log_nil(:flag_set, method)
+          log_invalid_flag_set_type(method)
         elsif !flag_set.empty? && string_match?(flag_set.strip.downcase, method)
           valid_flag_sets.add(flag_set.strip.downcase)
         else
-          @config.logger.warn("#{method}: you passed an invalid flag set, flag set name must be a non-empty String")
+          log_invalid_flag_set_type(method)
         end
       end
       !valid_flag_sets.empty? ? valid_flag_sets.to_a :  []
@@ -93,7 +108,9 @@ module SplitIoClient
     end
 
     def log_nil(key, method)
-      @config.logger.error("#{method}: you passed a nil #{key}, #{key} must be a non-empty String or a Symbol")
+      msg_text = String.new("#{method}: you passed a nil #{key}, #{key} must be a non-empty String")
+      msg_text << " or a Symbol" if !key.equal?("flag set")
+      @config.logger.error(msg_text)
     end
 
     def log_empty_string(key, method)
@@ -102,6 +119,10 @@ module SplitIoClient
 
     def log_invalid_type(key, method)
       @config.logger.error("#{method}: you passed an invalid #{key} type, #{key} must be a non-empty String or a Symbol")
+    end
+
+    def log_invalid_flag_set_type(method)
+      @config.logger.warn("#{method}: you passed an invalid flag set type, flag set must be a non-empty String")
     end
 
     def log_convert_numeric(key, method, value)

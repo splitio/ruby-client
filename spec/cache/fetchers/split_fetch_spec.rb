@@ -23,7 +23,7 @@ describe SplitIoClient::Cache::Fetchers::SplitFetcher do
         cache_adapter: :memory
       )
     end
-    let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::FlagSetsRepository.new([]) }
+    let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new([]) }
     let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([]) }
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
     let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
@@ -74,7 +74,7 @@ describe SplitIoClient::Cache::Fetchers::SplitFetcher do
         flag_sets_filter: ['set_2']
       )
     end
-    let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::FlagSetsRepository.new(['set_2']) }
+    let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new(['set_2']) }
     let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new(['set_2']) }
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
     let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
@@ -121,7 +121,7 @@ describe SplitIoClient::Cache::Fetchers::SplitFetcher do
         cache_adapter: :redis
       )
     end
-    let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::FlagSetsRepository.new([]) }
+    let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::RedisFlagSetsRepository.new(config) }
     let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([]) }
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
     let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
