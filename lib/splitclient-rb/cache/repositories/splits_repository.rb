@@ -151,6 +151,8 @@ module SplitIoClient
             increase_tt_name_count(split[:trafficTypeName])
             decrease_tt_name_count(existing_split[:trafficTypeName])
             remove_from_flag_sets(existing_split)
+          elsif(existing_split[:sets] != split[:sets])
+            remove_from_flag_sets(existing_split)
           end
 
           if !split[:sets].nil?
@@ -193,8 +195,10 @@ module SplitIoClient
         end
 
         def remove_from_flag_sets(feature_flag)
-          if !feature_flag[:sets].nil?
-            for flag_set in feature_flag[:sets]
+          name = feature_flag[:name]
+          flag_sets = get_split(name)[:sets] if exists?(name)
+          if !flag_sets.nil?
+            for flag_set in flag_sets
               @flag_sets.remove_feature_flag_from_flag_set(flag_set, feature_flag[:name])
               if is_flag_set_exist(flag_set) && @flag_sets.get_flag_sets([flag_set]).length == 0 && !@flag_set_filter.should_filter?
                   @flag_sets.remove_flag_set(flag_set)

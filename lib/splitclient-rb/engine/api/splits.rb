@@ -8,6 +8,7 @@ module SplitIoClient
         super(config)
         @api_key = api_key
         @telemetry_runtime_producer = telemetry_runtime_producer
+        @flag_sets_filter = @config.flag_sets_filter
       end
 
       def since(since, fetch_options = { cache_control_headers: false, till: nil, sets: nil })
@@ -15,7 +16,7 @@ module SplitIoClient
 
         params = { since: since }
         params[:till] = fetch_options[:till] unless fetch_options[:till].nil?
-        params[:sets] = fetch_options[:sets].join(",") unless fetch_options[:sets].nil?
+        params[:sets] = @flag_sets_filter.join(",") unless @flag_sets_filter.empty?
         response = get_api("#{@config.base_uri}/splitChanges", @api_key, params, fetch_options[:cache_control_headers])
         if response.status == 414
           @config.logger.error("Error fetching feature flags; the amount of flag sets provided are too big, causing uri length error.")

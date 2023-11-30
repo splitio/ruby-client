@@ -1141,7 +1141,7 @@ describe SplitIoClient do
         flag_sets_filter: ['set_3', '@3we'])
     end
       before do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?sets=set_3&since=-1')
       .to_return(status: 200, body: splits)
       mock_segment_changes('segment1', segment1, '-1')
       mock_segment_changes('segment1', segment1, '1470947453877')
