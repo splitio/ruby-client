@@ -17,6 +17,7 @@ module SplitIoClient
         params = { since: since }
         params[:till] = fetch_options[:till] unless fetch_options[:till].nil?
         params[:sets] = @flag_sets_filter.join(",") unless @flag_sets_filter.empty?
+        @config.logger.debug("Fetching from splitChanges with #{params}: ")
         response = get_api("#{@config.base_uri}/splitChanges", @api_key, params, fetch_options[:cache_control_headers])
         if response.status == 414
           @config.logger.error("Error fetching feature flags; the amount of flag sets provided are too big, causing uri length error.")
