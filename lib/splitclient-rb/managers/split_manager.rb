@@ -105,7 +105,8 @@ module SplitIoClient
           killed: split[:killed],
           treatments: treatments,
           change_number: split[:changeNumber],
-          configs: split[:configurations] || {}
+          configs: split[:configurations] || {},
+          sets: split[:sets] || []
         }
     end
 
