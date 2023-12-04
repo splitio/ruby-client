@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-require 'set'
 
 module SplitIoClient
   class Validators
@@ -63,7 +62,7 @@ module SplitIoClient
         log_invalid_flag_set_type(method)
         return []
       end
-      valid_flag_sets = SortedSet[]
+      valid_flag_sets = Set[]
       without_nil.compact.uniq.select do |flag_set|
         if flag_set.nil? || !flag_set.is_a?(String)
           log_invalid_flag_set_type(method)
@@ -75,7 +74,7 @@ module SplitIoClient
           log_invalid_flag_set_type(method)
         end
       end
-      !valid_flag_sets.empty? ? valid_flag_sets.to_a :  []
+      !valid_flag_sets.empty? ? valid_flag_sets.to_a.sort :  []
     end
 
     private
