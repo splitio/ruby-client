@@ -121,7 +121,7 @@ describe SplitIoClient do
       split = subject.instance_variable_get(:@splits_repository).get_split('test_1_ruby')
       result = subject.send(:build_split_view, 'test_1_ruby', split)
       expect(result[:configs]).to eq(on: '{"size":15,"test":20}')
-      expect(result[:sets]).to eq(nil)
+      expect(result[:sets]).to eq([])
     end
 
     it 'returns empty hash when no configurations' do
