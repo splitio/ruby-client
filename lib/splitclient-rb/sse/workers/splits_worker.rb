@@ -66,7 +66,9 @@ module SplitIoClient
           return false unless !notification.data['d'].nil? && @feature_flags_repository.get_change_number == notification.data['pcn']
 
           new_split = return_split_from_json(notification)
-          SplitIoClient::Helpers::RepositoryHelper.update_feature_flag_repository(@feature_flags_repository, [new_split], notification.data['changeNumber'], @config)
+          SplitIoClient::Helpers::RepositoryHelper.update_feature_flag_repository(@feature_flags_repository,
+                                                                                  [new_split],
+                                                                                  notification.data['changeNumber'], @config)
           fetch_segments_if_not_exists(new_split)
 
           @telemetry_runtime_producer.record_updates_from_sse(Telemetry::Domain::Constants::SPLITS)
