@@ -171,8 +171,6 @@ module SplitIoClient
         end
 
         def remove_feature_flag(split)
-          tt_name = split[:trafficTypeName]
-
           decrease_tt_name_count(split[:trafficTypeName])
           remove_from_flag_sets(split)
           @adapter.delete(namespace_key(".split.#{split[:name]}"))

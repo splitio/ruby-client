@@ -402,7 +402,7 @@ module SplitIoClient
         @telemetry_evaluation_producer.record_latency(Telemetry::Domain::Constants::TREATMENTS_BY_FLAG_SET, bucket)
       when GET_TREATMENTS_BY_FLAG_SETS
         @telemetry_evaluation_producer.record_latency(Telemetry::Domain::Constants::TREATMENTS_BY_FLAG_SETS, bucket)
-      when GET_TREATMENT_WITH_CONFIG_BY_FLAG_SET
+      when GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SET
         @telemetry_evaluation_producer.record_latency(Telemetry::Domain::Constants::TREATMENTS_WITH_CONFIG_BY_FLAG_SET, bucket)
       when GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SETS
         @telemetry_evaluation_producer.record_latency(Telemetry::Domain::Constants::TREATMENTS_WITH_CONFIG_BY_FLAG_SETS, bucket)
