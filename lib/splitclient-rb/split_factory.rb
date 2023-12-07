@@ -26,7 +26,18 @@ module SplitIoClient
       end
 
       @api_key = api_key
+
+      store_flag_sets = config_hash.key?(:flag_sets_filter) ? config_hash[:flag_sets_filter] : []
+      store_flag_sets = [] if !store_flag_sets.is_a?(Array)
+      flag_sets_count = 0
+      flag_sets_invalid = 0
+
       @config = SplitConfig.new(config_hash.merge(localhost_mode: @api_key == LOCALHOST_API_KEY ))
+
+      if config_hash.key?(:flag_sets_filter)
+        flag_sets_count = store_flag_sets.length()
+        flag_sets_invalid = flag_sets_count - @config.flag_sets_filter.length()
+      end
 
       raise 'Invalid SDK mode' unless valid_mode
 
@@ -35,17 +46,20 @@ module SplitIoClient
       register_factory
 
       build_telemetry_components
+      build_flag_sets_filter
       build_repositories
-      build_telemetry_synchronizer
+      build_telemetry_synchronizer(flag_sets_count, flag_sets_invalid)
       build_impressions_sender_adapter
       build_unique_keys_tracker
       build_impressions_components
 
       @status_manager = Engine::StatusManager.new(@config)
+      @split_validator = SplitIoClient::Validators.new(@config)
+      @evaluator = Engine::Parser::Evaluator.new(@segments_repository, @splits_repository, @config)
 
       start!
 
-      @client = SplitClient.new(@api_key, repositories, @status_manager, @config, @impressions_manager, @evaluation_producer)
+      @client = SplitClient.new(@api_key, repositories, @status_manager, @config, @impressions_manager, @evaluation_producer, @evaluator, @split_validator)
       @manager = SplitManager.new(@splits_repository, @status_manager, @config)
     end
 
@@ -55,11 +69,11 @@ module SplitIoClient
       if @config.consumer?
         build_synchronizer
         build_sync_manager
-        
+
         @sync_manager.start_consumer
         return
       end
-      
+
       build_fetchers
       build_synchronizer
       build_streaming_components
@@ -135,7 +149,7 @@ module SplitIoClient
     end
 
     def repositories
-      { 
+      {
         splits: @splits_repository,
         segments: @segments_repository,
         impressions: @impressions_repository,
@@ -188,7 +202,7 @@ module SplitIoClient
       segments_worker = SSE::Workers::SegmentsWorker.new(@synchronizer, @config, @segments_repository)
       notification_manager_keeper = SSE::NotificationManagerKeeper.new(@config, @runtime_producer, @push_status_queue)
       notification_processor = SSE::NotificationProcessor.new(@config, splits_worker, segments_worker)
-      event_parser = SSE::EventSource::EventParser.new(config)      
+      event_parser = SSE::EventSource::EventParser.new(config)
       sse_client = SSE::EventSource::Client.new(@config, @api_key, @runtime_producer, event_parser, notification_manager_keeper, notification_processor, @push_status_queue)
       @sse_handler = SSE::SSEHandler.new(@config, splits_worker, segments_worker, sse_client)
       @push_manager = Engine::PushManager.new(@config, @sse_handler, @api_key, @runtime_producer)
@@ -199,15 +213,20 @@ module SplitIoClient
     end
 
     def build_repositories
-      @splits_repository = SplitsRepository.new(@config)
+      if @config.cache_adapter.is_a? SplitIoClient::Cache::Adapters::RedisAdapter
+        @flag_sets_repository = SplitIoClient::Cache::Repositories::RedisFlagSetsRepository.new(@config)
+      else
+        @flag_sets_repository = SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new(@config.flag_sets_filter)
+      end
+      @splits_repository = SplitsRepository.new(@config, @flag_sets_repository, @flag_sets_filter)
       @segments_repository = SegmentsRepository.new(@config)
       @impressions_repository = ImpressionsRepository.new(@config)
       @events_repository = EventsRepository.new(@config, @api_key, @runtime_producer)
     end
 
-    def build_telemetry_synchronizer
+    def build_telemetry_synchronizer(flag_sets, flag_sets_invalid)
       @telemetry_api = Api::TelemetryApi.new(@config, @api_key, @runtime_producer)
-      @telemetry_synchronizer = Telemetry::Synchronizer.new(@config, @telemetry_consumers, @init_producer, repositories, @telemetry_api)
+      @telemetry_synchronizer = Telemetry::Synchronizer.new(@config, @telemetry_consumers, @init_producer, repositories, @telemetry_api, flag_sets, flag_sets_invalid)
     end
 
     def build_unique_keys_tracker
@@ -250,6 +269,10 @@ module SplitIoClient
       build_impression_counter
 
       @impressions_manager = Engine::Common::ImpressionManager.new(@config, @impressions_repository, @impression_counter, @runtime_producer, @impression_observer, @unique_keys_tracker)
+    end
+
+    def build_flag_sets_filter
+      @flag_sets_filter = SplitIoClient::Cache::Filter::FlagSetsFilter.new(@config.flag_sets_filter)
     end
   end
 end

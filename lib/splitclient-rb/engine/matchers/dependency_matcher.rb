@@ -12,7 +12,7 @@ module SplitIoClient
 
     def match?(args)
       keys = { matching_key: args[:matching_key], bucketing_key: args[:bucketing_key] }
-      evaluate = args[:evaluator].call(keys, @feature_flag, args[:attributes])
+      evaluate = args[:evaluator].evaluate_feature_flag(keys, @feature_flag, args[:attributes])
       matches = @treatments.include?(evaluate[:treatment])
       @logger.log_if_debug("[dependencyMatcher] Parent feature flag #{@feature_flag} evaluated to #{evaluate[:treatment]} \
         with label #{evaluate[:label]}. #{@feature_flag} evaluated treatment is part of [#{@treatments}] ? #{matches}.")

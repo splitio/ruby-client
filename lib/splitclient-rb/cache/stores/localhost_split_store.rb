@@ -55,7 +55,7 @@ module SplitIoClient
         def store_split(split)
           @config.logger.debug("storing feature flag (#{split[:name]})") if @config.debug_enabled
 
-          @splits_repository.add_split(split)
+          @splits_repository.update([split], [], -1)
         end
 
         def load_features

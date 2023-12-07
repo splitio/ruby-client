@@ -4,7 +4,9 @@ require 'spec_helper'
 
 describe SplitIoClient::Engine::Parser::Evaluator do
   let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(@default_config) }
-  let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(@default_config) }
+  let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new([])}
+  let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([])}
+  let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(@default_config, flag_sets_repository, flag_set_filter) }
   let(:evaluator) { described_class.new(segments_repository, splits_repository, true) }
 
   let(:killed_split) { { killed: true, defaultTreatment: 'default' } }
@@ -16,12 +18,12 @@ describe SplitIoClient::Engine::Parser::Evaluator do
   end
 
   it 'returns killed treatment' do
-    expect(evaluator.call({ matching_key: 'foo' }, killed_split))
+    expect(evaluator.evaluate_feature_flag({ matching_key: 'foo' }, killed_split))
       .to eq(label: 'killed', treatment: 'default', change_number: nil, config: nil)
   end
 
   it 'returns archived treatment' do
-    expect(evaluator.call({ matching_key: 'foo' }, archived_split))
+    expect(evaluator.evaluate_feature_flag({ matching_key: 'foo' }, archived_split))
       .to eq(label: 'archived', treatment: SplitIoClient::Engine::Models::Treatment::CONTROL,
              change_number: nil, config: nil)
   end
@@ -32,9 +34,9 @@ describe SplitIoClient::Engine::Parser::Evaluator do
         .to receive(:get_split).and_return(split_data[:splits][0])
 
       expect(evaluator).to receive(:match).exactly(2).times
-      evaluator.call({ bucketing_key: nil, matching_key: 'fake_user_id_1' }, split_data[:splits][0])
+      evaluator.evaluate_feature_flag({ bucketing_key: nil, matching_key: 'fake_user_id_1' }, split_data[:splits][0])
 
-      evaluator.call({ bucketing_key: nil, matching_key: 'fake_user_id_1' }, split_data[:splits][1])
+      evaluator.evaluate_feature_flag({ bucketing_key: nil, matching_key: 'fake_user_id_1' }, split_data[:splits][1])
     end
   end
 end

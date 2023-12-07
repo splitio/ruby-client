@@ -2,40 +2,34 @@ module SplitIoClient
   module Engine
     module Parser
       class Evaluator
-        def initialize(segments_repository, splits_repository, config, multiple = false)
+        def initialize(segments_repository, splits_repository, config)
           @splits_repository = splits_repository
           @segments_repository = segments_repository
-          @multiple = multiple
           @config = config
-          @cache = {}
         end
 
-        def call(keys, split, attributes = nil)
+        def evaluate_feature_flag(keys, feature_flag, attributes = nil)
           # DependencyMatcher here, split is actually a split_name in this case
-          cache_result = split.is_a? String
-          split = @splits_repository.get_split(split) if cache_result
-          digest = Digest::MD5.hexdigest("#{{matching_key: keys[:matching_key]}}#{split}#{attributes}")
-
-          if Models::Split.archived?(split)
-            return treatment_hash(Models::Label::ARCHIVED, Models::Treatment::CONTROL, split[:changeNumber])
-          end
-
-          treatment = if Models::Split.matchable?(split)
-            if @multiple && @cache[digest]
-              @cache[digest]
-            else
-              match(split, keys, attributes)
-            end
-          else
-            treatment_hash(Models::Label::KILLED, split[:defaultTreatment], split[:changeNumber], split_configurations(split[:defaultTreatment], split))
-          end
-
-          @cache[digest] = treatment if cache_result
-
-          treatment
+          cache_result = feature_flag.is_a? String
+          feature_flag = @splits_repository.get_split(feature_flag) if cache_result
+          evaluate_treatment(keys, feature_flag, attributes)
         end
 
         private
+
+        def evaluate_treatment(keys, feature_flag, attributes)
+          if Models::Split.archived?(feature_flag)
+            return treatment_hash(Models::Label::ARCHIVED, Models::Treatment::CONTROL, feature_flag[:changeNumber])
+          end
+
+          treatment = if Models::Split.matchable?(feature_flag)
+                        match(feature_flag, keys, attributes)
+                      else
+                        treatment_hash(Models::Label::KILLED, feature_flag[:defaultTreatment], feature_flag[:changeNumber], split_configurations(feature_flag[:defaultTreatment], feature_flag))
+                      end
+
+          treatment
+        end
 
         def split_configurations(treatment, split)
           return nil if split[:configurations].nil?

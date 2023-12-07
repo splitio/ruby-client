@@ -6,7 +6,9 @@ module SplitIoClient
       def initialize(config,
                      telemtry_consumers,
                      repositories,
-                     telemetry_api)
+                     telemetry_api,
+                     flag_sets,
+                     flag_sets_invalid)
         @config = config
         @telemetry_init_consumer = telemtry_consumers[:init]
         @telemetry_runtime_consumer = telemtry_consumers[:runtime]
@@ -14,6 +16,8 @@ module SplitIoClient
         @splits_repository = repositories[:splits]
         @segments_repository = repositories[:segments]
         @telemetry_api = telemetry_api
+        @flag_sets = flag_sets
+        @flag_sets_invalid = flag_sets_invalid
       end
 
       def synchronize_stats
@@ -64,6 +68,8 @@ module SplitIoClient
                                      active_factories,
                                      redundant_active_factories,
                                      @telemetry_runtime_consumer.pop_tags,
+                                     @flag_sets,
+                                     @flag_sets_invalid,
                                      @config.streaming_enabled,
                                      rates,
                                      url_overrides,
@@ -113,7 +119,9 @@ module SplitIoClient
           bT: init.bt,
           nR: init.nr,
           t: init.t,
-          i: init.i
+          i: init.i,
+          fsT: init.fsT,
+          fsI: init.fsI
         }
       end
 
@@ -125,6 +133,10 @@ module SplitIoClient
             ts: usage.ml[Telemetry::Domain::Constants::TREATMENTS],
             tc: usage.ml[Telemetry::Domain::Constants::TREATMENT_WITH_CONFIG],
             tcs: usage.ml[Telemetry::Domain::Constants::TREATMENTS_WITH_CONFIG],
+            tf: usage.ml[Telemetry::Domain::Constants::TREATMENTS_BY_FLAG_SET],
+            tfs: usage.ml[Telemetry::Domain::Constants::TREATMENTS_BY_FLAG_SETS],
+            tcf: usage.ml[Telemetry::Domain::Constants::TREATMENTS_WITH_CONFIG_BY_FLAG_SET],
+            tcfs: usage.ml[Telemetry::Domain::Constants::TREATMENTS_WITH_CONFIG_BY_FLAG_SETS],
             tr: usage.ml[Telemetry::Domain::Constants::TRACK]
           },
           mE: {
@@ -132,6 +144,10 @@ module SplitIoClient
             ts: usage.me[Telemetry::Domain::Constants::TREATMENTS],
             tc: usage.me[Telemetry::Domain::Constants::TREATMENT_WITH_CONFIG],
             tcs: usage.me[Telemetry::Domain::Constants::TREATMENTS_WITH_CONFIG],
+            tf: usage.me[Telemetry::Domain::Constants::TREATMENTS_BY_FLAG_SET],
+            tfs: usage.me[Telemetry::Domain::Constants::TREATMENTS_BY_FLAG_SETS],
+            tcf: usage.me[Telemetry::Domain::Constants::TREATMENTS_WITH_CONFIG_BY_FLAG_SET],
+            tcfs: usage.me[Telemetry::Domain::Constants::TREATMENTS_WITH_CONFIG_BY_FLAG_SETS],
             tr: usage.me[Telemetry::Domain::Constants::TRACK]
           },
           hE: {

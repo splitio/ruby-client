@@ -6,7 +6,7 @@ module SplitIoClient
       class SplitsRepository < Repository
         attr_reader :adapter
 
-        def initialize(config)
+        def initialize(config, flag_sets_repository, flag_set_filter)
           super(config)
           @tt_cache = {}
           @adapter = case @config.cache_adapter.class.to_s
@@ -15,48 +15,18 @@ module SplitIoClient
           else
             @config.cache_adapter
           end
+          @flag_sets = flag_sets_repository
+          @flag_set_filter = flag_set_filter
           unless @config.mode.equal?(:consumer)
             @adapter.set_string(namespace_key('.splits.till'), '-1')
             @adapter.initialize_map(namespace_key('.segments.registered'))
           end
         end
 
-        def add_split(split)
-          return unless split[:name]
-          existing_split = get_split(split[:name])
-
-          if(!existing_split)
-            increase_tt_name_count(split[:trafficTypeName])
-          elsif(existing_split[:trafficTypeName] != split[:trafficTypeName])
-            increase_tt_name_count(split[:trafficTypeName])
-            decrease_tt_name_count(existing_split[:trafficTypeName])
-          end
-
-          @adapter.set_string(namespace_key(".split.#{split[:name]}"), split.to_json)
-        end
-
-        def remove_split(split)
-          tt_name = split[:trafficTypeName]
-
-          decrease_tt_name_count(split[:trafficTypeName])
-
-          @adapter.delete(namespace_key(".split.#{split[:name]}"))
-        end
-
-        def get_splits(names, symbolize_names = true)
-          splits = {}
-          split_names = names.map { |name| namespace_key(".split.#{name}") }
-          splits.merge!(
-            @adapter
-              .multiple_strings(split_names)
-              .map { |name, data| [name.gsub(namespace_key('.split.'), ''), data] }.to_h
-          )
-
-          splits.map do |name, data|
-            parsed_data = data ? JSON.parse(data, symbolize_names: true) : nil
-            split_name = symbolize_names ? name.to_sym : name
-            [split_name, parsed_data]
-          end.to_h
+        def update(to_add, to_delete, new_change_number)
+          to_add.each{ |feature_flag| add_feature_flag(feature_flag) }
+          to_delete.each{ |feature_flag| remove_feature_flag(feature_flag) }
+          set_change_number(new_change_number)
         end
 
         def get_split(name)
@@ -65,8 +35,13 @@ module SplitIoClient
           JSON.parse(split, symbolize_names: true) if split
         end
 
-        def splits
-          get_splits(split_names, false)
+        def splits(filtered_names=nil)
+          symbolize = true
+          if filtered_names.nil?
+            filtered_names = split_names
+            symbolize = false
+          end
+          get_splits(filtered_names, symbolize)
         end
 
         def traffic_type_exists(tt_name)
@@ -144,7 +119,91 @@ module SplitIoClient
           split_names.length
         end
 
+        def get_feature_flags_by_sets(flag_sets)
+          sets_to_fetch = Array.new
+          flag_sets.each do |flag_set|
+            unless @flag_sets.flag_set_exist?(flag_set)
+              @config.logger.warn("Flag set #{flag_set} is not part of the configured flag set list, ignoring it.")
+              next
+            end
+            sets_to_fetch.push(flag_set)
+          end
+          @flag_sets.get_flag_sets(flag_sets)
+        end
+
+        def is_flag_set_exist(flag_set)
+          @flag_sets.flag_set_exist?(flag_set)
+        end
+
+        def flag_set_filter
+          @flag_set_filter
+        end
+
         private
+
+        def add_feature_flag(split)
+          return unless split[:name]
+          existing_split = get_split(split[:name])
+
+          if(!existing_split)
+            increase_tt_name_count(split[:trafficTypeName])
+          elsif(existing_split[:trafficTypeName] != split[:trafficTypeName])
+            increase_tt_name_count(split[:trafficTypeName])
+            decrease_tt_name_count(existing_split[:trafficTypeName])
+            remove_from_flag_sets(existing_split)
+          elsif(existing_split[:sets] != split[:sets])
+            remove_from_flag_sets(existing_split)
+          end
+
+          if !split[:sets].nil?
+            for flag_set in split[:sets]
+              if !@flag_sets.flag_set_exist?(flag_set)
+                if @flag_set_filter.should_filter?
+                  next
+                end
+                @flag_sets.add_flag_set(flag_set)
+              end
+              @flag_sets.add_feature_flag_to_flag_set(flag_set, split[:name])
+            end
+          end
+
+          @adapter.set_string(namespace_key(".split.#{split[:name]}"), split.to_json)
+        end
+
+        def remove_feature_flag(split)
+          decrease_tt_name_count(split[:trafficTypeName])
+          remove_from_flag_sets(split)
+          @adapter.delete(namespace_key(".split.#{split[:name]}"))
+        end
+
+        def get_splits(names, symbolize_names = true)
+          splits = {}
+          split_names = names.map { |name| namespace_key(".split.#{name}") }
+          splits.merge!(
+            @adapter
+              .multiple_strings(split_names)
+              .map { |name, data| [name.gsub(namespace_key('.split.'), ''), data] }.to_h
+          )
+
+          splits.map do |name, data|
+            parsed_data = data ? JSON.parse(data, symbolize_names: true) : nil
+            split_name = symbolize_names ? name.to_sym : name
+            [split_name, parsed_data]
+          end.to_h
+        end
+
+        def remove_from_flag_sets(feature_flag)
+          name = feature_flag[:name]
+          flag_sets = get_split(name)[:sets] if exists?(name)
+          if !flag_sets.nil?
+            for flag_set in flag_sets
+              @flag_sets.remove_feature_flag_from_flag_set(flag_set, feature_flag[:name])
+              if is_flag_set_exist(flag_set) && @flag_sets.get_flag_sets([flag_set]).length == 0 && !@flag_set_filter.should_filter?
+                  @flag_sets.remove_flag_set(flag_set)
+              end
+            end
+          end
+        end
 
         def increase_tt_name_count(tt_name)
           return unless tt_name

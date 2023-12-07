@@ -14,7 +14,9 @@ describe SplitIoClient::Engine::Synchronizer do
   let(:synchronizer) do
     api_key = 'Synchronizer-key'
     runtime_producer = SplitIoClient::Telemetry::RuntimeProducer.new(config)
-    splits_repository = SplitIoClient::Cache::Repositories::SplitsRepository.new(config)
+    flag_sets_repository = SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new([])
+    flag_set_filter = SplitIoClient::Cache::Filter::FlagSetsFilter.new([])
+    splits_repository = SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter)
     segments_repository = SplitIoClient::Cache::Repositories::SegmentsRepository.new(config)
 
     repositories = {

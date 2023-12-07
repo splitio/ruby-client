@@ -17,7 +17,7 @@ module SplitIoClient
             fetch_splits
             return
           end
-          
+
           splits_thread
         end
 
@@ -25,13 +25,8 @@ module SplitIoClient
           @semaphore.synchronize do
             data = splits_since(@splits_repository.get_change_number, fetch_options)
 
-            data[:splits] && data[:splits].each do |split|
-              add_split_unless_archived(split)
-            end
-
+            SplitIoClient::Helpers::RepositoryHelper.update_feature_flag_repository(@splits_repository, data[:splits], data[:till], @config)
             @splits_repository.set_segment_names(data[:segment_names])
-            @splits_repository.set_change_number(data[:till])
-
             @config.logger.debug("segments seen(#{data[:segment_names].length}): #{data[:segment_names].to_a}") if @config.debug_enabled
 
             { segment_names: data[:segment_names], success: true }
@@ -62,28 +57,6 @@ module SplitIoClient
 
         def splits_since(since, fetch_options = { cache_control_headers: false, till: nil })
           splits_api.since(since, fetch_options)
-        end
-
-        def add_split_unless_archived(split)
-          if Engine::Models::Split.archived?(split)
-            @config.logger.debug("Seeing archived feature flag #{split[:name]}") if @config.debug_enabled
-
-            remove_archived_split(split)
-          else
-            store_split(split)
-          end
-        end
-
-        def remove_archived_split(split)
-          @config.logger.debug("removing feature flag from store(#{split})") if @config.debug_enabled
-
-          @splits_repository.remove_split(split)
-        end
-
-        def store_split(split)
-          @config.logger.debug("storing feature flag (#{split[:name]})") if @config.debug_enabled
-
-          @splits_repository.add_split(split)
         end
 
         def splits_api

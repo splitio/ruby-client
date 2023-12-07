@@ -1,7 +1,12 @@
 CHANGES
-
-x.x.x (coming soon)
-- Added `default_treatment` property to the `split_view` object returned by the `split` and `splits` methods of the SDK manager.
+8.3.0 (Dec 7, 2023)
+- Added support for Flag Sets on the SDK, which enables grouping feature flags and interacting with the group rather than individually (more details in our documentation):
+  - Added new variations of the get treatment methods to support evaluating flags in given flag set/s.
+    - get_treatments_by_flag_set and get_treatments_by_flag_sets
+    - get_treatments_with_config_by_flag_set and get_treatments_with_config_by_flag_sets
+- Added a new optional Split Filter configuration option. This allows the SDK and Split services to only synchronize the flags in the specified flag sets, avoiding unused or unwanted flags from being synced on the SDK instance, bringing all the benefits from a reduced payload.
+   - Note: Only applicable when the SDK is in charge of the rollout data synchronization. When not applicable, the SDK will log a warning on init.
+- Added `default_treatment` and `sets` property to the `split_view` object returned by the `split` and `splits` methods of the SDK manager.
 
 8.2.0 (Jul 18, 2023)
 - Improved streaming architecture implementation to apply feature flag updates from the notification received which is now enhanced, improving efficiency and reliability of the whole update system.
@@ -63,10 +68,10 @@ x.x.x (coming soon)
 
 7.2.1 (Oct 23, 2020)
 - Updated redis dependency to >= 4.2.2.
-- Updated ably error handling. 
+- Updated ably error handling.
 
 7.2.0 (Sep 25, 2020)
-- Added impressions dedupe logic to avoid sending duplicated impressions:  
+- Added impressions dedupe logic to avoid sending duplicated impressions:
   - Added `OPTIMIZED` and `DEBUG` modes in order to enabling/disabling how impressions are going to be sent into Split servers,
     - `OPTIMIZED`: will send unique impressions in a timeframe in order to reduce how many times impressions are posted to Split.
     - `DEBUG`: will send every impression generated to Split.
