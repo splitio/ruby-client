@@ -107,6 +107,7 @@ module SplitIoClient
           change_number: split[:changeNumber],
           configs: split[:configurations] || {},
           sets: split[:sets] || []
+          default_treatment: split[:defaultTreatment]
         }
     end
 

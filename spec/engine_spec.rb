@@ -323,7 +323,7 @@ describe SplitIoClient, type: :client do
 
         expect(subject.get_treatment('random_user_id', 'test_feature'))
           .to eq SplitIoClient::Engine::Models::Treatment::CONTROL
-        expect(log.string).to include 'get_treatment: the SDK is not ready, the operation cannot be executed'
+        expect(log.string).to include 'get_treatment: the SDK is not ready, results may be incorrect for feature flag test_feature. Make sure to wait for SDK readiness before using this method'
         destroy_factory
       end
     end
