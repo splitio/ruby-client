@@ -4,7 +4,8 @@ require 'spec_helper'
 
 describe SplitIoClient::BetweenMatcher do
   subject do
-    SplitIoClient::SplitFactory.new('test_api_key', {logger: Logger.new('/dev/null'), streaming_enabled: false, impressions_refresh_rate: 9999, impressions_mode: :none, features_refresh_rate: 9999, telemetry_refresh_rate: 99999}).client
+#    SplitIoClient::SplitFactory.new('test_api_key', {logger: Logger.new('/dev/null'), streaming_enabled: false, impressions_refresh_rate: 9999, impressions_mode: :none, features_refresh_rate: 9999, telemetry_refresh_rate: 99999}).client
+    SplitIoClient::SplitFactory.new('test_api_key', {streaming_enabled: false, impressions_refresh_rate: 9999, impressions_mode: :none, features_refresh_rate: 9999, telemetry_refresh_rate: 99999}).client
   end
 
   let(:datetime_matcher_splits) do
@@ -38,7 +39,11 @@ describe SplitIoClient::BetweenMatcher do
     let(:non_matching_low_value_attributes) { { income: 99 } }
 
     before do
-      stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?since/)
+#      stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?since/)
+#        .to_return(status: 200, body: number_matcher_splits)
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges')
+        .to_return(status: 200, body: number_matcher_splits)
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
         .to_return(status: 200, body: number_matcher_splits)
       subject.block_until_ready
       sleep 1

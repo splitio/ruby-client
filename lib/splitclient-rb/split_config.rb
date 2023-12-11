@@ -122,6 +122,7 @@ module SplitIoClient
       @on_demand_fetch_retry_delay_seconds = SplitConfig.default_on_demand_fetch_retry_delay_seconds
       @on_demand_fetch_max_retries = SplitConfig.default_on_demand_fetch_max_retries
 
+      @flag_sets_filter = SplitConfig.sanitize_flag_set_filter(opts[:flag_sets_filter], @split_validator, opts[:cache_adapter], @logger)
       startup_log
     end
 
@@ -287,7 +288,7 @@ module SplitIoClient
 
     attr_accessor :sdk_start_time
 
-    attr_accessor :on_demand_fetch_retry_delay_seconds    
+    attr_accessor :on_demand_fetch_retry_delay_seconds
     attr_accessor :on_demand_fetch_max_retries
 
     attr_accessor :unique_keys_refresh_rate
@@ -295,6 +296,12 @@ module SplitIoClient
     attr_accessor :unique_keys_bulk_size
 
     attr_accessor :counter_refresh_rate
+
+    #
+    # Flagsets filter
+    #
+    # @return [Array]
+    attr_accessor :flag_sets_filter
 
     def self.default_counter_refresh_rate(adapter)
       return 300 if adapter == :redis # Send bulk impressions count - Refresh rate: 5 min.
@@ -325,9 +332,9 @@ module SplitIoClient
       end
     end
 
-    def self.init_impressions_refresh_rate(impressions_mode, refresh_rate, default_rate)      
+    def self.init_impressions_refresh_rate(impressions_mode, refresh_rate, default_rate)
       return (refresh_rate.nil? || refresh_rate <= 0 ? default_rate : refresh_rate) if impressions_mode == :debug
-      
+
       return refresh_rate.nil? || refresh_rate <= 0 ? SplitConfig.default_impressions_refresh_rate_optimized : [default_rate, refresh_rate].max
     end
 
@@ -482,7 +489,7 @@ module SplitIoClient
     end
 
     def self.default_telemetry_refresh_rate
-      3600      
+      3600
     end
 
     def self.default_unique_keys_refresh_rate(adapter)
@@ -511,6 +518,15 @@ module SplitIoClient
 
     def self.default_offline_refresh_rate
       5
+    end
+
+    def self.sanitize_flag_set_filter(flag_sets, validator, adapter, logger)
+      return [] if flag_sets.nil?
+      if adapter == :redis
+        logger.warn("config: : flag_sets_filter is not applicable for Consumer modes where the SDK does not keep rollout data in sync. FlagSet filter was discarded")
+        return []
+      end
+      return validator.valid_flag_sets(:config, flag_sets)
     end
 
     #
@@ -646,7 +662,7 @@ module SplitIoClient
           return 'NA'.freeze
         end
       end
-      
+
       return ''.freeze
     end
 
@@ -656,7 +672,7 @@ module SplitIoClient
     # @return [string]
     def self.machine_ip(ip_addresses_enabled, ip, adapter)
       if ip_addresses_enabled
-        begin          
+        begin
           return ip unless ip.nil? || ip.to_s.empty?
 
           loopback_ip = Socket.ip_address_list.find { |ip| ip.ipv4_loopback? }

@@ -38,22 +38,34 @@ module SplitIoClient
 
         def init_latencies
           @latencies = Concurrent::Array.new
+          treatment_with_config_by_flag_set_const = Domain::Constants::TREATMENTS_WITH_CONFIG_BY_FLAG_SET
+          treatment_with_config_by_flag_sets_const = Domain::Constants::TREATMENTS_WITH_CONFIG_BY_FLAG_SETS
 
           array_size = BinarySearchLatencyTracker::BUCKETS.length
           @latencies << { method: Domain::Constants::TREATMENT, latencies: Concurrent::Array.new(array_size, 0) }
           @latencies << { method: Domain::Constants::TREATMENTS, latencies: Concurrent::Array.new(array_size, 0) }
           @latencies << { method: Domain::Constants::TREATMENT_WITH_CONFIG, latencies: Concurrent::Array.new(array_size, 0) }
           @latencies << { method: Domain::Constants::TREATMENTS_WITH_CONFIG, latencies: Concurrent::Array.new(array_size, 0) }
+          @latencies << { method: Domain::Constants::TREATMENTS_BY_FLAG_SET, latencies: Concurrent::Array.new(array_size, 0) }
+          @latencies << { method: Domain::Constants::TREATMENTS_BY_FLAG_SETS, latencies: Concurrent::Array.new(array_size, 0) }
+          @latencies << { method: treatment_with_config_by_flag_set_const, latencies: Concurrent::Array.new(array_size, 0) }
+          @latencies << { method: treatment_with_config_by_flag_sets_const, latencies: Concurrent::Array.new(array_size, 0) }
           @latencies << { method: Domain::Constants::TRACK, latencies: Concurrent::Array.new(array_size, 0) }
         end
 
         def init_exceptions
           @exceptions = Concurrent::Array.new
+          treatment_with_config_by_flag_set_const = Domain::Constants::TREATMENTS_WITH_CONFIG_BY_FLAG_SET
+          treatment_with_config_by_flag_sets_const = Domain::Constants::TREATMENTS_WITH_CONFIG_BY_FLAG_SETS
 
           @exceptions << { method: Domain::Constants::TREATMENT, exceptions: Concurrent::AtomicFixnum.new(0) }
           @exceptions << { method: Domain::Constants::TREATMENTS, exceptions: Concurrent::AtomicFixnum.new(0) }
           @exceptions << { method: Domain::Constants::TREATMENT_WITH_CONFIG, exceptions: Concurrent::AtomicFixnum.new(0) }
           @exceptions << { method: Domain::Constants::TREATMENTS_WITH_CONFIG, exceptions: Concurrent::AtomicFixnum.new(0) }
+          @exceptions << { method: Domain::Constants::TREATMENTS_BY_FLAG_SET, exceptions: Concurrent::AtomicFixnum.new(0) }
+          @exceptions << { method: Domain::Constants::TREATMENTS_BY_FLAG_SETS, exceptions: Concurrent::AtomicFixnum.new(0) }
+          @exceptions << { method: treatment_with_config_by_flag_set_const, exceptions: Concurrent::AtomicFixnum.new(0) }
+          @exceptions << { method: treatment_with_config_by_flag_sets_const, exceptions: Concurrent::AtomicFixnum.new(0) }
           @exceptions << { method: Domain::Constants::TRACK, exceptions: Concurrent::AtomicFixnum.new(0) }
         end
 

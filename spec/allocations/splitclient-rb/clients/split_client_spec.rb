@@ -5,7 +5,9 @@ require 'spec_helper'
 describe SplitIoClient::SplitClient do
   let(:config) { SplitIoClient::SplitConfig.new(impressions_queue_size: 10) }
 
-  let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config) }
+  let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new([])}
+  let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([])}
+  let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
   let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
   let(:impressions_repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
   let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
@@ -17,6 +19,7 @@ describe SplitIoClient::SplitClient do
   let(:api_key) { 'SplitClient-key' }
   let(:telemetry_api) { SplitIoClient::Api::TelemetryApi.new(config, api_key, runtime_producer) }
   let(:impressions_api) { SplitIoClient::Api::Impressions.new(api_key, config, runtime_producer) }
+  let(:evaluator) { SplitIoClient::Engine::Parser::Evaluator.new(segments_repository, splits_repository, config) }
   let(:sender_adapter) do
     SplitIoClient::Cache::Senders::ImpressionsSenderAdapter.new(config,
                                                                 telemetry_api,
@@ -37,8 +40,7 @@ describe SplitIoClient::SplitClient do
                                                          unique_keys_tracker)
   end
   let(:client) do
-    repositories = { splits: splits_repository, segments: segments_repository, impressions: impressions_repository, events: nil }
-    SplitIoClient::SplitClient.new('', repositories, nil, config, impressions_manager, evaluation_producer)
+    SplitIoClient::SplitClient.new('', {:splits => splits_repository, :segments => segments_repository, :impressions => impressions_repository, :events => nil}, nil, config, impressions_manager, evaluation_producer, evaluator, SplitIoClient::Validators.new(config))
   end
 
   context 'control' do

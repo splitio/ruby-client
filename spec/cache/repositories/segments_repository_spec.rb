@@ -5,7 +5,9 @@ require 'spec_helper'
 describe SplitIoClient::Cache::Repositories::SegmentsRepository do
   context 'memory adapter' do
     let(:repository) { described_class.new(@default_config) }
-    let(:split_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(@default_config) }
+    let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new([]) }
+    let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([]) }
+    let(:split_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(@default_config, flag_sets_repository, flag_set_filter) }
 
     it 'removes keys' do
       repository.add_to_segment(name: 'foo', added: [1, 2, 3], removed: [])

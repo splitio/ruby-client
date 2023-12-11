@@ -24,7 +24,7 @@ describe SplitIoClient do
 
     stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
       .to_return(status: 200, body: 'ok')
-    
+
     stub_request(:get, "https://sdk.split.io/api/splitChanges?since=1473413807667")
       .to_return(status: 200, body: "", headers: {})
   end
@@ -95,22 +95,33 @@ describe SplitIoClient do
     end
   end
 
+  context 'sets' do
+    it 'return split sets in splitview' do
+      subject.block_until_ready
+      splits = subject.splits
+      expect(splits[0][:sets]).to eq(["set_1"])
+      expect(splits[1][:sets]).to eq(["set_1", "set_2"])
+      expect(subject.split('test_1_ruby')[:sets]).to eq(['set_1'])
+    end
+  end
+
   describe 'configurations' do
     let(:splits3) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../test_data/splits/splits3.json'))) }
 
     before do
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
         .to_return(status: 200, body: splits3)
-      
+
       stub_request(:get, "https://sdk.split.io/api/splitChanges?since=1473863097220")
         .to_return(status: 200, body: "", headers: {})
     end
 
-    it 'returns configurations' do
+    it 'returns configurations and sets' do
       subject.block_until_ready
       split = subject.instance_variable_get(:@splits_repository).get_split('test_1_ruby')
-      result = subject.send(:build_split_view, 'test_1_ruby', split)[:configs]
-      expect(result).to eq(on: '{"size":15,"test":20}')
+      result = subject.send(:build_split_view, 'test_1_ruby', split)
+      expect(result[:configs]).to eq(on: '{"size":15,"test":20}')
+      expect(result[:sets]).to eq([])
     end
 
     it 'returns empty hash when no configurations' do

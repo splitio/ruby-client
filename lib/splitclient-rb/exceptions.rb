@@ -12,4 +12,15 @@ module SplitIoClient
       @event = event
     end
   end
+
+  class ApiException < SplitIoError
+    def initialize(msg, exception_code)
+      @@exception_code = exception_code
+      super(msg)
+    end
+    def exception_code
+      @@exception_code
+    end
+  end
+
 end

@@ -6,7 +6,7 @@ describe SplitIoClient::DependencyMatcher do
   let(:evaluator) { double }
 
   it 'matches' do
-    allow(evaluator).to receive(:call).with({ matching_key: 'foo', bucketing_key: 'bar' }, 'foo', nil)
+    allow(evaluator).to receive(:evaluate_feature_flag).with({ matching_key: 'foo', bucketing_key: 'bar' }, 'foo', nil)
                                       .and_return(treatment: 'yes')
 
     expect(described_class.new('foo', %w[on yes true], @split_logger)
@@ -14,7 +14,7 @@ describe SplitIoClient::DependencyMatcher do
   end
 
   it 'does not match' do
-    allow(evaluator).to receive(:call).with({ matching_key: 'foo', bucketing_key: 'bar' }, 'foo', nil)
+    allow(evaluator).to receive(:evaluate_feature_flag).with({ matching_key: 'foo', bucketing_key: 'bar' }, 'foo', nil)
                                       .and_return(treatment: 'no')
 
     expect(described_class.new('foo', %w[on yes true], @split_logger)

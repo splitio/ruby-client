@@ -3,6 +3,8 @@
 module SplitIoClient
   class Validators
 
+    Flagset_regex = /^[a-z0-9][_a-z0-9]{0,49}$/
+
     def initialize(config)
       @config = config
     end
@@ -15,8 +17,12 @@ module SplitIoClient
         valid_attributes?(method, attributes)
     end
 
-    def valid_get_treatments_parameters(method, split_names)
-      valid_split_names?(method, split_names)
+    def valid_get_treatments_parameters(method, key, split_names, matching_key, bucketing_key, attributes)
+      valid_key?(method, key) &&
+        valid_split_names?(method, split_names)
+        valid_matching_key?(method, matching_key) &&
+        valid_bucketing_key?(method, key, bucketing_key) &&
+        valid_attributes?(method, attributes)
     end
 
     def valid_track_parameters(key, traffic_type_name, event_type, value, properties)
@@ -38,6 +44,39 @@ module SplitIoClient
       true
     end
 
+    def valid_flag_sets(method, flag_sets)
+      if flag_sets.nil? || !flag_sets.is_a?(Array)
+        @config.logger.error("#{method}: FlagSets must be a non-empty list.")
+        return []
+      end
+      if flag_sets.empty?
+        @config.logger.error("#{method}: FlagSets must be a non-empty list.")
+        return []
+      end
+      without_nil = Array.new
+      flag_sets.each { |flag_set|
+        without_nil.push(flag_set) if !flag_set.nil?
+        log_nil("flag set", method) if flag_set.nil?
+      }
+      if without_nil.length() == 0
+        log_invalid_flag_set_type(method)
+        return []
+      end
+      valid_flag_sets = Set[]
+      without_nil.compact.uniq.select do |flag_set|
+        if flag_set.nil? || !flag_set.is_a?(String)
+          log_invalid_flag_set_type(method)
+        elsif flag_set.is_a?(String) && flag_set.empty?
+          log_invalid_flag_set_type(method)
+        elsif !flag_set.empty? && string_match?(flag_set.strip.downcase, method)
+          valid_flag_sets.add(flag_set.strip.downcase)
+        else
+          log_invalid_flag_set_type(method)
+        end
+      end
+      !valid_flag_sets.empty? ? valid_flag_sets.to_a.sort :  []
+    end
+
     private
 
     def string?(value)
@@ -52,8 +91,25 @@ module SplitIoClient
       (value.is_a?(Numeric) && !value.to_f.nan?) || string?(value)
     end
 
+    def string_match?(value, method)
+      if Flagset_regex.match(value) == nil
+        log_invalid_match(value, method)
+        false
+      else
+        true
+      end
+    end
+
+    def log_invalid_match(key, method)
+      @config.logger.error("#{method}: you passed #{key}, flag set must adhere to the regular expression #{Flagset_regex}. " +
+      "This means flag set must be alphanumeric, cannot be more than 50 characters long, and can only include a dash, underscore, " +
+      "period, or colon as separators of alphanumeric characters.")
+    end
+
     def log_nil(key, method)
-      @config.logger.error("#{method}: you passed a nil #{key}, #{key} must be a non-empty String or a Symbol")
+      msg_text = String.new("#{method}: you passed a nil #{key}, #{key} must be a non-empty String")
+      msg_text << " or a Symbol" if !key.equal?("flag set")
+      @config.logger.error(msg_text)
     end
 
     def log_empty_string(key, method)
@@ -62,6 +118,10 @@ module SplitIoClient
 
     def log_invalid_type(key, method)
       @config.logger.error("#{method}: you passed an invalid #{key} type, #{key} must be a non-empty String or a Symbol")
+    end
+
+    def log_invalid_flag_set_type(method)
+      @config.logger.warn("#{method}: you passed an invalid flag set type, flag set must be a non-empty String")
     end
 
     def log_convert_numeric(key, method, value)

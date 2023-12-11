@@ -116,7 +116,8 @@
             ],
             "label": "in segment all"
           }
-        ]
+        ],
+        "sets": ["set_3"]
       },
       {
         "trafficTypeName": "account",
@@ -228,7 +229,8 @@
             ],
             "label": "in split test_definition_as_of treatment [off]"
           }
-        ]
+        ],
+        "sets": ["set_2"]
       },
       {
         "trafficTypeName": "account",
@@ -280,7 +282,8 @@
             ],
             "label": "in segment all"
           }
-        ]
+        ],
+        "sets": ["set_1", "set_2"]
       },
       {
         "trafficTypeName": "account",
@@ -544,7 +547,8 @@
             ],
             "label": "eee in list [1, 2, ...]"
           }
-        ]
+        ],
+        "sets": []
       },
       {
         "trafficTypeName": "account",

@@ -31,19 +31,24 @@ describe SplitIoClient do
   end
 
   context 'checking logic impressions' do
-    it 'get_treament should post 5 impressions - debug mode' do
+    it 'get_treament should post 7 impressions - debug mode' do
       stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262916').to_return(status: 200, body: '')
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?since=-1").to_return(status: 200, body: splits, headers: {})
 
       factory = SplitIoClient::SplitFactory.new('test_api_key_debug-1', streaming_enabled: false, impressions_mode: :debug)
       debug_client = factory.client
-
-      debug_client.block_until_ready
+      debug_client.block_until_ready(2)
       sleep 1
 
       expect(debug_client.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
-      expect(debug_client.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
-      expect(debug_client.get_treatment('admin', 'FACUNDO_TEST')).to eq 'off'
+      treatments = {:FACUNDO_TEST=>"on"}
+      expect(debug_client.get_treatments_by_flag_set('nico_test', 'set_3')).to eq treatments
+      treatments = {:FACUNDO_TEST=>"off"}
+      expect(debug_client.get_treatments_by_flag_sets('admin', ['set_3'])).to eq treatments
+      treatments = {:FACUNDO_TEST=>{:treatment=>"off", :config=>nil}}
+      expect(debug_client.get_treatments_with_config_by_flag_set('admin', 'set_3')).to eq treatments
+      expect(debug_client.get_treatments_with_config_by_flag_sets('admin', ['set_3'])).to eq treatments
       expect(debug_client.get_treatment('24', 'Test_Save_1')).to eq 'off'
       expect(debug_client.get_treatment('24', 'Test_Save_1')).to eq 'off'
 
@@ -51,27 +56,27 @@ describe SplitIoClient do
 
       sleep 0.5
 
-      expect(impressions.size).to eq 5
+      expect(impressions.size).to eq 7
     end
 
-    it 'get_treaments should post 11 impressions - debug mode' do
+    it 'get_treaments should post 9 impressions - debug mode' do
       stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1506703262916').to_return(status: 200, body: '')
 
       factory = SplitIoClient::SplitFactory.new('test_api_key_debug-2', streaming_enabled: false, impressions_mode: :debug)
       debug_client = factory.client
-      debug_client.block_until_ready
+      debug_client.block_until_ready(2)
 
-      debug_client.get_treatments('nico_test', %w[FACUNDO_TEST MAURO_TEST Test_Save_1])
       debug_client.get_treatments('admin', %w[FACUNDO_TEST MAURO_TEST Test_Save_1])
       debug_client.get_treatments('maldo', %w[FACUNDO_TEST Test_Save_1])
       debug_client.get_treatments('nico_test', %w[FACUNDO_TEST MAURO_TEST Test_Save_1])
+      expect(debug_client.get_treatments_by_flag_set('admin', 'set_3')).to eq ({:FACUNDO_TEST=>"off"})
 
       impressions = debug_client.instance_variable_get(:@impressions_repository).batch
 
       sleep 0.5
 
-      expect(impressions.size).to eq 11
+      expect(impressions.size).to eq 9
     end
 
     it 'get_treament should post 3 impressions - optimized mode' do
@@ -81,9 +86,9 @@ describe SplitIoClient do
 
       factory = SplitIoClient::SplitFactory.new('test_api_key-1', streaming_enabled: false, impressions_mode: :optimized, impressions_refresh_rate: 60)
       client = factory.client
-      client.block_until_ready
+      client.block_until_ready(2)
 
-      expect(client.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
+      expect(client.get_treatments_by_flag_sets('nico_test', ['set_3'])).to eq ({:FACUNDO_TEST=>"on"})
       expect(client.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
       expect(client.get_treatment('admin', 'FACUNDO_TEST')).to eq 'off'
       expect(client.get_treatment('24', 'Test_Save_1')).to eq 'off'
@@ -113,7 +118,7 @@ describe SplitIoClient do
       factory = SplitIoClient::SplitFactory.new('test_api_key-2', streaming_enabled: false, impressions_mode: :optimized)
       client = factory.client
 
-      client.block_until_ready
+      client.block_until_ready(2)
       sleep 1
 
       client.get_treatments('nico_test', %w[FACUNDO_TEST MAURO_TEST Test_Save_1])
