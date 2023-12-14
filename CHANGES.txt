@@ -1,4 +1,8 @@
 CHANGES
+
+Next release (TBD)
+- Fixed ruby process hanging due to failed thread.join command, when calling destroy and a http request still active.
+
 8.3.0 (Dec 11, 2023)
 - Added support for Flag Sets on the SDK, which enables grouping feature flags and interacting with the group rather than individually (more details in our documentation):
   - Added new variations of the get treatment methods to support evaluating flags in given flag set/s.
