@@ -73,16 +73,19 @@ module SplitIoClient
           keys = 0
 
           names.each do |name|
-            segment_keys = get_segment_keys(name)            
+            segment_keys = get_segment_keys(name)
             keys += segment_keys.length
           end
-          
+
           keys
         rescue StandardError => e
           @config.log_found_exception(__method__.to_s, e)
           0
         end
 
+        def segment_exist?(name)
+          @adapter.exists?(segment_data(name))
+        end
         private
 
         def segment_data(name)
