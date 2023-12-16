@@ -35,6 +35,8 @@ describe SplitIoClient do
       expect(configs.on_demand_fetch_retry_delay_seconds).to eq SplitIoClient::SplitConfig.default_on_demand_fetch_retry_delay_seconds
       expect(configs.on_demand_fetch_max_retries).to eq SplitIoClient::SplitConfig.default_on_demand_fetch_max_retries
       expect(configs.flag_sets_filter).to eq []
+      expect(configs.segment_directory).to eq SplitIoClient::SplitConfig.default_segment_directory
+      expect(configs.localhost_refresh_enabled).to eq false
     end
 
     it 'stores and retrieves correctly the customized values' do
@@ -179,6 +181,15 @@ describe SplitIoClient do
 
       configs = SplitIoClient::SplitConfig.new(flag_sets_filter: ['1set', 12])
       expect(configs.flag_sets_filter).to eq ['1set']
+    end
+
+    it 'test json localhost params' do
+      configs = SplitIoClient::SplitConfig.new(segment_directory: '/some/folder/path/')
+      expect(configs.segment_directory).to eq '/some/folder/path/'
+
+      configs = SplitIoClient::SplitConfig.new(localhost_refresh_enabled: true)
+      expect(configs.localhost_refresh_enabled).to eq true
+
     end
   end
 end
