@@ -48,30 +48,11 @@ module SplitIoClient
           raise "Segment file does not exist" if !File.exists?(File.join(@segment_directory, segment_name))
 
           parsed = JSON.parse(File.read(File.join(@segment_directory, segment_name)), symbolize_names: true)
-          santitized_segment = sanitize_segment(parsed)
+          santitized_segment = Helpers::ApiHelper.sanitize_segment(@config.logger, parsed)
         rescue StandardError => e
           @config.logger.error("Exception caught: #{e.message}")
           raise "Error parsing file for segment \'#{segment_name}\', Make sure it's readable."
         end
-      end
-
-      def sanitize_segment(parsed)
-        if !parsed.key?(:name) || parsed[:name].nil?
-          @config.logger.warn("Segment does not have [name] element, skipping")
-          raise "Segment does not have [name] element"
-        end
-        if parsed[:name].strip.empty?
-          @config.logger.warn("Segment [name] element is blank, skipping")
-          raise "Segment [name] element is blank"
-        end
-
-        [[:till, -1, -1, nil, nil, [0]],
-                        [:added, [], nil, nil, nil, nil],
-                        [:removed, [], nil, nil, nil, nil]
-        ].each { |element|
-            parsed = Helpers::ApiHelper.sanitize_object_element(@config.logger, parsed, 'segment', element[0], element[1], lower_value=element[2], upper_value=element[3], in_list=nil, not_in_list=element[5])
-        }
-        parsed = Helpers::ApiHelper.sanitize_object_element(@config.logger, parsed, 'segment', :since, parsed[:till], -1, parsed[:till], nil, [0])
       end
     end
   end

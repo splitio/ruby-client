@@ -88,127 +88,127 @@ describe SplitIoClient::Api::SplitsJSONLocalhost do
     it 'test json elements' do
       # check no changes if all elements exist with valid values
       parsed = {"splits": [], "since": -1, "till": -1}
-      expect(split_api.send(:sanitize_json_elements, parsed)).to eq(parsed)
+      expect(SplitIoClient::Helpers::ApiHelper.sanitize_json_elements(parsed)).to eq(parsed)
 
       # check set since to -1 when is nil
       parsed2 = {"splits": [], "since": nil, "till": -1}
-      expect(split_api.send(:sanitize_json_elements, parsed2)).to eq(parsed)
+      expect(SplitIoClient::Helpers::ApiHelper.sanitize_json_elements(parsed2)).to eq(parsed)
 
       # check no changes if since > -1
       parsed2 = {"splits": [], "since": 12, "till": -1}
-      expect(split_api.send(:sanitize_json_elements, parsed2)).to eq(parsed)
+      expect(SplitIoClient::Helpers::ApiHelper.sanitize_json_elements(parsed2)).to eq(parsed)
 
       # check set till to -1 when is None
       parsed2 = {"splits": [], "since": 12, "till": nil}
-      expect(split_api.send(:sanitize_json_elements, parsed2)).to eq(parsed)
+      expect(SplitIoClient::Helpers::ApiHelper.sanitize_json_elements(parsed2)).to eq(parsed)
 
       # check add since when missing
       parsed2 = {"splits": [], "till": -1}
-      expect(split_api.send(:sanitize_json_elements, parsed2)).to eq(parsed)
+      expect(SplitIoClient::Helpers::ApiHelper.sanitize_json_elements(parsed2)).to eq(parsed)
 
       # check add till when missing
       parsed2 = {"splits": [], "since": -1}
-      expect(split_api.send(:sanitize_json_elements, parsed2)).to eq(parsed)
+      expect(SplitIoClient::Helpers::ApiHelper.sanitize_json_elements(parsed2)).to eq(parsed)
 
       # check add splits when missing
       parsed2 = {"since": -1, "till": -1}
-      expect(split_api.send(:sanitize_json_elements, parsed2)).to eq(parsed)
+      expect(SplitIoClient::Helpers::ApiHelper.sanitize_json_elements(parsed2)).to eq(parsed)
     end
 
     it 'test_split_incorrect_elements_sanitization' do
       splits_json = JSON.parse(File.read(File.expand_path('../../../../test_data/splits/splits_localhost.json', __FILE__)), symbolize_names: true)
       # No changes when split structure is good
-      expect(split_api.send(:sanitize_feature_flag_elements, [splits_json[:splits][1]])).to eq([splits_json[:splits][1]])
+      expect(SplitIoClient::Helpers::ApiHelper.sanitize_feature_flag_elements(config, [splits_json[:splits][1]])).to eq([splits_json[:splits][1]])
 
       # test 'trafficTypeName' value None
       split = splits_json[:splits][1]
       split[:trafficTypeName] = nil
-      expect(split_api.send(:sanitize_feature_flag_elements, [split])).to eq([splits_json[:splits][1]])
+      expect(SplitIoClient::Helpers::ApiHelper.sanitize_feature_flag_elements(config, [split])).to eq([splits_json[:splits][1]])
 
       # test 'trafficAllocation' value None
       split = splits_json[:splits][1]
       split[:trafficAllocation] = nil
-      expect(split_api.send(:sanitize_feature_flag_elements, [split])).to eq([splits_json[:splits][1]])
+      expect(SplitIoClient::Helpers::ApiHelper.sanitize_feature_flag_elements(config, [split])).to eq([splits_json[:splits][1]])
 
       # test 'trafficAllocation' valid value should not change
       split = splits_json[:splits][1]
       split[:trafficAllocation] = 50
-      expect(split_api.send(:sanitize_feature_flag_elements, [split])).to eq([split])
+      expect(SplitIoClient::Helpers::ApiHelper.sanitize_feature_flag_elements(config, [split])).to eq([split])
 
       # test 'trafficAllocation' invalid value should change
       split = splits_json[:splits][1]
       split[:trafficAllocation] = 110
-      expect(split_api.send(:sanitize_feature_flag_elements, [split])).to eq([splits_json[:splits][1]])
+      expect(SplitIoClient::Helpers::ApiHelper.sanitize_feature_flag_elements(config, [split])).to eq([splits_json[:splits][1]])
 
       # test 'trafficAllocationSeed' is set to millisec epoch when None
       split = splits_json[:splits][1]
       split[:trafficAllocationSeed] = nil
-      expect(split_api.send(:sanitize_feature_flag_elements, [split])[0][:trafficAllocationSeed]).to be > 0
+      expect(SplitIoClient::Helpers::ApiHelper.sanitize_feature_flag_elements(config, [split])[0][:trafficAllocationSeed]).to be > 0
 
       # test 'trafficAllocationSeed' is set to millisec epoch when 0
       split = splits_json[:splits][1]
       split[:trafficAllocationSeed] = 0
-      expect(split_api.send(:sanitize_feature_flag_elements, [split])[0][:trafficAllocationSeed]).to be > 0
+      expect(SplitIoClient::Helpers::ApiHelper.sanitize_feature_flag_elements(config, [split])[0][:trafficAllocationSeed]).to be > 0
 
       # test 'seed' is set to millisec epoch when None
       split = splits_json[:splits][1]
       split[:seed] = nil
-      expect(split_api.send(:sanitize_feature_flag_elements, [split])[0][:seed]).to be > 0
+      expect(SplitIoClient::Helpers::ApiHelper.sanitize_feature_flag_elements(config, [split])[0][:seed]).to be > 0
 
       # test 'seed' is set to millisec epoch when its 0
       split = splits_json[:splits][1]
       split[:seed] = 0
-      expect(split_api.send(:sanitize_feature_flag_elements, [split])[0][:seed]).to be > 0
+      expect(SplitIoClient::Helpers::ApiHelper.sanitize_feature_flag_elements(config, [split])[0][:seed]).to be > 0
 
       # test 'status' is set to ACTIVE when None
       split = splits_json[:splits][1]
       split[:status] = nil
-      expect(split_api.send(:sanitize_feature_flag_elements, [split])).to eq([splits_json[:splits][1]])
+      expect(SplitIoClient::Helpers::ApiHelper.sanitize_feature_flag_elements(config, [split])).to eq([splits_json[:splits][1]])
 
       # test 'status' is set to ACTIVE when incorrect
       split = splits_json[:splits][1]
       split[:status] = "w"
-      expect(split_api.send(:sanitize_feature_flag_elements, [split])).to eq([splits_json[:splits][1]])
+      expect(SplitIoClient::Helpers::ApiHelper.sanitize_feature_flag_elements(config, [split])).to eq([splits_json[:splits][1]])
 
       # test ''killed' is set to False when incorrect
       split = splits_json[:splits][1]
       split[:killed] = nil
-      expect(split_api.send(:sanitize_feature_flag_elements, [split])).to eq([splits_json[:splits][1]])
+      expect(SplitIoClient::Helpers::ApiHelper.sanitize_feature_flag_elements(config, [split])).to eq([splits_json[:splits][1]])
 
       # test 'defaultTreatment' is set to control when None
       split = splits_json[:splits][1]
       split[:defaultTreatment] = nil
-      expect(split_api.send(:sanitize_feature_flag_elements, [split])[0][:defaultTreatment]).to eq('control')
+      expect(SplitIoClient::Helpers::ApiHelper.sanitize_feature_flag_elements(config, [split])[0][:defaultTreatment]).to eq('control')
 
       # test 'defaultTreatment' is set to control when its empty
       split = splits_json[:splits][1]
       split[:defaultTreatment] = ' '
-      expect(split_api.send(:sanitize_feature_flag_elements, [split])[0][:defaultTreatment]).to eq('control')
+      expect(SplitIoClient::Helpers::ApiHelper.sanitize_feature_flag_elements(config, [split])[0][:defaultTreatment]).to eq('control')
 
       # test 'changeNumber' is set to 0 when None
       split = splits_json[:splits][1]
       split[:changeNumber] = nil
-      expect(split_api.send(:sanitize_feature_flag_elements, [split])[0][:changeNumber]).to eq(0)
+      expect(SplitIoClient::Helpers::ApiHelper.sanitize_feature_flag_elements(config, [split])[0][:changeNumber]).to eq(0)
 
       # test 'changeNumber' is set to 0 when invalid
       split = splits_json[:splits][1]
       split[:changeNumber] = -33
-      expect(split_api.send(:sanitize_feature_flag_elements, [split])[0][:changeNumber]).to eq(0)
+      expect(SplitIoClient::Helpers::ApiHelper.sanitize_feature_flag_elements(config, [split])[0][:changeNumber]).to eq(0)
 
       # test 'algo' is set to 2 when None
       split = splits_json[:splits][1]
       split[:algo] = nil
-      expect(split_api.send(:sanitize_feature_flag_elements, [split])[0][:algo]).to eq(2)
+      expect(SplitIoClient::Helpers::ApiHelper.sanitize_feature_flag_elements(config, [split])[0][:algo]).to eq(2)
 
       # test 'algo' is set to 2 when higher than 2
       split = splits_json[:splits][1]
       split[:algo] = 3
-      expect(split_api.send(:sanitize_feature_flag_elements, [split])[0][:algo]).to eq(2)
+      expect(SplitIoClient::Helpers::ApiHelper.sanitize_feature_flag_elements(config, [split])[0][:algo]).to eq(2)
 
       # test 'algo' is set to 2 when lower than 2
       split = splits_json[:splits][1]
       split[:algo] = 1
-      expect(split_api.send(:sanitize_feature_flag_elements, [split])[0][:algo]).to eq(2)
+      expect(SplitIoClient::Helpers::ApiHelper.sanitize_feature_flag_elements(config, [split])[0][:algo]).to eq(2)
     end
 
     it 'test_split_missing_elements_sanitization' do
@@ -217,7 +217,7 @@ describe SplitIoClient::Api::SplitsJSONLocalhost do
       # test missing all conditions with default rule set to 100% off
       split = splits_json[:splits][1]
       split.delete(:conditions)
-      expect(split_api.send(:sanitize_feature_flag_elements, [split])[0][:conditions]).to eq([{
+      expect(SplitIoClient::Helpers::ApiHelper.sanitize_feature_flag_elements(config, [split])[0][:conditions]).to eq([{
         :conditionType => "ROLLOUT",
         :matcherGroup => {
           :combiner => "AND",
@@ -241,7 +241,7 @@ describe SplitIoClient::Api::SplitsJSONLocalhost do
 
       # test missing ALL_KEYS condition matcher with default rule set to 100% off
       split = splits_json[:splits][0]
-      expect(split_api.send(:sanitize_feature_flag_elements, [split])[0][:conditions][3]).to eq({
+      expect(SplitIoClient::Helpers::ApiHelper.sanitize_feature_flag_elements(config, [split])[0][:conditions][3]).to eq({
         :conditionType => "ROLLOUT",
         :matcherGroup => {
           :combiner => "AND",
@@ -267,7 +267,7 @@ describe SplitIoClient::Api::SplitsJSONLocalhost do
       split = splits_json[:splits][0]
       split[:conditions][0][:conditionType] = "NOT"
       split[:conditions][0][:matcherGroup][:matchers][0][:matcherType] = "ALL_KEYS"
-      expect(split_api.send(:sanitize_feature_flag_elements, [split])[0][:conditions][3]).to eq({
+      expect(SplitIoClient::Helpers::ApiHelper.sanitize_feature_flag_elements(config, [split])[0][:conditions][3]).to eq({
         :conditionType => "ROLLOUT",
         :matcherGroup => {
           :combiner => "AND",
