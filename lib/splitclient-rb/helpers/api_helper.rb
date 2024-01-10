@@ -40,8 +40,8 @@ module SplitIoClient
       end
 
       def self.sanitize_feature_flag(config, parsed)
-        parsed = Helpers::ApiHelper.sanitize_json_elements(parsed)
-        parsed[:splits] = Helpers::ApiHelper.sanitize_feature_flag_elements(config, parsed[:splits])
+        parsed = sanitize_json_elements(parsed)
+        parsed[:splits] = sanitize_feature_flag_elements(config, parsed[:splits])
         parsed
       end
 
@@ -76,9 +76,9 @@ module SplitIoClient
             [:algo, 2, 2, 2, nil, nil]
           ]
           elements.each { |element|
-            feature_flag = Helpers::ApiHelper.sanitize_object_element(config.logger, feature_flag, 'split', element[0], element[1], lower_value=element[2], upper_value=element[3], in_list=element[4], not_in_list=element[5])
+            feature_flag = sanitize_object_element(config.logger, feature_flag, 'split', element[0], element[1], lower_value=element[2], upper_value=element[3], in_list=element[4], not_in_list=element[5])
           }
-          feature_flag = Helpers::ApiHelper.sanitize_condition(config.logger, feature_flag)
+          feature_flag = sanitize_condition(config.logger, feature_flag)
 
           feature_flag[:sets] = [] if !feature_flag.key?(:sets)
           feature_flag[:sets] = config.split_validator.valid_flag_sets('Localhost Validator', feature_flag[:sets])
@@ -154,9 +154,9 @@ module SplitIoClient
                         [:added, [], nil, nil, nil, nil],
                         [:removed, [], nil, nil, nil, nil]
         ].each { |element|
-            parsed = Helpers::ApiHelper.sanitize_object_element(logger, parsed, 'segment', element[0], element[1], lower_value=element[2], upper_value=element[3], in_list=nil, not_in_list=element[5])
+            parsed = sanitize_object_element(logger, parsed, 'segment', element[0], element[1], lower_value=element[2], upper_value=element[3], in_list=nil, not_in_list=element[5])
         }
-        parsed = Helpers::ApiHelper.sanitize_object_element(logger, parsed, 'segment', :since, parsed[:till], -1, parsed[:till], nil, [0])
+        parsed = sanitize_object_element(logger, parsed, 'segment', :since, parsed[:till], -1, parsed[:till], nil, [0])
       end
     end
   end
