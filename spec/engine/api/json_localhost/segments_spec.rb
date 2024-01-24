@@ -87,51 +87,51 @@ describe SplitIoClient::Api::SegmentsJSONLocalhost do
     it 'test sanitize name' do
       # should reject segment if 'name' is null
       segment = {:name => nil, :added => [], :removed => [], :since => -1, :till => 12}
-      expect { segment_api.send(:sanitize_segment, segment) }.to raise_error(RuntimeError)
+      expect { SplitIoClient::Helpers::ApiHelper.sanitize_segment(config.logger, segment) }.to raise_error(RuntimeError)
 
       # should reject segment if 'name' is empty
       segment = {:name => "", :added => [], :removed => [], :since => -1, :till => 12}
-      expect { segment_api.send(:sanitize_segment, segment) }.to raise_error(RuntimeError)
+      expect { SplitIoClient::Helpers::ApiHelper.sanitize_segment(config.logger, segment) }.to raise_error(RuntimeError)
 
       # should reject segment if 'name' does not exist
       segment = {:added => [], :removed => [], :since => -1, :till => 12}
-      expect { segment_api.send(:sanitize_segment, segment) }.to raise_error(RuntimeError)
+      expect { SplitIoClient::Helpers::ApiHelper.sanitize_segment(config.logger, segment) }.to raise_error(RuntimeError)
     end
 
     it 'test sanitize missing fields' do
       # should add missing 'added' element
       segment = {:name => 'segment1', :removed => [], :since => -1, :till => 12}
-      expect(segment_api.send(:sanitize_segment, segment)).to eq({:name => 'segment1', :added => [], :removed => [], :since => -1, :till => 12})
+      expect(SplitIoClient::Helpers::ApiHelper.sanitize_segment(config.logger, segment)).to eq({:name => 'segment1', :added => [], :removed => [], :since => -1, :till => 12})
 
       # should add missing 'removed' element
       segment = {:name => 'segment1', :added => [], :since => -1, :till => 12}
-      expect(segment_api.send(:sanitize_segment, segment)).to eq({:name => 'segment1', :added => [], :removed => [], :since => -1, :till => 12})
+      expect(SplitIoClient::Helpers::ApiHelper.sanitize_segment(config.logger, segment)).to eq({:name => 'segment1', :added => [], :removed => [], :since => -1, :till => 12})
 
       # should add since and till with -1 if they are missing
       segment = {:name => 'segment1', :added => [], :removed => []}
-      expect(segment_api.send(:sanitize_segment, segment)).to eq({:name => 'segment1', :added => [], :removed => [], :since => -1, :till => -1})
+      expect(SplitIoClient::Helpers::ApiHelper.sanitize_segment(config.logger, segment)).to eq({:name => 'segment1', :added => [], :removed => [], :since => -1, :till => -1})
     end
 
     it 'test reset incorrect values' do
       # should reset added and remved to array if values are None
       segment = {:name => 'segment1', :added => nil, :removed => nil, :since => -1, :till => 12}
-      expect(segment_api.send(:sanitize_segment, segment)).to eq({:name => 'segment1', :added => [], :removed => [], :since => -1, :till => 12})
+      expect(SplitIoClient::Helpers::ApiHelper.sanitize_segment(config.logger, segment)).to eq({:name => 'segment1', :added => [], :removed => [], :since => -1, :till => 12})
 
       # should reset since and till to -1 if values are None
       segment = {:name => 'segment1', :added => [], :removed => [], :since => -1, :till => nil}
-      expect(segment_api.send(:sanitize_segment, segment)).to eq({:name => 'segment1', :added => [], :removed => [], :since => -1, :till => -1})
+      expect(SplitIoClient::Helpers::ApiHelper.sanitize_segment(config.logger, segment)).to eq({:name => 'segment1', :added => [], :removed => [], :since => -1, :till => -1})
 
       # should reset since and till to -1 if values are 0
       segment = {:name => 'segment1', :added => [], :removed => [], :since => 0, :till => 0}
-      expect(segment_api.send(:sanitize_segment, segment)).to eq({:name => 'segment1', :added => [], :removed => [], :since => -1, :till => -1})
+      expect(SplitIoClient::Helpers::ApiHelper.sanitize_segment(config.logger, segment)).to eq({:name => 'segment1', :added => [], :removed => [], :since => -1, :till => -1})
 
       # should reset till and since to -1 if values below -1
       segment = {:name => 'segment1', :added => [], :removed => [], :since => -44, :till => -2}
-      expect(segment_api.send(:sanitize_segment, segment)).to eq({:name => 'segment1', :added => [], :removed => [], :since => -1, :till => -1})
+      expect(SplitIoClient::Helpers::ApiHelper.sanitize_segment(config.logger, segment)).to eq({:name => 'segment1', :added => [], :removed => [], :since => -1, :till => -1})
 
       # should reset since to till if value above till
       segment = {:name => 'segment1', :added => [], :removed => [], :since => 40, :till => 12}
-      expect(segment_api.send(:sanitize_segment, segment)).to eq({:name => 'segment1', :added => [], :removed => [], :since => 12, :till => 12})
+      expect(SplitIoClient::Helpers::ApiHelper.sanitize_segment(config.logger, segment)).to eq({:name => 'segment1', :added => [], :removed => [], :since => 12, :till => 12})
     end
   end
 end
