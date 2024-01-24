@@ -96,6 +96,8 @@ module SplitIoClient
       )
 
       @split_file = opts[:split_file] || SplitConfig.default_split_file
+      @segment_directory = opts[:segment_directory] || SplitConfig.default_segment_directory
+      @localhost_refresh_enabled = opts[:localhost_refresh_enabled] || false
 
       @valid_mode = true
       @split_logger = SplitIoClient::SplitLogger.new(self)
@@ -263,6 +265,8 @@ module SplitIoClient
     attr_accessor :events_queue_size
 
     attr_accessor :split_file
+    attr_accessor :segment_directory
+    attr_accessor :localhost_refresh_enabled
 
     attr_accessor :localhost_mode
 
@@ -514,6 +518,10 @@ module SplitIoClient
 
     def self.default_split_file
       File.join(Dir.home, '.split')
+    end
+
+    def self.default_segment_directory
+      Dir.home
     end
 
     def self.default_offline_refresh_rate
