@@ -1,7 +1,7 @@
 module SplitIoClient
   class SplitIoError < StandardError; end
 
-  class SDKShutdownException < SplitIoError; end
+  class SDKShutdownException < Exception; end
 
   class SDKBlockerTimeoutExpiredException < SplitIoError; end
 
