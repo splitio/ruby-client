@@ -182,7 +182,7 @@ module SplitIoClient
 
           if check_undefined_matcher(split)
             @config.logger.warn("Feature Flag #{split[:name]} has undefined matcher, setting conditions to default template.")
-            split['conditions'] = [SplitsRepository::DEFAULT_CONDITIONS_TEMPLATE]
+            split[:conditions] = [SplitsRepository::DEFAULT_CONDITIONS_TEMPLATE]
           end
           if !split[:sets].nil?
             for flag_set in split[:sets]
