@@ -7,6 +7,7 @@ describe SplitIoClient::SSE::EventSource::EventParser do
   let(:log) { StringIO.new }
   let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log)) }
 
+  let(:event_split_update_ws) { "fb\r\nid: 123\nevent: message\ndata:{\"id\":\"1\",\"clientId\":\"emptyClientId\",\"connectionId\":\"1\",\"timestamp\":1582045421733,\"channel\":\"channel-test\",\"data\":\"{\\\"type\\\" : \\\"SPLIT_UPDATE\\\",\\\"changeNumber\\\": 5564531221}\",\"name\":\"asdasd\"}\n\n\r\n" }
   let(:event_split_update) { "fb\r\nid: 123\nevent: message\ndata: {\"id\":\"1\",\"clientId\":\"emptyClientId\",\"connectionId\":\"1\",\"timestamp\":1582045421733,\"channel\":\"channel-test\",\"data\":\"{\\\"type\\\" : \\\"SPLIT_UPDATE\\\",\\\"changeNumber\\\": 5564531221}\",\"name\":\"asdasd\"}\n\n\r\n" }
   let(:event_split_kill) { "fb\r\nid: 123\nevent: message\ndata: {\"id\":\"1\",\"clientId\":\"emptyClientId\",\"connectionId\":\"1\",\"timestamp\":1582045421733,\"channel\":\"channel-test\",\"data\":\"{\\\"type\\\" : \\\"SPLIT_KILL\\\",\\\"changeNumber\\\": 5564531221, \\\"defaultTreatment\\\" : \\\"off\\\", \\\"splitName\\\" : \\\"split-test\\\"}\",\"name\":\"asdasd\"}\n\n\r\n" }
   let(:event_segment_update) { "fb\r\nid: 123\nevent: message\ndata: {\"id\":\"1\",\"clientId\":\"emptyClientId\",\"connectionId\":\"1\",\"timestamp\":1582045421733,\"channel\":\"channel-test\",\"data\":\"{\\\"type\\\" : \\\"SEGMENT_UPDATE\\\",\\\"changeNumber\\\": 5564531221, \\\"segmentName\\\" : \\\"segment-test\\\"}\",\"name\":\"asdasd\"}\n\n\r\n" }
@@ -19,6 +20,16 @@ describe SplitIoClient::SSE::EventSource::EventParser do
     parser = subject.new(config)
 
     event = parser.parse(event_split_update)[0]
+    expect(event.event_type).to eq('message')
+    expect(event.data['type']).to eq('SPLIT_UPDATE')
+    expect(event.data['changeNumber']).to eq(5_564_531_221)
+    expect(event.channel).to eq('channel-test')
+  end
+
+  it 'split update event - fixing event parser' do
+    parser = subject.new(config)
+
+    event = parser.parse(event_split_update_ws)[0]
     expect(event.event_type).to eq('message')
     expect(event.data['type']).to eq('SPLIT_UPDATE')
     expect(event.data['changeNumber']).to eq(5_564_531_221)
