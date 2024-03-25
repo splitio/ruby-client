@@ -43,7 +43,8 @@ module SplitIoClient
         private
 
         def parse_event_data(data, type)
-          event_data = JSON.parse(data.sub('data: ', ''))
+          data_value = data.sub('data:', '')
+          event_data = JSON.parse(data_value.strip)
           client_id = event_data['clientId']&.strip
           channel = event_data['channel']&.strip
           parsed_data = JSON.parse(event_data['data']) unless type == 'error'

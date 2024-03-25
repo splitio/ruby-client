@@ -168,8 +168,16 @@ describe SplitIoClient do
 
         client = factory.client
         client.block_until_ready
-        sleep(2)
-        expect(client.get_treatment('admin', 'bilal_split')).to eq('off')
+
+        treatment = 'control'
+        for i in 1..5 do
+          p i
+          sleep(1)
+          treatment = client.get_treatment('admin', 'bilal_split')
+          break if treatment != 'control'
+        end
+
+        expect(treatment).to eq('off')
       end
     end
 
