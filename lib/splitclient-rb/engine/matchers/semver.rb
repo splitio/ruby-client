@@ -111,6 +111,14 @@ module SplitIoClient
       -1
     end
 
+    # Compare the current Semver object's major, minor, patch and is_stable attributes to a given Semver object, return:
+    #      0: if self == passed
+    #      1: if self > passed
+    #      -1: if self < passed
+    #
+    # @param to_compare [trype] splitio.models.grammar.matchers.semver.Semver object
+    #
+    # @returns [Integer] based on comparison
     def compare_attributes(to_compare)
       result = compare_vars(@major, to_compare.major)
       return result if result != 0
@@ -128,6 +136,14 @@ module SplitIoClient
       0
     end
 
+    # Compare the current Semver object's pre_release attribute to a given Semver object, return:
+    #      0: if self == passed
+    #      1: if self > passed
+    #      -1: if self < passed
+    #
+    # @param to_compare [trype] splitio.models.grammar.matchers.semver.Semver object
+    #
+    # @returns [Integer] based on comparison
     def compare_pre_release(to_compare)
       min_length = get_pre_min_length(to_compare)
       0.upto(min_length - 1) do |i|
@@ -143,6 +159,11 @@ module SplitIoClient
       compare_vars(@pre_release.length, to_compare.pre_release.length)
     end
 
+    # Get minimum of current Semver object's pre_release attributes length to a given Semver object
+    #
+    # @param to_compare [trype] splitio.models.grammar.matchers.semver.Semver object
+    #
+    # @returns [Integer]
     def get_pre_min_length(to_compare)
       [@pre_release.length, to_compare.pre_release.length].min
     end

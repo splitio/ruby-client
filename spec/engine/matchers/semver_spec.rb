@@ -83,8 +83,8 @@ describe SplitIoClient::Semver do
   end
 
   def verify_version(semver, major, minor, patch, pre_release="", is_stable=True)
-    if semver.major == major and semver.minor == minor and semver.patch == patch and
-      semver.pre_release == pre_release and semver.is_stable == is_stable
+    if semver.major == major && semver.minor == minor &&d semver.patch == patch &&
+       semver.pre_release == pre_release && semver.is_stable == is_stable
       return true
     end
     return false
