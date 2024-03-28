@@ -19,11 +19,11 @@ module SplitIoClient
       return false unless @validator.valid_matcher_arguments(args)
 
       value_to_match = args[:attributes][@attribute.to_sym]
-      if !value_to_match.is_a?(String)
+      unless value_to_match.is_a?(String)
         @logger.error('stringMatcherData is required for EQUAL_TO_SEMVER matcher type')
         return false
       end
-      matches = (@semver.compare(SplitIoClient::Semver.new(value_to_match)) == 0)
+      matches = @semver.compare(SplitIoClient::Semver.new(value_to_match)).zero?
       @logger.log_if_debug("[EqualsToSemverMatcher] #{value_to_match} matches -> #{matches}")
       matches
     end
