@@ -28,4 +28,11 @@ describe SplitIoClient::EqualToSemverMatcher do
     expect(matcher.match?(:attributes=>{"version": "2.1.5"})).to eq(false)
     expect(matcher.match?(:attributes=>{"version": "2.1.5-rc1"})).to eq(false)
   end
+
+  it 'invalid attribute' do
+    matcher = described_class.new("version", raw[:stringMatcherData], config.split_logger, config.split_validator)
+    expect(matcher.match?(:attributes=>{"version": 2.1})).to eq(false)
+    expect(matcher.match?(:attributes=>{"version": nil})).to eq(false)
+  end
+
 end

@@ -20,7 +20,7 @@ module SplitIoClient
 
       value_to_match = args[:attributes][@attribute.to_sym]
       unless value_to_match.is_a?(String)
-        @logger.error('stringMatcherData is required for EQUAL_TO_SEMVER matcher type')
+        @logger.log_if_debug('stringMatcherData is required for EQUAL_TO_SEMVER matcher type')
         return false
       end
       matches = @semver.compare(SplitIoClient::Semver.new(value_to_match)).zero?
