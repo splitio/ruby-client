@@ -189,6 +189,14 @@ module SplitIoClient
       )
     end
 
+    def matcher_equal_to_semver(params)
+      EqualToSemverMatcher.new(
+        params[:matcher][:keySelector][:attribute],
+        params[:matcher][:stringMatcherData],
+        @config.split_logger, @config.split_validator
+      )
+    end
+
     #
     # @return [object] the negate value for this condition
     def negate
