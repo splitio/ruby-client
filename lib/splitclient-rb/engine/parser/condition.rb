@@ -222,6 +222,14 @@ module SplitIoClient
       )
     end
 
+    def matcher_in_list_semver(params)
+      InListSemverMatcher.new(
+        params[:matcher][:keySelector][:attribute],
+        params[:matcher][:whitelistMatcherData][:whitelist],
+        @config.split_logger, @config.split_validator
+      )
+    end
+
     #
     # @return [object] the negate value for this condition
     def negate
