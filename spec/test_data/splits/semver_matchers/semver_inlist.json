@@ -1,0 +1,86 @@
+{
+  "splits": [
+    {
+      "trafficTypeName": "user",
+      "name": "semver_inlist",
+      "trafficAllocation": 100,
+      "trafficAllocationSeed": 1068038034,
+      "seed": -1053389887,
+      "status": "ACTIVE",
+      "killed": false,
+      "defaultTreatment": "off",
+      "changeNumber": 1675259356568,
+      "algo": 2,
+      "configurations": {},
+      "conditions": [
+        {
+          "conditionType": "ROLLOUT",
+          "matcherGroup": {
+            "combiner": "AND",
+            "matchers":
+                    [
+                        {"keySelector": {"trafficType": "user", "attribute": "version"},
+                        "matcherType": "IN_LIST_SEMVER",
+                        "negate": false,
+                        "userDefinedSegmentMatcherData": null,
+                        "whitelistMatcherData": {"whitelist": ["1.22.9", "2.1.0"]},
+                        "unaryNumericMatcherData": null,
+                        "betweenMatcherData": null,
+                        "dependencyMatcherData": null,
+                        "booleanMatcherData": null,
+                        "stringMatcherData": null,
+                        "betweenStringMatcherData": null}
+                    ]
+           },
+           "partitions": [
+            {
+              "treatment": "on",
+              "size": 100
+            },
+            {
+              "treatment": "off",
+              "size": 0
+            }
+          ],
+          "label": "between semver"
+        },
+        {
+          "conditionType": "ROLLOUT",
+          "matcherGroup": {
+            "combiner": "AND",
+            "matchers": [
+              {
+                "keySelector": {
+                  "trafficType": "user",
+                  "attribute": null
+                },
+                "matcherType": "ALL_KEYS",
+                "negate": false,
+                "userDefinedSegmentMatcherData": null,
+                "whitelistMatcherData": null,
+                "unaryNumericMatcherData": null,
+                "betweenMatcherData": null,
+                "booleanMatcherData": null,
+                "dependencyMatcherData": null,
+                "stringMatcherData": null
+              }
+            ]
+          },
+          "partitions": [
+            {
+              "treatment": "on",
+              "size": 0
+            },
+            {
+              "treatment": "off",
+              "size": 100
+            }
+          ],
+          "label": "default rule"
+        }
+      ]
+    }
+  ],
+  "since": -1,
+  "till": 1675259356568
+}
