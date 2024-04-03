@@ -3,18 +3,12 @@
 require 'spec_helper'
 
 class MyCustomDecorator3
-  def initialize
-    true
-  end
   def get_header_overrides(request_context)
       ["value"]
   end
 end
 
 class MyCustomDecorator2
-  def initialize
-    true
-  end
   def get_header_overrides(request_context)
       headers = request_context.headers
       headers["UserCustomHeader"] = ["value"]
@@ -26,9 +20,6 @@ class MyCustomDecorator2
 end
 
 class MyCustomDecorator
-  def initialize
-    true
-  end
   def get_header_overrides(request_context)
       headers = request_context.headers
       headers["UserCustomHeader"] = ["value"]
