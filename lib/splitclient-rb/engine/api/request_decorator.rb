@@ -25,18 +25,18 @@ module SplitIoClient
         end
       end
 
-      def decorate_headers(request)
-        custom_headers = @custom_header_decorator.get_header_overrides(SplitIoClient::Api::RequestContext.new(request.headers.clone))
+      def decorate_headers(headers)
+        custom_headers = @custom_header_decorator.get_header_overrides(SplitIoClient::Api::RequestContext.new(headers.clone))
         custom_headers.keys().each do |header|
           if is_header_allowed(header)
-            if request.headers[header].is_a?(Array)
-              request.headers[header] = custom_headers[header].join(',')
+            if custom_headers[header].is_a?(Array)
+              headers[header] = custom_headers[header].join(',')
             else
-              request.headers[header] = custom_headers[header]
+              headers[header] = custom_headers[header]
             end
           end
         end
-        request
+        headers
       rescue StandardError => e
         raise e, 'Problem adding custom header in request decorator', e.backtrace
       end
