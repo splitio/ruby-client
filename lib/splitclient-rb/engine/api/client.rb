@@ -3,17 +3,18 @@
 module SplitIoClient
   module Api
     class Client
-      def initialize(config)
+      def initialize(config, request_decorator)
         @config = config
+        @request_decorator = request_decorator
 
         check_faraday_compatibility
       end
 
       def get_api(url, api_key, params = {}, cache_control_headers = false)
         api_client.get(url, params) do |req|
-          req.headers = common_headers(api_key).merge('Accept-Encoding' => 'gzip')
-          req.headers = req.headers.merge('Cache-Control' => 'no-cache') if cache_control_headers
-
+          headers = common_headers(api_key).merge('Accept-Encoding' => 'gzip')
+          headers = headers.merge('Cache-Control' => 'no-cache') if cache_control_headers
+          req.headers = @request_decorator.decorate_headers(headers)
           req.options[:timeout] = @config.read_timeout
           req.options[:open_timeout] = @config.connection_timeout
 
@@ -29,12 +30,13 @@ module SplitIoClient
           req.headers = common_headers(api_key)
                         .merge('Content-Type' => 'application/json')
                         .merge(headers)
-          
+
           machine_ip = @config.machine_ip
           machine_name = @config.machine_name
 
           req.headers = req.headers.merge('SplitSDKMachineIP' => machine_ip) unless machine_ip.empty? || machine_ip == 'unknown'
           req.headers = req.headers.merge('SplitSDKMachineName' => machine_name) unless machine_name.empty? || machine_name == 'unknown'
+          req.headers = @request_decorator.decorate_headers(req.headers)
 
           req.body = data.to_json
 

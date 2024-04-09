@@ -4,8 +4,8 @@ module SplitIoClient
   module Api
     # Retrieves split definitions from the Split Backend
     class Splits < Client
-      def initialize(api_key, config, telemetry_runtime_producer)
-        super(config)
+      def initialize(api_key, config, telemetry_runtime_producer, request_decorator)
+        super(config, request_decorator)
         @api_key = api_key
         @telemetry_runtime_producer = telemetry_runtime_producer
         @flag_sets_filter = @config.flag_sets_filter

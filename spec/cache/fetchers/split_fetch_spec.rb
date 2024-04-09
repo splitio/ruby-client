@@ -27,7 +27,7 @@ describe SplitIoClient::Cache::Fetchers::SplitFetcher do
     let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([]) }
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
     let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
-    let(:store) { described_class.new(splits_repository, '', config, telemetry_runtime_producer) }
+    let(:store) { described_class.new(splits_repository, '', config, telemetry_runtime_producer, SplitIoClient::Api::RequestDecorator.new(nil)) }
 
     it 'returns splits since' do
       splits = store.send(:splits_since, -1)
@@ -78,7 +78,7 @@ describe SplitIoClient::Cache::Fetchers::SplitFetcher do
     let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new(['set_2']) }
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
     let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
-    let(:store) { described_class.new(splits_repository, '', config, telemetry_runtime_producer) }
+    let(:store) { described_class.new(splits_repository, '', config, telemetry_runtime_producer, SplitIoClient::Api::RequestDecorator.new(nil)) }
 
     before do
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?sets=set_2&since=-1')
@@ -130,7 +130,7 @@ describe SplitIoClient::Cache::Fetchers::SplitFetcher do
     let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([]) }
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
     let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
-    let(:store) { described_class.new(splits_repository, '', config, telemetry_runtime_producer) }
+    let(:store) { described_class.new(splits_repository, '', config, telemetry_runtime_producer, SplitIoClient::Api::RequestDecorator.new(nil)) }
 
     it 'returns splits since' do
       splits = store.send(:splits_since, -1)

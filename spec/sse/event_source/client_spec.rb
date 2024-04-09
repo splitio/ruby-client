@@ -3,9 +3,19 @@
 require 'spec_helper'
 require 'http_server_mock'
 
+class MyCustomDecorator
+  def get_header_overrides(request_context)
+      headers = request_context.headers
+      headers["UserCustomHeader"] = ["value"]
+      headers["AnotherCustomHeader"] = ["val1", "val2"]
+      headers
+  end
+end
+
 describe SplitIoClient::SSE::EventSource::Client do
   subject { SplitIoClient::SSE::EventSource::Client }
 
+  let(:request_decorator) { SplitIoClient::Api::RequestDecorator.new(MyCustomDecorator.new) }
   let(:log) { StringIO.new }
   let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log)) }
   let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
@@ -25,8 +35,8 @@ describe SplitIoClient::SSE::EventSource::Client do
   end
   let(:parameters) do
     {
-      split_fetcher: SplitIoClient::Cache::Fetchers::SplitFetcher.new(repositories[:splits], api_key, config, telemetry_runtime_producer),
-      segment_fetcher: SplitIoClient::Cache::Fetchers::SegmentFetcher.new(repositories[:segments], api_key, config, telemetry_runtime_producer),
+      split_fetcher: SplitIoClient::Cache::Fetchers::SplitFetcher.new(repositories[:splits], api_key, config, telemetry_runtime_producer, request_decorator),
+      segment_fetcher: SplitIoClient::Cache::Fetchers::SegmentFetcher.new(repositories[:segments], api_key, config, telemetry_runtime_producer, request_decorator),
       imp_counter: SplitIoClient::Engine::Common::ImpressionCounter.new,
       telemetry_runtime_producer: telemetry_runtime_producer
     }
@@ -48,6 +58,7 @@ describe SplitIoClient::SSE::EventSource::Client do
 
   context 'tests' do
     it 'receive split update event' do
+
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
         .with(headers: { 'Authorization' => 'Bearer client-spec-key' })
         .to_return(status: 200, body: '{"splits":[],"since":-1,"till":5564531221}')
@@ -61,7 +72,7 @@ describe SplitIoClient::SSE::EventSource::Client do
         end
         start_workers
 
-        sse_client = subject.new(config, api_token, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor, push_status_queue)
+        sse_client = subject.new(config, api_token, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor, push_status_queue, request_decorator)
 
         connected = sse_client.start(server.base_uri)
         expect(connected).to eq(true)
@@ -92,7 +103,7 @@ describe SplitIoClient::SSE::EventSource::Client do
         end
         start_workers
 
-        sse_client = subject.new(config, api_token, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor, push_status_queue)
+        sse_client = subject.new(config, api_token, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor, push_status_queue, request_decorator)
 
         connected = sse_client.start(server.base_uri)
         expect(connected).to eq(true)
@@ -121,7 +132,7 @@ describe SplitIoClient::SSE::EventSource::Client do
           send_stream_content(res, event_segment_update)
         end
         start_workers
-        sse_client = subject.new(config, api_token, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor, push_status_queue)
+        sse_client = subject.new(config, api_token, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor, push_status_queue, request_decorator)
 
         connected = sse_client.start(server.base_uri)
         expect(connected).to eq(true)
@@ -144,7 +155,7 @@ describe SplitIoClient::SSE::EventSource::Client do
           send_stream_content(res, event_control)
         end
         start_workers
-        sse_client = subject.new(config, api_token, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor, push_status_queue)
+        sse_client = subject.new(config, api_token, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor, push_status_queue, request_decorator)
 
         connected = sse_client.start(server.base_uri)
         expect(connected).to eq(true)
@@ -166,7 +177,7 @@ describe SplitIoClient::SSE::EventSource::Client do
           send_stream_content(res, event_invalid_format)
         end
         start_workers
-        sse_client = subject.new(config, api_token, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor, push_status_queue)
+        sse_client = subject.new(config, api_token, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor, push_status_queue, request_decorator)
 
         connected = sse_client.start(server.base_uri)
         expect(connected).to eq(true)
@@ -188,7 +199,7 @@ describe SplitIoClient::SSE::EventSource::Client do
           send_stream_content(res, event_occupancy)
         end
         start_workers
-        sse_client = subject.new(config, api_token, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor, push_status_queue)
+        sse_client = subject.new(config, api_token, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor, push_status_queue, request_decorator)
 
         connected = sse_client.start(server.base_uri)
         expect(connected).to eq(true)
@@ -208,7 +219,7 @@ describe SplitIoClient::SSE::EventSource::Client do
           send_stream_content(res, event_error, 400)
         end
         start_workers
-        sse_client = subject.new(config, api_token, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor, push_status_queue)
+        sse_client = subject.new(config, api_token, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor, push_status_queue, request_decorator)
 
         connected = sse_client.start(server.base_uri)
 
@@ -226,7 +237,7 @@ describe SplitIoClient::SSE::EventSource::Client do
           send_stream_content(res, event_error, 400)
         end
         start_workers
-        sse_client = subject.new(config, api_token, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor, push_status_queue)
+        sse_client = subject.new(config, api_token, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor, push_status_queue, request_decorator)
 
         connected = sse_client.start(server.base_uri)
         expect(connected).to eq(false)
@@ -234,6 +245,13 @@ describe SplitIoClient::SSE::EventSource::Client do
 
         stop_workers
       end
+    end
+
+    it "append custom headers" do
+      sse_client = subject.new(config, api_token, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor, push_status_queue, request_decorator)
+      req = sse_client.send :build_request, URI("http://localhost")
+      expect(req).to include("UserCustomHeader: value")
+      expect(req).to include("AnotherCustomHeader: val1,val2")
     end
   end
 
