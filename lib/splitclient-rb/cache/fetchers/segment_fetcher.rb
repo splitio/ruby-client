@@ -4,12 +4,13 @@ module SplitIoClient
       class SegmentFetcher
         attr_reader :segments_repository
 
-        def initialize(segments_repository, api_key, config, telemetry_runtime_producer)
+        def initialize(segments_repository, api_key, config, telemetry_runtime_producer, request_decorator)
           @segments_repository = segments_repository
           @api_key = api_key
           @config = config
           @semaphore = Mutex.new
           @telemetry_runtime_producer = telemetry_runtime_producer
+          @request_decorator = request_decorator
         end
 
         def call
@@ -17,14 +18,14 @@ module SplitIoClient
             fetch_segments
             return
           end
-          
+
           segments_thread
         end
 
         def fetch_segments_if_not_exists(names, cache_control_headers = false)
           names.each do |name|
             change_number = @segments_repository.get_change_number(name)
-            
+
             if change_number == -1
               fetch_options = { cache_control_headers: cache_control_headers, till: nil }
               fetch_segment(name, fetch_options) if change_number == -1
@@ -75,7 +76,7 @@ module SplitIoClient
         end
 
         def segments_api
-          @segments_api ||= SplitIoClient::Api::Segments.new(@api_key, @segments_repository, @config, @telemetry_runtime_producer)
+          @segments_api ||= SplitIoClient::Api::Segments.new(@api_key, @segments_repository, @config, @telemetry_runtime_producer, @request_decorator)
         end
       end
     end

@@ -4,8 +4,8 @@ module SplitIoClient
   module Api
     # Retrieves segment changes from the Split Backend
     class Segments < Client
-      def initialize(api_key, segments_repository, config, telemetry_runtime_producer)
-        super(config)
+      def initialize(api_key, segments_repository, config, telemetry_runtime_producer, request_decorator)
+        super(config, request_decorator)
         @api_key = api_key
         @segments_repository = segments_repository
         @telemetry_runtime_producer = telemetry_runtime_producer

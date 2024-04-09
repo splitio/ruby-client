@@ -20,6 +20,7 @@ module SplitIoClient
                        notification_manager_keeper,
                        notification_processor,
                        status_queue,
+                       request_decorator,
                        read_timeout: DEFAULT_READ_TIMEOUT)
           @config = config
           @api_key = api_key
@@ -32,6 +33,7 @@ module SplitIoClient
           @connected = Concurrent::AtomicBoolean.new(false)
           @first_event = Concurrent::AtomicBoolean.new(true)
           @socket = nil
+          @request_decorator = request_decorator
         end
 
         def close(status = nil)
@@ -145,7 +147,6 @@ module SplitIoClient
 
         def process_data(partial_data)
           return if partial_data.nil? || partial_data == KEEP_ALIVE_RESPONSE
-
           @config.logger.debug("Event partial data: #{partial_data}") if @config.debug_enabled
           events = @event_parser.parse(partial_data)
           events.each { |event| process_event(event) }
@@ -161,9 +162,19 @@ module SplitIoClient
           req << "SplitSDKMachineIP: #{@config.machine_ip}\r\n"
           req << "SplitSDKMachineName: #{@config.machine_name}\r\n"
           req << "SplitSDKClientKey: #{@api_key.split(//).last(4).join}\r\n" unless @api_key.nil?
+          req << add_custom_headers
           req << "Cache-Control: no-cache\r\n\r\n"
           @config.logger.debug("Request info: #{req}") if @config.debug_enabled
           req
+        end
+
+        def add_custom_headers
+          custom_headers = @request_decorator.decorate_headers({})
+          all_headers = ""
+          custom_headers.keys().each do |header|
+            all_headers += header + ": " + custom_headers[header] + "\r\n"
+          end
+          all_headers
         end
 
         def process_event(event)
@@ -196,7 +207,7 @@ module SplitIoClient
 
         def push_status(status)
           return if status.nil?
-          
+
           @config.logger.debug("Pushing new sse status: #{status}")
           @status_queue.push(status)
         end
