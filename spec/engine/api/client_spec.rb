@@ -55,7 +55,7 @@ describe SplitIoClient::Api::Client do
       client = described_class.new(@default_config, MyRequestDecorator.new(nil))
       client.get_api(url, api_key, params)
 
-      expect($headers).to eq({"Accept-Encoding"=>"gzip,deflate"})
+      expect($headers).to eq({"Accept-Encoding"=>"gzip", "Authorization" => "Bearer abc-def-ghi", "SplitSDKVersion" => "ruby-8.3.1"})
     end
 
   end

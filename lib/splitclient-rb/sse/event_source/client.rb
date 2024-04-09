@@ -155,6 +155,8 @@ module SplitIoClient
         end
 
         def build_request(uri)
+          custom_headers = @request_decorator.decorate_headers({})
+
           req = "GET #{uri.request_uri} HTTP/1.1\r\n"
           req << "Host: #{uri.host}\r\n"
           req << "Accept: text/event-stream\r\n"
@@ -162,19 +164,10 @@ module SplitIoClient
           req << "SplitSDKMachineIP: #{@config.machine_ip}\r\n"
           req << "SplitSDKMachineName: #{@config.machine_name}\r\n"
           req << "SplitSDKClientKey: #{@api_key.split(//).last(4).join}\r\n" unless @api_key.nil?
-          req << add_custom_headers
+          custom_headers.keys().each{ |header| req << header + ": " + custom_headers[header] + "\r\n" }
           req << "Cache-Control: no-cache\r\n\r\n"
           @config.logger.debug("Request info: #{req}") if @config.debug_enabled
           req
-        end
-
-        def add_custom_headers
-          custom_headers = @request_decorator.decorate_headers({})
-          all_headers = ""
-          custom_headers.keys().each do |header|
-            all_headers += header + ": " + custom_headers[header] + "\r\n"
-          end
-          all_headers
         end
 
         def process_event(event)
