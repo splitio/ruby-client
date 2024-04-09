@@ -15,7 +15,7 @@ describe SplitIoClient::Api::Splits do
     end
     let(:log) { StringIO.new }
     let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
-    let(:splits_api) { described_class.new('', config, telemetry_runtime_producer) }
+    let(:splits_api) { described_class.new('', config, telemetry_runtime_producer, SplitIoClient::Api::RequestDecorator.new(nil)) }
 
     it 'returns splits with segment names' do
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
@@ -38,7 +38,7 @@ describe SplitIoClient::Api::Splits do
     end
     let(:log) { StringIO.new }
     let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
-    let(:splits_api) { described_class.new('', config, telemetry_runtime_producer) }
+    let(:splits_api) { described_class.new('', config, telemetry_runtime_producer, SplitIoClient::Api::RequestDecorator.new(nil)) }
 
     it 'returns the splits - with 2 sets param' do
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?sets=set_1,set_2&since=-1')
@@ -93,7 +93,7 @@ describe SplitIoClient::Api::Splits do
     end
     let(:log) { StringIO.new }
     let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
-    let(:splits_api) { described_class.new('', config, telemetry_runtime_producer) }
+    let(:splits_api) { described_class.new('', config, telemetry_runtime_producer, SplitIoClient::Api::RequestDecorator.new(nil)) }
 
     it 'returns the splits - checking headers when cache_control_headers is false' do
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
