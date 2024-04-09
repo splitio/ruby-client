@@ -164,7 +164,7 @@ module SplitIoClient
           req << "SplitSDKMachineIP: #{@config.machine_ip}\r\n"
           req << "SplitSDKMachineName: #{@config.machine_name}\r\n"
           req << "SplitSDKClientKey: #{@api_key.split(//).last(4).join}\r\n" unless @api_key.nil?
-          custom_headers.keys().each{ |header| req << header + ": " + custom_headers[header] + "\r\n" }
+          custom_headers.keys().each{ |header| req << "#{header}: #{custom_headers[header]}\r\n" }
           req << "Cache-Control: no-cache\r\n\r\n"
           @config.logger.debug("Request info: #{req}") if @config.debug_enabled
           req
