@@ -8,10 +8,6 @@ module SplitIoClient
 
     attr_reader :major, :minor, :patch, :pre_release, :is_stable, :old_version
 
-    #
-    # Class Initializer
-    #
-    # @param version [String] raw version as read from splitChanges response.
     def initialize(version)
       @major = 0
       @minor = 0
@@ -20,6 +16,19 @@ module SplitIoClient
       @is_stable = false
       @old_version = version
       parse
+    end
+
+    #
+    # Class builder
+    #
+    # @param version [String] raw version as read from splitChanges response.
+    #
+    # @return [type] Semver instance
+    def self.build(version, logger)
+      new(version)
+    rescue RuntimeError => e
+      logger.warn("Failed to parse Semver data:  #{e}")
+      nil
     end
 
     #
