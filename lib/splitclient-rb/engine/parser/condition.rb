@@ -213,6 +213,15 @@ module SplitIoClient
       )
     end
 
+    def matcher_between_semver(params)
+      BetweenSemverMatcher.new(
+        params[:matcher][:keySelector][:attribute],
+        params[:matcher][:betweenStringMatcherData][:start],
+        params[:matcher][:betweenStringMatcherData][:end],
+        @config.split_logger, @config.split_validator
+      )
+    end
+
     #
     # @return [object] the negate value for this condition
     def negate
