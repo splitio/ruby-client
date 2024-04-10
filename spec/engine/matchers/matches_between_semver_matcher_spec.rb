@@ -14,9 +14,9 @@ describe SplitIoClient::BetweenSemverMatcher do
     matcher = described_class.new("version", raw[:betweenStringMatcherData][:start], raw[:betweenStringMatcherData][:end], config.split_logger, config.split_validator)
     expect(matcher.attribute).to eq("version")
     semver_start = matcher.instance_variable_get(:@semver_start)
-    expect(semver_start.instance_variable_get(:@old_version)).to eq("2.1.8")
+    expect(semver_start.instance_variable_get(:@version)).to eq("2.1.8")
     semver_end = matcher.instance_variable_get(:@semver_end)
-    expect(semver_end.instance_variable_get(:@old_version)).to eq("2.1.11")
+    expect(semver_end.instance_variable_get(:@version)).to eq("2.1.11")
   end
 
   it 'matches' do

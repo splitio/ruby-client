@@ -23,7 +23,7 @@ module SplitIoClient
         @logger.log_if_debug('whitelistMatcherData is required for IN_LIST_SEMVER matcher type')
         return false
       end
-      matches = (@semver_list.map { |item| item.compare(value_to_match) }).any?(&:zero?)
+      matches = (@semver_list.map { |item| item.version == value_to_match.version }).any? { |item| item == true }
       @logger.log_if_debug("[InListSemverMatcher] #{value_to_match} matches -> #{matches}")
       matches
     end

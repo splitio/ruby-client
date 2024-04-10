@@ -14,7 +14,7 @@ describe SplitIoClient::LessThanOrEqualToSemverMatcher do
     matcher = described_class.new("version", raw[:stringMatcherData], config.split_logger, config.split_validator)
     expect(matcher.attribute).to eq("version")
     semver = matcher.instance_variable_get(:@semver)
-    expect(semver.instance_variable_get(:@old_version)).to eq("2.1.8")
+    expect(semver.instance_variable_get(:@version)).to eq("2.1.8")
   end
 
   it 'matches' do

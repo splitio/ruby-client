@@ -14,17 +14,17 @@ describe SplitIoClient::EqualToSemverMatcher do
     matcher = described_class.new("version", raw[:stringMatcherData], config.split_logger, config.split_validator)
     expect(matcher.attribute).to eq("version")
     semver = matcher.instance_variable_get(:@semver)
-    expect(semver.instance_variable_get(:@old_version)).to eq("2.1.8")
+    expect(semver.instance_variable_get(:@version)).to eq("2.1.8")
   end
 
   it 'matches' do
     matcher = described_class.new("version", raw[:stringMatcherData], config.split_logger, config.split_validator)
-    expect(matcher.match?(:attributes=>{"version": "2.1.8+rc"})).to eq(true)
     expect(matcher.match?(:attributes=>{"version": "2.1.8"})).to eq(true)
   end
 
   it 'does not match' do
     matcher = described_class.new("version", raw[:stringMatcherData], config.split_logger, config.split_validator)
+    expect(matcher.match?(:attributes=>{"version": "2.1.8+rc"})).to eq(false)
     expect(matcher.match?(:attributes=>{"version": "2.1.5"})).to eq(false)
     expect(matcher.match?(:attributes=>{"version": "2.1.5-rc1"})).to eq(false)
   end
