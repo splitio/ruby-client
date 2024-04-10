@@ -6,7 +6,7 @@ module SplitIoClient
     PRE_RELEASE_DELIMITER = '-'
     VALUE_DELIMITER = '.'
 
-    attr_reader :major, :minor, :patch, :pre_release, :is_stable, :old_version
+    attr_reader :major, :minor, :patch, :pre_release, :is_stable, :old_version, :version
 
     def initialize(version)
       @major = 0
@@ -15,6 +15,8 @@ module SplitIoClient
       @pre_release = []
       @is_stable = false
       @old_version = version
+      @version = ""
+      @metadata = ""
       parse
     end
 
@@ -39,7 +41,7 @@ module SplitIoClient
     def remove_metadata_if_exists
       index = @old_version.index(METADATA_DELIMITER)
       return @old_version if index.nil?
-
+      @metadata = @old_version[index+1,@old_version.length]
       @old_version[0, index]
     end
 
@@ -52,7 +54,7 @@ module SplitIoClient
     #
     # @returns [Integer] based on comparison
     def compare(to_compare)
-      return 0 if @old_version == to_compare.old_version
+      return 0 if @version == to_compare.version
 
       # Compare major, minor, and patch versions numerically
       return compare_attributes(to_compare) if compare_attributes(to_compare) != 0
@@ -100,6 +102,9 @@ module SplitIoClient
       @major = parts[0].to_i
       @minor = parts[1].to_i
       @patch = parts[2].to_i
+      @version = "#{@major}#{VALUE_DELIMITER}#{@minor}#{VALUE_DELIMITER}#{@patch}"
+      @version += "#{PRE_RELEASE_DELIMITER}#{@pre_release.join('.')}" if !@pre_release.empty?
+      @version += "#{METADATA_DELIMITER}#{@metadata}" if !@metadata.empty?
     end
 
     #
