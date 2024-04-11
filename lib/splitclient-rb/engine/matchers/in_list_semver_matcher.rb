@@ -15,16 +15,16 @@ module SplitIoClient
     end
 
     def match?(args)
-      @logger.log_if_debug('[InListSemverMatcher] evaluating value and attributes.')
+      @logger.debug('[InListSemverMatcher] evaluating value and attributes.')
       return false unless @validator.valid_matcher_arguments(args) && args[:attributes][@attribute.to_sym].is_a?(String)
 
       value_to_match = SplitIoClient::Semver.build(args[:attributes][@attribute.to_sym], @logger)
       unless !value_to_match.nil? && @semver_list.all? { |n| !n.nil? }
-        @logger.log_if_debug('whitelistMatcherData is required for IN_LIST_SEMVER matcher type')
+        @logger.error('whitelistMatcherData is required for IN_LIST_SEMVER matcher type')
         return false
       end
       matches = (@semver_list.map { |item| item.version == value_to_match.version }).any? { |item| item == true }
-      @logger.log_if_debug("[InListSemverMatcher] #{value_to_match} matches -> #{matches}")
+      @logger.debug("[InListSemverMatcher] #{value_to_match} matches -> #{matches}")
       matches
     end
   end
