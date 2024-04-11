@@ -126,7 +126,7 @@ describe SplitIoClient::Cache::Repositories::SplitsRepository do
             }
         }]
       }
-      repository.update([split], [], -1)
+      repository.update([split.dup], [], -1)
       expect(repository.get_split('corge')[:conditions]).to eq [SplitIoClient::Cache::Repositories::SplitsRepository::DEFAULT_CONDITIONS_TEMPLATE]
 
       # test with multiple conditions

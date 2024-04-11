@@ -10,21 +10,21 @@ module SplitIoClient
       super(logger)
       @validator = validator
       @attribute = attribute
-      @semver_list = list_value.map { |item| SplitIoClient::Semver.new(item) }
+      @semver_list = list_value.map { |item| SplitIoClient::Semver.build(item, logger) }
       @logger = logger
     end
 
     def match?(args)
-      @logger.log_if_debug('[InListSemverMatcher] evaluating value and attributes.')
-      return false unless @validator.valid_matcher_arguments(args)
+      @logger.debug('[InListSemverMatcher] evaluating value and attributes.')
+      return false unless @validator.valid_matcher_arguments(args) && args[:attributes][@attribute.to_sym].is_a?(String)
 
-      value_to_match = args[:attributes][@attribute.to_sym]
-      unless value_to_match.is_a?(String)
-        @logger.log_if_debug('whitelistMatcherData is required for IN_LIST_SEMVER matcher type')
+      value_to_match = SplitIoClient::Semver.build(args[:attributes][@attribute.to_sym], @logger)
+      unless !value_to_match.nil? && @semver_list.all? { |n| !n.nil? }
+        @logger.error('whitelistMatcherData is required for IN_LIST_SEMVER matcher type')
         return false
       end
-      matches = (@semver_list.map { |item| item.compare(SplitIoClient::Semver.new(value_to_match)) }).any?(&:zero?)
-      @logger.log_if_debug("[InListSemverMatcher] #{value_to_match} matches -> #{matches}")
+      matches = (@semver_list.map { |item| item.version == value_to_match.version }).any? { |item| item == true }
+      @logger.debug("[InListSemverMatcher] #{value_to_match} matches -> #{matches}")
       matches
     end
   end

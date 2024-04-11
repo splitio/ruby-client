@@ -6,7 +6,7 @@ module SplitIoClient
     PRE_RELEASE_DELIMITER = '-'
     VALUE_DELIMITER = '.'
 
-    attr_reader :major, :minor, :patch, :pre_release, :is_stable, :old_version
+    attr_reader :major, :minor, :patch, :pre_release, :is_stable, :version
 
     def initialize(version)
       @major = 0
@@ -14,8 +14,9 @@ module SplitIoClient
       @patch = 0
       @pre_release = []
       @is_stable = false
-      @old_version = version
-      parse
+      @version = ''
+      @metadata = ''
+      parse(version)
     end
 
     #
@@ -26,21 +27,25 @@ module SplitIoClient
     # @return [type] Semver instance
     def self.build(version, logger)
       new(version)
-    rescue RuntimeError => e
-      logger.warn("Failed to parse Semver data:  #{e}")
+    rescue NoMethodError => e
+      logger.error("Failed to parse Semver data, incorrect data type:  #{e}")
+      nil
+    rescue StandardError => e
+      logger.error("Failed to parse Semver data:  #{e}")
       nil
     end
 
     #
-    # Check if there is any metadata characters in self._old_version.
+    # Check if there is any metadata characters in version.
     #
     # @return [type] String semver without the metadata
     #
-    def remove_metadata_if_exists
-      index = @old_version.index(METADATA_DELIMITER)
-      return @old_version if index.nil?
+    def remove_metadata_if_exists(old_version)
+      index = old_version.index(METADATA_DELIMITER)
+      return old_version if index.nil?
 
-      @old_version[0, index]
+      @metadata = old_version[index + 1, old_version.length]
+      old_version[0, index]
     end
 
     # Compare the current Semver object to a given Semver object, return:
@@ -52,7 +57,7 @@ module SplitIoClient
     #
     # @returns [Integer] based on comparison
     def compare(to_compare)
-      return 0 if @old_version == to_compare.old_version
+      return 0 if @version == to_compare.version
 
       # Compare major, minor, and patch versions numerically
       return compare_attributes(to_compare) if compare_attributes(to_compare) != 0
@@ -68,10 +73,10 @@ module SplitIoClient
     end
 
     #
-    # Parse the string in self._old_version to update the other internal variables
+    # Parse the string in version to update the other internal variables
     #
-    def parse
-      without_metadata = remove_metadata_if_exists
+    def parse(old_version)
+      without_metadata = remove_metadata_if_exists(old_version)
 
       index = without_metadata.index(PRE_RELEASE_DELIMITER)
       if index.nil?
@@ -100,6 +105,9 @@ module SplitIoClient
       @major = parts[0].to_i
       @minor = parts[1].to_i
       @patch = parts[2].to_i
+      @version = "#{@major}#{VALUE_DELIMITER}#{@minor}#{VALUE_DELIMITER}#{@patch}"
+      @version += "#{PRE_RELEASE_DELIMITER}#{@pre_release.join('.')}" unless @pre_release.empty?
+      @version += "#{METADATA_DELIMITER}#{@metadata}" unless @metadata.empty?
     end
 
     #
