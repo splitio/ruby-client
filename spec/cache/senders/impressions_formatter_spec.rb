@@ -5,6 +5,7 @@ require 'spec_helper'
 describe SplitIoClient::Cache::Senders::ImpressionsFormatter do
   RSpec.shared_examples 'Impressions Formatter' do |cache_adapter|
     let(:config) { SplitIoClient::SplitConfig.new(impressions_queue_size: 5, cache_adapter: cache_adapter) }
+    let(:request_decorator) { SplitIoClient::Api::RequestDecorator.new(nil) }
     let(:repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
     let(:formatter) { described_class.new(repository) }
     let(:formatted_impressions) { formatter.send(:call, true) }
@@ -19,8 +20,8 @@ describe SplitIoClient::Cache::Senders::ImpressionsFormatter do
       bf = SplitIoClient::Cache::Filter::BloomFilter.new(1_000)
       filter_adapter = SplitIoClient::Cache::Filter::FilterAdapter.new(config, bf)
       api_key = 'ImpressionsFormatter-key'
-      telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, api_key, runtime_producer)
-      impressions_api = SplitIoClient::Api::Impressions.new(api_key, config, runtime_producer)
+      telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, api_key, runtime_producer, request_decorator)
+      impressions_api = SplitIoClient::Api::Impressions.new(api_key, config, runtime_producer, request_decorator)
       sender_adapter = SplitIoClient::Cache::Senders::ImpressionsSenderAdapter.new(config, telemetry_api, impressions_api)
 
       SplitIoClient::Engine::Impressions::UniqueKeysTracker.new(config,

@@ -18,6 +18,7 @@ describe SplitIoClient::Cache::Fetchers::SegmentFetcher do
       { name: 'employees', added: [], removed: [], since: 1_473_863_075_059, till: 1_473_863_075_059 }
     ]
   end
+  let(:request_decorator) { SplitIoClient::Api::RequestDecorator.new(nil) }
 
   before do
     stub_request(:get, 'https://sdk.split.io/api/segmentChanges/employees?since=-1')
@@ -37,9 +38,9 @@ describe SplitIoClient::Cache::Fetchers::SegmentFetcher do
     let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([]) }
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
     let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
-    let(:segment_fetcher) { described_class.new(segments_repository, '', config, telemetry_runtime_producer, SplitIoClient::Api::RequestDecorator.new(nil)) }
+    let(:segment_fetcher) { described_class.new(segments_repository, '', config, telemetry_runtime_producer, request_decorator) }
     let(:split_fetcher) do
-      SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, '', config, telemetry_runtime_producer, SplitIoClient::Api::RequestDecorator.new(nil))
+      SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, '', config, telemetry_runtime_producer, request_decorator)
     end
 
     it 'fetch segments' do
@@ -73,9 +74,9 @@ describe SplitIoClient::Cache::Fetchers::SegmentFetcher do
     let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([]) }
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
     let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
-    let(:segment_fetcher) { described_class.new(segments_repository, '', config, telemetry_runtime_producer, SplitIoClient::Api::RequestDecorator.new(nil)) }
+    let(:segment_fetcher) { described_class.new(segments_repository, '', config, telemetry_runtime_producer, request_decorator) }
     let(:split_fetcher) do
-      SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, '', config, telemetry_runtime_producer, SplitIoClient::Api::RequestDecorator.new(nil))
+      SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, '', config, telemetry_runtime_producer, request_decorator)
     end
 
     it 'fetch segments' do

@@ -10,9 +10,10 @@ describe SplitIoClient::Api::Events do
       transport_debug_enabled: true
     )
   end
+  let(:request_decorator) { SplitIoClient::Api::RequestDecorator.new(nil) }
   let(:log) { StringIO.new }
   let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
-  let(:events_api) { described_class.new('', config, telemetry_runtime_producer) }
+  let(:events_api) { described_class.new('', config, telemetry_runtime_producer, request_decorator) }
   let(:events) do
     [{
       e: {
@@ -84,7 +85,7 @@ describe SplitIoClient::Api::Events do
         ip_addresses_enabled: false
       )
 
-      api = described_class.new('', custom_config, telemetry_runtime_producer)
+      api = described_class.new('', custom_config, telemetry_runtime_producer, request_decorator)
 
       stub_request(:post, 'https://events.split.io/api/events/bulk')
         .with(headers: {

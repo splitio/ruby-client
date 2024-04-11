@@ -180,5 +180,19 @@ describe SplitIoClient do
       configs = SplitIoClient::SplitConfig.new(flag_sets_filter: ['1set', 12])
       expect(configs.flag_sets_filter).to eq ['1set']
     end
+
+    it "test header_override_callback validation" do
+      configs = SplitIoClient::SplitConfig.new(header_override_callback: "something")
+      expect(configs.header_override_callback).to be_nil
+
+      class MyCustomDecorator
+        def get_header_overrides(request_context)
+            ["value"]
+        end
+      end
+      custom_decorator = MyCustomDecorator.new
+      configs = SplitIoClient::SplitConfig.new(header_override_callback: custom_decorator)
+      expect(configs.header_override_callback).to be(custom_decorator)
+    end
   end
 end

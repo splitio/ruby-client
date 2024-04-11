@@ -27,16 +27,16 @@ module SplitIoClient
 
       def post_api(url, api_key, data, headers = {}, params = {})
         api_client.post(url) do |req|
-          req.headers = common_headers(api_key)
+          headers = common_headers(api_key)
                         .merge('Content-Type' => 'application/json')
                         .merge(headers)
 
           machine_ip = @config.machine_ip
           machine_name = @config.machine_name
 
-          req.headers = req.headers.merge('SplitSDKMachineIP' => machine_ip) unless machine_ip.empty? || machine_ip == 'unknown'
-          req.headers = req.headers.merge('SplitSDKMachineName' => machine_name) unless machine_name.empty? || machine_name == 'unknown'
-          req.headers = @request_decorator.decorate_headers(req.headers)
+          headers = headers.merge('SplitSDKMachineIP' => machine_ip) unless machine_ip.empty? || machine_ip == 'unknown'
+          headers = headers.merge('SplitSDKMachineName' => machine_name) unless machine_name.empty? || machine_name == 'unknown'
+          req.headers = @request_decorator.decorate_headers(headers)
 
           req.body = data.to_json
 
@@ -48,6 +48,7 @@ module SplitIoClient
         end
       rescue StandardError => e
         @config.logger.warn("#{e}\nURL:#{url}\ndata:#{data}\nparams:#{params}")
+        puts e
         raise e, 'Split SDK failed to connect to backend to post information', e.backtrace
       end
 

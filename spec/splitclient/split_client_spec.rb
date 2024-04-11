@@ -4,13 +4,14 @@ require 'spec_helper'
 
 describe SplitIoClient::SplitClient do
   let(:config) { SplitIoClient::SplitConfig.new(cache_adapter: :memory, impressions_mode: :debug) }
+  let(:request_decorator) { SplitIoClient::Api::RequestDecorator.new(nil) }
   let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
   let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new([]) }
   let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([]) }
   let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
   let(:impressions_repository) {SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
   let(:runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
-  let(:events_repository) { SplitIoClient::Cache::Repositories::EventsRepository.new(config, 'sdk_key', runtime_producer) }
+  let(:events_repository) { SplitIoClient::Cache::Repositories::EventsRepository.new(config, 'sdk_key', runtime_producer, request_decorator) }
   let(:impression_manager) { SplitIoClient::Engine::Common::ImpressionManager.new(config, impressions_repository, SplitIoClient::Engine::Common::NoopImpressionCounter.new, runtime_producer, SplitIoClient::Observers::NoopImpressionObserver.new, SplitIoClient::Engine::Impressions::NoopUniqueKeysTracker.new) }
   let(:evaluation_producer) { SplitIoClient::Telemetry::EvaluationProducer.new(config) }
   let(:evaluator) { SplitIoClient::Engine::Parser::Evaluator.new(segments_repository, splits_repository, config) }

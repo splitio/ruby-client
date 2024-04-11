@@ -123,6 +123,9 @@ module SplitIoClient
       @on_demand_fetch_max_retries = SplitConfig.default_on_demand_fetch_max_retries
 
       @flag_sets_filter = SplitConfig.sanitize_flag_set_filter(opts[:flag_sets_filter], @split_validator, opts[:cache_adapter], @logger)
+
+      @header_override_callback = SplitConfig.header_override_callback(opts[:header_override_callback])
+
       startup_log
     end
 
@@ -302,6 +305,17 @@ module SplitIoClient
     #
     # @return [Array]
     attr_accessor :flag_sets_filter
+
+    #
+    # Custom Headers override
+    #
+    # @return SplitIoClient::Api::CustomHeaderDecorator
+    attr_accessor :header_override_callback
+
+    def self.header_override_callback(header_override_callback)
+      return header_override_callback if header_override_callback.class.method_defined? :get_header_overrides
+      nil
+    end
 
     def self.default_counter_refresh_rate(adapter)
       return 300 if adapter == :redis # Send bulk impressions count - Refresh rate: 5 min.

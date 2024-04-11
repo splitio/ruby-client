@@ -8,6 +8,7 @@ describe SplitIoClient::Engine::SyncManager do
 
   let(:event_control) { "d4\r\nid: 123\nevent: message\ndata: {\"id\":\"1\",\"clientId\":\"emptyClientId\",\"timestamp\": 1582056812285,\"encoding\": \"json\",\"channel\": \"control_pri\",\"data\":\"{\\\"type\\\" : \\\"CONTROL\\\",\\\"controlType\\\":\\\"STREAMING_DISABLED\\\"}\"}\n\n\r\n" }
 
+  let(:request_decorator) { SplitIoClient::Api::RequestDecorator.new(nil) }
   let(:splits) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/splits.json')) }
   let(:segment1) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/segment1.json')) }
   let(:segment2) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/segment2.json')) }
@@ -22,7 +23,7 @@ describe SplitIoClient::Engine::SyncManager do
   let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
   let(:impressions_repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
   let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
-  let(:events_repository) { SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key, telemetry_runtime_producer) }
+  let(:events_repository) { SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key, telemetry_runtime_producer, request_decorator) }
   let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
   let(:repositories) do
     {
@@ -34,8 +35,8 @@ describe SplitIoClient::Engine::SyncManager do
   end
   let(:sync_params) do
     {
-      split_fetcher: SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, telemetry_runtime_producer),
-      segment_fetcher: SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, telemetry_runtime_producer),
+      split_fetcher: SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, telemetry_runtime_producer, request_decorator),
+      segment_fetcher: SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, telemetry_runtime_producer, request_decorator),
       imp_counter: impression_counter,
       telemetry_runtime_producer: telemetry_runtime_producer,
       unique_keys_tracker: SplitIoClient::Engine::Impressions::NoopUniqueKeysTracker.new
@@ -47,7 +48,7 @@ describe SplitIoClient::Engine::SyncManager do
   let(:runtime_consumer) { SplitIoClient::Telemetry::RuntimeConsumer.new(config) }
   let(:evaluation_consumer) { SplitIoClient::Telemetry::EvaluationConsumer.new(config) }
   let(:telemetry_consumers) { { init: init_consumer, runtime: runtime_consumer, evaluation: evaluation_consumer } }
-  let(:telemetry_api) { SplitIoClient::Api::TelemetryApi.new(config, api_key, telemetry_runtime_producer) }
+  let(:telemetry_api) { SplitIoClient::Api::TelemetryApi.new(config, api_key, telemetry_runtime_producer, request_decorator) }
   let(:telemetry_synchronizer) { SplitIoClient::Telemetry::Synchronizer.new(config, telemetry_consumers, init_producer, repositories, telemetry_api, 0, 0) }
   let(:status_manager) { SplitIoClient::Engine::StatusManager.new(config) }
   let(:splits_worker) { SplitIoClient::SSE::Workers::SplitsWorker.new(synchronizer, config, splits_repository, telemetry_runtime_producer, sync_params[:segment_fetcher]) }
@@ -56,9 +57,9 @@ describe SplitIoClient::Engine::SyncManager do
   let(:event_parser) { SplitIoClient::SSE::EventSource::EventParser.new(config) }
   let(:push_status_queue) { Queue.new }
   let(:notification_manager_keeper) { SplitIoClient::SSE::NotificationManagerKeeper.new(config, telemetry_runtime_producer, push_status_queue) }
-  let(:sse_client) { SplitIoClient::SSE::EventSource::Client.new(config, api_key, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor, push_status_queue) }
+  let(:sse_client) { SplitIoClient::SSE::EventSource::Client.new(config, api_key, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor, push_status_queue, request_decorator) }
   let(:sse_handler) { SplitIoClient::SSE::SSEHandler.new(config, splits_worker, segments_worker, sse_client) }
-  let(:push_manager) { SplitIoClient::Engine::PushManager.new(config, sse_handler, api_key, telemetry_runtime_producer) }
+  let(:push_manager) { SplitIoClient::Engine::PushManager.new(config, sse_handler, api_key, telemetry_runtime_producer, request_decorator) }
 
   before do
     mock_split_changes_with_since(splits, '-1')

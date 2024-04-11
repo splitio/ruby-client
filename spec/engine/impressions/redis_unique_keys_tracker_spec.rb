@@ -6,14 +6,15 @@ require 'filter_imp_test'
 describe SplitIoClient::Engine::Impressions::UniqueKeysTracker do
   subject { SplitIoClient::Engine::Impressions::UniqueKeysTracker }
 
+  let(:request_decorator) { SplitIoClient::Api::RequestDecorator.new(nil) }
   let(:config) do
     SplitIoClient::SplitConfig.new(logger: Logger.new(StringIO.new), cache_adapter: :redis, redis_namespace: 'tracker-prefix')
   end
   let(:sender_adapter) do
     api_key = 'UniqueKeysTracker-key'
     runtime_producer = SplitIoClient::Telemetry::RuntimeProducer.new(config)
-    telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, api_key, runtime_producer)
-    impressions_api = SplitIoClient::Api::Impressions.new(api_key, config, runtime_producer)
+    telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, api_key, runtime_producer, request_decorator)
+    impressions_api = SplitIoClient::Api::Impressions.new(api_key, config, runtime_producer, request_decorator)
 
     SplitIoClient::Cache::Senders::ImpressionsSenderAdapter.new(config, telemetry_api, impressions_api)
   end

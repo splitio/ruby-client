@@ -5,11 +5,12 @@ require 'spec_helper'
 describe SplitIoClient::Cache::Senders::LocalhostRepoCleaner do
   context '#clear_repositories' do
     let(:config) { SplitIoClient::SplitConfig.new }
+    let(:request_decorator) { SplitIoClient::Api::RequestDecorator.new(nil) }
 
     let(:impressions_repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
     let(:runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
     let(:events_repository) do
-      SplitIoClient::Cache::Repositories::EventsRepository.new(config, 'localhost', runtime_producer)
+      SplitIoClient::Cache::Repositories::EventsRepository.new(config, 'localhost', runtime_producer, request_decorator)
     end
     let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
     let(:impression_observer) { SplitIoClient::Observers::ImpressionObserver.new }
@@ -17,8 +18,8 @@ describe SplitIoClient::Cache::Senders::LocalhostRepoCleaner do
       bf = SplitIoClient::Cache::Filter::BloomFilter.new(1_000)
       filter_adapter = SplitIoClient::Cache::Filter::FilterAdapter.new(config, bf)
       api_key = 'LocalhostRepoCleaner-key'
-      telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, api_key, runtime_producer)
-      impressions_api = SplitIoClient::Api::Impressions.new(api_key, config, runtime_producer)
+      telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, api_key, runtime_producer, request_decorator)
+      impressions_api = SplitIoClient::Api::Impressions.new(api_key, config, runtime_producer, request_decorator)
       sender_adapter = SplitIoClient::Cache::Senders::ImpressionsSenderAdapter.new(config, telemetry_api, impressions_api)
 
       SplitIoClient::Engine::Impressions::UniqueKeysTracker.new(config,

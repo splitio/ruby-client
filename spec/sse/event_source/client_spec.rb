@@ -30,7 +30,7 @@ describe SplitIoClient::SSE::EventSource::Client do
       splits: SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter),
       segments: SplitIoClient::Cache::Repositories::SegmentsRepository.new(config),
       impressions: SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config),
-      events: SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key, telemetry_runtime_producer)
+      events: SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key, telemetry_runtime_producer, request_decorator)
     }
   end
   let(:parameters) do

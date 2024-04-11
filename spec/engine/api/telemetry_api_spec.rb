@@ -3,10 +3,11 @@
 require 'spec_helper'
 
 describe SplitIoClient::Api::TelemetryApi do
+  let(:request_decorator) { SplitIoClient::Api::RequestDecorator.new(nil) }
   let(:log) { StringIO.new }
   let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log), debug_enabled: true, transport_debug_enabled: true) }
   let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
-  let(:telemetry_api) { described_class.new(config, 'api-key-test', telemetry_runtime_producer) }
+  let(:telemetry_api) { described_class.new(config, 'api-key-test', telemetry_runtime_producer, request_decorator) }
 
   before do
     stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/usage')

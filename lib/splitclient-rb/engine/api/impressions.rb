@@ -3,8 +3,8 @@
 module SplitIoClient
   module Api
     class Impressions < Client
-      def initialize(api_key, config, telemetry_runtime_producer)
-        super(config)
+      def initialize(api_key, config, telemetry_runtime_producer, request_decorator)
+        super(config, request_decorator)
         @api_key = api_key
         @telemetry_runtime_producer = telemetry_runtime_producer
       end
@@ -21,7 +21,7 @@ module SplitIoClient
 
         if response.success?
           @config.split_logger.log_if_debug("Impressions reported: #{total_impressions(impressions)}")
-          
+
           bucket = BinarySearchLatencyTracker.get_bucket((Time.now - start) * 1000.0)
           @telemetry_runtime_producer.record_sync_latency(Telemetry::Domain::Constants::IMPRESSIONS_SYNC, bucket)
           @telemetry_runtime_producer.record_successful_sync(Telemetry::Domain::Constants::IMPRESSIONS_SYNC, (Time.now.to_f * 1000.0).to_i)

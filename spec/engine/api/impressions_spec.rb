@@ -10,9 +10,10 @@ describe SplitIoClient::Api::Impressions do
       transport_debug_enabled: true
     )
   end
+  let(:request_decorator) { SplitIoClient::Api::RequestDecorator.new(nil) }
   let(:log) { StringIO.new }
   let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
-  let(:impressions_api) { described_class.new('', config, telemetry_runtime_producer) }
+  let(:impressions_api) { described_class.new('', config, telemetry_runtime_producer, request_decorator) }
   let(:impressions) do
     [
       {
@@ -41,7 +42,7 @@ describe SplitIoClient::Api::Impressions do
 
     it 'post impressions with impressions_mode in debug' do
       custom_config = SplitIoClient::SplitConfig.new(logger: Logger.new(log), impressions_mode: :debug)
-      custom_api = described_class.new('', custom_config, telemetry_runtime_producer)
+      custom_api = described_class.new('', custom_config, telemetry_runtime_producer, request_decorator)
 
       stub_request(:post, 'https://events.split.io/api/testImpressions/bulk')
         .with(headers: {
@@ -94,7 +95,7 @@ describe SplitIoClient::Api::Impressions do
         ip_addresses_enabled: false
       )
 
-      api = described_class.new('', custom_config, telemetry_runtime_producer)
+      api = described_class.new('', custom_config, telemetry_runtime_producer, request_decorator)
 
       stub_request(:post, 'https://events.split.io/api/testImpressions/bulk')
         .with(headers: {
