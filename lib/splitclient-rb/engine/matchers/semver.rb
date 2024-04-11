@@ -27,7 +27,10 @@ module SplitIoClient
     # @return [type] Semver instance
     def self.build(version, logger)
       new(version)
-    rescue StandardError, NoMethodError => e
+    rescue NoMethodError => e
+      logger.error("Failed to parse Semver data, incorrect data type:  #{e}")
+      nil
+    rescue StandardError => e
       logger.error("Failed to parse Semver data:  #{e}")
       nil
     end

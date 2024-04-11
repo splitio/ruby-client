@@ -19,7 +19,7 @@ module SplitIoClient
       @logger.debug('[BetweenSemverMatcher] evaluating value and attributes.')
       return false unless @validator.valid_matcher_arguments(args)
 
-      value_to_match = SplitIoClient::Semver.build(args[:attributes][@attribute.to_sym],  @logger)
+      value_to_match = SplitIoClient::Semver.build(args[:attributes][@attribute.to_sym], @logger)
       unless !value_to_match.nil? && !@semver_start.nil? && !@semver_end.nil?
         @logger.error('betweenStringMatcherData is required for BETWEEN_SEMVER matcher type')
         return false

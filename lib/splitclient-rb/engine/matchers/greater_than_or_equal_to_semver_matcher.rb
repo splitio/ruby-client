@@ -18,7 +18,7 @@ module SplitIoClient
       @logger.debug('[GreaterThanOrEqualsToSemverMatcher] evaluating value and attributes.')
       return false unless @validator.valid_matcher_arguments(args)
 
-      value_to_match = SplitIoClient::Semver.build(args[:attributes][@attribute.to_sym],  @logger)
+      value_to_match = SplitIoClient::Semver.build(args[:attributes][@attribute.to_sym], @logger)
       unless !value_to_match.nil? && !@semver.nil?
         @logger.error('stringMatcherData is required for GREATER_THAN_OR_EQUAL_TO_SEMVER matcher type')
         return false
