@@ -23,7 +23,7 @@ module SplitIoClient
         @logger.error('stringMatcherData is required for LESS_THAN_OR_EQUAL_TO_SEMVER matcher type')
         return false
       end
-      matches = [0, -1].include?(@semver.compare(value_to_match))
+      matches = [0, -1].include?(value_to_match.compare(@semver))
       @logger.debug("[LessThanOrEqualsToSemverMatcher] #{value_to_match} matches -> #{matches}")
       matches
     end

@@ -27,8 +27,8 @@ describe SplitIoClient::LessThanOrEqualToSemverMatcher do
 
   it 'does not match' do
     matcher = described_class.new("version", raw[:stringMatcherData], config.logger, config.split_validator)
-    expect(matcher.match?(:attributes=>{"version": "2.1.5"})).to eq(false)
-    expect(matcher.match?(:attributes=>{"version": "2.1.5-rc1"})).to eq(false)
+    expect(matcher.match?(:attributes=>{"version": "2.1.10"})).to eq(false)
+    expect(matcher.match?(:attributes=>{"version": "2.2.0-rc1"})).to eq(false)
   end
 
   it 'invalid attribute' do
