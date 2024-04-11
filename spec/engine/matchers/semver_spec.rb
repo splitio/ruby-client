@@ -45,7 +45,6 @@ describe SplitIoClient::Semver do
           expect(described_class.build(valid_versions[i][0], logger).compare(described_class.build(valid_versions[i][1], logger))).not_to eq(0)
         end
       end
-
     end
   end
 end
