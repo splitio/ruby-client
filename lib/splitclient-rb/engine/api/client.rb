@@ -48,7 +48,6 @@ module SplitIoClient
         end
       rescue StandardError => e
         @config.logger.warn("#{e}\nURL:#{url}\ndata:#{data}\nparams:#{params}")
-        puts e
         raise e, 'Split SDK failed to connect to backend to post information', e.backtrace
       end
 
