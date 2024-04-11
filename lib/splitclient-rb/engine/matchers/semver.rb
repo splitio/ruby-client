@@ -63,7 +63,10 @@ module SplitIoClient
       return compare_attributes(to_compare) if compare_attributes(to_compare) != 0
 
       # Compare pre-release versions lexically
-      compare_pre_release(to_compare)
+      return compare_pre_release(to_compare) if compare_pre_release(to_compare) != 0
+
+      # compare length of version
+      compare_vars(@version.length, to_compare.version.length)
     end
 
     private
