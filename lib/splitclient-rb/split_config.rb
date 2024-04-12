@@ -124,7 +124,7 @@ module SplitIoClient
 
       @flag_sets_filter = SplitConfig.sanitize_flag_set_filter(opts[:flag_sets_filter], @split_validator, opts[:cache_adapter], @logger)
 
-      @header_override_callback = SplitConfig.header_override_callback(opts[:header_override_callback])
+      @header_override_callback = SplitConfig.header_override_callback(opts[:header_override_callback], @logger)
 
       startup_log
     end
@@ -312,9 +312,12 @@ module SplitIoClient
     # @return SplitIoClient::Api::CustomHeaderDecorator
     attr_accessor :header_override_callback
 
-    def self.header_override_callback(header_override_callback)
-      return header_override_callback if header_override_callback.class.method_defined? :get_header_overrides
-      nil
+    def self.header_override_callback(header_override_callback, logger)
+      if !header_override_callback.class.method_defined? :get_header_overrides
+        logger.error("Custom Header Override instance does not have required `get_header_overrides` method. Instance is ignored.")
+        return nil
+      end
+      header_override_callback
     end
 
     def self.default_counter_refresh_rate(adapter)
