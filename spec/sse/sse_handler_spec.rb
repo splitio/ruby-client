@@ -6,6 +6,7 @@ require 'http_server_mock'
 describe SplitIoClient::SSE::SSEHandler do
   subject { SplitIoClient::SSE::SSEHandler }
 
+  let(:request_decorator) { SplitIoClient::Api::RequestDecorator.new(nil) }
   let(:api_key) { 'SSEHandler-key' }
   let(:log) { StringIO.new }
   let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log)) }
@@ -21,13 +22,13 @@ describe SplitIoClient::SSE::SSEHandler do
       splits: splits_repository,
       segments: segments_repository,
       impressions: SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config),
-      events: SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key, telemetry_runtime_producer)
+      events: SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key, telemetry_runtime_producer, request_decorator)
     }
   end
   let(:parameters) do
     {
-      split_fetcher: SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, telemetry_runtime_producer),
-      segment_fetcher: SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, telemetry_runtime_producer),
+      split_fetcher: SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, telemetry_runtime_producer, request_decorator),
+      segment_fetcher: SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, telemetry_runtime_producer, request_decorator),
       imp_counter: SplitIoClient::Engine::Common::ImpressionCounter.new,
       telemetry_runtime_producer: telemetry_runtime_producer
     }
@@ -37,7 +38,7 @@ describe SplitIoClient::SSE::SSEHandler do
   let(:segments_worker) { SplitIoClient::SSE::Workers::SegmentsWorker.new(synchronizer, config, segments_repository) }
   let(:notification_processor) { SplitIoClient::SSE::NotificationProcessor.new(config, splits_worker, segments_worker) }
   let(:event_parser) { SplitIoClient::SSE::EventSource::EventParser.new(config) }
-  let(:sse_client) { SplitIoClient::SSE::EventSource::Client.new(config, api_key, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor, push_status_queue) }
+  let(:sse_client) { SplitIoClient::SSE::EventSource::Client.new(config, api_key, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor, push_status_queue, request_decorator) }
 
   it 'start - should connect' do
     mock_server do |server|

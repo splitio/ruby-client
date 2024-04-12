@@ -4,6 +4,7 @@ require 'spec_helper'
 
 describe SplitIoClient::Cache::Senders::ImpressionsCountSender do
   subject { SplitIoClient::Cache::Senders::ImpressionsCountSender }
+  let(:request_decorator) { SplitIoClient::Api::RequestDecorator.new(nil) }
 
   before :each do
     impression_counter.inc('feature1', make_timestamp('2020-09-02 09:15:11'))
@@ -48,8 +49,8 @@ describe SplitIoClient::Cache::Senders::ImpressionsCountSender do
     let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
     let(:impressions_sender_adapter) do
       telemetry_runtime_producer = SplitIoClient::Telemetry::RuntimeProducer.new(config)
-      impressions_api = SplitIoClient::Api::Impressions.new('key-test', config, telemetry_runtime_producer)
-      telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, 'key-test', telemetry_runtime_producer)
+      impressions_api = SplitIoClient::Api::Impressions.new('key-test', config, telemetry_runtime_producer, request_decorator)
+      telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, 'key-test', telemetry_runtime_producer, request_decorator)
 
       SplitIoClient::Cache::Senders::ImpressionsSenderAdapter.new(config, telemetry_api, impressions_api)
     end

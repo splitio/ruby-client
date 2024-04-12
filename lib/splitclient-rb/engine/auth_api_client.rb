@@ -6,9 +6,9 @@ require 'cgi'
 module SplitIoClient
   module Engine
     class AuthApiClient
-      def initialize(config, telemetry_runtime_producer)
+      def initialize(config, telemetry_runtime_producer, request_decorator)
         @config = config
-        @api_client = SplitIoClient::Api::Client.new(@config)
+        @api_client = SplitIoClient::Api::Client.new(@config, request_decorator)
         @telemetry_runtime_producer = telemetry_runtime_producer
       end
 

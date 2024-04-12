@@ -5,6 +5,7 @@ require 'spec_helper'
 describe SplitIoClient::SplitClient do
   let(:config) { SplitIoClient::SplitConfig.new(impressions_queue_size: 10) }
 
+  let(:request_decorator) { SplitIoClient::Api::RequestDecorator.new(nil) }
   let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new([])}
   let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([])}
   let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
@@ -17,8 +18,8 @@ describe SplitIoClient::SplitClient do
   let(:filter_adapter) { SplitIoClient::Cache::Filter::FilterAdapter.new(config, bf) }
   let(:runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
   let(:api_key) { 'SplitClient-key' }
-  let(:telemetry_api) { SplitIoClient::Api::TelemetryApi.new(config, api_key, runtime_producer) }
-  let(:impressions_api) { SplitIoClient::Api::Impressions.new(api_key, config, runtime_producer) }
+  let(:telemetry_api) { SplitIoClient::Api::TelemetryApi.new(config, api_key, runtime_producer, request_decorator) }
+  let(:impressions_api) { SplitIoClient::Api::Impressions.new(api_key, config, runtime_producer, request_decorator) }
   let(:evaluator) { SplitIoClient::Engine::Parser::Evaluator.new(segments_repository, splits_repository, config) }
   let(:sender_adapter) do
     SplitIoClient::Cache::Senders::ImpressionsSenderAdapter.new(config,

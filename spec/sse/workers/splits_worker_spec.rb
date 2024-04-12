@@ -7,6 +7,7 @@ require 'byebug'
 describe SplitIoClient::SSE::Workers::SplitsWorker do
   subject { SplitIoClient::SSE::Workers::SplitsWorker }
 
+  let(:request_decorator) { SplitIoClient::Api::RequestDecorator.new(nil) }
   let(:splits) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/splits.json')) }
   let(:segment1) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/segment1.json')) }
   let(:segment2) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/segment2.json')) }
@@ -27,12 +28,12 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
     let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([])}
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
     let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
-    let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, telemetry_runtime_producer) }
-    let(:segment_fetcher) { SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, telemetry_runtime_producer) }
+    let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, telemetry_runtime_producer, request_decorator) }
+    let(:segment_fetcher) { SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, telemetry_runtime_producer, request_decorator) }
     let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
     let(:synchronizer) do
-      telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, api_key, telemetry_runtime_producer)
-      impressions_api = SplitIoClient::Api::Impressions.new(api_key, config, telemetry_runtime_producer)
+      telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, api_key, telemetry_runtime_producer, request_decorator)
+      impressions_api = SplitIoClient::Api::Impressions.new(api_key, config, telemetry_runtime_producer, request_decorator)
 
       repositories = {
         splits: splits_repository,
@@ -44,7 +45,7 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
         segment_fetcher: segment_fetcher,
         imp_counter: SplitIoClient::Engine::Common::ImpressionCounter.new,
         impressions_sender_adapter: SplitIoClient::Cache::Senders::ImpressionsSenderAdapter.new(config, telemetry_api, impressions_api),
-        impressions_api: SplitIoClient::Api::Impressions.new(api_key, config, telemetry_runtime_producer)
+        impressions_api: SplitIoClient::Api::Impressions.new(api_key, config, telemetry_runtime_producer, request_decorator)
       }
 
       SplitIoClient::Engine::Synchronizer.new(repositories, config, params)
@@ -102,12 +103,12 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
     let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([])}
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
     let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
-    let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, telemetry_runtime_producer) }
-    let(:segment_fetcher) { SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, telemetry_runtime_producer) }
+    let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, telemetry_runtime_producer, request_decorator) }
+    let(:segment_fetcher) { SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, telemetry_runtime_producer, request_decorator) }
     let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
     let(:synchronizer) do
-      telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, api_key, telemetry_runtime_producer)
-      impressions_api = SplitIoClient::Api::Impressions.new(api_key, config, telemetry_runtime_producer)
+      telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, api_key, telemetry_runtime_producer, request_decorator)
+      impressions_api = SplitIoClient::Api::Impressions.new(api_key, config, telemetry_runtime_producer, request_decorator)
 
       repositories = {
         splits: splits_repository,
@@ -119,7 +120,7 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
         segment_fetcher: segment_fetcher,
         imp_counter: SplitIoClient::Engine::Common::ImpressionCounter.new,
         impressions_sender_adapter: SplitIoClient::Cache::Senders::ImpressionsSenderAdapter.new(config, telemetry_api, impressions_api),
-        impressions_api: SplitIoClient::Api::Impressions.new(api_key, config, telemetry_runtime_producer)
+        impressions_api: SplitIoClient::Api::Impressions.new(api_key, config, telemetry_runtime_producer, request_decorator)
       }
 
       SplitIoClient::Engine::Synchronizer.new(repositories, config, params)
@@ -172,12 +173,12 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
     let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new(["set_1"])}
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
     let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
-    let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, telemetry_runtime_producer) }
-    let(:segment_fetcher) { SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, telemetry_runtime_producer) }
+    let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, telemetry_runtime_producer, request_decorator) }
+    let(:segment_fetcher) { SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, telemetry_runtime_producer, request_decorator) }
     let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
     let(:synchronizer) do
-      telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, api_key, telemetry_runtime_producer)
-      impressions_api = SplitIoClient::Api::Impressions.new(api_key, config, telemetry_runtime_producer)
+      telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, api_key, telemetry_runtime_producer, request_decorator)
+      impressions_api = SplitIoClient::Api::Impressions.new(api_key, config, telemetry_runtime_producer, request_decorator)
 
       repositories = {
         splits: splits_repository,
@@ -189,7 +190,7 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
         segment_fetcher: segment_fetcher,
         imp_counter: SplitIoClient::Engine::Common::ImpressionCounter.new,
         impressions_sender_adapter: SplitIoClient::Cache::Senders::ImpressionsSenderAdapter.new(config, telemetry_api, impressions_api),
-        impressions_api: SplitIoClient::Api::Impressions.new(api_key, config, telemetry_runtime_producer)
+        impressions_api: SplitIoClient::Api::Impressions.new(api_key, config, telemetry_runtime_producer, request_decorator)
       }
 
       SplitIoClient::Engine::Synchronizer.new(repositories, config, params)
@@ -224,12 +225,12 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
     let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([])}
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
     let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
-    let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, telemetry_runtime_producer) }
-    let(:segment_fetcher) { SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, telemetry_runtime_producer) }
+    let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, telemetry_runtime_producer, request_decorator) }
+    let(:segment_fetcher) { SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, telemetry_runtime_producer, request_decorator) }
     let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
     let(:synchronizer) do
-      telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, api_key, telemetry_runtime_producer)
-      impressions_api = SplitIoClient::Api::Impressions.new(api_key, config, telemetry_runtime_producer)
+      telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, api_key, telemetry_runtime_producer, request_decorator)
+      impressions_api = SplitIoClient::Api::Impressions.new(api_key, config, telemetry_runtime_producer, request_decorator)
 
       repositories = {
         splits: splits_repository,
@@ -241,7 +242,7 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
         segment_fetcher: segment_fetcher,
         imp_counter: SplitIoClient::Engine::Common::ImpressionCounter.new,
         impressions_sender_adapter: SplitIoClient::Cache::Senders::ImpressionsSenderAdapter.new(config, telemetry_api, impressions_api),
-        impressions_api: SplitIoClient::Api::Impressions.new(api_key, config, telemetry_runtime_producer)
+        impressions_api: SplitIoClient::Api::Impressions.new(api_key, config, telemetry_runtime_producer, request_decorator)
       }
 
       SplitIoClient::Engine::Synchronizer.new(repositories, config, params)

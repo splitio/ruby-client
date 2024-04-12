@@ -10,9 +10,10 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
         impressions_queue_size: 5
       )
     end
+    let(:request_decorator) { SplitIoClient::Api::RequestDecorator.new(nil) }
     let(:repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
     let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
-    let(:impression_api) { SplitIoClient::Api::Impressions.new(nil, config, telemetry_runtime_producer) }
+    let(:impression_api) { SplitIoClient::Api::Impressions.new(nil, config, telemetry_runtime_producer, request_decorator) }
     let(:sender) { described_class.new(repository, config, impression_api) }
     let(:formatted_impressions) { SplitIoClient::Cache::Senders::ImpressionsFormatter.new(repository).call(true) }
     let(:treatment1) { { treatment: 'on', label: 'custom_label1', change_number: 123_456 } }
@@ -23,7 +24,7 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
       bf = SplitIoClient::Cache::Filter::BloomFilter.new(1_000)
       filter_adapter = SplitIoClient::Cache::Filter::FilterAdapter.new(config, bf)
       api_key = 'ImpressionsSender-key'
-      telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, api_key, telemetry_runtime_producer)
+      telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, api_key, telemetry_runtime_producer, request_decorator)
       sender_adapter = SplitIoClient::Cache::Senders::ImpressionsSenderAdapter.new(config, telemetry_api, impression_api)
 
       SplitIoClient::Engine::Impressions::UniqueKeysTracker.new(config,

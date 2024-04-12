@@ -4,6 +4,8 @@ require 'spec_helper'
 require 'set'
 
 describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
+  let(:request_decorator) { SplitIoClient::Api::RequestDecorator.new(nil) }
+
   RSpec.shared_examples 'Impressions Repository' do
     let(:ip) { config.machine_ip }
     let(:machine_name) { config.machine_name }
@@ -111,8 +113,8 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
       bf = SplitIoClient::Cache::Filter::BloomFilter.new(1_000)
       filter_adapter = SplitIoClient::Cache::Filter::FilterAdapter.new(config, bf)
       api_key = 'ImpressionsRepository-memory-key'
-      telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, api_key, runtime_producer)
-      impressions_api = SplitIoClient::Api::Impressions.new(api_key, config, runtime_producer)
+      telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, api_key, runtime_producer, request_decorator)
+      impressions_api = SplitIoClient::Api::Impressions.new(api_key, config, runtime_producer, request_decorator)
       sender_adapter = SplitIoClient::Cache::Senders::ImpressionsSenderAdapter.new(config, telemetry_api, impressions_api)
 
       SplitIoClient::Engine::Impressions::UniqueKeysTracker.new(config,
@@ -168,8 +170,8 @@ describe SplitIoClient::Cache::Repositories::ImpressionsRepository do
       bf = SplitIoClient::Cache::Filter::BloomFilter.new(1_000)
       filter_adapter = SplitIoClient::Cache::Filter::FilterAdapter.new(config, bf)
       api_key = 'ImpressionsRepository-key'
-      telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, api_key, runtime_producer)
-      impressions_api = SplitIoClient::Api::Impressions.new(api_key, config, runtime_producer)
+      telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, api_key, runtime_producer, request_decorator)
+      impressions_api = SplitIoClient::Api::Impressions.new(api_key, config, runtime_producer, request_decorator)
       sender_adapter = SplitIoClient::Cache::Senders::ImpressionsSenderAdapter.new(config, telemetry_api, impressions_api)
 
       SplitIoClient::Engine::Impressions::UniqueKeysTracker.new(config,

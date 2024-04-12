@@ -5,6 +5,7 @@ require 'spec_helper'
 describe SplitIoClient::Engine::Synchronizer do
   subject { SplitIoClient::Engine::Synchronizer }
 
+  let(:request_decorator) { SplitIoClient::Api::RequestDecorator.new(nil) }
   let(:splits) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/splits.json')) }
   let(:segment1) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/segment1.json')) }
   let(:segment2) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/segment2.json')) }
@@ -23,12 +24,12 @@ describe SplitIoClient::Engine::Synchronizer do
       splits: splits_repository,
       segments: segments_repository,
       impressions: SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config),
-      events: SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key, runtime_producer)
+      events: SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key, runtime_producer, request_decorator)
     }
 
     parameters = {
-      split_fetcher: SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, runtime_producer),
-      segment_fetcher: SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, runtime_producer),
+      split_fetcher: SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, runtime_producer, request_decorator),
+      segment_fetcher: SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, runtime_producer, request_decorator),
       telemetry_runtime_producer: runtime_producer,
       unique_keys_tracker: SplitIoClient::Engine::Impressions::NoopUniqueKeysTracker.new
     }

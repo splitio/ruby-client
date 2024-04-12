@@ -6,6 +6,7 @@ require 'my_impression_listener'
 describe SplitIoClient::Engine::Common::ImpressionManager do
   subject { SplitIoClient::Engine::Common::ImpressionManager }
 
+  let(:request_decorator) { SplitIoClient::Api::RequestDecorator.new(nil) }
   let(:log) { StringIO.new }
   let(:impression_listener) { MyImpressionListener.new }
   let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
@@ -15,8 +16,8 @@ describe SplitIoClient::Engine::Common::ImpressionManager do
     bf = SplitIoClient::Cache::Filter::BloomFilter.new(1_000)
     filter_adapter = SplitIoClient::Cache::Filter::FilterAdapter.new(config, bf)
     api_key = 'ImpressionManager-key'
-    telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, api_key, telemetry_runtime_producer)
-    impressions_api = SplitIoClient::Api::Impressions.new(api_key, config, telemetry_runtime_producer)
+    telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, api_key, telemetry_runtime_producer, request_decorator)
+    impressions_api = SplitIoClient::Api::Impressions.new(api_key, config, telemetry_runtime_producer, request_decorator)
     sender_adapter = SplitIoClient::Cache::Senders::ImpressionsSenderAdapter.new(config, telemetry_api, impressions_api)
 
     SplitIoClient::Engine::Impressions::UniqueKeysTracker.new(config,

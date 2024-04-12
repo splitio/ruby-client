@@ -92,10 +92,11 @@ describe SplitIoClient::Cache::Senders::ImpressionsSenderAdapter do
 
   context 'memory' do
     let(:config) { SplitIoClient::SplitConfig.new }
+    let(:request_decorator) { SplitIoClient::Api::RequestDecorator.new(nil) }
     let(:api_key) { 'ImpressionsSenderAdapter_Memory' }
     let(:runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
-    let(:telemetry_api) { SplitIoClient::Api::TelemetryApi.new(config, api_key, runtime_producer) }
-    let(:impressions_api) { SplitIoClient::Api::Impressions.new(api_key, config, runtime_producer) }
+    let(:telemetry_api) { SplitIoClient::Api::TelemetryApi.new(config, api_key, runtime_producer, request_decorator) }
+    let(:impressions_api) { SplitIoClient::Api::Impressions.new(api_key, config, runtime_producer, request_decorator) }
     let(:sender) { subject.new(config, telemetry_api, impressions_api) }
 
     it 'record_uniques_key' do

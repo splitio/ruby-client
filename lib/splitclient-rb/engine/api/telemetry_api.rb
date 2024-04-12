@@ -3,8 +3,8 @@
 module SplitIoClient
   module Api
     class TelemetryApi < Client
-      def initialize(config, api_key, telemetry_runtime_producer)
-        super(config)
+      def initialize(config, api_key, telemetry_runtime_producer, request_decorator)
+        super(config, request_decorator)
         @api_key = api_key
         @telemetry_runtime_producer = telemetry_runtime_producer
       end
@@ -33,7 +33,7 @@ module SplitIoClient
 
         if response.success?
           @config.split_logger.log_if_debug("Telemetry post succeeded: record #{method}.")
-          
+
           bucket = BinarySearchLatencyTracker.get_bucket((Time.now - start) * 1000.0)
           @telemetry_runtime_producer.record_sync_latency(Telemetry::Domain::Constants::TELEMETRY_SYNC, bucket)
           @telemetry_runtime_producer.record_successful_sync(Telemetry::Domain::Constants::TELEMETRY_SYNC, (Time.now.to_f * 1000.0).to_i)
