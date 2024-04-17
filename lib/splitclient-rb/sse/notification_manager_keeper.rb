@@ -14,8 +14,8 @@ module SplitIoClient
         @telemetry_runtime_producer = telemetry_runtime_producer
         @status_queue = status_queue
         @publisher_available = Concurrent::AtomicBoolean.new(true)
-        @publishers_pri = Concurrent::AtomicFixnum.new
-        @publishers_sec = Concurrent::AtomicFixnum.new
+        @publishers_pri = Concurrent::AtomicFixnum.new(1)
+        @publishers_sec = Concurrent::AtomicFixnum.new(1)
       end
 
       def handle_incoming_occupancy_event(event)

@@ -16,11 +16,10 @@ describe SplitIoClient do
   let(:event_segment_update_must_fetch) { "fb\r\nid: 123\nevent: message\ndata: {\"id\":\"1\",\"clientId\":\"emptyClientId\",\"connectionId\":\"1\",\"timestamp\":1582045421733,\"channel\":\"mauroc\",\"data\":\"{\\\"type\\\" : \\\"SEGMENT_UPDATE\\\",\\\"changeNumber\\\": 1470947453879, \\\"segmentName\\\" : \\\"segment3\\\"}\",\"name\":\"asdasd\"}\n\n\r\n" }
   let(:event_segment_update_must_not_fetch) { "fb\r\nid: 123\nevent: message\ndata: {\"id\":\"1\",\"clientId\":\"emptyClientId\",\"connectionId\":\"1\",\"timestamp\":1582045421733,\"channel\":\"mauroc\",\"data\":\"{\\\"type\\\" : \\\"SEGMENT_UPDATE\\\",\\\"changeNumber\\\": -1, \\\"segmentName\\\" : \\\"segment3\\\"}\",\"name\":\"asdasd\"}\n\n\r\n" }
   let(:event_occupancy_with_publishers) { "d4\r\nevent: message\ndata: {\"id\":\"123\",\"timestamp\":1586803930362,\"encoding\":\"json\",\"channel\":\"[?occupancy=metrics.publishers]control_pri\",\"data\":\"{\\\"metrics\\\":{\\\"publishers\\\":2}}\",\"name\":\"[meta]occupancy\"}\n\n\r\nfb\r\nid: 123\nevent: message\ndata: {\"id\":\"1\",\"clientId\":\"emptyClientId\",\"connectionId\":\"1\",\"timestamp\":1582045421733,\"channel\":\"mauroc\",\"data\":\"{\\\"type\\\" : \\\"SPLIT_UPDATE\\\",\\\"changeNumber\\\": 1585948850111}\",\"name\":\"asdasd\"}\n\n\r\n" }
-  let(:event_occupancy_without_publishers) { "d4\r\nevent: message\ndata: {\"id\":\"123\",\"timestamp\":1586803930362,\"encoding\":\"json\",\"channel\":\"[?occupancy=metrics.publishers]control_pri\",\"data\":\"{\\\"metrics\\\":{\\\"publishers\\\":0}}\",\"name\":\"[meta]occupancy\"}\n\n\r\n" }
+  let(:event_occupancy_without_publishers) { "d4\r\nevent: message\ndata: {\"id\":\"123\",\"timestamp\":1586803930362,\"encoding\":\"json\",\"channel\":\"[?occupancy=metrics.publishers]control_pri\",\"data\":\"{\\\"metrics\\\":{\\\"publishers\\\":0}}\",\"name\":\"[meta]occupancy\"}\n\n\r\nd4\r\nevent: message\ndata: {\"id\":\"123\",\"timestamp\":1586803930362,\"encoding\":\"json\",\"channel\":\"[?occupancy=metrics.publishers]control_sec\",\"data\":\"{\\\"metrics\\\":{\\\"publishers\\\":0}}\",\"name\":\"[meta]occupancy\"}\n\n\r\n" }
   let(:event_control_STREAMING_PAUSED) { "d4\r\nevent: message\ndata: {\"id\":\"123\",\"clientId\":\"emptyClientId\",\"timestamp\":1582056812285,\"encoding\":\"json\",\"channel\":\"control_pri\",\"data\":\"{\\\"type\\\":\\\"CONTROL\\\",\\\"controlType\\\":\\\"STREAMING_PAUSED\\\"}\"}\n\n\r\n" }
   let(:event_control_STREAMING_RESUMED) { "d4\r\nevent: message\ndata: {\"id\":\"123\",\"clientId\":\"emptyClientId\",\"timestamp\":1582056812285,\"encoding\":\"json\",\"channel\":\"control_pri\",\"data\":\"{\\\"type\\\":\\\"CONTROL\\\",\\\"controlType\\\":\\\"STREAMING_RESUMED\\\"}\"}\n\n\r\n" }
   let(:event_control_STREAMING_DISABLED) { "d4\r\nevent: message\ndata: {\"id\":\"123\",\"clientId\":\"emptyClientId\",\"timestamp\":1582056812285,\"encoding\":\"json\",\"channel\":\"control_pri\",\"data\":\"{\\\"type\\\":\\\"CONTROL\\\",\\\"controlType\\\":\\\"STREAMING_DISABLED\\\"}\"}\n\n\r\n" }
-
   let(:auth_service_url) { 'https://auth.fake.io/api/auth' }
   let(:splits) do
     File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/splits_push.json'))
@@ -171,7 +170,6 @@ describe SplitIoClient do
 
         treatment = 'control'
         for i in 1..5 do
-          p i
           sleep(1)
           treatment = client.get_treatment('admin', 'bilal_split')
           break if treatment != 'control'
