@@ -5,7 +5,7 @@ module SplitIoClient
     module Repositories
       class SplitsRepository < Repository
         attr_reader :adapter
-        DEFAULT_CONDITIONS_TEMPLATE =   {
+        DEFAULT_CONDITIONS_TEMPLATE = [{
           conditionType: "ROLLOUT",
           matcherGroup: {
               combiner: "AND",
@@ -30,7 +30,7 @@ module SplitIoClient
               }
           ],
           label: "unsupported matcher type"
-      }
+      }]
         def initialize(config, flag_sets_repository, flag_set_filter)
           super(config)
           @tt_cache = {}
@@ -182,7 +182,7 @@ module SplitIoClient
 
           if check_undefined_matcher(split)
             @config.logger.warn("Feature Flag #{split[:name]} has undefined matcher, setting conditions to default template.")
-            split[:conditions] = [SplitsRepository::DEFAULT_CONDITIONS_TEMPLATE]
+            split[:conditions] = SplitsRepository::DEFAULT_CONDITIONS_TEMPLATE
           end
           if !split[:sets].nil?
             for flag_set in split[:sets]
