@@ -1,3 +1,6 @@
+require 'thread'
+require 'thwait'
+
 module SplitIoClient
   EVENTS_SIZE_THRESHOLD = 32768
   EVENT_AVERAGE_SIZE = 1024
@@ -96,7 +99,16 @@ module SplitIoClient
 
     def destroy
       @config.logger.info('Split client shutdown started...') if @config.debug_enabled
-
+      if !@config.cache_adapter.is_a?(SplitIoClient::Cache::Adapters::RedisAdapter) && !@impressions_repository.empty? &&
+        !@events_repository.empty? && @config.impressions_mode != :none
+        @config.logger.debug("Impressions and/or Events cache is not empty")
+        if !@config.threads.key?(:impressions_sender) && !@config.threads.key?(:events_sender)
+          @config.logger.debug("Periodic data recording thread has not started yet, waiting for service startup.")
+          threads = []
+          threads << @config.threads[:start_sdk]
+          ThreadsWait.all_waits(*threads)
+        end
+      end
       @config.threads.select { |name, thread| name.to_s.end_with? 'sender' }.values.each do |thread|
         thread.raise(SplitIoClient::SDKShutdownException)
         thread.join
