@@ -96,10 +96,10 @@ module SplitIoClient
 
     def destroy
       @config.logger.info('Split client shutdown started...') if @config.debug_enabled
-      if !@config.cache_adapter.is_a?(SplitIoClient::Cache::Adapters::RedisAdapter) && !@impressions_repository.empty? &&
-        !@events_repository.empty? && @config.impressions_mode != :none
+      if !@config.cache_adapter.is_a?(SplitIoClient::Cache::Adapters::RedisAdapter) && @config.impressions_mode != :none &&
+          (!@impressions_repository.empty? || !@events_repository.empty?)
         @config.logger.debug("Impressions and/or Events cache is not empty")
-        if !@config.threads.key?(:impressions_sender) && !@config.threads.key?(:events_sender)
+        if !@config.threads.key?(:impressions_sender) || !@config.threads.key?(:events_sender)
           @config.logger.debug("Periodic data recording thread has not started yet, waiting for service startup.")
           @config.threads[:start_sdk].join
         end
