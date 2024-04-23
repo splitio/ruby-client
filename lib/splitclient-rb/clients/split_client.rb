@@ -108,7 +108,7 @@ module SplitIoClient
       end
       @config.threads.select { |name, thread| name.to_s.end_with? 'sender' }.values.each do |thread|
         thread.raise(SplitIoClient::SDKShutdownException)
-        thread.join
+        thread.join(5)
       end
 
       @config.threads.values.each { |thread| Thread.kill(thread) }
