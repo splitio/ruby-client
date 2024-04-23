@@ -72,8 +72,6 @@ describe SplitIoClient::SplitClient do
 
       factory5 = SplitIoClient::SplitFactory.new('test_api_key',
           features_refresh_rate: 9999,
-          telemetry_refresh_rate: 99999,
-          impressions_refresh_rate: 99999,
           streaming_enabled: false)
       client5 = factory5.client
       client5.block_until_ready

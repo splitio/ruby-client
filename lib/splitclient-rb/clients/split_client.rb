@@ -99,9 +99,11 @@ module SplitIoClient
       if !@config.cache_adapter.is_a?(SplitIoClient::Cache::Adapters::RedisAdapter) && @config.impressions_mode != :none &&
           (!@impressions_repository.empty? || !@events_repository.empty?)
         @config.logger.debug("Impressions and/or Events cache is not empty")
+        # Adding small delay to ensure sender threads are fully running
+        sleep(0.1)
         if !@config.threads.key?(:impressions_sender) || !@config.threads.key?(:events_sender)
           @config.logger.debug("Periodic data recording thread has not started yet, waiting for service startup.")
-          @config.threads[:start_sdk].join
+          @config.threads[:start_sdk].join if @config.threads.key?(:start_sdk)
         end
       end
       @config.threads.select { |name, thread| name.to_s.end_with? 'sender' }.values.each do |thread|
