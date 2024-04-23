@@ -1,6 +1,3 @@
-require 'thread'
-require 'thwait'
-
 module SplitIoClient
   EVENTS_SIZE_THRESHOLD = 32768
   EVENT_AVERAGE_SIZE = 1024
@@ -104,9 +101,7 @@ module SplitIoClient
         @config.logger.debug("Impressions and/or Events cache is not empty")
         if !@config.threads.key?(:impressions_sender) && !@config.threads.key?(:events_sender)
           @config.logger.debug("Periodic data recording thread has not started yet, waiting for service startup.")
-          threads = []
-          threads << @config.threads[:start_sdk]
-          ThreadsWait.all_waits(*threads)
+          @config.threads[:start_sdk].join
         end
       end
       @config.threads.select { |name, thread| name.to_s.end_with? 'sender' }.values.each do |thread|
