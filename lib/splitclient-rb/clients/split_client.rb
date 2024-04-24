@@ -103,12 +103,12 @@ module SplitIoClient
         sleep(0.1)
         if !@config.threads.key?(:impressions_sender) || !@config.threads.key?(:events_sender)
           @config.logger.debug("Periodic data recording thread has not started yet, waiting for service startup.")
-          @config.threads[:start_sdk].join if @config.threads.key?(:start_sdk)
+          @config.threads[:start_sdk].join(5) if @config.threads.key?(:start_sdk)
         end
       end
       @config.threads.select { |name, thread| name.to_s.end_with? 'sender' }.values.each do |thread|
         thread.raise(SplitIoClient::SDKShutdownException)
-        thread.join(5)
+        thread.join
       end
 
       @config.threads.values.each { |thread| Thread.kill(thread) }
