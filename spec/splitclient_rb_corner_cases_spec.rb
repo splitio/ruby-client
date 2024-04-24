@@ -21,10 +21,10 @@ describe SplitIoClient do
 
   before do
     stub_request(:post, 'https://events.split.io/api/testImpressions/bulk').to_return(status: 200, body: '')
-    stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1').to_return(status: 200, body: splits_json)
+    stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1').to_return(status: 200, body: splits_json)
     stub_request(:get, 'https://sdk.split.io/api/segmentChanges/demo?since=-1').to_return(status: 200, body: segment_res)
     stub_request(:get, 'https://sdk.split.io/api/segmentChanges/employees?since=-1').to_return(status: 200, body: segment_res)
-    stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1473413807667').to_return(status: 200, body: segment_res)
+    stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1473413807667').to_return(status: 200, body: segment_res)
     stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: segment_res)
     stub_request(:post, 'https://events.split.io/api/testImpressions/count').to_return(status: 200, body: '')
   end

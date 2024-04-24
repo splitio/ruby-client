@@ -14,7 +14,7 @@ module SplitIoClient
 
       def authenticate(api_key)
         start = Time.now
-        response = @api_client.get_api(@config.auth_service_url, api_key)
+        response = @api_client.get_api("#{@config.auth_service_url}?s=#{SplitIoClient::Api::Splits::SPEC_VERSION}", api_key)
 
         return process_success(response, start) if response.success?
 

@@ -68,7 +68,7 @@ describe SplitIoClient::Engine::SyncManager do
     mock_segment_changes('segment2', segment2, '-1')
     mock_segment_changes('segment2', segment2, '1470947453878')
     mock_segment_changes('segment3', segment3, '-1')
-    stub_request(:get, config.auth_service_url).to_return(status: 200, body: body_response)
+    stub_request(:get, config.auth_service_url + "?s=1.1").to_return(status: 200, body: body_response)
     stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
   end
 
@@ -84,7 +84,7 @@ describe SplitIoClient::Engine::SyncManager do
       sync_manager.start
 
       sleep(2)
-      expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.once
+      expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')).to have_been_made.once
 
       expect(config.threads.size).to eq(11)
       config.threads.values.each { |thread| Thread.kill(thread) }
@@ -104,7 +104,7 @@ describe SplitIoClient::Engine::SyncManager do
       sync_manager.start
 
       sleep(2)
-      expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')).to have_been_made.once
+      expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')).to have_been_made.once
 
       expect(config.threads.size).to eq(8)
       config.threads.values.each { |thread| Thread.kill(thread) }
@@ -136,7 +136,7 @@ describe SplitIoClient::Engine::SyncManager do
   private
 
   def mock_split_changes_with_since(splits_json, since)
-    stub_request(:get, "https://sdk.split.io/api/splitChanges?since=#{since}")
+    stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=#{since}")
       .to_return(status: 200, body: splits_json)
   end
 

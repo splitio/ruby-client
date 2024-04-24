@@ -11,7 +11,7 @@ describe SplitIoClient::Cache::Fetchers::SplitFetcher do
   end
 
   before do
-    stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+    stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
       .to_return(status: 200, body: active_splits_json)
   end
 
@@ -48,7 +48,7 @@ describe SplitIoClient::Cache::Fetchers::SplitFetcher do
       active_split = store.splits_repository.splits['test_1_ruby']
       expect(active_split[:status]).to eq('ACTIVE')
 
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1473413807667')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1473413807667')
         .to_return(status: 200, body: archived_splits_json)
 
       store.send(:fetch_splits)
@@ -81,7 +81,7 @@ describe SplitIoClient::Cache::Fetchers::SplitFetcher do
     let(:store) { described_class.new(splits_repository, '', config, telemetry_runtime_producer) }
 
     before do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?sets=set_2&since=-1')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1&sets=set_2')
       .to_return(status: 200, body: active_splits_json)
     end
 
@@ -103,14 +103,14 @@ describe SplitIoClient::Cache::Fetchers::SplitFetcher do
       expect(store.splits_repository.get_split('sample_feature')[:name]).to eq('sample_feature')
       expect(store.splits_repository.get_split('test_1_ruby')).to eq(nil)
 
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?sets=set_2&since=1473413807667')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1473413807667&sets=set_2')
         .to_return(status: 200, body: archived_splits_json)
 
       store.send(:fetch_splits)
       expect(store.splits_repository.get_split('sample_feature')).to eq(nil)
 
       store.splits_repository.set_change_number(-1)
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?sets=set_2&since=-1')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1&sets=set_2')
         .to_return(status: 200, body: active_splits_json)
 
       store.send(:fetch_splits)
@@ -149,7 +149,7 @@ describe SplitIoClient::Cache::Fetchers::SplitFetcher do
       active_split = store.splits_repository.splits['test_1_ruby']
       expect(active_split[:status]).to eq('ACTIVE')
 
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1473413807667')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1473413807667')
         .to_return(status: 200, body: archived_splits_json)
 
       store.send(:fetch_splits)

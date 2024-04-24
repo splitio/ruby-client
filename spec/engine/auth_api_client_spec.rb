@@ -15,7 +15,7 @@ describe SplitIoClient::Engine::AuthApiClient do
   let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
 
   it 'authenticate success' do
-    stub_request(:get, config.auth_service_url).to_return(status: 200, body: body_response)
+    stub_request(:get, config.auth_service_url + "?s=1.1").to_return(status: 200, body: body_response)
 
     auth_api_client = subject.new(config, telemetry_runtime_producer)
     response = auth_api_client.authenticate(api_key)
@@ -26,7 +26,7 @@ describe SplitIoClient::Engine::AuthApiClient do
   end
 
   it 'auth server return 500' do
-    stub_request(:get, config.auth_service_url).to_return(status: 500)
+    stub_request(:get, config.auth_service_url + "?s=1.1").to_return(status: 500)
 
     auth_api_client = subject.new(config, telemetry_runtime_producer)
     response = auth_api_client.authenticate(api_key)
@@ -36,7 +36,7 @@ describe SplitIoClient::Engine::AuthApiClient do
   end
 
   it 'auth server return 401' do
-    stub_request(:get, config.auth_service_url).to_return(status: 401)
+    stub_request(:get, config.auth_service_url + "?s=1.1").to_return(status: 401)
 
     auth_api_client = subject.new(config, telemetry_runtime_producer)
     response = auth_api_client.authenticate(api_key)

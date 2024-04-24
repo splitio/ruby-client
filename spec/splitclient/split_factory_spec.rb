@@ -69,7 +69,7 @@ describe SplitIoClient::SplitFactory do
     let(:mode) { :standalone }
 
     it 'log an error stating Api Key is invalid' do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
         .to_return(status: 200, body: [])
       stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
         .to_return(status: 200, body: '')
@@ -89,7 +89,7 @@ describe SplitIoClient::SplitFactory do
     let(:mode) { :standalone }
 
     it 'log an error stating Api Key is invalid' do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
         .to_return(status: 200, body: [])
       stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
         .to_return(status: 200, body: '')
@@ -112,9 +112,9 @@ describe SplitIoClient::SplitFactory do
     end
 
     it 'log an error stating Api Key is invalid' do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
         .to_return(status: 200, body: splits_with_segments_json)
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=1473863097220')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1473863097220')
         .to_return(status: 200, body: [])
       stub_request(:get, 'https://sdk.split.io/api/segmentChanges/employees?since=-1')
         .to_return(status: 403, body: [])
@@ -140,7 +140,7 @@ describe SplitIoClient::SplitFactory do
     let(:mode) { :standalone }
 
     it 'log an error' do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
         .to_return(status: 200, body: [])
 
       stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/usage')
@@ -174,7 +174,7 @@ describe SplitIoClient::SplitFactory do
     end
 
     it 'logs warnings stating number of factories' do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
         .to_return(status: 200, body: [])
 
       described_class.new('API_KEY', options)
@@ -188,7 +188,7 @@ describe SplitIoClient::SplitFactory do
     end
 
     it 'decreases number of registered factories on client destroy' do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
         .to_return(status: 200, body: [])
 
       expect(SplitIoClient.split_factory_registry.number_of_factories_for('API_KEY')).to eq 0
@@ -203,7 +203,7 @@ describe SplitIoClient::SplitFactory do
     end
 
     it 'active and redundant factories' do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
         .to_return(status: 200, body: [])
 
       stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
@@ -239,7 +239,7 @@ describe SplitIoClient::SplitFactory do
         .to_return(status: 200, body: 'ok')
       stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
         .to_return(status: 200, body: 'ok')
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
         .to_return(status: 200, body: [])
       stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
         .to_return(status: 200, body: '')
@@ -260,7 +260,7 @@ describe SplitIoClient::SplitFactory do
         .to_return(status: 200, body: 'ok')
       stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
         .to_return(status: 200, body: 'ok')
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
         .to_return(status: 200, body: [])
       stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
         .to_return(status: 200, body: '')
@@ -281,7 +281,7 @@ describe SplitIoClient::SplitFactory do
         .to_return(status: 200, body: 'ok')
       stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
         .to_return(status: 200, body: 'ok')
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
         .to_return(status: 200, body: [])
       stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
         .to_return(status: 200, body: '')
@@ -302,7 +302,7 @@ describe SplitIoClient::SplitFactory do
         .to_return(status: 200, body: 'ok')
       stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
         .to_return(status: 200, body: 'ok')
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
         .to_return(status: 200, body: [])
       stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
         .to_return(status: 200, body: '')
