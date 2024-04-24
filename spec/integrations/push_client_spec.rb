@@ -151,12 +151,9 @@ describe SplitIoClient do
       stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
       stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=1585948850111").to_return(status: 200, body: '')
       stub_request(:get, "https://sdk.split.io/api/segmentChanges/bilal_segment?since=-1").to_return(status: 200, body: '')
-      mock_server do |server|
-        server.setup_response('/') do |_, res|
-          send_content(res, event_split_iff_update_no_compression)
-        end
+      stub_request(:get, auth_service_url + "?s=1.1").to_return(status: 200, body: auth_body_response)
 
-        stub_request(:get, auth_service_url + "?s=1.1").to_return(status: 200, body: auth_body_response)
+      mock_server do |server|
 
         streaming_service_url = server.base_uri
         factory = SplitIoClient::SplitFactory.new(
@@ -167,6 +164,10 @@ describe SplitIoClient do
 
         client = factory.client
         client.block_until_ready
+
+        server.setup_response('/') do |_, res|
+          send_content(res, event_split_iff_update_no_compression)
+        end
 
         treatment = 'control'
         for i in 1..5 do

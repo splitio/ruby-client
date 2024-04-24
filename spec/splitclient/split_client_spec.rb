@@ -56,14 +56,14 @@ describe SplitIoClient::SplitClient do
     end
 
     it 'posting impressions and events' do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
         .to_return(status: 200, body: splits)
       stub_request(:post, 'https://events.split.io/api/events/bulk').to_return(status: 200, body: '')
       stub_request(:post, 'https://events.split.io/api/testImpressions/bulk').to_return(status: 200, body: '')
       stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
       stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/usage').to_return(status: 200, body: '')
-      stub_request(:get, "https://sdk.split.io/api/splitChanges?since=1506703262916").to_return(status: 200, body: 'ok')
-      stub_request(:get, "https://sdk.split.io/api/splitChanges?sets=set_3&since=1506703262916").to_return(status: 200, body: 'ok')
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916").to_return(status: 200, body: 'ok')
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916sets=set_3&").to_return(status: 200, body: 'ok')
       mock_segment_changes('segment1', segment1, '-1')
       mock_segment_changes('segment1', segment1, '1470947453877')
       mock_segment_changes('segment2', segment2, '-1')
@@ -74,7 +74,7 @@ describe SplitIoClient::SplitClient do
           features_refresh_rate: 9999,
           streaming_enabled: false)
       client5 = factory5.client
-      client5.block_until_ready
+      client5.block_until_ready(5)
 
       for a in 1..100 do
         expect(client5.track('id' + a.to_s, 'account', 'event', 1)).to be_truthy
