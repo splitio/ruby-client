@@ -5,8 +5,6 @@ module SplitIoClient
     # Retrieves split definitions from the Split Backend
     class Splits < Client
 
-      SPEC_VERSION = "1.1"
-
       def initialize(api_key, config, telemetry_runtime_producer)
         super(config)
         @api_key = api_key
@@ -17,7 +15,7 @@ module SplitIoClient
       def since(since, fetch_options = { cache_control_headers: false, till: nil, sets: nil})
         start = Time.now
 
-        params = { s: SPEC_VERSION, since: since }
+        params = { s: SplitIoClient::Spec::FeatureFlags::SPEC_VERSION, since: since }
         params[:till] = fetch_options[:till] unless fetch_options[:till].nil?
         params[:sets] = @flag_sets_filter.join(",") unless @flag_sets_filter.empty?
         @config.logger.debug("Fetching from splitChanges with #{params}: ")

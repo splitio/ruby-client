@@ -105,6 +105,8 @@ require 'splitclient-rb/engine/sync_manager'
 require 'splitclient-rb/engine/synchronizer'
 require 'splitclient-rb/utilitites'
 
+require 'splitclient-rb/spec.rb'
+
 # SSE
 require 'splitclient-rb/sse/event_source/client'
 require 'splitclient-rb/sse/event_source/event_parser'
