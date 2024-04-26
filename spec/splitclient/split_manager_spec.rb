@@ -10,7 +10,7 @@ describe SplitIoClient do
   let(:segments) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../test_data/segments/engine_segments.json'))) }
 
   before do
-    stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+    stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
       .to_return(status: 200, body: splits)
 
     stub_request(:get, 'https://sdk.split.io/api/segmentChanges/demo?since=-1')
@@ -25,7 +25,7 @@ describe SplitIoClient do
     stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config')
       .to_return(status: 200, body: 'ok')
 
-    stub_request(:get, "https://sdk.split.io/api/splitChanges?since=1473413807667")
+    stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=1473413807667")
       .to_return(status: 200, body: "", headers: {})
   end
 
@@ -85,7 +85,7 @@ describe SplitIoClient do
 
   context '#splits' do
     it 'returns empty array and logs error  when not ready' do
-      stub_request(:get, "https://sdk.split.io/api/splitChanges?since=-1")
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=-1")
         .to_return(status: 200, body: "", headers: {})
 
       allow(subject).to receive(:ready?).and_return(false)
@@ -109,10 +109,10 @@ describe SplitIoClient do
     let(:splits3) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../test_data/splits/splits3.json'))) }
 
     before do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
         .to_return(status: 200, body: splits3)
 
-      stub_request(:get, "https://sdk.split.io/api/splitChanges?since=1473863097220")
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=1473863097220")
         .to_return(status: 200, body: "", headers: {})
     end
 
@@ -137,10 +137,10 @@ describe SplitIoClient do
     let(:splits4) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../test_data/splits/splits4.json'))) }
 
     before do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
         .to_return(status: 200, body: splits4)
 
-      stub_request(:get, "https://sdk.split.io/api/splitChanges?since")
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since")
         .to_return(status: 200, body: "", headers: {})
     end
 

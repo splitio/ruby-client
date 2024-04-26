@@ -18,7 +18,7 @@ describe SplitIoClient::Api::Splits do
     let(:splits_api) { described_class.new('', config, telemetry_runtime_producer) }
 
     it 'returns splits with segment names' do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
         .to_return(status: 200, body: splits)
 
       parsed_splits = splits_api.send(:splits_with_segment_names, splits)
@@ -41,7 +41,7 @@ describe SplitIoClient::Api::Splits do
     let(:splits_api) { described_class.new('', config, telemetry_runtime_producer) }
 
     it 'returns the splits - with 2 sets param' do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?sets=set_1,set_2&since=-1')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1&sets=set_1,set_2')
         .with(headers: {
                 'Accept' => '*/*',
                 'Accept-Encoding' => 'gzip',
@@ -61,7 +61,7 @@ describe SplitIoClient::Api::Splits do
     end
 
     it 'raise api exception when status 414' do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?sets=set_1,set_2&since=-1')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1&sets=set_1,set_2')
         .with(headers: {
                 'Accept' => '*/*',
                 'Accept-Encoding' => 'gzip',
@@ -96,7 +96,7 @@ describe SplitIoClient::Api::Splits do
     let(:splits_api) { described_class.new('', config, telemetry_runtime_producer) }
 
     it 'returns the splits - checking headers when cache_control_headers is false' do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
         .with(headers: {
                 'Accept' => '*/*',
                 'Accept-Encoding' => 'gzip',
@@ -115,7 +115,7 @@ describe SplitIoClient::Api::Splits do
     end
 
     it 'returns the splits - with till param' do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1&till=123123')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1&till=123123')
         .with(headers: {
                 'Accept' => '*/*',
                 'Accept-Encoding' => 'gzip',
@@ -135,7 +135,7 @@ describe SplitIoClient::Api::Splits do
     end
 
     it 'returns the splits - checking headers when cache_control_headers is true' do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
         .with(headers: {
                 'Accept' => '*/*',
                 'Accept-Encoding' => 'gzip',
@@ -156,7 +156,7 @@ describe SplitIoClient::Api::Splits do
     end
 
     it 'throws exception if request to get splits from API returns unexpected status code' do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
         .to_return(status: 404)
 
       expect { splits_api.since(-1) }.to raise_error(
@@ -166,7 +166,7 @@ describe SplitIoClient::Api::Splits do
     end
 
     it 'throws exception if request to get splits from API fails' do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
         .to_raise(StandardError)
 
       expect { splits_api.since(-1) }.to raise_error(
@@ -175,7 +175,7 @@ describe SplitIoClient::Api::Splits do
     end
 
     it 'throws exception if request to get splits from API times out' do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
         .to_timeout
 
       expect { splits_api.since(-1) }.to raise_error(

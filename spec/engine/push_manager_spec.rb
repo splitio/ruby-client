@@ -43,7 +43,7 @@ describe SplitIoClient::Engine::PushManager do
           send_mock_content(res, 'content')
         end
 
-        stub_request(:get, config.auth_service_url).to_return(status: 200, body: body_response)
+        stub_request(:get, config.auth_service_url + "?s=1.1").to_return(status: 200, body: body_response)
         config.streaming_service_url = server.base_uri
 
         sse_handler = SplitIoClient::SSE::SSEHandler.new(config, splits_worker, segments_worker, sse_client)
@@ -51,7 +51,7 @@ describe SplitIoClient::Engine::PushManager do
         push_manager = subject.new(config, sse_handler, api_key, runtime_producer)
         connected = push_manager.start_sse
 
-        expect(a_request(:get, config.auth_service_url)).to have_been_made.times(1)
+        expect(a_request(:get, config.auth_service_url + "?s=1.1")).to have_been_made.times(1)
 
         sleep(1.5)
         expect(connected).to eq(true)
@@ -61,14 +61,14 @@ describe SplitIoClient::Engine::PushManager do
     end
 
     it 'must not connect to server. Auth server return 500' do
-      stub_request(:get, config.auth_service_url).to_return(status: 500)
+      stub_request(:get, config.auth_service_url + "?s=1.1").to_return(status: 500)
 
       sse_handler = SplitIoClient::SSE::SSEHandler.new(config, splits_worker, segments_worker, sse_client)
 
       push_manager = subject.new(config, sse_handler, api_key, runtime_producer)
       connected = push_manager.start_sse
 
-      expect(a_request(:get, config.auth_service_url)).to have_been_made.times(1)
+      expect(a_request(:get, config.auth_service_url + "?s=1.1")).to have_been_made.times(1)
 
       sleep(1.5)
 
@@ -77,14 +77,14 @@ describe SplitIoClient::Engine::PushManager do
     end
 
     it 'must not connect to server. Auth server return 401' do
-      stub_request(:get, config.auth_service_url).to_return(status: 401)
+      stub_request(:get, config.auth_service_url + "?s=1.1").to_return(status: 401)
 
       sse_handler = SplitIoClient::SSE::SSEHandler.new(config, splits_worker, segments_worker, sse_client)
 
       push_manager = subject.new(config, sse_handler, api_key, runtime_producer)
       connected = push_manager.start_sse
 
-      expect(a_request(:get, config.auth_service_url)).to have_been_made.times(1)
+      expect(a_request(:get, config.auth_service_url + "?s=1.1")).to have_been_made.times(1)
 
       sleep(1.5)
 
@@ -100,14 +100,14 @@ describe SplitIoClient::Engine::PushManager do
           send_mock_content(res, 'content')
         end
 
-        stub_request(:get, config.auth_service_url).to_return(status: 200, body: body_response)
+        stub_request(:get, config.auth_service_url + "?s=1.1").to_return(status: 200, body: body_response)
         config.streaming_service_url = server.base_uri
 
         sse_handler = SplitIoClient::SSE::SSEHandler.new(config, splits_worker, segments_worker, sse_client)
         push_manager = subject.new(config, sse_handler, api_key, runtime_producer)
         connected = push_manager.start_sse
 
-        expect(a_request(:get, config.auth_service_url)).to have_been_made.times(1)
+        expect(a_request(:get, config.auth_service_url + "?s=1.1")).to have_been_made.times(1)
 
         sleep(1.5)
 
