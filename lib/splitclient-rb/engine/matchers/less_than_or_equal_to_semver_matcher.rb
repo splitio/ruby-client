@@ -15,7 +15,7 @@ module SplitIoClient
     end
 
     def match?(args)
-      @logger.log_if_debug('[LessThanOrEqualsToSemverMatcher] evaluating value and attributes.')
+      @logger.debug('[LessThanOrEqualsToSemverMatcher] evaluating value and attributes.')
       return false unless @validator.valid_matcher_arguments(args)
 
       value_to_match = SplitIoClient::Semver.build(args[:attributes][@attribute.to_sym], @logger)
@@ -24,7 +24,7 @@ module SplitIoClient
         return false
       end
       matches = [0, -1].include?(value_to_match.compare(@semver))
-      @logger.log_if_debug("[LessThanOrEqualsToSemverMatcher] #{value_to_match} matches -> #{matches}")
+      @logger.debug("[LessThanOrEqualsToSemverMatcher] #{value_to_match} matches -> #{matches}")
       matches
     end
   end
