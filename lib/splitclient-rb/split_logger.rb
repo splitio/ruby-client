@@ -15,5 +15,9 @@ module SplitIoClient
       def error(message)
         @config.logger.error(message)
       end
+
+      def debug(message)
+        @config.logger.debug(message) if @config.debug_enabled
+      end
   end
 end
