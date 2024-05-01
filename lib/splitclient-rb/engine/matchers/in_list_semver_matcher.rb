@@ -15,7 +15,7 @@ module SplitIoClient
     end
 
     def match?(args)
-      @logger.debug('[InListSemverMatcher] evaluating value and attributes.')
+      @logger.log_if_debug('[InListSemverMatcher] evaluating value and attributes.')
       return false unless @validator.valid_matcher_arguments(args) && args[:attributes][@attribute.to_sym].is_a?(String)
 
       value_to_match = SplitIoClient::Semver.build(args[:attributes][@attribute.to_sym], @logger)
@@ -24,7 +24,7 @@ module SplitIoClient
         return false
       end
       matches = (@semver_list.map { |item| item.version == value_to_match.version }).any? { |item| item == true }
-      @logger.debug("[InListSemverMatcher] #{value_to_match} matches -> #{matches}")
+      @logger.log_if_debug("[InListSemverMatcher] #{value_to_match} matches -> #{matches}")
       matches
     end
   end

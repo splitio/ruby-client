@@ -16,8 +16,8 @@ module SplitIoClient
         start = Time.now
 
         params = { s: SplitIoClient::Spec::FeatureFlags::SPEC_VERSION, since: since }
-        params[:till] = fetch_options[:till] unless fetch_options[:till].nil?
         params[:sets] = @flag_sets_filter.join(",") unless @flag_sets_filter.empty?
+        params[:till] = fetch_options[:till] unless fetch_options[:till].nil?
         @config.logger.debug("Fetching from splitChanges with #{params}: ")
         response = get_api("#{@config.base_uri}/splitChanges", @api_key, params, fetch_options[:cache_control_headers])
         if response.status == 414
