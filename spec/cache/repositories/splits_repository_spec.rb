@@ -126,29 +126,51 @@ describe SplitIoClient::Cache::Repositories::SplitsRepository do
             }
         }]
       }
-      repository.update([split.dup], [], -1)
-      expect(repository.get_split('corge')[:conditions]).to eq [SplitIoClient::Cache::Repositories::SplitsRepository::DEFAULT_CONDITIONS_TEMPLATE]
+
+      repository.update([split], [], -1)
+      expect(repository.get_split('corge')[:conditions]).to eq SplitIoClient::Cache::Repositories::SplitsRepository::DEFAULT_CONDITIONS_TEMPLATE
 
       # test with multiple conditions
-      split[:conditions] .append({
-        partitions: [
-            {treatment: 'on', size: 25},
-            {treatment: 'off', size: 75}
-        ],
-        contitionType: 'WHITELIST',
-        label: 'some_other_label',
-        matcherGroup: {
-            matchers: [
-                {
-                    matcherType: 'ALL_KEYS',
-                    negate: false,
-                }
+      split2 = {
+        name: 'corge2',
+        trafficTypeName: 'tt_name_5',
+        conditions: [
+          {
+              partitions: [
+                  {treatment: 'on', size: 50},
+                  {treatment: 'off', size: 50}
+              ],
+              contitionType: 'WHITELIST',
+              label: 'some_label',
+              matcherGroup: {
+                  matchers: [
+                      {
+                          matcherType: 'UNDEFINED',
+                          whitelistMatcherData: {
+                              whitelist: ['k1', 'k2', 'k3']
+                          },
+                          negate: false,
+                      }
+                  ],
+                  combiner: 'AND'
+              }
+          },
+          {
+            partitions: [
+              {treatment: 'on', size: 25},
+              {treatment: 'off', size: 75}
             ],
-            combiner: 'AND'
+            contitionType: 'WHITELIST',
+            label: 'some_other_label',
+            matcherGroup: {
+              matchers: [{matcherType: 'ALL_KEYS', negate: false}],
+              combiner: 'AND'
+            }
+          }]
         }
-      })
-      repository.update([split], [], -1)
-      expect(repository.get_split('corge')[:conditions]).to eq [SplitIoClient::Cache::Repositories::SplitsRepository::DEFAULT_CONDITIONS_TEMPLATE]
+
+      repository.update([split2], [], -1)
+      expect(repository.get_split('corge2')[:conditions]).to eq SplitIoClient::Cache::Repositories::SplitsRepository::DEFAULT_CONDITIONS_TEMPLATE
     end
   end
 

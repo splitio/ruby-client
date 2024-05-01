@@ -25,6 +25,10 @@ module SplitIoClient
           @config.log_found_exception(__method__.to_s, e)
         end
 
+        def empty?
+          @repository.empty?
+         end
+
         protected
 
         def metadata

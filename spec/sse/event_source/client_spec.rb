@@ -48,10 +48,10 @@ describe SplitIoClient::SSE::EventSource::Client do
 
   context 'tests' do
     it 'receive split update event' do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
         .with(headers: { 'Authorization' => 'Bearer client-spec-key' })
         .to_return(status: 200, body: '{"splits":[],"since":-1,"till":5564531221}')
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=5564531221')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=5564531221')
         .with(headers: { 'Authorization' => 'Bearer client-spec-key' })
         .to_return(status: 200, body: '{"splits":[],"since":5564531221,"till":5564531221}')
 
@@ -68,7 +68,7 @@ describe SplitIoClient::SSE::EventSource::Client do
         expect(sse_client.connected?).to eq(true)
         expect(push_status_queue.pop(true)).to eq(SplitIoClient::Constants::PUSH_CONNECTED)
         sleep 1
-        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1').with(headers: { 'Authorization' => 'Bearer client-spec-key' })).to have_been_made.times(1)
+        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1').with(headers: { 'Authorization' => 'Bearer client-spec-key' })).to have_been_made.times(1)
 
         sse_client.close
 
@@ -79,10 +79,10 @@ describe SplitIoClient::SSE::EventSource::Client do
     end
 
     it 'receive split kill event' do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
         .with(headers: { 'Authorization' => 'Bearer client-spec-key' })
         .to_return(status: 200, body: '{"splits":[],"since":-1,"till":5564531221}')
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?since=5564531221')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=5564531221')
         .with(headers: { 'Authorization' => 'Bearer client-spec-key' })
         .to_return(status: 200, body: '{"splits":[],"since":5564531221,"till":5564531221}')
 
@@ -99,7 +99,7 @@ describe SplitIoClient::SSE::EventSource::Client do
         expect(sse_client.connected?).to eq(true)
         expect(push_status_queue.pop(true)).to eq(SplitIoClient::Constants::PUSH_CONNECTED)
         sleep 1
-        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1').with(headers: { 'Authorization' => 'Bearer client-spec-key' })).to have_been_made.times(1)
+        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1').with(headers: { 'Authorization' => 'Bearer client-spec-key' })).to have_been_made.times(1)
 
         sse_client.close
 
@@ -150,7 +150,7 @@ describe SplitIoClient::SSE::EventSource::Client do
         expect(connected).to eq(true)
         expect(sse_client.connected?).to eq(true)
         expect(push_status_queue.pop(true)).to eq(SplitIoClient::Constants::PUSH_CONNECTED)
-        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1').with(headers: { 'Authorization' => 'Bearer client-spec-key' })).to have_been_made.times(0)
+        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1').with(headers: { 'Authorization' => 'Bearer client-spec-key' })).to have_been_made.times(0)
         expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment-test?since=-1').with(headers: { 'Authorization' => 'Bearer client-spec-key' })).to have_been_made.times(0)
 
         sse_client.close
@@ -172,7 +172,7 @@ describe SplitIoClient::SSE::EventSource::Client do
         expect(connected).to eq(true)
         expect(sse_client.connected?).to eq(true)
         expect(push_status_queue.pop(true)).to eq(SplitIoClient::Constants::PUSH_CONNECTED)
-        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?since=-1').with(headers: { 'Authorization' => 'Bearer client-spec-key' })).to have_been_made.times(0)
+        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1').with(headers: { 'Authorization' => 'Bearer client-spec-key' })).to have_been_made.times(0)
         expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment-test?since=-1').with(headers: { 'Authorization' => 'Bearer client-spec-key' })).to have_been_made.times(0)
 
         sse_client.close
