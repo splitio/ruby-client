@@ -68,6 +68,7 @@ describe 'Semver matchers integration' do
     it 'validates the treatment is the default treatment for incorrect attributes hash and nil' do
       expect(subject.get_treatment(user, 'semver_equalto')).to eq 'off'
       expect(subject.get_treatment(user, 'semver_equalto', {:version => "1.22.10"})).to eq 'off'
+      sleep 0.2
       subject.destroy()
     end
   end
@@ -90,6 +91,7 @@ describe 'Semver matchers integration' do
     it 'validates the treatment is the default treatment for incorrect attributes hash and nil' do
       expect(subject.get_treatment(user, 'semver_greater_or_equalto')).to eq 'off'
       expect(subject.get_treatment(user, 'semver_greater_or_equalto', {:version => "1.22.8"})).to eq 'off'
+      sleep 0.2
       subject.destroy()
     end
   end
@@ -112,6 +114,7 @@ describe 'Semver matchers integration' do
     it 'validates the treatment is the default treatment for incorrect attributes hash and nil' do
       expect(subject.get_treatment(user, 'semver_less_or_equalto')).to eq 'off'
       expect(subject.get_treatment(user, 'semver_less_or_equalto', {:version => "1.22.10"})).to eq 'off'
+      sleep 0.2
       subject.destroy()
     end
   end
@@ -134,6 +137,7 @@ describe 'Semver matchers integration' do
     it 'validates the treatment is the default treatment for incorrect attributes hash and nil' do
       expect(subject.get_treatment(user, 'semver_inlist')).to eq 'off'
       expect(subject.get_treatment(user, 'semver_inlist', {:version => "1.22.10"})).to eq 'off'
+      sleep 0.2
       subject.destroy()
     end
   end
@@ -157,6 +161,7 @@ describe 'Semver matchers integration' do
       expect(subject.get_treatment(user, 'semver_between')).to eq 'off'
       expect(subject.get_treatment(user, 'semver_between', {:version => "1.22.9-rc1"})).to eq 'off'
       expect(subject.get_treatment(user, 'semver_between', {:version => "2.1.1"})).to eq 'off'
+      sleep 0.2
       subject.destroy()
     end
   end
