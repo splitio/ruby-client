@@ -15,7 +15,7 @@ module SplitIoClient
     end
 
     def match?(args)
-      return false if !verify_semver_arg?(args, "InListSemverMatcher")
+      return false unless verify_semver_arg?(args, 'InListSemverMatcher')
 
       value_to_match = SplitIoClient::Semver.build(args[:attributes][@attribute.to_sym], @logger)
       unless !value_to_match.nil? && @semver_list.all? { |n| !n.nil? }

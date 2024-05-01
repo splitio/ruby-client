@@ -15,10 +15,10 @@ module SplitIoClient
     end
 
     def match?(args)
-      return false if !verify_semver_arg?(args, "EqualsToSemverMatcher")
+      return false unless verify_semver_arg?(args, 'EqualsToSemverMatcher')
 
       value_to_match = SplitIoClient::Semver.build(args[:attributes][@attribute.to_sym], @logger)
-      return false if !check_semver_value_to_match(value_to_match, MATCHER_TYPE)
+      return false unless check_semver_value_to_match(value_to_match, MATCHER_TYPE)
 
       matches = (@semver.version == value_to_match.version)
       @logger.debug("[EqualsToSemverMatcher] #{value_to_match} matches -> #{matches}")
