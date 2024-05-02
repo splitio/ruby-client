@@ -189,6 +189,47 @@ module SplitIoClient
       )
     end
 
+    def matcher_equal_to_semver(params)
+      EqualToSemverMatcher.new(
+        params[:matcher][:keySelector][:attribute],
+        params[:matcher][:stringMatcherData],
+        @config.split_logger, @config.split_validator
+      )
+    end
+
+    def matcher_greater_than_or_equal_to_semver(params)
+      GreaterThanOrEqualToSemverMatcher.new(
+        params[:matcher][:keySelector][:attribute],
+        params[:matcher][:stringMatcherData],
+        @config.split_logger, @config.split_validator
+      )
+    end
+
+    def matcher_less_than_or_equal_to_semver(params)
+      LessThanOrEqualToSemverMatcher.new(
+        params[:matcher][:keySelector][:attribute],
+        params[:matcher][:stringMatcherData],
+        @config.split_logger, @config.split_validator
+      )
+    end
+
+    def matcher_between_semver(params)
+      BetweenSemverMatcher.new(
+        params[:matcher][:keySelector][:attribute],
+        params[:matcher][:betweenStringMatcherData][:start],
+        params[:matcher][:betweenStringMatcherData][:end],
+        @config.split_logger, @config.split_validator
+      )
+    end
+
+    def matcher_in_list_semver(params)
+      InListSemverMatcher.new(
+        params[:matcher][:keySelector][:attribute],
+        params[:matcher][:whitelistMatcherData][:whitelist],
+        @config.split_logger, @config.split_validator
+      )
+    end
+
     #
     # @return [object] the negate value for this condition
     def negate
