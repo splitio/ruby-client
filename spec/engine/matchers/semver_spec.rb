@@ -33,6 +33,13 @@ describe SplitIoClient::Semver do
         expect(described_class.build(version[0], logger)).to eq(nil)
       end
     end
+
+    it 'verify leading-zero integers are converted' do
+      semver = described_class.build('1.01.2', logger)
+      expect(semver.version).to eq('1.1.2')
+      expect(described_class.build('1.01.2-rc.04', logger).version).to eq('1.1.2-rc.4')
+    end
+
   end
 
   context 'compare versions' do

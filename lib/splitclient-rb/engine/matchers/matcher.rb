@@ -41,7 +41,7 @@ module SplitIoClient
     end
 
     def check_semver_value_to_match(value_to_match, matcher_spec_name)
-      unless !value_to_match.nil? && !@semver.nil?
+      if value_to_match.nil? || @semver.nil?
         @logger.error("stringMatcherData is required for #{matcher_spec_name} matcher type")
         return false
 

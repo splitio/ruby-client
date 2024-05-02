@@ -70,7 +70,7 @@ module SplitIoClient
     private
 
     def integer?(value)
-      value.to_i.to_s == value
+      !!value.match(/^(\d)+$/)
     end
 
     #
@@ -107,8 +107,19 @@ module SplitIoClient
       @minor = parts[1].to_i
       @patch = parts[2].to_i
       @version = "#{@major}#{VALUE_DELIMITER}#{@minor}#{VALUE_DELIMITER}#{@patch}"
-      @version += "#{PRE_RELEASE_DELIMITER}#{@pre_release.join('.')}" unless @pre_release.empty?
+      @version += parse_pre_release
       @version += "#{METADATA_DELIMITER}#{@metadata}" unless @metadata.empty?
+    end
+
+    def parse_pre_release
+      return '' if @pre_release.empty?
+
+      pre_parsed = []
+      @pre_release.each do |pre_digit|
+        pre_digit = pre_digit.to_i if integer?(pre_digit)
+        pre_parsed << pre_digit
+      end
+      "#{PRE_RELEASE_DELIMITER}#{pre_parsed.join('.')}"
     end
 
     #
@@ -169,6 +180,7 @@ module SplitIoClient
 
         if integer?(@pre_release[i]) && integer?(to_compare.pre_release[i])
           return compare_vars(@pre_release[i].to_i, to_compare.pre_release[i].to_i)
+
         end
 
         return compare_vars(@pre_release[i], to_compare.pre_release[i])
