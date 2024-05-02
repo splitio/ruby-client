@@ -29,7 +29,7 @@ module SplitIoClient
               size: 100
               }
           ],
-          label: "unsupported matcher type"
+          label: "targeting rule type unsupported by sdk"
         }]
 
         def initialize(config, flag_sets_repository, flag_set_filter)

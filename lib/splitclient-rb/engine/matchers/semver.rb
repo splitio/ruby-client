@@ -60,7 +60,8 @@ module SplitIoClient
       return 0 if @version == to_compare.version
 
       # Compare major, minor, and patch versions numerically
-      return compare_attributes(to_compare) if compare_attributes(to_compare) != 0
+      result = compare_attributes(to_compare)
+      return result if result != 0
 
       # Compare pre-release versions lexically
       compare_pre_release(to_compare)

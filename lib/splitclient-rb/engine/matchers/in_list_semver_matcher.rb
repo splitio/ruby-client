@@ -10,7 +10,12 @@ module SplitIoClient
       super(logger)
       @validator = validator
       @attribute = attribute
-      @semver_list = list_value.map { |item| SplitIoClient::Semver.build(item, logger) }
+      @semver_list = []
+
+      list_value.map do |item|
+        version = SplitIoClient::Semver.build(item, logger)
+        @semver_list << version unless version.nil?
+      end
       @logger = logger
     end
 
@@ -18,7 +23,7 @@ module SplitIoClient
       return false unless verify_semver_arg?(args, 'InListSemverMatcher')
 
       value_to_match = SplitIoClient::Semver.build(args[:attributes][@attribute.to_sym], @logger)
-      unless !value_to_match.nil? && @semver_list.all? { |n| !n.nil? }
+      if value_to_match.nil?
         @logger.error('whitelistMatcherData is required for IN_LIST_SEMVER matcher type')
         return false
       end
