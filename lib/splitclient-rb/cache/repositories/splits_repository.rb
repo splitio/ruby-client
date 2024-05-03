@@ -5,6 +5,32 @@ module SplitIoClient
     module Repositories
       class SplitsRepository < Repository
         attr_reader :adapter
+        DEFAULT_CONDITIONS_TEMPLATE = [{
+          conditionType: "ROLLOUT",
+          matcherGroup: {
+              combiner: "AND",
+              matchers: [
+              {
+                  keySelector: nil,
+                  matcherType: "ALL_KEYS",
+                  negate: false,
+                  userDefinedSegmentMatcherData: nil,
+                  whitelistMatcherData: nil,
+                  unaryNumericMatcherData: nil,
+                  betweenMatcherData: nil,
+                  dependencyMatcherData: nil,
+                  booleanMatcherData: nil,
+                  stringMatcherData: nil
+              }]
+          },
+          partitions: [
+              {
+              treatment: "control",
+              size: 100
+              }
+          ],
+          label: "targeting rule type unsupported by sdk"
+        }]
 
         def initialize(config, flag_sets_repository, flag_set_filter)
           super(config)
@@ -155,6 +181,10 @@ module SplitIoClient
             remove_from_flag_sets(existing_split)
           end
 
+          if check_undefined_matcher(split)
+            @config.logger.warn("Feature Flag #{split[:name]} has undefined matcher, setting conditions to default template.")
+            split[:conditions] = SplitsRepository::DEFAULT_CONDITIONS_TEMPLATE
+          end
           if !split[:sets].nil?
             for flag_set in split[:sets]
               if !@flag_sets.flag_set_exist?(flag_set)
@@ -168,6 +198,18 @@ module SplitIoClient
           end
 
           @adapter.set_string(namespace_key(".split.#{split[:name]}"), split.to_json)
+        end
+
+        def check_undefined_matcher(split)
+          for condition in split[:conditions]
+            for matcher in condition[:matcherGroup][:matchers]
+              if !SplitIoClient::Condition.instance_methods(false).map(&:to_s).include?("matcher_#{matcher[:matcherType].downcase}")
+                @config.logger.error("Detected undefined matcher #{matcher[:matcherType].downcase} in feature flag #{split[:name]}")
+                return true
+              end
+            end
+          end
+          return false
         end
 
         def remove_feature_flag(split)

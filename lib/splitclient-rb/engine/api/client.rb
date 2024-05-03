@@ -10,6 +10,7 @@ module SplitIoClient
       end
 
       def get_api(url, api_key, params = {}, cache_control_headers = false)
+        api_client.options.params_encoder.sort_params = false
         api_client.get(url, params) do |req|
           req.headers = common_headers(api_key).merge('Accept-Encoding' => 'gzip')
           req.headers = req.headers.merge('Cache-Control' => 'no-cache') if cache_control_headers
@@ -29,7 +30,7 @@ module SplitIoClient
           req.headers = common_headers(api_key)
                         .merge('Content-Type' => 'application/json')
                         .merge(headers)
-          
+
           machine_ip = @config.machine_ip
           machine_name = @config.machine_name
 
@@ -55,6 +56,7 @@ module SplitIoClient
         @api_client ||= Faraday.new do |builder|
           builder.use SplitIoClient::FaradayMiddleware::Gzip
           builder.adapter :net_http_persistent
+          builder.options.params_encoder = Faraday::FlatParamsEncoder
         end
       end
 

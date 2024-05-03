@@ -30,6 +30,9 @@ describe SplitIoClient::SSE::NotificationManagerKeeper do
 
     it 'STREAMING_RESUMED without publishers enabled' do
       data = { 'metrics' => { 'publishers' => 0 } }
+      event = SplitIoClient::SSE::EventSource::StreamData.new('message', 'test-client-id', data, 'control_sec')
+      noti_manager_keeper.handle_incoming_occupancy_event(event)
+
       event = SplitIoClient::SSE::EventSource::StreamData.new('message', 'test-client-id', data, 'control_pri')
       noti_manager_keeper.handle_incoming_occupancy_event(event)
 
@@ -54,6 +57,9 @@ describe SplitIoClient::SSE::NotificationManagerKeeper do
   context 'OCCUPANCY EVENT' do
     it 'first time without publishers available' do
       data = { 'metrics' => { 'publishers' => 0 } }
+      event = SplitIoClient::SSE::EventSource::StreamData.new('message', 'test-client-id', data, 'control_sec')
+      noti_manager_keeper.handle_incoming_occupancy_event(event)
+
       event = SplitIoClient::SSE::EventSource::StreamData.new('message', 'test-client-id', data, 'control_pri')
       noti_manager_keeper.handle_incoming_occupancy_event(event)
 
@@ -70,6 +76,9 @@ describe SplitIoClient::SSE::NotificationManagerKeeper do
 
     it 'handle many events' do
       data = { 'metrics' => { 'publishers' => 0 } }
+      event = SplitIoClient::SSE::EventSource::StreamData.new('message', 'test-client-id', data, 'control_sec')
+      noti_manager_keeper.handle_incoming_occupancy_event(event)
+
       event = SplitIoClient::SSE::EventSource::StreamData.new('message', 'test-client-id', data, 'control_pri')
       noti_manager_keeper.handle_incoming_occupancy_event(event)
       expect(push_status_queue.pop(true)).to eq(SplitIoClient::Constants::PUSH_SUBSYSTEM_DOWN)
