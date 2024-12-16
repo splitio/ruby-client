@@ -27,7 +27,7 @@ module SplitIoClient
         end
 
         def clear
-          @ba.delete()
+          @ba = nil
           reset_filter
         end
 
