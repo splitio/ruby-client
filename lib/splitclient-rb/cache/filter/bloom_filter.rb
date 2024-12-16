@@ -8,8 +8,8 @@ module SplitIoClient
       class BloomFilter
         def initialize(capacity, false_positive_probability = 0.001)
           @capacity = capacity.round
-          m = best_m(capacity, false_positive_probability)
-          @ba = BitArray.new(m.round)
+          @m = best_m(capacity, false_positive_probability)
+          reset_filter
           @k = best_k(capacity)
         end
 
@@ -17,21 +17,25 @@ module SplitIoClient
           return false if contains?(string)
 
           positions = hashes(string)
-          
           positions.each { |position| @ba[position] = 1 }
 
           true
         end
-      
+
         def contains?(string)
           !hashes(string).any? { |ea| @ba[ea] == 0 }
         end
 
         def clear
-          @ba.size.times { |i| @ba[i] = 0 }
+          @ba.delete()
+          reset_filter
         end
-      
+
         private
+
+        def reset_filter
+          @ba = BitArray.new(@m.round)
+        end
 
         # m is the required number of bits in the array
         def best_m(capacity, false_positive_probability)
