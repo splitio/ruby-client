@@ -13,6 +13,11 @@ module SplitIoClient
             next
           end
 
+          unless feature_flag.key?(:impressionsDisabled)
+            feature_flag[:impressionsDisabled] = false
+            config.logger.debug("feature flag (#{feature_flag[:name]}) does not have `impressionsDisabled` field, setting it to `false`") if config.debug_enabled
+          end
+
           config.logger.debug("storing feature flag (#{feature_flag[:name]})") if config.debug_enabled
           to_add.push(feature_flag)
         end

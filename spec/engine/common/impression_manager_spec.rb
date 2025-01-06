@@ -47,8 +47,7 @@ describe SplitIoClient::Engine::Common::ImpressionManager do
                   unique_keys_tracker)
     end
 
-    # TODO: remove skip test when the sdk support :none mode.
-    xit 'build & track impression' do
+    it 'build & track impression' do
       expected =
         {
           m: { s: version, i: ip, n: machine_name },
@@ -71,6 +70,7 @@ describe SplitIoClient::Engine::Common::ImpressionManager do
                                                        'bucketing_key_test',
                                                        'split_name_test',
                                                        treatment,
+                                                       false,
                                                        params)
       expect(impression).to match(expected)
 
@@ -78,11 +78,49 @@ describe SplitIoClient::Engine::Common::ImpressionManager do
       expect(result_count['split_name_test::1478113200000']).to eq(1)
       expect(unique_cache['split_name_test'].size).to eq(1)
 
-      impression_manager.track([impression])
+      impression_manager.track([{impression: impression, disabled: false}])
 
       sleep 0.5
       expect(impression_repository.batch.size).to eq(0)
       expect(impression_listener.size).to eq(1)
+    end
+
+    it 'impression toggle' do
+      expected =
+      {
+        m: { s: version, i: ip, n: machine_name },
+        i: {
+          k: 'matching_key_test',
+          b: 'bucketing_key_test',
+          f: 'split_name_test',
+          t: 'off',
+          r: 'default label',
+          c: 1_478_113_516_002,
+          m: 1_478_113_516_222,
+          pt: nil
+        },
+        attributes: {}
+      }
+    treatment = { treatment: 'off', label: 'default label', change_number: 1_478_113_516_002 }
+    params = { attributes: {}, time: 1_478_113_516_222 }
+
+    impression = impression_manager.build_impression('matching_key_test',
+                                                     'bucketing_key_test',
+                                                     'split_name_test',
+                                                     treatment,
+                                                     true,
+                                                     params)
+    expect(impression).to match(expected)
+
+    result_count = impression_counter.pop_all
+    expect(result_count['split_name_test::1478113200000']).to eq(1)
+    expect(unique_cache['split_name_test'].size).to eq(1)
+
+    impression_manager.track([{impression: impression, disabled: true}])
+
+    sleep 0.5
+    expect(impression_repository.batch.size).to eq(0)
+    expect(impression_listener.size).to eq(1)
     end
   end
 
@@ -127,14 +165,14 @@ describe SplitIoClient::Engine::Common::ImpressionManager do
       treatment = { treatment: 'off', label: 'default label', change_number: 1_478_113_516_002 }
       params = { attributes: {}, time: 1_478_113_516_222 }
 
-      res = impression_manager.build_impression('matching_key_test', 'bucketing_key_test', 'split_name_test', treatment, params)
+      res = impression_manager.build_impression('matching_key_test', 'bucketing_key_test', 'split_name_test', treatment, true, params)
 
       expect(res).to match(expected)
     end
 
     it 'track' do
       impressions = []
-      impressions << expected
+      impressions << {impression: expected, disabled: false}
 
       impression_manager.track(impressions)
 
@@ -150,16 +188,16 @@ describe SplitIoClient::Engine::Common::ImpressionManager do
       params = { attributes: {}, time: expected[:i][:m] }
       imp = expected[:i]
 
-      impressions << impression_manager.build_impression(imp[:k], imp[:b], imp[:f], treatment_data, params)
-      impressions << impression_manager.build_impression(imp[:k], imp[:b], imp[:f], treatment_data, params)
-      impressions << impression_manager.build_impression(imp[:k], imp[:b], imp[:f], treatment_data, params)
-      impressions << impression_manager.build_impression(imp[:k], imp[:b], imp[:f], treatment_data, params)
+      impressions << {impression: impression_manager.build_impression(imp[:k], imp[:b], imp[:f], treatment_data, false, params), disabled: false}
+      impressions << {impression: impression_manager.build_impression(imp[:k], imp[:b], imp[:f], treatment_data, false, params), disabled: false}
+      impressions << {impression: impression_manager.build_impression(imp[:k], imp[:b], imp[:f], treatment_data, false, params), disabled: false}
+      impressions << {impression: impression_manager.build_impression(imp[:k], imp[:b], imp[:f], treatment_data, false, params), disabled: false}
 
-      impressions << impression_manager.build_impression('second_key', imp[:b], imp[:f], treatment_data, params)
-      impressions << impression_manager.build_impression('second_key', imp[:b], imp[:f], treatment_data, params)
+      impressions << {impression: impression_manager.build_impression('second_key', imp[:b], imp[:f], treatment_data, false, params), disabled: false}
+      impressions << {impression: impression_manager.build_impression('second_key', imp[:b], imp[:f], treatment_data, false, params), disabled: false}
 
-      impressions << impression_manager.build_impression('second_key', imp[:b], 'test_split', treatment_data, params)
-      impressions << impression_manager.build_impression('second_key', imp[:b], 'test_split', treatment_data, params)
+      impressions << {impression: impression_manager.build_impression('second_key', imp[:b], 'test_split', treatment_data, false, params), disabled: false}
+      impressions << {impression: impression_manager.build_impression('second_key', imp[:b], 'test_split', treatment_data, false, params), disabled: false}
 
       impression_manager.track(impressions)
 
@@ -175,31 +213,30 @@ describe SplitIoClient::Engine::Common::ImpressionManager do
       treatment_data = { treatment: 'off', label: 'default label', change_number: 1_478_113_516_002 }
       params = { attributes: {}, time: expected[:i][:m] }
       imp = expected[:i]
+      impressions << {impression: impression_manager.build_impression(imp[:k], imp[:b], imp[:f], treatment_data, false, params), disabled: false}
+      impressions << {impression: impression_manager.build_impression(imp[:k], imp[:b], imp[:f], treatment_data, false, params), disabled: false}
+      impressions << {impression: impression_manager.build_impression(imp[:k], imp[:b], imp[:f], treatment_data, false, params), disabled: false}
+      impressions << {impression: impression_manager.build_impression(imp[:k], imp[:b], imp[:f], treatment_data, false, params), disabled: false}
 
-      impressions << impression_manager.build_impression(imp[:k], imp[:b], imp[:f], treatment_data, params)
-      impressions << impression_manager.build_impression(imp[:k], imp[:b], imp[:f], treatment_data, params)
-      impressions << impression_manager.build_impression(imp[:k], imp[:b], imp[:f], treatment_data, params)
-      impressions << impression_manager.build_impression(imp[:k], imp[:b], imp[:f], treatment_data, params)
+      impressions << {impression: impression_manager.build_impression('second_key', imp[:b], imp[:f], treatment_data, false, params), disabled: false}
+      impressions << {impression: impression_manager.build_impression('second_key', imp[:b], imp[:f], treatment_data, false, params), disabled: false}
 
-      impressions << impression_manager.build_impression('second_key', imp[:b], imp[:f], treatment_data, params)
-      impressions << impression_manager.build_impression('second_key', imp[:b], imp[:f], treatment_data, params)
+      impressions << {impression: impression_manager.build_impression('second_key', imp[:b], 'test_split', treatment_data, false, params), disabled: false}
+      impressions << {impression: impression_manager.build_impression('second_key', imp[:b], 'test_split', treatment_data, false, params), disabled: false}
+      impressions << {impression: impression_manager.build_impression('second_key', imp[:b], 'test_split', treatment_data, false, params), disabled: false}
+      impressions << {impression: impression_manager.build_impression('second_key', imp[:b], 'test_split', treatment_data, false, params), disabled: false}
 
-      impressions << impression_manager.build_impression('second_key', imp[:b], 'test_split', treatment_data, params)
-      impressions << impression_manager.build_impression('second_key', imp[:b], 'test_split', treatment_data, params)
-      impressions << impression_manager.build_impression('second_key', imp[:b], 'test_split', treatment_data, params)
-      impressions << impression_manager.build_impression('second_key', imp[:b], 'test_split', treatment_data, params)
+      impressions << {impression: impression_manager.build_impression('other_key', imp[:b], 'test_split', treatment_data, false, params), disabled: false}
 
-      impressions << impression_manager.build_impression('other_key', imp[:b], 'test_split', treatment_data, params)
-
-      impressions << impression_manager.build_impression('other_key-1', imp[:b], 'test_split', treatment_data, params)
-      impressions << impression_manager.build_impression('other_key-2', imp[:b], 'test_split', treatment_data, params)
-      impressions << impression_manager.build_impression('other_key-3', imp[:b], 'test_split', treatment_data, params)
-      impressions << impression_manager.build_impression('other_key-4', imp[:b], 'test_split', treatment_data, params)
-      impressions << impression_manager.build_impression('other_key-5', imp[:b], 'test_split', treatment_data, params)
-      impressions << impression_manager.build_impression('other_key-6', imp[:b], 'test_split', treatment_data, params)
-      impressions << impression_manager.build_impression('other_key-7', imp[:b], 'test_split', treatment_data, params)
-      impressions << impression_manager.build_impression('other_key-8', imp[:b], 'test_split', treatment_data, params)
-      impressions << impression_manager.build_impression('other_key-9', imp[:b], 'test_split', treatment_data, params)
+      impressions << {impression: impression_manager.build_impression('other_key-1', imp[:b], 'test_split', treatment_data, false, params), disabled: false}
+      impressions << {impression: impression_manager.build_impression('other_key-2', imp[:b], 'test_split', treatment_data, false, params), disabled: false}
+      impressions << {impression: impression_manager.build_impression('other_key-3', imp[:b], 'test_split', treatment_data, false, params), disabled: false}
+      impressions << {impression: impression_manager.build_impression('other_key-4', imp[:b], 'test_split', treatment_data, false, params), disabled: false}
+      impressions << {impression: impression_manager.build_impression('other_key-5', imp[:b], 'test_split', treatment_data, false, params), disabled: false}
+      impressions << {impression: impression_manager.build_impression('other_key-6', imp[:b], 'test_split', treatment_data, false, params), disabled: false}
+      impressions << {impression: impression_manager.build_impression('other_key-7', imp[:b], 'test_split', treatment_data, false, params), disabled: false}
+      impressions << {impression: impression_manager.build_impression('other_key-8', imp[:b], 'test_split', treatment_data, false, params), disabled: false}
+      impressions << {impression: impression_manager.build_impression('other_key-9', imp[:b], 'test_split', treatment_data, false, params), disabled: false}
 
       impression_manager.track(impressions)
 
@@ -207,6 +244,24 @@ describe SplitIoClient::Engine::Common::ImpressionManager do
       expect(runtime_consumer.impressions_stats(SplitIoClient::Telemetry::Domain::Constants::IMPRESSIONS_DROPPED)).to be(3)
       expect(runtime_consumer.impressions_stats(SplitIoClient::Telemetry::Domain::Constants::IMPRESSIONS_QUEUED)).to be(10)
       expect(runtime_consumer.impressions_stats(SplitIoClient::Telemetry::Domain::Constants::IMPRESSIONS_DEDUPE)).to be(7)
+    end
+
+    it 'impressions toggle' do
+      impressions = []
+
+      treatment_data = { treatment: 'off', label: 'default label', change_number: 1_478_113_516_002 }
+      params = { attributes: {}, time: expected[:i][:m] }
+      imp = expected[:i]
+
+      impressions << {impression: impression_manager.build_impression(imp[:k], imp[:b], imp[:f], treatment_data, true, params), disabled: true}
+      impression_manager.track(impressions)
+      sleep(0.5)
+
+      expect(impression_repository.batch.size).to eq(0)
+      expect(impression_listener.size).to eq(1)
+      result_count = impression_counter.pop_all
+      expect(result_count['split_name_test::1478113200000']).to eq(1)
+      expect(unique_cache['split_name_test'].size).to eq(1)
     end
   end
 
@@ -255,20 +310,20 @@ describe SplitIoClient::Engine::Common::ImpressionManager do
       params = { attributes: {}, time: expected[:i][:m] }
       imp = expected[:i]
 
-      impressions << impression_manager.build_impression(imp[:k], imp[:b], imp[:f], treatment_data, params)
-      impressions << impression_manager.build_impression(imp[:k], imp[:b], imp[:f], treatment_data, params)
-      impressions << impression_manager.build_impression(imp[:k], imp[:b], imp[:f], treatment_data, params)
-      impressions << impression_manager.build_impression(imp[:k], imp[:b], imp[:f], treatment_data, params)
+      impressions << {impression: impression_manager.build_impression(imp[:k], imp[:b], imp[:f], treatment_data, false, params), disabled: false}
+      impressions << {impression: impression_manager.build_impression(imp[:k], imp[:b], imp[:f], treatment_data, false, params), disabled: false}
+      impressions << {impression: impression_manager.build_impression(imp[:k], imp[:b], imp[:f], treatment_data, false, params), disabled: false}
+      impressions << {impression: impression_manager.build_impression(imp[:k], imp[:b], imp[:f], treatment_data, false, params), disabled: false}
 
-      impressions << impression_manager.build_impression('second_key', imp[:b], imp[:f], treatment_data, params)
-      impressions << impression_manager.build_impression('second_key', imp[:b], imp[:f], treatment_data, params)
+      impressions << {impression: impression_manager.build_impression('second_key', imp[:b], imp[:f], treatment_data, false, params), disabled: false}
+      impressions << {impression: impression_manager.build_impression('second_key', imp[:b], imp[:f], treatment_data, false, params), disabled: false}
 
-      impressions << impression_manager.build_impression('second_key', imp[:b], 'test_split', treatment_data, params)
-      impressions << impression_manager.build_impression('second_key', imp[:b], 'test_split', treatment_data, params)
-      impressions << impression_manager.build_impression('second_key', imp[:b], 'test_split', treatment_data, params)
-      impressions << impression_manager.build_impression('second_key', imp[:b], 'test_split', treatment_data, params)
+      impressions << {impression: impression_manager.build_impression('second_key', imp[:b], 'test_split', treatment_data, false, params), disabled: false}
+      impressions << {impression: impression_manager.build_impression('second_key', imp[:b], 'test_split', treatment_data, false, params), disabled: false}
+      impressions << {impression: impression_manager.build_impression('second_key', imp[:b], 'test_split', treatment_data, false, params), disabled: false}
+      impressions << {impression: impression_manager.build_impression('second_key', imp[:b], 'test_split', treatment_data, false, params), disabled: false}
 
-      impressions << impression_manager.build_impression('other_key', imp[:b], 'test_split', treatment_data, params)
+      impressions << {impression: impression_manager.build_impression('other_key', imp[:b], 'test_split', treatment_data, false, params), disabled: false}
 
       impression_manager.track(impressions)
 
@@ -276,6 +331,24 @@ describe SplitIoClient::Engine::Common::ImpressionManager do
       expect(runtime_consumer.impressions_stats(SplitIoClient::Telemetry::Domain::Constants::IMPRESSIONS_DROPPED)).to be(1)
       expect(runtime_consumer.impressions_stats(SplitIoClient::Telemetry::Domain::Constants::IMPRESSIONS_QUEUED)).to be(10)
       expect(runtime_consumer.impressions_stats(SplitIoClient::Telemetry::Domain::Constants::IMPRESSIONS_DEDUPE)).to be(0)
+    end
+
+    it 'impressions toggle' do
+      impressions = []
+
+      treatment_data = { treatment: 'off', label: 'default label', change_number: 1_478_113_516_002 }
+      params = { attributes: {}, time: expected[:i][:m] }
+      imp = expected[:i]
+
+      impressions << {impression: impression_manager.build_impression(imp[:k], imp[:b], imp[:f], treatment_data, true, params), disabled: true}
+      impression_manager.track(impressions)
+      sleep(0.5)
+
+      expect(impression_repository.batch.size).to eq(0)
+      expect(impression_listener.size).to eq(1)
+      result_count = impression_counter.pop_all
+      expect(result_count['split_name_test::1478113200000']).to eq(1)
+      expect(unique_cache['split_name_test'].size).to eq(1)
     end
   end
 end

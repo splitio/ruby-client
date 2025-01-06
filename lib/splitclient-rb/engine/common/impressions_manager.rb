@@ -18,19 +18,16 @@ module SplitIoClient
           @unique_keys_tracker = unique_keys_tracker
         end
 
-        def build_impression(matching_key, bucketing_key, split_name, treatment, params = {})
+        def build_impression(matching_key, bucketing_key, split_name, treatment, impressions_disabled, params = {})
           impression_data = impression_data(matching_key, bucketing_key, split_name, treatment, params[:time])
-
           begin
-            case @config.impressions_mode
-            when :debug #  In DEBUG mode we should calculate the pt only.
-              impression_data[:pt] = @impression_observer.test_and_set(impression_data)
-            when :none # In NONE mode we should track the total amount of evaluations and the unique keys.
+            if @config.impressions_mode == :none || impressions_disabled # In NONE mode we should track the total amount of evaluations and the unique keys.
               @impression_counter.inc(split_name, impression_data[:m])
               @unique_keys_tracker.track(split_name, matching_key)
+            elsif @config.impressions_mode == :debug #  In DEBUG mode we should calculate the pt only.
+              impression_data[:pt] = @impression_observer.test_and_set(impression_data)
             else # In OPTIMIZED mode we should track the total amount of evaluations and deduplicate the impressions.
               impression_data[:pt] = @impression_observer.test_and_set(impression_data)
-
               @impression_counter.inc(split_name, impression_data[:m]) unless impression_data[:pt].nil?
             end
           rescue StandardError => e
@@ -40,24 +37,25 @@ module SplitIoClient
           impression(impression_data, params[:attributes])
         end
 
-        def track(impressions)
-          return if impressions.empty?
+        def track(impressions_decorator)
+          return if impressions_decorator.empty?
 
-          stats = { dropped: 0, queued: 0, dedupe: 0 }
-          begin
-            case @config.impressions_mode
-            when :none
-              return
-            when :debug
-              track_debug_mode(impressions, stats)
-            when :optimized
-              track_optimized_mode(impressions, stats)
+          impressions_decorator.each do |impression_decorator|
+            stats = { dropped: 0, queued: 0, dedupe: 0 }
+            begin
+              if @config.impressions_mode == :none || impression_decorator[:disabled]
+                return
+              elsif @config.impressions_mode == :debug
+                track_debug_mode([impression_decorator[:impression]], stats)
+              elsif @config.impressions_mode == :optimized
+                track_optimized_mode([impression_decorator[:impression]], stats)
+              end
+            rescue StandardError => e
+              @config.log_found_exception(__method__.to_s, e)
+            ensure
+              record_stats(stats)
+              impression_router.add_bulk([impression_decorator[:impression]])
             end
-          rescue StandardError => e
-            @config.log_found_exception(__method__.to_s, e)
-          ensure
-            record_stats(stats)
-            impression_router.add_bulk(impressions)
           end
         end
 
@@ -126,11 +124,10 @@ module SplitIoClient
 
         def track_optimized_mode(impressions, stats)
           optimized_impressions = impressions.select { |imp| should_queue_impression?(imp[:i]) }
-
+          stats[:dedupe] = impressions.length - optimized_impressions.length
           return if optimized_impressions.empty?
 
           stats[:dropped] = @impressions_repository.add_bulk(optimized_impressions)
-          stats[:dedupe] = impressions.length - optimized_impressions.length
           stats[:queued] = optimized_impressions.length - stats[:dropped]
         end
       end
