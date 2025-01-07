@@ -332,14 +332,14 @@ module SplitIoClient
       end
 
       feature_flag = @splits_repository.get_split(feature_flag_name)
-      treatments, impressions = evaluate_treatment(feature_flag, feature_flag_name, bucketing_key, matching_key, attributes, calling_method, multiple)
+      treatments, impressions_decorator = evaluate_treatment(feature_flag, feature_flag_name, bucketing_key, matching_key, attributes, calling_method, multiple)
 
-      @impressions_manager.track(impressions) unless impressions.nil?
+      @impressions_manager.track(impressions_decorator) unless impressions_decorator.nil?
       treatments
     end
 
     def evaluate_treatment(feature_flag, feature_flag_name, bucketing_key, matching_key, attributes, calling_method, multiple = false)
-      impressions = []
+      impressions_decorator = []
       begin
         start = Time.now
         if feature_flag.nil? && ready?
@@ -358,20 +358,20 @@ module SplitIoClient
         end
 
         record_latency(calling_method, start)
-        impression = @impressions_manager.build_impression(matching_key, bucketing_key, feature_flag_name, treatment_data, { attributes: attributes, time: nil })
-        impressions << impression unless impression.nil?
+        impression_decorator = { impression: @impressions_manager.build_impression(matching_key, bucketing_key, feature_flag_name, treatment_data, feature_flag[:impressionsDisabled], { attributes: attributes, time: nil }), disabled: feature_flag[:impressionsDisabled] }
+        impressions_decorator << impression_decorator unless impression_decorator.nil?
       rescue StandardError => e
         @config.log_found_exception(__method__.to_s, e)
 
         record_exception(calling_method)
 
-        impression = @impressions_manager.build_impression(matching_key, bucketing_key, feature_flag_name, control_treatment, { attributes: attributes, time: nil })
-        impressions << impression unless impression.nil?
+        impression_decorator = { impression: @impressions_manager.build_impression(matching_key, bucketing_key, feature_flag_name, control_treatment, { attributes: attributes, time: nil }), disabled: false }
+        impressions_decorator << impression_decorator unless impression_decorator.nil?
 
-        return parsed_treatment(control_treatment.merge({ label: Engine::Models::Label::EXCEPTION }), multiple), impressions
+        return parsed_treatment(control_treatment.merge({ label: Engine::Models::Label::EXCEPTION }), multiple), impressions_decorator
       end
 
-      return parsed_treatment(treatment_data, multiple), impressions
+      return parsed_treatment(treatment_data, multiple), impressions_decorator
     end
 
     def control_treatment
