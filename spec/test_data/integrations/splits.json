@@ -1,6 +1,7 @@
 {
     "splits": [
       {
+        "impressionsDisabled": false,
         "trafficTypeName": "account",
         "name": "FACUNDO_TEST",
         "trafficAllocation": 59,
@@ -120,6 +121,7 @@
         "sets": ["set_3"]
       },
       {
+        "impressionsDisabled": false,
         "trafficTypeName": "account",
         "name": "testing",
         "trafficAllocation": 100,
@@ -233,6 +235,7 @@
         "sets": ["set_2"]
       },
       {
+        "impressionsDisabled": false,
         "trafficTypeName": "account",
         "name": "testing222",
         "trafficAllocation": 100,
@@ -286,6 +289,7 @@
         "sets": ["set_1", "set_2"]
       },
       {
+        "impressionsDisabled": false,
         "trafficTypeName": "account",
         "name": "a_new_split_2",
         "trafficAllocation": 99,
@@ -551,6 +555,7 @@
         "sets": []
       },
       {
+        "impressionsDisabled": false,
         "trafficTypeName": "account",
         "name": "test_string_without_attr",
         "trafficAllocation": 100,
@@ -620,6 +625,7 @@
         ]
       },
       {
+        "impressionsDisabled": false,
         "trafficTypeName": "user",
         "name": "Test",
         "trafficAllocation": 100,
@@ -745,6 +751,7 @@
         ]
       },
       {
+        "impressionsDisabled": false,
         "trafficTypeName": "account",
         "name": "Test_Save_1",
         "trafficAllocation": 100,
@@ -891,6 +898,7 @@
         ]
       },
       {
+        "impressionsDisabled": false,
         "trafficTypeName": "account",
         "name": "TEST",
         "trafficAllocation": 100,
@@ -939,6 +947,7 @@
         ]
       },
       {
+        "impressionsDisabled": false,
         "trafficTypeName": "user",
         "name": "benchmark_jw_1",
         "trafficAllocation": 100,
@@ -1025,6 +1034,7 @@
         ]
       },
       {
+        "impressionsDisabled": false,
         "trafficTypeName": "user",
         "name": "nico_tests",
         "trafficAllocation": 100,
@@ -1070,6 +1080,7 @@
         ]
       },
       {
+        "impressionsDisabled": false,
         "trafficTypeName": "account",
         "name": "testo2222",
         "trafficAllocation": 100,
@@ -1282,6 +1293,7 @@
         ]
       },
       {
+        "impressionsDisabled": false,
         "trafficTypeName": "user",
         "name": "Tagging",
         "trafficAllocation": 100,
@@ -1330,6 +1342,7 @@
         ]
       },
       {
+        "impressionsDisabled": false,
         "trafficTypeName": "account",
         "name": "Welcome_Page_UI",
         "trafficAllocation": 100,
@@ -1381,6 +1394,7 @@
         ]
       },
       {
+        "impressionsDisabled": false,
         "trafficTypeName": "test",
         "name": "pato_test_3",
         "trafficAllocation": 100,
@@ -1429,6 +1443,7 @@
         ]
       },
       {
+        "impressionsDisabled": false,
         "trafficTypeName": "account",
         "name": "testo23",
         "trafficAllocation": 100,
@@ -1477,6 +1492,7 @@
         ]
       },
       {
+        "impressionsDisabled": false,
         "trafficTypeName": "account",
         "name": "testo909090",
         "trafficAllocation": 100,
@@ -1643,6 +1659,7 @@
         ]
       },
       {
+        "impressionsDisabled": false,
         "trafficTypeName": "account",
         "name": "testo22",
         "trafficAllocation": 100,
@@ -1691,6 +1708,7 @@
         ]
       },
       {
+        "impressionsDisabled": false,
         "trafficTypeName": "user",
         "name": "test-net",
         "trafficAllocation": 100,
@@ -1739,6 +1757,7 @@
         ]
       },
       {
+        "impressionsDisabled": false,
         "trafficTypeName": "account",
         "name": "test_dep_2",
         "trafficAllocation": 100,
@@ -1831,6 +1850,7 @@
         ]
       },
       {
+        "impressionsDisabled": false,
         "trafficTypeName": "account",
         "name": "Definition_As_Of_Clickable_UI",
         "trafficAllocation": 100,
@@ -1911,6 +1931,7 @@
         ]
       },
       {
+        "impressionsDisabled": false,
         "trafficTypeName": "account",
         "name": "Identify_UI",
         "trafficAllocation": 100,
@@ -1959,6 +1980,7 @@
         ]
       },
       {
+        "impressionsDisabled": false,
         "trafficTypeName": "account",
         "name": "test_definition_as_of",
         "trafficAllocation": 100,
@@ -2007,6 +2029,7 @@
         ]
       },
       {
+        "impressionsDisabled": false,
         "trafficTypeName": "user",
         "name": "Test-jw-go",
         "trafficAllocation": 100,
@@ -2085,6 +2108,7 @@
         ]
       },
       {
+        "impressionsDisabled": false,
         "trafficTypeName": "user",
         "name": "benchmark_jw_7",
         "trafficAllocation": 100,
@@ -2133,6 +2157,7 @@
         ]
       },
       {
+        "impressionsDisabled": false,
         "trafficTypeName": "user",
         "name": "benchmark_jw_6",
         "trafficAllocation": 100,
@@ -2181,6 +2206,7 @@
         ]
       },
       {
+        "impressionsDisabled": false,
         "trafficTypeName": "user",
         "name": "benchmark_jw_5",
         "trafficAllocation": 100,
@@ -2229,6 +2255,7 @@
         ]
       },
       {
+        "impressionsDisabled": false,
         "trafficTypeName": "user",
         "name": "benchmark_jw_4",
         "trafficAllocation": 100,
@@ -2277,6 +2304,7 @@
         ]
       },
       {
+        "impressionsDisabled": false,
         "trafficTypeName": "user",
         "name": "benchmark_jw_3",
         "trafficAllocation": 100,
@@ -2325,6 +2353,7 @@
         ]
       },
       {
+        "impressionsDisabled": false,
         "trafficTypeName": "user",
         "name": "benchmark_jw_2",
         "trafficAllocation": 100,
@@ -2373,6 +2402,7 @@
         ]
       },
       {
+        "impressionsDisabled": false,
         "trafficTypeName": "account",
         "name": "MAURO_TEST",
         "trafficAllocation": 59,
