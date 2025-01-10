@@ -362,9 +362,7 @@ module SplitIoClient
         impressions_decorator << impression_decorator unless impression_decorator.nil?
       rescue StandardError => e
         @config.log_found_exception(__method__.to_s, e)
-        puts e.to_s
         record_exception(calling_method)
-        puts "split-client exception: #{treatment_data}"
         impression_decorator = { :impression => @impressions_manager.build_impression(matching_key, bucketing_key, feature_flag_name, control_treatment, false, { attributes: attributes, time: nil }), :disabled => false }
         impressions_decorator << impression_decorator unless impression_decorator.nil?
 
