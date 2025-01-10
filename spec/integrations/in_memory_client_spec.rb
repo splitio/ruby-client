@@ -45,7 +45,27 @@ describe SplitIoClient do
 #    sleep 1
   end
 
+  #  after(:each) do
+  #  client.destroy
+   # sleep 0.5
+  #end
+
   context '#get_treatment' do
+    it 'returns CONTROL when server return 500' do
+    #  stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916").to_return(status: 200, body: 'ok')
+      mock_split_changes_error
+      expect(client.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'control'
+
+      sleep 0.5
+      impressions = custom_impression_listener.queue
+      expect(impressions.size).to eq 1
+      expect(impressions[0][:matching_key]).to eq('nico_test')
+      expect(impressions[0][:split_name]).to eq('FACUNDO_TEST')
+      expect(impressions[0][:treatment][:treatment]).to eq('control')
+      expect(impressions[0][:treatment][:label]).to eq('not ready')
+      expect(impressions[0][:treatment][:change_number]).to eq(nil)
+    end
+
     it 'returns treatments with FACUNDO_TEST feature and check impressions' do
       stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916").to_return(status: 200, body: 'ok')
       client.block_until_ready
@@ -128,23 +148,6 @@ describe SplitIoClient do
 
       impressions = custom_impression_listener.queue
       expect(impressions.size).to eq 0
-    end
-
-    it 'returns CONTROL when server return 500' do
-      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916").to_return(status: 200, body: 'ok')
-      mock_split_changes_error
-
-      expect(client.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'control'
-
-      sleep 0.5
-      impressions = custom_impression_listener.queue
-
-      expect(impressions.size).to eq 1
-      expect(impressions[0][:matching_key]).to eq('nico_test')
-      expect(impressions[0][:split_name]).to eq('FACUNDO_TEST')
-      expect(impressions[0][:treatment][:treatment]).to eq('control')
-      expect(impressions[0][:treatment][:label]).to eq('not ready')
-      expect(impressions[0][:treatment][:change_number]).to eq(nil)
     end
 
     it 'with multiple factories returns on' do
@@ -450,7 +453,7 @@ describe SplitIoClient do
 
     it 'returns CONTROL when server return 500' do
       mock_split_changes_error
-
+      sleep 1
       result = client.get_treatments('nico_test', %w[FACUNDO_TEST random_treatment])
 
       expect(result[:FACUNDO_TEST]).to eq 'control'

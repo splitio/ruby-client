@@ -230,11 +230,6 @@ module SplitIoClient
     end
 
     def build_unique_keys_tracker
-      if @config.impressions_mode != :none
-        @unique_keys_tracker = Engine::Impressions::NoopUniqueKeysTracker.new
-        return
-      end
-
       bf = Cache::Filter::BloomFilter.new(30_000_000)
       filter_adapter = Cache::Filter::FilterAdapter.new(@config, bf)
       cache = Concurrent::Hash.new
@@ -242,8 +237,7 @@ module SplitIoClient
     end
 
     def build_impressions_observer
-      if (@config.cache_adapter == :redis && @config.impressions_mode != :optimized) ||
-         (@config.cache_adapter == :memory && @config.impressions_mode == :none)
+      if (@config.cache_adapter == :redis && @config.impressions_mode != :optimized)
         @impression_observer = Observers::NoopImpressionObserver.new
       else
         @impression_observer = Observers::ImpressionObserver.new
@@ -251,12 +245,7 @@ module SplitIoClient
     end
 
     def build_impression_counter
-      case @config.impressions_mode
-      when :debug
-        @impression_counter = Engine::Common::NoopImpressionCounter.new
-      else
-        @impression_counter = Engine::Common::ImpressionCounter.new
-      end
+      @impression_counter = Engine::Common::ImpressionCounter.new
     end
 
     def build_impressions_sender_adapter

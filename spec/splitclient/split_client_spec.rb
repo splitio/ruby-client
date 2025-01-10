@@ -92,6 +92,127 @@ describe SplitIoClient::SplitClient do
   end
 end
 
+context 'impressions toggle' do
+  it 'optimized mode' do
+    config = SplitIoClient::SplitConfig.new(cache_adapter: :memory, impressions_mode: :optimized)
+    segments_repository = SplitIoClient::Cache::Repositories::SegmentsRepository.new(config)
+    flag_sets_repository = SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new([])
+    flag_set_filter = SplitIoClient::Cache::Filter::FlagSetsFilter.new([])
+    splits_repository = SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter)
+    impressions_repository = SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config)
+    runtime_producer = SplitIoClient::Telemetry::RuntimeProducer.new(config)
+    events_repository = SplitIoClient::Cache::Repositories::EventsRepository.new(config, 'sdk_key', runtime_producer)
+    impressions_counter = SplitIoClient::Engine::Common::ImpressionCounter.new
+    filter_adapter = SplitIoClient::Cache::Filter::FilterAdapter.new(config, SplitIoClient::Cache::Filter::BloomFilter.new(1_000))
+    unique_keys_tracker = SplitIoClient::Engine::Impressions::UniqueKeysTracker.new(config, filter_adapter, nil,  Concurrent::Hash.new)
+    impression_manager = SplitIoClient::Engine::Common::ImpressionManager.new(config, impressions_repository, impressions_counter, runtime_producer, SplitIoClient::Observers::ImpressionObserver.new, unique_keys_tracker)
+    evaluation_producer = SplitIoClient::Telemetry::EvaluationProducer.new(config)
+    evaluator = SplitIoClient::Engine::Parser::Evaluator.new(segments_repository, splits_repository, config)
+    split_client = SplitIoClient::SplitClient.new('sdk_key', {:splits => splits_repository, :segments => segments_repository, :impressions => impressions_repository, :events => events_repository}, nil, config, impression_manager, evaluation_producer, evaluator, SplitIoClient::Validators.new(config))
+
+    splits = File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/imp-toggle.json'))
+    splits_repository.update([JSON.parse(splits,:symbolize_names => true)[:splits][0]], [], -1)
+    splits_repository.update([JSON.parse(splits,:symbolize_names => true)[:splits][1]], [], -1)
+    splits_repository.update([JSON.parse(splits,:symbolize_names => true)[:splits][2]], [], -1)
+
+    expect(split_client.get_treatment('key1', 'with_track_disabled')).to eq('off')
+    expect(split_client.get_treatment('key2', 'with_track_enabled')).to eq('off')
+    expect(split_client.get_treatment('key3', 'without_track')).to eq('off')
+
+    imps = impressions_repository.batch
+    expect(imps.length()).to eq(2)
+    expect(imps[0][:i][:f]).to eq('with_track_enabled')
+    expect(imps[1][:i][:f]).to eq('without_track')
+
+    unique_keys = unique_keys_tracker.instance_variable_get(:@cache)
+    expect(unique_keys.key?('with_track_disabled')).to eq(true)
+    expect(unique_keys.length).to eq(1)
+    imp_count = impressions_counter.pop_all
+    expect(imp_count.keys()[0].include? ('with_track_disabled')).to eq(true)
+    expect(imp_count.length).to eq(1)
+  end
+
+  it 'debug mode' do
+    config = SplitIoClient::SplitConfig.new(cache_adapter: :memory, impressions_mode: :debug)
+    segments_repository = SplitIoClient::Cache::Repositories::SegmentsRepository.new(config)
+    flag_sets_repository = SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new([])
+    flag_set_filter = SplitIoClient::Cache::Filter::FlagSetsFilter.new([])
+    splits_repository = SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter)
+    impressions_repository = SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config)
+    runtime_producer = SplitIoClient::Telemetry::RuntimeProducer.new(config)
+    events_repository = SplitIoClient::Cache::Repositories::EventsRepository.new(config, 'sdk_key', runtime_producer)
+    impressions_counter = SplitIoClient::Engine::Common::ImpressionCounter.new
+    filter_adapter = SplitIoClient::Cache::Filter::FilterAdapter.new(config, SplitIoClient::Cache::Filter::BloomFilter.new(1_000))
+    unique_keys_tracker = SplitIoClient::Engine::Impressions::UniqueKeysTracker.new(config, filter_adapter, nil,  Concurrent::Hash.new)
+    impression_manager = SplitIoClient::Engine::Common::ImpressionManager.new(config, impressions_repository, impressions_counter, runtime_producer, SplitIoClient::Observers::ImpressionObserver.new, unique_keys_tracker)
+    evaluation_producer = SplitIoClient::Telemetry::EvaluationProducer.new(config)
+    evaluator = SplitIoClient::Engine::Parser::Evaluator.new(segments_repository, splits_repository, config)
+    split_client = SplitIoClient::SplitClient.new('sdk_key', {:splits => splits_repository, :segments => segments_repository, :impressions => impressions_repository, :events => events_repository}, nil, config, impression_manager, evaluation_producer, evaluator, SplitIoClient::Validators.new(config))
+
+    splits = File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/imp-toggle.json'))
+    splits_repository.update([JSON.parse(splits,:symbolize_names => true)[:splits][0]], [], -1)
+    splits_repository.update([JSON.parse(splits,:symbolize_names => true)[:splits][1]], [], -1)
+    splits_repository.update([JSON.parse(splits,:symbolize_names => true)[:splits][2]], [], -1)
+
+    expect(split_client.get_treatment('key1', 'with_track_disabled')).to eq('off')
+    expect(split_client.get_treatment('key2', 'with_track_enabled')).to eq('off')
+    expect(split_client.get_treatment('key3', 'without_track')).to eq('off')
+
+    imps = impressions_repository.batch
+    expect(imps.length()).to eq(2)
+    expect(imps[0][:i][:f]).to eq('with_track_enabled')
+    expect(imps[1][:i][:f]).to eq('without_track')
+
+    unique_keys = unique_keys_tracker.instance_variable_get(:@cache)
+    expect(unique_keys.key?('with_track_disabled')).to eq(true)
+    expect(unique_keys.length).to eq(1)
+    imp_count = impressions_counter.pop_all
+    expect(imp_count.keys()[0].include? ('with_track_disabled')).to eq(true)
+    expect(imp_count.length).to eq(1)
+  end
+
+  it 'none mode' do
+    config = SplitIoClient::SplitConfig.new(cache_adapter: :memory, impressions_mode: :none)
+    segments_repository = SplitIoClient::Cache::Repositories::SegmentsRepository.new(config)
+    flag_sets_repository = SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new([])
+    flag_set_filter = SplitIoClient::Cache::Filter::FlagSetsFilter.new([])
+    splits_repository = SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter)
+    impressions_repository = SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config)
+    runtime_producer = SplitIoClient::Telemetry::RuntimeProducer.new(config)
+    events_repository = SplitIoClient::Cache::Repositories::EventsRepository.new(config, 'sdk_key', runtime_producer)
+    impressions_counter = SplitIoClient::Engine::Common::ImpressionCounter.new
+    filter_adapter = SplitIoClient::Cache::Filter::FilterAdapter.new(config, SplitIoClient::Cache::Filter::BloomFilter.new(1_000))
+    unique_keys_tracker = SplitIoClient::Engine::Impressions::UniqueKeysTracker.new(config, filter_adapter, nil,  Concurrent::Hash.new)
+    impression_manager = SplitIoClient::Engine::Common::ImpressionManager.new(config, impressions_repository, impressions_counter, runtime_producer, SplitIoClient::Observers::ImpressionObserver.new, unique_keys_tracker)
+    evaluation_producer = SplitIoClient::Telemetry::EvaluationProducer.new(config)
+    evaluator = SplitIoClient::Engine::Parser::Evaluator.new(segments_repository, splits_repository, config)
+    split_client = SplitIoClient::SplitClient.new('sdk_key', {:splits => splits_repository, :segments => segments_repository, :impressions => impressions_repository, :events => events_repository}, nil, config, impression_manager, evaluation_producer, evaluator, SplitIoClient::Validators.new(config))
+
+    splits = File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/imp-toggle.json'))
+    splits_repository.update([JSON.parse(splits,:symbolize_names => true)[:splits][0]], [], -1)
+    splits_repository.update([JSON.parse(splits,:symbolize_names => true)[:splits][1]], [], -1)
+    splits_repository.update([JSON.parse(splits,:symbolize_names => true)[:splits][2]], [], -1)
+
+    expect(split_client.get_treatment('key1', 'with_track_disabled')).to eq('off')
+    expect(split_client.get_treatment('key2', 'with_track_enabled')).to eq('off')
+    expect(split_client.get_treatment('key3', 'without_track')).to eq('off')
+
+    imps = impressions_repository.batch
+    expect(imps.length()).to eq(0)
+
+    unique_keys = unique_keys_tracker.instance_variable_get(:@cache)
+    expect(unique_keys.key?('with_track_disabled')).to eq(true)
+    expect(unique_keys.key?('with_track_enabled')).to eq(true)
+    expect(unique_keys.key?('without_track')).to eq(true)
+    expect(unique_keys.length).to eq(3)
+    imp_count = impressions_counter.pop_all
+    expect(imp_count.keys()[0].include? ('with_track_disabled')).to eq(true)
+    expect(imp_count.keys()[1].include? ('with_track_enabled')).to eq(true)
+    expect(imp_count.keys()[2].include? ('without_track')).to eq(true)
+    expect(imp_count.length).to eq(3)
+  end
+end
+
 def mock_segment_changes(segment_name, segment_json, since)
   stub_request(:get, "https://sdk.split.io/api/segmentChanges/#{segment_name}?since=#{since}")
     .to_return(status: 200, body: segment_json)
