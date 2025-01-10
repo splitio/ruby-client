@@ -1235,8 +1235,6 @@ describe SplitIoClient do
       imp_count = impression_counter.pop_all
       expect(imp_count.keys()[0].include? ('with_track_disabled')).to eq(true)
       expect(imp_count.length).to eq(1)
-      client_imp_toggle.destroy
-      sleep 1
     end
     it 'debug mode' do
       splits_imp_toggle = File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/imp-toggle.json'))
@@ -1271,10 +1269,8 @@ describe SplitIoClient do
       imp_count = impression_counter.pop_all
       expect(imp_count.keys()[0].include? ('with_track_disabled')).to eq(true)
       expect(imp_count.length).to eq(1)
-      client_imp_toggle.destroy
-      sleep 1
     end
-    it 'debug mode' do
+    it 'none mode' do
       splits_imp_toggle = File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/imp-toggle.json'))
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
           .to_return(status: 200, body: splits_imp_toggle)
@@ -1308,8 +1304,6 @@ describe SplitIoClient do
       expect(imp_count.keys()[1].include? ('with_track_enabled')).to eq(true)
       expect(imp_count.keys()[2].include? ('without_track')).to eq(true)
       expect(imp_count.length).to eq(3)
-      client_imp_toggle.destroy
-      sleep 1
     end
   end
 end
