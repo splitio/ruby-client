@@ -45,6 +45,7 @@ module SplitIoClient
             stats = { dropped: 0, queued: 0, dedupe: 0 }
             begin
               next if @config.impressions_mode == :none || impression_decorator[:disabled]
+
               if @config.impressions_mode == :debug
                 track_debug_mode([impression_decorator[:impression]], stats)
               else
