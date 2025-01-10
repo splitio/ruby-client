@@ -358,12 +358,6 @@ module SplitIoClient
         end
 
         record_latency(calling_method, start)
-        if !feature_flag.nil?
-          impressions_disabled = feature_flag[:impressionsDisabled]
-        else
-          impressions_disabled = false
-        end
-
         impression_decorator = { :impression => @impressions_manager.build_impression(matching_key, bucketing_key, feature_flag_name, treatment_data, impressions_disabled, params={ attributes: attributes, time: nil }), :disabled => impressions_disabled }
         impressions_decorator << impression_decorator unless impression_decorator.nil?
       rescue StandardError => e
