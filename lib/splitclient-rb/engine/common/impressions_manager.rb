@@ -21,7 +21,7 @@ module SplitIoClient
         def build_impression(matching_key, bucketing_key, split_name, treatment_data, impressions_disabled, params = {})
           impression_data = impression_data(matching_key, bucketing_key, split_name, treatment_data, params[:time])
           begin
-            if @config.impressions_mode == :none || impressions_disabled # In NONE mode we should track the total amount of evaluations and the unique keys.
+            if @config.impressions_mode == :none || impressions_disabled
               @impression_counter.inc(split_name, impression_data[:m])
               @unique_keys_tracker.track(split_name, matching_key)
             elsif @config.impressions_mode == :debug #  In DEBUG mode we should calculate the pt only.
@@ -44,11 +44,10 @@ module SplitIoClient
             impression_router.add_bulk([impression_decorator[:impression]])
             stats = { dropped: 0, queued: 0, dedupe: 0 }
             begin
-              if @config.impressions_mode == :none || impression_decorator[:disabled]
-                next
-              elsif @config.impressions_mode == :debug
+              next if @config.impressions_mode == :none || impression_decorator[:disabled]
+              if @config.impressions_mode == :debug
                 track_debug_mode([impression_decorator[:impression]], stats)
-              elsif @config.impressions_mode == :optimized
+              else
                 track_optimized_mode([impression_decorator[:impression]], stats)
               end
             rescue StandardError => e
