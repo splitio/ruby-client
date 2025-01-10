@@ -358,7 +358,7 @@ module SplitIoClient
         end
 
         record_latency(calling_method, start)
-        impression_decorator = { :impression => @impressions_manager.build_impression(matching_key, bucketing_key, feature_flag_name, treatment_data, impressions_disabled, params={ attributes: attributes, time: nil }), :disabled => impressions_disabled }
+        impression_decorator = { :impression => @impressions_manager.build_impression(matching_key, bucketing_key, feature_flag_name, treatment_data, impressions_disabled, { attributes: attributes, time: nil }), :disabled => impressions_disabled }
         impressions_decorator << impression_decorator unless impression_decorator.nil?
       rescue StandardError => e
         @config.log_found_exception(__method__.to_s, e)
