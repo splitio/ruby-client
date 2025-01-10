@@ -18,8 +18,8 @@ module SplitIoClient
           @unique_keys_tracker = unique_keys_tracker
         end
 
-        def build_impression(matching_key, bucketing_key, split_name, treatment, impressions_disabled, params = {})
-          impression_data = impression_data(matching_key, bucketing_key, split_name, treatment, params[:time])
+        def build_impression(matching_key, bucketing_key, split_name, treatment_data, impressions_disabled, params = {})
+          impression_data = impression_data(matching_key, bucketing_key, split_name, treatment_data, params[:time])
           begin
             if @config.impressions_mode == :none || impressions_disabled # In NONE mode we should track the total amount of evaluations and the unique keys.
               @impression_counter.inc(split_name, impression_data[:m])
@@ -41,10 +41,11 @@ module SplitIoClient
           return if impressions_decorator.empty?
 
           impressions_decorator.each do |impression_decorator|
+            impression_router.add_bulk([impression_decorator[:impression]])
             stats = { dropped: 0, queued: 0, dedupe: 0 }
             begin
               if @config.impressions_mode == :none || impression_decorator[:disabled]
-                return
+                next
               elsif @config.impressions_mode == :debug
                 track_debug_mode([impression_decorator[:impression]], stats)
               elsif @config.impressions_mode == :optimized
@@ -54,7 +55,6 @@ module SplitIoClient
               @config.log_found_exception(__method__.to_s, e)
             ensure
               record_stats(stats)
-              impression_router.add_bulk([impression_decorator[:impression]])
             end
           end
         end

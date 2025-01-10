@@ -267,7 +267,7 @@ module SplitIoClient
         to_return = Hash.new
         sanitized_feature_flag_names.each {|name|
           to_return[name.to_sym] = control_treatment_with_config
-          impressions << @impressions_manager.build_impression(matching_key, bucketing_key, name.to_sym, control_treatment_with_config.merge({ label: Engine::Models::Label::NOT_READY }), { attributes: attributes, time: nil })
+          impressions << { :impression => @impressions_manager.build_impression(matching_key, bucketing_key, name.to_sym, control_treatment_with_config.merge({ :label => Engine::Models::Label::NOT_READY }), false, { attributes: attributes, time: nil }), :disabled => false }
         }
         @impressions_manager.track(impressions)
         return to_return
@@ -278,7 +278,6 @@ module SplitIoClient
         valid_feature_flag_names << feature_flag_name unless feature_flag_name.nil?
       }
       start = Time.now
-      impressions_total = []
 
       feature_flags = @splits_repository.splits(valid_feature_flag_names)
       treatments = Hash.new
@@ -291,15 +290,14 @@ module SplitIoClient
           next
         end
         treatments_labels_change_numbers, impressions = evaluate_treatment(feature_flag, key, bucketing_key, matching_key, attributes, calling_method)
-        impressions_total.concat(impressions) unless impressions.nil?
         treatments[key] =
         {
           treatment: treatments_labels_change_numbers[:treatment],
           config: treatments_labels_change_numbers[:config]
         }
+        @impressions_manager.track(impressions) unless impressions.empty?
       end
       record_latency(calling_method, start)
-      @impressions_manager.track(impressions_total) unless impressions_total.empty?
 
       treatments.merge(invalid_treatments)
     end
@@ -345,37 +343,37 @@ module SplitIoClient
         if feature_flag.nil? && ready?
           @config.logger.warn("#{calling_method}: you passed #{feature_flag_name} that " \
             'does not exist in this environment, please double check what feature flags exist in the Split user interface')
-          return parsed_treatment(control_treatment.merge({ label: Engine::Models::Label::NOT_FOUND }), multiple), nil
+          return parsed_treatment(control_treatment.merge({ :label => Engine::Models::Label::NOT_FOUND }), multiple), nil
         end
-        treatment_data =
+
         if !feature_flag.nil? && ready?
-          @evaluator.evaluate_feature_flag(
+          treatment_data = @evaluator.evaluate_feature_flag(
             { bucketing_key: bucketing_key, matching_key: matching_key }, feature_flag, attributes
           )
+          impressions_disabled = feature_flag[:impressionsDisabled]
         else
           @config.logger.error("#{calling_method}: the SDK is not ready, results may be incorrect for feature flag #{feature_flag_name}. Make sure to wait for SDK readiness before using this method.")
-          control_treatment.merge({ label: Engine::Models::Label::NOT_READY })
+          treatment_data = control_treatment.merge({ :label => Engine::Models::Label::NOT_READY })
+          impressions_disabled = false
         end
 
         record_latency(calling_method, start)
-        impression_decorator = { impression: @impressions_manager.build_impression(matching_key, bucketing_key, feature_flag_name, treatment_data, feature_flag[:impressionsDisabled], { attributes: attributes, time: nil }), disabled: feature_flag[:impressionsDisabled] }
+        impression_decorator = { :impression => @impressions_manager.build_impression(matching_key, bucketing_key, feature_flag_name, treatment_data, impressions_disabled, params={ attributes: attributes, time: nil }), :disabled => impressions_disabled }
         impressions_decorator << impression_decorator unless impression_decorator.nil?
       rescue StandardError => e
         @config.log_found_exception(__method__.to_s, e)
-
         record_exception(calling_method)
-
-        impression_decorator = { impression: @impressions_manager.build_impression(matching_key, bucketing_key, feature_flag_name, control_treatment, { attributes: attributes, time: nil }), disabled: false }
+        impression_decorator = { :impression => @impressions_manager.build_impression(matching_key, bucketing_key, feature_flag_name, control_treatment, false, { attributes: attributes, time: nil }), :disabled => false }
         impressions_decorator << impression_decorator unless impression_decorator.nil?
 
-        return parsed_treatment(control_treatment.merge({ label: Engine::Models::Label::EXCEPTION }), multiple), impressions_decorator
+        return parsed_treatment(control_treatment.merge({ :label => Engine::Models::Label::EXCEPTION }), multiple), impressions_decorator
       end
 
       return parsed_treatment(treatment_data, multiple), impressions_decorator
     end
 
     def control_treatment
-      { treatment: Engine::Models::Treatment::CONTROL }
+      { :treatment => Engine::Models::Treatment::CONTROL }
     end
 
     def control_treatment_with_config

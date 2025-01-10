@@ -1,6 +1,7 @@
 {
   "splits": [
     {
+      "impressionsDisabled": false,
       "trafficTypeName": "user",
       "name": "push_test",
       "trafficAllocation": 44,
