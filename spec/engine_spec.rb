@@ -56,10 +56,6 @@ describe SplitIoClient, type: :client do
       Redis.new.flushall if @mode.equal?(:consumer)
     end
 
-    after(:each) do
-      subject.destroy
-    end
-
     context '#equal_to_set_matcher and get_treatment validation attributes' do
       before do
         equal_to_set_matcher_json = File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/engine/equal_to_set_matcher.json'))
