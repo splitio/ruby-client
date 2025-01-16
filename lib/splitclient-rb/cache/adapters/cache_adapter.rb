@@ -8,7 +8,7 @@ module SplitIoClient
         def_delegators :@adapter, :initialize_set, :set_bool, :pipelined
 
         def initialize(config)
-          @cache = LruRedux::TTL::ThreadSafeCache.new(config.max_cache_size, config.cache_ttl)
+          @cache = LruRedux::TTL::ThreadSafeCache.new(config.max_cache_size, config.cache_ttl, config.ignore_empty_cache)
           @adapter = config.cache_adapter
         end
 

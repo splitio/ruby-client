@@ -23,6 +23,7 @@ module SplitIoClient
     # @option opts [Int] :impressions_queue_size Size of the impressions queue in the memory repository. Once reached, newer impressions will be dropped
     # @option opts [Int] :impressions_bulk_size Max number of impressions to be sent to the backend on each post
     # @option opts [#log] :impression_listener this object will capture all impressions and process them through `#log`
+    # @option opts [Boolean] :ignore_empty_cache (true) The value to enable or disable caching nil values.
     # @option opts [Int] :cache_ttl Time to live in seconds for the memory cache values when using Redis.
     # @option opts [Int] :max_cache_size Max number of items to be held in the memory cache before prunning when using Redis.
     # @return [type] SplitConfig with configuration options
@@ -70,6 +71,7 @@ module SplitIoClient
       @machine_name = SplitConfig.machine_hostname(@ip_addresses_enabled, opts[:machine_name], opts[:cache_adapter] || SplitConfig.default_cache_adapter)
       @machine_ip = SplitConfig.machine_ip(@ip_addresses_enabled, opts[:machine_ip], opts[:cache_adapter] || SplitConfig.default_cache_adapter)
 
+      @ignore_empty_cache = opts[:ignore_empty_cache] || SplitConfig.ignore_empty_cache
       @cache_ttl = opts[:cache_ttl] || SplitConfig.cache_ttl
       @max_cache_size = opts[:max_cache_size] || SplitConfig.max_cache_size
 
@@ -221,6 +223,7 @@ module SplitIoClient
     attr_accessor :machine_ip
     attr_accessor :machine_name
 
+    attr_accessor :ignore_empty_cache
     attr_accessor :cache_ttl
     attr_accessor :max_cache_size
 
@@ -592,6 +595,14 @@ module SplitIoClient
     end
 
     #
+    # The default ignore_empty_cache value
+    #
+    # @return [boolean]
+    def self.ignore_empty_cache
+      true
+    end
+
+    #
     # The default cache time to live
     #
     # @return [int]
@@ -599,6 +610,7 @@ module SplitIoClient
       5
     end
 
+    #
     # The default max cache size
     #
     # @return [int]
@@ -606,6 +618,7 @@ module SplitIoClient
       500
     end
 
+    #
     # The default max key size
     #
     # @return [int]
