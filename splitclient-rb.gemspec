@@ -56,9 +56,9 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'faraday-net_http_persistent', '>= 1.0', '< 3.0'
   spec.add_runtime_dependency 'json', '>= 1.8', '< 3.0'
   spec.add_runtime_dependency 'jwt', '>= 1.0.0', '< 3.0'
-  spec.add_runtime_dependency 'lru_redux', '~> 1.1'
   spec.add_runtime_dependency 'net-http-persistent', '>= 2.9', '< 5.0'
   spec.add_runtime_dependency 'redis', '>= 4.0.0', '< 6.0'
+  spec.add_runtime_dependency 'sin_lru_redux', '~> 2.5'
   spec.add_runtime_dependency 'socketry', '>= 0.4', '< 1.0'
   spec.add_runtime_dependency 'thread_safe', '~> 0.3'
 end
