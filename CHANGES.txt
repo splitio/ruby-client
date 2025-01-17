@@ -1,6 +1,6 @@
 CHANGES
 
-8.5.0 (Jan xx, 2025)
+8.5.0 (Jan 17, 2025)
 - Fixed high cpu usage when unique keys are cleared every 24 hours.
 - Added support for the new impressions tracking toggle available on feature flags, both respecting the setting and including the new field being returned on SplitView type objects. Read more in our docs.
 
