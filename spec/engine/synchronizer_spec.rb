@@ -47,6 +47,13 @@ describe SplitIoClient::Engine::Synchronizer do
       mock_segment_changes('segment3', segment3, '1470947453879')
     end
 
+    it 'senders should start always' do
+      synchronizer.start_periodic_data_recording
+      sleep (2)
+      expect(config.threads.key?(:impressions_sender)).to eq(true)
+      expect(config.threads.key?(:impressions_count_sender)).to eq(true)
+    end
+
     it 'sync_all asynchronous - should return true' do
       result = synchronizer.sync_all
 
