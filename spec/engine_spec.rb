@@ -48,6 +48,8 @@ describe SplitIoClient, type: :client do
       stub_request(:any, /https:\/\/events.*/).to_return(status: 200, body: '')
       stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.1&since/)
       .to_return(status: 200, body: '')
+      stub_request(:post, "https://telemetry.split.io/api/v1/metrics/config")
+      .to_return(status: 200, body: '')
     end
 
     before :each do
@@ -726,6 +728,7 @@ describe SplitIoClient, type: :client do
 
     context 'whitelist matcher' do
       before do
+        stub_request(:get, "https://sdk.split.io/api/segmentChanges/demo?since=-1").to_return(status: 200, body: "")
         whitelist_matcher_json = File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/engine/whitelist_matcher.json'))
         load_splits(whitelist_matcher_json, flag_sets_json)
         subject.block_until_ready
@@ -832,20 +835,18 @@ describe SplitIoClient, type: :client do
       before do
         impressions_test_json = File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/engine/impressions_test.json'))
         load_splits(impressions_test_json, flag_sets_json)
-        stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.1&since/).to_return(status: 200, body: '')
+        subject.block_until_ready(5)
       end
 
       it 'returns correct impressions for get_treatments checking ' do
-        subject.get_treatments('26', %w[sample_feature beta_feature])
         # Need this because we're storing impressions in the Set
         # Without sleep we may have identical impressions (including time)
         # In that case only one impression with key "26" would be stored
         sleep 1
 
         subject.get_treatments('26', %w[sample_feature beta_feature])
-
+        sleep 1
         impressions = customer_impression_listener.queue
-
         expect(impressions.size >= 2).to be true
         close_redis
       end
@@ -872,7 +873,8 @@ describe SplitIoClient, type: :client do
         before do
           traffic_allocation_json = File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/splits_traffic_allocation.json'))
           load_splits(traffic_allocation_json, flag_sets_json)
-          subject.block_until_ready
+          subject.block_until_ready(5)
+          add_splits_to_repository(traffic_allocation_json)
         end
 
         it 'returns expected treatment' do
@@ -1267,7 +1269,8 @@ private
 
 def load_splits(splits_json, flag_sets_json)
   if @mode.equal?(:standalone)
-    stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.1&since.*/)
+#    stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.1&since.*/)
+    stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=-1")
     .to_return(status: 200, body: splits_json)
   else
     add_splits_to_repository(splits_json)

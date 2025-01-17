@@ -46,11 +46,12 @@ describe SplitIoClient::Cache::Senders::LocalhostRepoCleaner do
       treatment_data = { treatment: 'on', label: 'sample_rule', change_number: 1_533_177_602_748 }
       params = { attributes: {}, time: nil }
       impressions = []
-      impressions << impressions_manager.build_impression('matching_key',
+      impressions << { :impression => impressions_manager.build_impression('matching_key',
                                                           'foo1',
                                                           'foo1',
                                                           treatment_data,
-                                                          params)
+                                                          false,
+                                                          params), :disabled => false }
 
       impressions_manager.track(impressions)
 

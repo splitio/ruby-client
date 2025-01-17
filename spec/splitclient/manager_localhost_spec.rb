@@ -21,7 +21,8 @@ describe SplitIoClient do
       name: 'local_feature',
       traffic_type_name: nil,
       treatments: ['local_treatment'],
-      sets: [] }
+      sets: [],
+      impressions_disabled: nil }
   end
 
   let(:split_views) do
@@ -32,7 +33,8 @@ describe SplitIoClient do
        name: 'local_feature',
        traffic_type_name: nil,
        treatments: ['local_treatment'],
-       sets: [] },
+       sets: [],
+       impressions_disabled: nil  },
      { change_number: nil,
        configs: { local_treatment2: nil },
        default_treatment: "control_treatment",
@@ -40,7 +42,8 @@ describe SplitIoClient do
        name: 'local_feature2',
        traffic_type_name: nil,
        treatments: ['local_treatment2'],
-       sets: [] }]
+       sets: [],
+       impressions_disabled: nil  }]
   end
 
   it 'validates the calling manager.splits returns the offline data' do
@@ -70,7 +73,8 @@ describe SplitIoClient do
          name: 'multiple_keys_feature',
          traffic_type_name: nil,
          treatments: %w[off on],
-         sets: [] },
+         sets: [],
+         impressions_disabled: nil  },
        { change_number: nil,
          configs: {
            on: '{"desc":"this applies only to ON and only for john_doe. The rest will receive OFF"}',
@@ -81,7 +85,8 @@ describe SplitIoClient do
          name: 'single_key_feature',
          traffic_type_name: nil,
          treatments: %w[on off],
-         sets: [] },
+         sets: [],
+         impressions_disabled: nil  },
        { change_number: nil,
          configs: {
            off: '{"desc":"this applies only to OFF treatment"}'
@@ -91,7 +96,8 @@ describe SplitIoClient do
          name: 'no_keys_feature',
          traffic_type_name: nil,
          treatments: %w[off],
-         sets: []  }]
+         sets: [],
+         impressions_disabled: nil   }]
     end
 
     it 'returns split_names' do
