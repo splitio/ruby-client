@@ -1,5 +1,9 @@
 CHANGES
 
+8.5.0 (Jan 17, 2025)
+- Fixed high cpu usage when unique keys are cleared every 24 hours.
+- Added support for the new impressions tracking toggle available on feature flags, both respecting the setting and including the new field being returned on SplitView type objects. Read more in our docs.
+
 8.4.0 (May 3, 2024)
 - Fixed issue preventing Impressopns and Events posting if client.destroy is called before the post threads started
 - Added support for targeting rules based on semantic versions (https://semver.org/).

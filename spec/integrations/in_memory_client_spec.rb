@@ -45,7 +45,27 @@ describe SplitIoClient do
 #    sleep 1
   end
 
+  #  after(:each) do
+  #  client.destroy
+   # sleep 0.5
+  #end
+
   context '#get_treatment' do
+    it 'returns CONTROL when server return 500' do
+    #  stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916").to_return(status: 200, body: 'ok')
+      mock_split_changes_error
+      expect(client.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'control'
+
+      sleep 0.5
+      impressions = custom_impression_listener.queue
+      expect(impressions.size).to eq 1
+      expect(impressions[0][:matching_key]).to eq('nico_test')
+      expect(impressions[0][:split_name]).to eq('FACUNDO_TEST')
+      expect(impressions[0][:treatment][:treatment]).to eq('control')
+      expect(impressions[0][:treatment][:label]).to eq('not ready')
+      expect(impressions[0][:treatment][:change_number]).to eq(nil)
+    end
+
     it 'returns treatments with FACUNDO_TEST feature and check impressions' do
       stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916").to_return(status: 200, body: 'ok')
       client.block_until_ready
@@ -128,23 +148,6 @@ describe SplitIoClient do
 
       impressions = custom_impression_listener.queue
       expect(impressions.size).to eq 0
-    end
-
-    it 'returns CONTROL when server return 500' do
-      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916").to_return(status: 200, body: 'ok')
-      mock_split_changes_error
-
-      expect(client.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'control'
-
-      sleep 0.5
-      impressions = custom_impression_listener.queue
-
-      expect(impressions.size).to eq 1
-      expect(impressions[0][:matching_key]).to eq('nico_test')
-      expect(impressions[0][:split_name]).to eq('FACUNDO_TEST')
-      expect(impressions[0][:treatment][:treatment]).to eq('control')
-      expect(impressions[0][:treatment][:label]).to eq('not ready')
-      expect(impressions[0][:treatment][:change_number]).to eq(nil)
     end
 
     it 'with multiple factories returns on' do
@@ -450,7 +453,7 @@ describe SplitIoClient do
 
     it 'returns CONTROL when server return 500' do
       mock_split_changes_error
-
+      sleep 1
       result = client.get_treatments('nico_test', %w[FACUNDO_TEST random_treatment])
 
       expect(result[:FACUNDO_TEST]).to eq 'control'
@@ -1196,7 +1199,112 @@ describe SplitIoClient do
       result = client1.get_treatments_with_config_by_flag_sets('nico_test', ['set_2', 'set_3'])
       expect(result[:FACUNDO_TEST]).to eq({:config=>"{\"color\":\"green\"}", :treatment=>"on"})
     end
+  end
 
+  context 'impressions toggle' do
+    it 'optimized mode' do
+      splits_imp_toggle = File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/imp-toggle.json'))
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
+          .to_return(status: 200, body: splits_imp_toggle)
+      factory_imp_toggle =
+        SplitIoClient::SplitFactory.new('test_api_key',
+          impressions_mode: :optimized,
+          features_refresh_rate: 9999,
+          telemetry_refresh_rate: 99999,
+          impressions_refresh_rate: 99999,
+          streaming_enabled: false)
+
+      client_imp_toggle = factory_imp_toggle.client
+      client_imp_toggle.block_until_ready
+
+      expect(client_imp_toggle.get_treatment('key1', 'with_track_disabled')).to eq('off')
+      expect(client_imp_toggle.get_treatment('key2', 'with_track_enabled')).to eq('off')
+      expect(client_imp_toggle.get_treatment('key3', 'without_track')).to eq('off')
+
+      impressions_repository = client_imp_toggle.instance_variable_get(:@impressions_repository)
+      imps = impressions_repository.batch
+      expect(imps.length()).to eq(2)
+      expect(imps[0][:i][:f]).to eq('with_track_enabled')
+      expect(imps[1][:i][:f]).to eq('without_track')
+
+      unique_keys_tracker = factory_imp_toggle.instance_variable_get(:@unique_keys_tracker)
+      unique_keys = unique_keys_tracker.instance_variable_get(:@cache)
+      expect(unique_keys.key?('with_track_disabled')).to eq(true)
+      expect(unique_keys.length).to eq(1)
+      impression_counter = factory_imp_toggle.instance_variable_get(:@impression_counter)
+      imp_count = impression_counter.pop_all
+      expect(imp_count.keys()[0].include? ('with_track_disabled')).to eq(true)
+      expect(imp_count.length).to eq(1)
+    end
+    it 'debug mode' do
+      splits_imp_toggle = File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/imp-toggle.json'))
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
+          .to_return(status: 200, body: splits_imp_toggle)
+      factory_imp_toggle =
+        SplitIoClient::SplitFactory.new('test_api_key',
+          impressions_mode: :debug,
+          features_refresh_rate: 9999,
+          telemetry_refresh_rate: 99999,
+          impressions_refresh_rate: 99999,
+          streaming_enabled: false)
+
+      client_imp_toggle = factory_imp_toggle.client
+      client_imp_toggle.block_until_ready
+
+      expect(client_imp_toggle.get_treatment('key1', 'with_track_disabled')).to eq('off')
+      expect(client_imp_toggle.get_treatment('key2', 'with_track_enabled')).to eq('off')
+      expect(client_imp_toggle.get_treatment('key3', 'without_track')).to eq('off')
+
+      impressions_repository = client_imp_toggle.instance_variable_get(:@impressions_repository)
+      imps = impressions_repository.batch
+      expect(imps.length()).to eq(2)
+      expect(imps[0][:i][:f]).to eq('with_track_enabled')
+      expect(imps[1][:i][:f]).to eq('without_track')
+
+      unique_keys_tracker = factory_imp_toggle.instance_variable_get(:@unique_keys_tracker)
+      unique_keys = unique_keys_tracker.instance_variable_get(:@cache)
+      expect(unique_keys.key?('with_track_disabled')).to eq(true)
+      expect(unique_keys.length).to eq(1)
+      impression_counter = factory_imp_toggle.instance_variable_get(:@impression_counter)
+      imp_count = impression_counter.pop_all
+      expect(imp_count.keys()[0].include? ('with_track_disabled')).to eq(true)
+      expect(imp_count.length).to eq(1)
+    end
+    it 'none mode' do
+      splits_imp_toggle = File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/imp-toggle.json'))
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
+          .to_return(status: 200, body: splits_imp_toggle)
+      factory_imp_toggle =
+        SplitIoClient::SplitFactory.new('test_api_key',
+          impressions_mode: :none,
+          features_refresh_rate: 9999,
+          telemetry_refresh_rate: 99999,
+          impressions_refresh_rate: 99999,
+          streaming_enabled: false)
+
+      client_imp_toggle = factory_imp_toggle.client
+      client_imp_toggle.block_until_ready
+      expect(client_imp_toggle.get_treatment('key1', 'with_track_disabled')).to eq('off')
+      expect(client_imp_toggle.get_treatment('key2', 'with_track_enabled')).to eq('off')
+      expect(client_imp_toggle.get_treatment('key3', 'without_track')).to eq('off')
+
+      impressions_repository = client_imp_toggle.instance_variable_get(:@impressions_repository)
+      imps = impressions_repository.batch
+      expect(imps.length()).to eq(0)
+
+      unique_keys_tracker = factory_imp_toggle.instance_variable_get(:@unique_keys_tracker)
+      unique_keys = unique_keys_tracker.instance_variable_get(:@cache)
+      expect(unique_keys.key?('with_track_disabled')).to eq(true)
+      expect(unique_keys.key?('with_track_enabled')).to eq(true)
+      expect(unique_keys.key?('without_track')).to eq(true)
+      expect(unique_keys.length).to eq(3)
+      impression_counter = factory_imp_toggle.instance_variable_get(:@impression_counter)
+      imp_count = impression_counter.pop_all
+      expect(imp_count.keys()[0].include? ('with_track_disabled')).to eq(true)
+      expect(imp_count.keys()[1].include? ('with_track_enabled')).to eq(true)
+      expect(imp_count.keys()[2].include? ('without_track')).to eq(true)
+      expect(imp_count.length).to eq(3)
+    end
   end
 end
 
