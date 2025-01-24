@@ -74,7 +74,7 @@ describe SplitIoClient do
 
       impressions = debug_client.instance_variable_get(:@impressions_repository).batch
 
-      sleep 0.5
+      sleep 1
 
       expect(impressions.size).to eq 9
     end
