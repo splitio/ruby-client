@@ -48,7 +48,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'simplecov-json', '~> 0.2'
   spec.add_development_dependency 'timecop', '~> 0.9'
   spec.add_development_dependency 'webmock', '~> 3.14'
-  spec.add_development_dependency 'webrick', '~> 1.7'
+  spec.add_development_dependency 'webrick', '~> 1.8.2'
 
   spec.add_runtime_dependency 'bitarray', '~> 1.3'
   spec.add_runtime_dependency 'concurrent-ruby', '~> 1.0'
@@ -61,4 +61,5 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'redis', '>= 4.0.0', '< 6.0'
   spec.add_runtime_dependency 'socketry', '>= 0.4', '< 1.0'
   spec.add_runtime_dependency 'thread_safe', '~> 0.3'
+  spec.add_runtime_dependency 'rexml', '~> 3.3.9'
 end
