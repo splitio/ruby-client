@@ -7,12 +7,11 @@ module SplitIoClient
   class RuleBasedSegmentMatcher < Matcher
     MATCHER_TYPE = 'IN_RULE_BASED_SEGMENT'
 
-    def initialize(rule_based_segments_repository, segments_repository, segment_name, config, evaluator)
+    def initialize(segments_repository, rule_based_segments_repository, segment_name, config)
       super(config.logger)
       @rule_based_segments_repository = rule_based_segments_repository
       @segments_repository = segments_repository
       @segment_name = segment_name
-      @evaluator = evaluator
       @config = config
     end
 
@@ -28,18 +27,40 @@ module SplitIoClient
 
       return false if rule_based_segment[:excluded][:keys].include?([args[:value]])
 
-      return false if @segments_repository.contains?(rule_based_segment[:excluded][:segments])
+      rule_based_segment[:excluded][:segments].each do |segment|
+        return false if segment[:type] == 'standard' and @segments_repository.in_segment?(segment[:name], args[:value])
+        
+        if segment[:type] == 'rule-based'
+          return true if match_rbs(@rule_based_segments_repository.get_rule_based_segment(segment[:name])[:conditions], args)
+        end
+      end
 
       matches = false
       rule_based_segment[:conditions].each do |c|
         condition = SplitIoClient::Condition.new(c, @config)
         next if condition.empty?
 
-        matches = Helpers::EvaluatorHelper.matcher_type(condition, @segments_repository).match?(args)
+        matches = Helpers::EvaluatorHelper.matcher_type(condition, @segments_repository, @rule_based_segments_repository).match?(args)
       end
       @logger.debug("[InRuleSegmentMatcher] #{@segment_name} is in rule based segment -> #{matches}")
 
       matches
+    end
+
+    private
+
+    def match_rbs(conditions, args)
+      conditions.each do |condition|
+        next if condition.empty?
+
+        return true if Helpers::EvaluatorHelper::matcher_type(SplitIoClient::Condition.new(condition, @config), 
+              @segments_repository, @rule_based_segments_repository).match?(
+                matching_key: args[:matching_key],
+                bucketing_key: args[:value],
+                attributes: args[:attributes]
+              )
+      end
+      return false
     end
   end
 end

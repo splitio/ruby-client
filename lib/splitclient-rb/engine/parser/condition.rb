@@ -230,6 +230,13 @@ module SplitIoClient
       )
     end
 
+    def matcher_in_rule_based_segment(params)
+      matcher = params[:matcher]
+      segment_name = matcher[:userDefinedSegmentMatcherData] && matcher[:userDefinedSegmentMatcherData][:segmentName]
+
+      RuleBasedSegmentMatcher.new(params[:segments_repository], params[:rule_based_segments_repository], segment_name, @config)
+    end
+
     #
     # @return [object] the negate value for this condition
     def negate

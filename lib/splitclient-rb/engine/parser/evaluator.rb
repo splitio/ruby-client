@@ -2,7 +2,7 @@ module SplitIoClient
   module Engine
     module Parser
       class Evaluator
-        def initialize(segments_repository, splits_repository, config)
+        def initialize(segments_repository, splits_repository, rb_segment_repository, config)
           @splits_repository = splits_repository
           @segments_repository = segments_repository
           @config = config
@@ -59,7 +59,7 @@ module SplitIoClient
               in_rollout = true
             end
 
-            condition_matched = Helpers::EvaluatorHelper::matcher_type(condition, @segments_repository).match?(
+            condition_matched = Helpers::EvaluatorHelper::matcher_type(condition, @segments_repository, @rb_segment_repository).match?(
               matching_key: keys[:matching_key],
               bucketing_key: keys[:bucketing_key],
               evaluator: self,
