@@ -2,10 +2,11 @@ module SplitIoClient
   module Cache
     module Fetchers
       class SplitFetcher
-        attr_reader :splits_repository
+        attr_reader :splits_repository, :rule_based_segments_repository
 
-        def initialize(splits_repository, api_key, config, telemetry_runtime_producer)
+        def initialize(splits_repository, rule_based_segments_repository, api_key, config, telemetry_runtime_producer)
           @splits_repository = splits_repository
+          @rule_based_segments_repository = rule_based_segments_repository
           @api_key = api_key
           @config = config
           @semaphore = Mutex.new
@@ -21,11 +22,12 @@ module SplitIoClient
           splits_thread
         end
 
-        def fetch_splits(fetch_options = { cache_control_headers: false, till: nil })
+        def fetch_splits(fetch_options = { cache_control_headers: false, till: nil, till_rbs: nil })
           @semaphore.synchronize do
-            data = splits_since(@splits_repository.get_change_number, fetch_options)
+            data = splits_since(@splits_repository.get_change_number, @rule_based_segments_repository.get_change_number, fetch_options)
 
-            SplitIoClient::Helpers::RepositoryHelper.update_feature_flag_repository(@splits_repository, data[:splits], data[:till], @config)
+            SplitIoClient::Helpers::RepositoryHelper.update_feature_flag_repository(@splits_repository, data[:ff][:d], data[:ff][:t], @config)
+            SplitIoClient::Helpers::RepositoryHelper.update_rule_based_segment_repository(@rule_based_segments_repository, data[:rbs][:d], data[:rbs][:t], @config)
             @splits_repository.set_segment_names(data[:segment_names])
             @config.logger.debug("segments seen(#{data[:segment_names].length}): #{data[:segment_names].to_a}") if @config.debug_enabled
 
@@ -55,8 +57,8 @@ module SplitIoClient
           end
         end
 
-        def splits_since(since, fetch_options = { cache_control_headers: false, till: nil })
-          splits_api.since(since, fetch_options)
+        def splits_since(since, since_rbs, fetch_options = { cache_control_headers: false, till: nil, till_rbs: nil })
+          splits_api.since(since, since_rbs, fetch_options)
         end
 
         def splits_api
