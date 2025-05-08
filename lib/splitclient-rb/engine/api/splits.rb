@@ -12,13 +12,12 @@ module SplitIoClient
         @flag_sets_filter = @config.flag_sets_filter
       end
 
-      def since(since, since_rbs, fetch_options = { cache_control_headers: false, till: nil, till_rbs: nil, sets: nil})
+      def since(since, since_rbs, fetch_options = { cache_control_headers: false, till: nil, sets: nil})
         start = Time.now
 
         params = { s: SplitIoClient::Spec::FeatureFlags::SPEC_VERSION, since: since, rbSince: since_rbs }
         params[:sets] = @flag_sets_filter.join(",") unless @flag_sets_filter.empty?
         params[:till] = fetch_options[:till] unless fetch_options[:till].nil?
-        params[:till_rbs] = fetch_options[:till_rbs] unless fetch_options[:till_rbs].nil?
         @config.logger.debug("Fetching from splitChanges with #{params}: ")
         response = get_api("#{@config.base_uri}/splitChanges", @api_key, params, fetch_options[:cache_control_headers])
         if response.status == 414

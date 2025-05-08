@@ -22,7 +22,7 @@ module SplitIoClient
           splits_thread
         end
 
-        def fetch_splits(fetch_options = { cache_control_headers: false, till: nil, till_rbs: nil })
+        def fetch_splits(fetch_options = { cache_control_headers: false, till: nil })
           @semaphore.synchronize do
             data = splits_since(@splits_repository.get_change_number, @rule_based_segments_repository.get_change_number, fetch_options)
 
@@ -57,7 +57,7 @@ module SplitIoClient
           end
         end
 
-        def splits_since(since, since_rbs, fetch_options = { cache_control_headers: false, till: nil, till_rbs: nil })
+        def splits_since(since, since_rbs, fetch_options = { cache_control_headers: false, till: nil })
           splits_api.since(since, since_rbs, fetch_options)
         end
 
