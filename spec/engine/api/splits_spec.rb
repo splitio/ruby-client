@@ -52,7 +52,7 @@ describe SplitIoClient::Api::Splits do
               })
         .to_return(status: 200, body: splits)
 
-      fetch_options = { cache_control_headers: false, till: nil, till_rbs: nil, sets: ['set_1','set_2'] }
+      fetch_options = { cache_control_headers: false, till: nil, sets: ['set_1','set_2'] }
       returned_splits = splits_api.since(-1, -1, fetch_options)
       expect(returned_splits[:segment_names]).to eq(Set.new(%w[demo employees]))
 
@@ -72,7 +72,7 @@ describe SplitIoClient::Api::Splits do
               })
         .to_return(status: 414, body: splits)
 
-      fetch_options = { cache_control_headers: false, till: nil, till_rbs: nil, sets: ['set_1','set_2'] }
+      fetch_options = { cache_control_headers: false, till: nil, sets: ['set_1','set_2'] }
       captured = 0
       begin
         returned_splits = splits_api.since(-1, -1, fetch_options)
@@ -126,7 +126,7 @@ describe SplitIoClient::Api::Splits do
               })
         .to_return(status: 200, body: splits)
 
-      fetch_options = { cache_control_headers: false, till: 123_123, till_rbs: nil, sets: nil }
+      fetch_options = { cache_control_headers: false, till: 123_123, sets: nil }
       returned_splits = splits_api.since(-1, -1, fetch_options)
       expect(returned_splits[:segment_names]).to eq(Set.new(%w[demo employees]))
 
@@ -147,7 +147,7 @@ describe SplitIoClient::Api::Splits do
               })
         .to_return(status: 200, body: splits)
 
-      fetch_options = { cache_control_headers: true, till: nil, till_rbs: nil, sets: nil }
+      fetch_options = { cache_control_headers: true, till: nil, sets: nil }
       returned_splits = splits_api.since(-1, -1, fetch_options)
       expect(returned_splits[:segment_names]).to eq(Set.new(%w[demo employees]))
 

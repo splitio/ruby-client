@@ -85,6 +85,7 @@ module SplitIoClient
         end
 
         def contains?(segment_names)
+          return false if rule_based_segment_names.empty?
           return set(segment_names).subset?(rule_based_segment_names)
         end
 

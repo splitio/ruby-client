@@ -154,6 +154,7 @@ module SplitIoClient
         segments: @segments_repository,
         impressions: @impressions_repository,
         events: @events_repository,
+        rule_based_segments: @rule_based_segment_repository
       }
     end
 
@@ -178,7 +179,7 @@ module SplitIoClient
     end
 
     def build_fetchers
-      @split_fetcher = SplitFetcher.new(@splits_repository, @api_key, @config, @runtime_producer)
+      @split_fetcher = SplitFetcher.new(@splits_repository, @rule_based_segments_repository, @api_key, @config, @runtime_producer)
       @segment_fetcher = SegmentFetcher.new(@segments_repository, @api_key, @config, @runtime_producer)
     end
 
@@ -198,7 +199,7 @@ module SplitIoClient
 
     def build_streaming_components
       @push_status_queue = Queue.new
-      splits_worker = SSE::Workers::SplitsWorker.new(@synchronizer, @config, @splits_repository, @runtime_producer, @segment_fetcher)
+      splits_worker = SSE::Workers::SplitsWorker.new(@synchronizer, @config, @splits_repository, @runtime_producer, @segment_fetcher, @rule_based_segment_repository)
       segments_worker = SSE::Workers::SegmentsWorker.new(@synchronizer, @config, @segments_repository)
       notification_manager_keeper = SSE::NotificationManagerKeeper.new(@config, @runtime_producer, @push_status_queue)
       notification_processor = SSE::NotificationProcessor.new(@config, splits_worker, segments_worker)
@@ -220,6 +221,7 @@ module SplitIoClient
       end
       @splits_repository = SplitsRepository.new(@config, @flag_sets_repository, @flag_sets_filter)
       @segments_repository = SegmentsRepository.new(@config)
+      @rule_based_segment_repository = RuleBasedSegmentRepository.new(@config)
       @impressions_repository = ImpressionsRepository.new(@config)
       @events_repository = EventsRepository.new(@config, @api_key, @runtime_producer)
     end
