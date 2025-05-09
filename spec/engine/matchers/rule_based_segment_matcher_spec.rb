@@ -32,7 +32,7 @@ describe SplitIoClient::RuleBasedSegmentMatcher do
       expect(matcher.match?(value: 'key2')).to be false
     end
 
-    it 'return true if excluded rb segment is matched' do
+    it 'return false if excluded rb segment is matched' do
       rbs_repositoy = SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config)
       rbs = {:name => 'sample_rule_based_segment', :trafficTypeName => 'tt_name_1', :conditions => [{
               :matcherGroup => {
