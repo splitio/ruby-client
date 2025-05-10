@@ -30,7 +30,7 @@ module SplitIoClient
       rule_based_segment[:excluded][:segments].each do |segment|
         return false if segment[:type] == 'standard' and @segments_repository.in_segment?(segment[:name], args[:value])
         
-        return false if SplitIoClient::RuleBasedSegmentMatcher.new(@segments_repository, @rule_based_segments_repository, segment[:name], @config).match?(args)
+        return false if segment[:type] == 'rule-based' and SplitIoClient::RuleBasedSegmentMatcher.new(@segments_repository, @rule_based_segments_repository, segment[:name], @config).match?(args)
       end
 
       matches = false
