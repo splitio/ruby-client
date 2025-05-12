@@ -12,10 +12,10 @@ module SplitIoClient
         @flag_sets_filter = @config.flag_sets_filter
       end
 
-      def since(since, fetch_options = { cache_control_headers: false, till: nil, sets: nil})
+      def since(since, since_rbs, fetch_options = { cache_control_headers: false, till: nil, sets: nil})
         start = Time.now
 
-        params = { s: SplitIoClient::Spec::FeatureFlags::SPEC_VERSION, since: since }
+        params = { s: SplitIoClient::Spec::FeatureFlags::SPEC_VERSION, since: since, rbSince: since_rbs }
         params[:sets] = @flag_sets_filter.join(",") unless @flag_sets_filter.empty?
         params[:till] = fetch_options[:till] unless fetch_options[:till].nil?
         @config.logger.debug("Fetching from splitChanges with #{params}: ")
@@ -25,11 +25,17 @@ module SplitIoClient
           raise ApiException.new response.body, 414
         end
         if response.success?
-          result = splits_with_segment_names(response.body)
-          unless result[:splits].empty?
-            @config.split_logger.log_if_debug("#{result[:splits].length} feature flags retrieved. since=#{since}")
+          result = objects_with_segment_names(response.body)
+          
+          unless result[:ff][:d].empty?
+            @config.split_logger.log_if_debug("#{result[:ff][:d].length} feature flags retrieved. since=#{since}")
           end
-          @config.split_logger.log_if_transport("Feature flag changes response: #{result.to_s}")
+          @config.split_logger.log_if_transport("Feature flag changes response: #{result[:ff].to_s}")
+
+          unless result[:rbs][:d].empty?
+            @config.split_logger.log_if_debug("#{result[:ff][:d].length} rule based segments retrieved. since=#{since_rbs}")
+          end
+          @config.split_logger.log_if_transport("rule based segments changes response: #{result[:rbs].to_s}")
 
           bucket = BinarySearchLatencyTracker.get_bucket((Time.now - start) * 1000.0)
           @telemetry_runtime_producer.record_sync_latency(Telemetry::Domain::Constants::SPLIT_SYNC, bucket)
@@ -48,15 +54,19 @@ module SplitIoClient
 
       private
 
-      def splits_with_segment_names(splits_json)
-        parsed_splits = JSON.parse(splits_json, symbolize_names: true)
+      def objects_with_segment_names(objects_json)
+        parsed_objects = JSON.parse(objects_json, symbolize_names: true)
 
-        parsed_splits[:segment_names] =
-          parsed_splits[:splits].each_with_object(Set.new) do |split, splits|
-            splits << Helpers::Util.segment_names_by_feature_flag(split)
+        parsed_objects[:segment_names] =
+          parsed_objects[:ff][:d].each_with_object(Set.new) do |split, splits|
+            splits << Helpers::Util.segment_names_by_object(split)
           end.flatten
-
-        parsed_splits
+        if not parsed_objects[:ff][:rbs].nil?
+          parsed_objects[:segment_names].merge parsed_objects[:ff][:rbs].each_with_object(Set.new) do |rule_based_segment, rule_based_segments|
+            rule_based_segments << Helpers::Util.segment_names_by_object(rule_based_segment)
+          end.flatten
+        end
+        parsed_objects
       end
     end
   end

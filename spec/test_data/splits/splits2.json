@@ -1,5 +1,5 @@
-{
-   "splits":[
+{"ff":{
+   "d":[
       {
          "trafficTypeName":"user",
          "name":"test_1_ruby",
@@ -259,6 +259,37 @@
          "sets":["set_1"]
       }
    ],
-   "since":-1,
-   "till":1473413807667
-}
+   "s":-1,
+   "t":1473413807667
+   }, "rbs": {"t": 1457726098069, "s": -1, "d": [{
+      "changeNumber": 123,
+      "name": "sample_rule_based_segment",
+      "status": "ACTIVE",
+      "trafficTypeName": "user",
+      "excluded":{
+        "keys":["mauro@split.io","gaston@split.io"],
+        "segments":[]
+      },
+      "conditions": [
+        {
+          "matcherGroup": {
+            "combiner": "AND",
+            "matchers": [
+              {
+                "keySelector": {
+                  "trafficType": "user",
+                  "attribute": "email"
+                },
+                "matcherType": "ENDS_WITH",
+                "negate": false,
+                "whitelistMatcherData": {
+                  "whitelist": [
+                    "@split.io"
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+  }]}}

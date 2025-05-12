@@ -36,10 +36,11 @@ describe SplitIoClient::Cache::Fetchers::SegmentFetcher do
     let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new([]) }
     let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([]) }
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
+    let(:rule_based_segments_repository) { SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config) }
     let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
     let(:segment_fetcher) { described_class.new(segments_repository, '', config, telemetry_runtime_producer) }
     let(:split_fetcher) do
-      SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, '', config, telemetry_runtime_producer)
+      SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, rule_based_segments_repository, '', config, telemetry_runtime_producer)
     end
 
     it 'fetch segments' do
@@ -72,10 +73,11 @@ describe SplitIoClient::Cache::Fetchers::SegmentFetcher do
     let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::RedisFlagSetsRepository.new(config) }
     let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([]) }
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
+    let(:rule_based_segments_repository) { SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config) }
     let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
     let(:segment_fetcher) { described_class.new(segments_repository, '', config, telemetry_runtime_producer) }
     let(:split_fetcher) do
-      SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, '', config, telemetry_runtime_producer)
+      SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, rule_based_segments_repository, '', config, telemetry_runtime_producer)
     end
 
     it 'fetch segments' do
