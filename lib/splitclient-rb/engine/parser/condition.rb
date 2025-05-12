@@ -230,6 +230,13 @@ module SplitIoClient
       )
     end
 
+    def matcher_in_rule_based_segment(params)
+      matcher = params[:matcher]
+      segment_name = matcher[:userDefinedSegmentMatcherData] && matcher[:userDefinedSegmentMatcherData][:segmentName]
+
+      RuleBasedSegmentMatcher.new(params[:segments_repository], params[:rule_based_segments_repository], segment_name, @config)
+    end
+
     #
     # @return [object] the negate value for this condition
     def negate
@@ -246,6 +253,8 @@ module SplitIoClient
     # @return [void]
     def set_partitions
       partitions_list = []
+      return partitions_list unless @data.key?('partitions')
+      
       @data[:partitions].each do |p|
         partition = SplitIoClient::Partition.new(p)
         partitions_list << partition

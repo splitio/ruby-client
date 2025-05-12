@@ -2,7 +2,7 @@ module SplitIoClient
   module Engine
     module Parser
       class Evaluator
-        def initialize(segments_repository, splits_repository, config)
+        def initialize(segments_repository, splits_repository, rb_segment_repository, config)
           @splits_repository = splits_repository
           @segments_repository = segments_repository
           @config = config
@@ -59,7 +59,7 @@ module SplitIoClient
               in_rollout = true
             end
 
-            condition_matched = matcher_type(condition).match?(
+            condition_matched = Helpers::EvaluatorHelper::matcher_type(condition, @segments_repository, @rb_segment_repository).match?(
               matching_key: keys[:matching_key],
               bucketing_key: keys[:bucketing_key],
               evaluator: self,
@@ -80,37 +80,8 @@ module SplitIoClient
           treatment_hash(Models::Label::NO_RULE_MATCHED, split[:defaultTreatment], split[:changeNumber], split_configurations(split[:defaultTreatment], split))
         end
 
-        def matcher_type(condition)
-          matchers = []
-
-          @segments_repository.adapter.pipelined do
-            condition.matchers.each do |matcher|
-              matchers << if matcher[:negate]
-                condition.negation_matcher(matcher_instance(matcher[:matcherType], condition, matcher))
-              else
-                matcher_instance(matcher[:matcherType], condition, matcher)
-              end
-            end
-          end
-
-          final_matcher = condition.create_condition_matcher(matchers)
-
-          if final_matcher.nil?
-            @logger.error('Invalid matcher type')
-          else
-            final_matcher
-          end
-        end
-
         def treatment_hash(label, treatment, change_number = nil, configurations = nil)
           { label: label, treatment: treatment, change_number: change_number, config: configurations }
-        end
-
-        def matcher_instance(type, condition, matcher)
-          condition.send(
-            "matcher_#{type.downcase}",
-            matcher: matcher, segments_repository: @segments_repository
-          )
         end
       end
     end
