@@ -32,9 +32,28 @@ describe SplitIoClient::RuleBasedSegmentMatcher do
       expect(matcher.match?(value: 'key2')).to be false
     end
 
-    it 'return true if excluded rb segment is matched' do
+    it 'return false if excluded rb segment is matched' do
       rbs_repositoy = SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config)
-      rbs = {:name => 'sample_rule_based_segment', :trafficTypeName => 'tt_name_1', :conditions => [], :excluded => {:keys => [], :segments => [{:name => 'no_excludes', :type => 'rule-based'}]}}
+      rbs = {:name => 'sample_rule_based_segment', :trafficTypeName => 'tt_name_1', :conditions => [{
+              :matcherGroup => {
+                :combiner => "AND",
+                :matchers => [
+                  {
+                    :matcherType => "WHITELIST",
+                    :negate => false,
+                    :userDefinedSegmentMatcherData => nil,
+                    :whitelistMatcherData => {
+                        :whitelist => [
+                          "bilal@split.io",
+                          "bilal"
+                        ]
+                    },
+                    :unaryNumericMatcherData => nil,
+                    :betweenMatcherData => nil
+                  }
+                ]
+              }
+            }], :excluded => {:keys => [], :segments => [{:name => 'no_excludes', :type => 'rule-based'}]}}
       rbs2 = {:name => 'no_excludes', :trafficTypeName => 'tt_name_1', 
           :conditions => [{
               :matcherGroup => {
@@ -60,8 +79,8 @@ describe SplitIoClient::RuleBasedSegmentMatcher do
 
       rbs_repositoy.update([rbs, rbs2], [], -1)
       matcher = described_class.new(segments_repository, rbs_repositoy, 'sample_rule_based_segment', config)
-      expect(matcher.match?(value: 'bilal@split.io', attributes: {'email': 'bilal@split.io'})).to be true
-      expect(matcher.match?(value: 'bilal', attributes: {'email': 'bilal'})).to be false
+      expect(matcher.match?(value: 'bilal@split.io', attributes: {'email': 'bilal@split.io'})).to be false
+      expect(matcher.match?(value: 'bilal', attributes: {'email': 'bilal'})).to be true
     end
 
     it 'return true if condition matches' do

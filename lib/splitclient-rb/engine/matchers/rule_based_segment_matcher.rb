@@ -44,11 +44,9 @@ module SplitIoClient
       rule_based_segment[:conditions].each do |c|
         condition = SplitIoClient::Condition.new(c, @config)
         next if condition.empty?
-
         matches = Helpers::EvaluatorHelper.matcher_type(condition, @segments_repository, @rule_based_segments_repository).match?(args)
       end
       @logger.debug("[InRuleSegmentMatcher] #{@segment_name} is in rule based segment -> #{matches}")
-
       matches
     end
 

@@ -22,13 +22,11 @@ module SplitIoClient
                   booleanMatcherData: nil,
                   stringMatcherData: nil
               }]
-          },
-          label: "targeting rule type unsupported by sdk"
+          }
         }]
 
         def initialize(config)
           super(config)
-          @tt_cache = {}
           @adapter = case @config.cache_adapter.class.to_s
           when 'SplitIoClient::Cache::Adapters::RedisAdapter'
             SplitIoClient::Cache::Adapters::CacheAdapter.new(@config)
@@ -79,8 +77,6 @@ module SplitIoClient
         end
 
         def clear
-          @tt_cache.clear
-
           @adapter.clear(namespace_key)
         end
 
