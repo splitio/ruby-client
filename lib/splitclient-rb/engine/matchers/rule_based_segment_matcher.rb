@@ -25,13 +25,18 @@ module SplitIoClient
       rule_based_segment = @rule_based_segments_repository.get_rule_based_segment(@segment_name)
       return false if rule_based_segment.nil?
 
-      return false if rule_based_segment[:excluded][:keys].include?([args[:value]])
+      if args[:value].nil? or args[:value].empty?
+        key = args[:matching_key]
+      else
+        key = args[:value]   
+      end
+      return false if rule_based_segment[:excluded][:keys].include?(key)
 
       rule_based_segment[:excluded][:segments].each do |segment|
-        return false if segment[:type] == 'standard' and @segments_repository.in_segment?(segment[:name], args[:value])
+        return false if segment[:type] == 'standard' and @segments_repository.in_segment?(segment[:name], key)
         
         if segment[:type] == 'rule-based'
-          return true if match_rbs(@rule_based_segments_repository.get_rule_based_segment(segment[:name])[:conditions], args)
+          return false if match_rbs(@rule_based_segments_repository.get_rule_based_segment(segment[:name]), args)
         end
       end
 
@@ -49,18 +54,13 @@ module SplitIoClient
 
     private
 
-    def match_rbs(conditions, args)
-      conditions.each do |condition|
-        next if condition.empty?
-
-        return true if Helpers::EvaluatorHelper::matcher_type(SplitIoClient::Condition.new(condition, @config), 
-              @segments_repository, @rule_based_segments_repository).match?(
-                matching_key: args[:matching_key],
-                bucketing_key: args[:value],
-                attributes: args[:attributes]
+    def match_rbs(rule_based_segment, args)      
+      rbs_matcher = RuleBasedSegmentMatcher.new(@segments_repository, @rule_based_segments_repository, rule_based_segment[:name], @config)
+      return rbs_matcher.match?(
+                  matching_key: args[:matching_key],
+                  bucketing_key: args[:value],
+                  attributes: args[:attributes]
               )
-      end
-      return false
     end
   end
 end

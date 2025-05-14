@@ -1,5 +1,5 @@
-{
-    "splits": [
+{ "ff":{
+  "d": [
         {
             "trafficTypeName": "account",
             "name": "Traffic_Allocation_UI",
@@ -355,4 +355,5 @@
     ],
   "since": -1,
   "till": 1470855828956
+},  "rbs": {"d":[], "s":-1, "t":-1}
 }

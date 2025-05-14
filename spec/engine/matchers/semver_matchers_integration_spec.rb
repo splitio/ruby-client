@@ -51,11 +51,11 @@ describe 'Semver matchers integration' do
 
   context 'equal to matcher' do
     before do
-      stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.1&since\.*/)
+      stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.3&since\.*/)
         .to_return(status: 200, body: semver_equalto_matcher_splits)
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')
         .to_return(status: 200, body: semver_equalto_matcher_splits)
-      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=1675259356568")
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=1675259356568&rbSince=-1")
         .to_return(status: 200, body: semver_equalto_matcher_splits)
       sleep 1
       subject.block_until_ready
@@ -75,9 +75,9 @@ describe 'Semver matchers integration' do
 
   context 'greater than or equal to matcher' do
     before do
-      stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.1&since/)
+      stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.3&since/)
         .to_return(status: 200, body: semver_greater_or_equalto_matcher_splits)
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')
         .to_return(status: 200, body: semver_greater_or_equalto_matcher_splits)
       sleep 1
       subject.block_until_ready
@@ -98,9 +98,9 @@ describe 'Semver matchers integration' do
 
   context 'less than or equal to matcher' do
     before do
-      stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.1&since/)
+      stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.3&since=-1&rbSince=-1/)
         .to_return(status: 200, body: semver_less_or_equalto_matcher_splits)
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')
         .to_return(status: 200, body: semver_less_or_equalto_matcher_splits)
       sleep 1
       subject.block_until_ready
@@ -121,9 +121,9 @@ describe 'Semver matchers integration' do
 
   context 'in list matcher' do
     before do
-      stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.1&since/)
+      stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.3&since=-1&rbSince=-1/)
         .to_return(status: 200, body: semver_inlist_matcher_splits)
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')
         .to_return(status: 200, body: semver_inlist_matcher_splits)
       sleep 1
       subject.block_until_ready
@@ -144,9 +144,9 @@ describe 'Semver matchers integration' do
 
   context 'between matcher' do
     before do
-      stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.1&since/)
+      stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.3&since=-1&rbSince=-1/)
         .to_return(status: 200, body: semver_between_matcher_splits)
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')
         .to_return(status: 200, body: semver_between_matcher_splits)
       sleep 1
       subject.block_until_ready

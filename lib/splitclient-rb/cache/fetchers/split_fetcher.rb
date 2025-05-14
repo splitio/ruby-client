@@ -28,6 +28,7 @@ module SplitIoClient
             SplitIoClient::Helpers::RepositoryHelper.update_feature_flag_repository(@splits_repository, data[:ff][:d], data[:ff][:t], @config)
             SplitIoClient::Helpers::RepositoryHelper.update_rule_based_segment_repository(@rule_based_segments_repository, data[:rbs][:d], data[:rbs][:t], @config)
             @splits_repository.set_segment_names(data[:segment_names])
+            @rule_based_segments_repository.set_segment_names(data[:segment_names])
             @config.logger.debug("segments seen(#{data[:segment_names].length}): #{data[:segment_names].to_a}") if @config.debug_enabled
 
             { segment_names: data[:segment_names], success: true }

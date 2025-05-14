@@ -32,12 +32,12 @@ describe SplitIoClient::Engine::Parser::Evaluator do
   context 'dependency matcher' do
     it 'uses cache' do
       allow(evaluator.instance_variable_get(:@splits_repository))
-        .to receive(:get_split).and_return(split_data[:splits][0])
+        .to receive(:get_split).and_return(split_data[:ff][:d][0])
 
       expect(evaluator).to receive(:match).exactly(2).times
-      evaluator.evaluate_feature_flag({ bucketing_key: nil, matching_key: 'fake_user_id_1' }, split_data[:splits][0])
+      evaluator.evaluate_feature_flag({ bucketing_key: nil, matching_key: 'fake_user_id_1' }, split_data[:ff][:d][0])
 
-      evaluator.evaluate_feature_flag({ bucketing_key: nil, matching_key: 'fake_user_id_1' }, split_data[:splits][1])
+      evaluator.evaluate_feature_flag({ bucketing_key: nil, matching_key: 'fake_user_id_1' }, split_data[:ff][:d][1])
     end
   end
 end

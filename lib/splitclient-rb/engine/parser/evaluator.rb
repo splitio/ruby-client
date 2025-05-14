@@ -5,6 +5,7 @@ module SplitIoClient
         def initialize(segments_repository, splits_repository, rb_segment_repository, config)
           @splits_repository = splits_repository
           @segments_repository = segments_repository
+          @rb_segment_repository = rb_segment_repository
           @config = config
         end
 
@@ -58,7 +59,6 @@ module SplitIoClient
 
               in_rollout = true
             end
-
             condition_matched = Helpers::EvaluatorHelper::matcher_type(condition, @segments_repository, @rb_segment_repository).match?(
               matching_key: keys[:matching_key],
               bucketing_key: keys[:bucketing_key],

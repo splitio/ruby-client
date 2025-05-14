@@ -33,8 +33,8 @@ describe SplitIoClient do
   context 'checking logic impressions' do
     it 'get_treament should post 7 impressions - debug mode' do
       stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916').to_return(status: 200, body: '')
-      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=-1").to_return(status: 200, body: splits, headers: {})
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262916').to_return(status: 200, body: '')
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1").to_return(status: 200, body: splits, headers: {})
 
       factory = SplitIoClient::SplitFactory.new('test_api_key_debug-1', streaming_enabled: false, impressions_mode: :debug)
       debug_client = factory.client
@@ -61,7 +61,7 @@ describe SplitIoClient do
 
     it 'get_treaments should post 9 impressions - debug mode' do
       stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916').to_return(status: 200, body: '')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262916&rbSince=-1').to_return(status: 200, body: '')
 
       factory = SplitIoClient::SplitFactory.new('test_api_key_debug-2', streaming_enabled: false, impressions_mode: :debug)
       debug_client = factory.client
@@ -81,7 +81,7 @@ describe SplitIoClient do
 
     it 'get_treament should post 3 impressions - optimized mode' do
       stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916').to_return(status: 200, body: '')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262916&rbSince=-1').to_return(status: 200, body: '')
       stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/usage').to_return(status: 200, body: '')
 
       factory = SplitIoClient::SplitFactory.new('test_api_key-1', streaming_enabled: false, impressions_mode: :optimized, impressions_refresh_rate: 60)
@@ -113,7 +113,7 @@ describe SplitIoClient do
     it 'get_treaments should post 8 impressions - optimized mode' do
       stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
       stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/usage').to_return(status: 200, body: '')
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916').to_return(status: 200, body: '')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262916&rbSince=-1').to_return(status: 200, body: '')
 
       factory = SplitIoClient::SplitFactory.new('test_api_key-2', streaming_enabled: false, impressions_mode: :optimized)
       client = factory.client
@@ -149,7 +149,7 @@ end
 private
 
 def mock_split_changes_v2(splits_json)
-  stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
+  stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')
     .to_return(status: 200, body: splits_json)
 end
 

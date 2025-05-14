@@ -1,5 +1,5 @@
-{
-  "splits": [
+{ "ff":{
+  "d": [
     {
       "trafficTypeName": "user",
       "name": "with_track_disabled",
@@ -152,4 +152,6 @@
   ],
   "since": -1,
   "till": 1675259356568
+  },
+ "rbs": {"d":[], "s":-1, "t":-1}
 }

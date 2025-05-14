@@ -33,7 +33,7 @@ module SplitIoClient
           @config.split_logger.log_if_transport("Feature flag changes response: #{result[:ff].to_s}")
 
           unless result[:rbs][:d].empty?
-            @config.split_logger.log_if_debug("#{result[:ff][:d].length} rule based segments retrieved. since=#{since_rbs}")
+            @config.split_logger.log_if_debug("#{result[:rbs][:d].length} rule based segments retrieved. since=#{since_rbs}")
           end
           @config.split_logger.log_if_transport("rule based segments changes response: #{result[:rbs].to_s}")
 
@@ -56,15 +56,24 @@ module SplitIoClient
 
       def objects_with_segment_names(objects_json)
         parsed_objects = JSON.parse(objects_json, symbolize_names: true)
+        parsed_objects[:segment_names] = Set.new
         parsed_objects[:segment_names] =
           parsed_objects[:ff][:d].each_with_object(Set.new) do |split, splits|
             splits << Helpers::Util.segment_names_by_object(split, "IN_SEGMENT")
           end.flatten
-        if not parsed_objects[:ff][:rbs].nil?
-          parsed_objects[:segment_names].merge parsed_objects[:ff][:rbs].each_with_object(Set.new) do |rule_based_segment, rule_based_segments|
-            rule_based_segments << Helpers::Util.segment_names_by_object(rule_based_segment, "IN_SEGMENT")
-          end.flatten
+
+        parsed_objects[:rbs][:d].each do |rule_based_segment|
+          parsed_objects[:segment_names].merge Helpers::Util.segment_names_by_object(rule_based_segment, "IN_SEGMENT")
         end
+
+        parsed_objects[:rbs][:d].each do |rule_based_segment| 
+          rule_based_segment[:excluded][:segments].each do |segment|
+            if segment[:type] == "standard"
+              parsed_objects[:segment_names].add(segment[:name])
+            end
+          end
+        end
+        
         parsed_objects
       end
     end
