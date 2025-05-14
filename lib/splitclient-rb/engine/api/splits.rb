@@ -56,14 +56,13 @@ module SplitIoClient
 
       def objects_with_segment_names(objects_json)
         parsed_objects = JSON.parse(objects_json, symbolize_names: true)
-
         parsed_objects[:segment_names] =
           parsed_objects[:ff][:d].each_with_object(Set.new) do |split, splits|
-            splits << Helpers::Util.segment_names_by_object(split)
+            splits << Helpers::Util.segment_names_by_object(split, "IN_SEGMENT")
           end.flatten
         if not parsed_objects[:ff][:rbs].nil?
           parsed_objects[:segment_names].merge parsed_objects[:ff][:rbs].each_with_object(Set.new) do |rule_based_segment, rule_based_segments|
-            rule_based_segments << Helpers::Util.segment_names_by_object(rule_based_segment)
+            rule_based_segments << Helpers::Util.segment_names_by_object(rule_based_segment, "IN_SEGMENT")
           end.flatten
         end
         parsed_objects

@@ -13,6 +13,8 @@ module SplitIoClient
         case incoming_notification.data['type']
         when SSE::EventSource::EventTypes::SPLIT_UPDATE
           process_split_update(incoming_notification)
+        when SSE::EventSource::EventTypes::RB_SEGMENT_UPDATE
+          process_split_update(incoming_notification)
         when SSE::EventSource::EventTypes::SPLIT_KILL
           process_split_kill(incoming_notification)
         when SSE::EventSource::EventTypes::SEGMENT_UPDATE
@@ -25,7 +27,7 @@ module SplitIoClient
       private
 
       def process_split_update(notification)
-        @config.logger.debug("SPLIT UPDATE notification received: #{notification}") if @config.debug_enabled
+        @config.logger.debug("#{notification.type} notification received: #{notification}") if @config.debug_enabled
         @splits_worker.add_to_queue(notification)
       end
 
