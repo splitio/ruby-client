@@ -127,6 +127,10 @@ module SplitIoClient
           @tt_cache.clear
 
           @adapter.clear(namespace_key)
+          unless @config.mode.equal?(:consumer)
+            @adapter.set_string(namespace_key('.splits.till'), '-1')
+            @adapter.initialize_map(namespace_key('.segments.registered'))
+          end
         end
 
         def kill(change_number, split_name, default_treatment)

@@ -27,7 +27,7 @@ module SplitIoClient
         feature_flag_repository.update(to_add, to_delete, change_number)
       end
 
-      def self.update_rule_based_segment_repository(rule_based_segment_repository, rule_based_segments, change_number, config, clear_storage)
+      def self.update_rule_based_segment_repository(rule_based_segment_repository, rule_based_segments, change_number, config)
         to_add = []
         to_delete = []
         rule_based_segments.each do |rule_based_segment|
@@ -40,7 +40,6 @@ module SplitIoClient
           config.logger.debug("storing rule based segment (#{rule_based_segment[:name]})") if config.debug_enabled
           to_add.push(rule_based_segment)
         end
-        rule_based_segment_repository.clear if clear_storage
 
         rule_based_segment_repository.update(to_add, to_delete, change_number)
       end

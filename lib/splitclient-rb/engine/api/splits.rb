@@ -22,7 +22,6 @@ module SplitIoClient
         start = Time.now
         
         if check_last_proxy_check_timestamp
-            puts "switching to new spec"
             @spec_version = SplitIoClient::Spec::FeatureFlags::SPEC_VERSION
             @config.logger.debug("Switching to new Feature flag spec #{@spec_version} and fetching.")
             since = -1
