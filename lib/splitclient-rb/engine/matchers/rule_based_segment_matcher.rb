@@ -25,20 +25,10 @@ module SplitIoClient
       rule_based_segment = @rule_based_segments_repository.get_rule_based_segment(@segment_name)
       return false if rule_based_segment.nil?
 
-      if args[:value].nil? or args[:value].empty?
-        key = args[:matching_key]
-      else
-        key = args[:value]   
-      end
+      key = update_key(args)
       return false if rule_based_segment[:excluded][:keys].include?(key)
 
-      rule_based_segment[:excluded][:segments].each do |segment|
-        return false if segment[:type] == 'standard' and @segments_repository.in_segment?(segment[:name], key)
-        
-        if segment[:type] == 'rule-based'
-          return false if match_rbs(@rule_based_segments_repository.get_rule_based_segment(segment[:name]), args)
-        end
-      end
+      return false unless check_excluded_segments(rule_based_segment)
 
       matches = false
       rule_based_segment[:conditions].each do |c|
@@ -54,13 +44,31 @@ module SplitIoClient
 
     private
 
-    def match_rbs(rule_based_segment, args)      
-      rbs_matcher = RuleBasedSegmentMatcher.new(@segments_repository, @rule_based_segments_repository, rule_based_segment[:name], @config)
-      return rbs_matcher.match?(
-                  matching_key: args[:matching_key],
-                  bucketing_key: args[:value],
-                  attributes: args[:attributes]
-              )
+    def check_excluded_segments(rule_based_segment)
+      rule_based_segment[:excluded][:segments].each do |segment|
+        return false if segment[:type] == 'standard' && @segments_repository.in_segment?(segment[:name], key)
+
+        return false if segment[:type] == 'rule-based' && match_rbs(
+          @rule_based_segments_repository.get_rule_based_segment(segment[:name]), args
+        )
+      end
+      True
+    end
+
+    def update_key(args)
+      if args[:value].nil? || args[:value].empty?
+        args[:matching_key]
+      else
+        args[:value]
+      end
+    end
+
+    def match_rbs(rule_based_segment, args)
+      rbs_matcher = RuleBasedSegmentMatcher.new(@segments_repository, @rule_based_segments_repository,
+                                                rule_based_segment[:name], @config)
+      rbs_matcher.match?(matching_key: args[:matching_key],
+                         bucketing_key: args[:value],
+                         attributes: args[:attributes])
     end
   end
 end

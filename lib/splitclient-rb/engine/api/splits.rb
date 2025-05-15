@@ -59,6 +59,7 @@ module SplitIoClient
             result = convert_to_newSPEC(result)
           end
           
+          result[:rbs][:d] = check_rbs_data(result[:rbs][:d])
           result = objects_with_segment_names(result)
           
           if @spec_version == SplitIoClient::Spec::FeatureFlags::SPEC_VERSION
@@ -96,6 +97,15 @@ module SplitIoClient
       end
 
       private
+
+      def check_rbs_data(rbs_data)
+        rbs_data.each do |rb_segment|
+          rb_segment[:excluded] = {:keys => [], :segments => []} if rb_segment[:excluded].nil?
+          rb_segment[:excluded][:keys] = [] if rb_segment[:excluded][:keys].nil?
+          rb_segment[:excluded][:segments] = [] if rb_segment[:excluded][:segments].nil?
+        end
+        rbs_data
+      end
 
       def objects_with_segment_names(parsed_objects)
         parsed_objects[:segment_names] = Set.new

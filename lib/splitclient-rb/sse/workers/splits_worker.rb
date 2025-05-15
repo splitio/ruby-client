@@ -4,7 +4,8 @@ module SplitIoClient
   module SSE
     module Workers
       class SplitsWorker
-        def initialize(synchronizer, config, feature_flags_repository, telemetry_runtime_producer, segment_fetcher, rule_based_segment_repository)
+        def initialize(synchronizer, config, feature_flags_repository, telemetry_runtime_producer,
+                       segment_fetcher, rule_based_segment_repository)
           @synchronizer = synchronizer
           @config = config
           @feature_flags_repository = feature_flags_repository
@@ -68,12 +69,11 @@ module SplitIoClient
         def update_feature_flag(notification)
           return true if @feature_flags_repository.get_change_number.to_i >= notification.data['changeNumber']
           return false unless !notification.data['d'].nil? && @feature_flags_repository.get_change_number == notification.data['pcn']
-          new_split = return_object_from_json(notification)
-          SplitIoClient::Helpers::RepositoryHelper.update_feature_flag_repository(@feature_flags_repository,
-                                                                                  [new_split],
-                                                                                  notification.data['changeNumber'], @config, false)
-          fetch_segments_if_not_exists(Helpers::Util.segment_names_by_object(new_split, "IN_SEGMENT"), @feature_flags_repository)
-          if fetch_rule_based_segments_if_not_exists(Helpers::Util.segment_names_by_object(new_split, "IN_RULE_BASED_SEGMENT"), notification.data['changeNumber'])
+
+          update_feature_flag_repository(notification)
+          fetch_segments_if_not_exists(Helpers::Util.segment_names_by_object(new_split, 'IN_SEGMENT'), @feature_flags_repository)
+          if fetch_rule_based_segments_if_not_exists(Helpers::Util.segment_names_by_object(new_split, 'IN_RULE_BASED_SEGMENT'),
+                                                     notification.data['changeNumber'])
             return true
           end
 
@@ -86,18 +86,26 @@ module SplitIoClient
           false
         end
 
+        def update_feature_flag_repository(notification)
+          new_split = return_object_from_json(notification)
+          SplitIoClient::Helpers::RepositoryHelper.update_feature_flag_repository(@feature_flags_repository, [new_split],
+                                                                                  notification.data['changeNumber'], @config, false)
+        end
+
         def update_rule_based_segment(notification)
           return true if @rule_based_segment_repository.get_change_number.to_i >= notification.data['changeNumber']
-          return false unless !notification.data['d'].nil? && @rule_based_segment_repository.get_change_number == notification.data['pcn']
+          return false unless !notification.data['d'].nil? &&
+                              @rule_based_segment_repository.get_change_number == notification.data['pcn']
 
           new_rb_segment = return_object_from_json(notification)
           SplitIoClient::Helpers::RepositoryHelper.update_rule_based_segment_repository(@rule_based_segment_repository,
-                                                                                  [new_rb_segment],
-                                                                                  notification.data['changeNumber'], @config)
-          fetch_segments_if_not_exists(Helpers::Util.segment_names_by_object(new_rb_segment, "IN_SEGMENT"), @rule_based_segment_repository)
+                                                                                        [new_rb_segment],
+                                                                                        notification.data['changeNumber'], @config)
+          fetch_segments_if_not_exists(Helpers::Util.segment_names_by_object(new_rb_segment, 'IN_SEGMENT'),
+                                       @rule_based_segment_repository)
 
-# TODO: enable when telemetry spec is added
-#          @telemetry_runtime_producer.record_updates_from_sse(Telemetry::Domain::Constants::SPLITS)
+          # TODO: enable when telemetry spec is added
+          # @telemetry_runtime_producer.record_updates_from_sse(Telemetry::Domain::Constants::SPLITS)
 
           true
         rescue StandardError => e
@@ -110,11 +118,9 @@ module SplitIoClient
           return if @feature_flags_repository.get_change_number.to_i > notification.data['changeNumber']
 
           @config.logger.debug("feature_flags_worker kill #{notification.data['splitName']}, #{notification.data['changeNumber']}")
-          @feature_flags_repository.kill(
-            notification.data['changeNumber'],
-            notification.data['splitName'],
-            notification.data['defaultTreatment']
-          )
+          @feature_flags_repository.kill(notification.data['changeNumber'],
+                                         notification.data['splitName'],
+                                         notification.data['defaultTreatment'])
           @synchronizer.fetch_splits(notification.data['changeNumber'], 0)
         end
 
@@ -124,7 +130,6 @@ module SplitIoClient
         end
 
         def fetch_segments_if_not_exists(segment_names, object_repository)
-          
           return if segment_names.nil?
 
           object_repository.set_segment_names(segment_names)
@@ -132,9 +137,8 @@ module SplitIoClient
         end
 
         def fetch_rule_based_segments_if_not_exists(segment_names, change_number)
-          if segment_names.nil? or segment_names.empty? or @rule_based_segment_repository.contains?(segment_names.to_a)
-            return false 
-          end
+          return false if segment_names.nil? || segment_names.empty? || @rule_based_segment_repository.contains?(segment_names.to_a)
+
           @synchronizer.fetch_splits(0, change_number)
 
           true

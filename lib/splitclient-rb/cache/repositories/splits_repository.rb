@@ -43,10 +43,7 @@ module SplitIoClient
           end
           @flag_sets = flag_sets_repository
           @flag_set_filter = flag_set_filter
-          unless @config.mode.equal?(:consumer)
-            @adapter.set_string(namespace_key('.splits.till'), '-1')
-            @adapter.initialize_map(namespace_key('.segments.registered'))
-          end
+          initialize_keys
         end
 
         def update(to_add, to_delete, new_change_number)
@@ -127,10 +124,7 @@ module SplitIoClient
           @tt_cache.clear
 
           @adapter.clear(namespace_key)
-          unless @config.mode.equal?(:consumer)
-            @adapter.set_string(namespace_key('.splits.till'), '-1')
-            @adapter.initialize_map(namespace_key('.segments.registered'))
-          end
+          initialize_keys
         end
 
         def kill(change_number, split_name, default_treatment)
@@ -170,6 +164,13 @@ module SplitIoClient
         end
 
         private
+
+        def initialize_keys
+          unless @config.mode.equal?(:consumer)
+            @adapter.set_string(namespace_key('.splits.till'), '-1')
+            @adapter.initialize_map(namespace_key('.segments.registered'))
+          end
+        end
 
         def add_feature_flag(split)
           return unless split[:name]
