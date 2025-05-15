@@ -3,7 +3,7 @@
 module SplitIoClient
   module Helpers
     class RepositoryHelper
-      def self.update_feature_flag_repository(feature_flag_repository, feature_flags, change_number, config)
+      def self.update_feature_flag_repository(feature_flag_repository, feature_flags, change_number, config, clear_storage)
         to_add = []
         to_delete = []
         feature_flags.each do |feature_flag|
@@ -23,10 +23,11 @@ module SplitIoClient
           config.logger.debug("storing feature flag (#{feature_flag[:name]})") if config.debug_enabled
           to_add.push(feature_flag)
         end
+        feature_flag_repository.clear if clear_storage
         feature_flag_repository.update(to_add, to_delete, change_number)
       end
 
-      def self.update_rule_based_segment_repository(rule_based_segment_repository, rule_based_segments, change_number, config)
+      def self.update_rule_based_segment_repository(rule_based_segment_repository, rule_based_segments, change_number, config, clear_storage)
         to_add = []
         to_delete = []
         rule_based_segments.each do |rule_based_segment|
@@ -39,6 +40,8 @@ module SplitIoClient
           config.logger.debug("storing rule based segment (#{rule_based_segment[:name]})") if config.debug_enabled
           to_add.push(rule_based_segment)
         end
+        rule_based_segment_repository.clear if clear_storage
+
         rule_based_segment_repository.update(to_add, to_delete, change_number)
       end
     end

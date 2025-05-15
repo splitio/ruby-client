@@ -71,7 +71,7 @@ module SplitIoClient
           new_split = return_object_from_json(notification)
           SplitIoClient::Helpers::RepositoryHelper.update_feature_flag_repository(@feature_flags_repository,
                                                                                   [new_split],
-                                                                                  notification.data['changeNumber'], @config)
+                                                                                  notification.data['changeNumber'], @config, false)
           fetch_segments_if_not_exists(Helpers::Util.segment_names_by_object(new_split, "IN_SEGMENT"), @feature_flags_repository)
           if fetch_rule_based_segments_if_not_exists(Helpers::Util.segment_names_by_object(new_split, "IN_RULE_BASED_SEGMENT"), notification.data['changeNumber'])
             return true
@@ -93,7 +93,7 @@ module SplitIoClient
           new_rb_segment = return_object_from_json(notification)
           SplitIoClient::Helpers::RepositoryHelper.update_rule_based_segment_repository(@rule_based_segment_repository,
                                                                                   [new_rb_segment],
-                                                                                  notification.data['changeNumber'], @config)
+                                                                                  notification.data['changeNumber'], @config, false)
           fetch_segments_if_not_exists(Helpers::Util.segment_names_by_object(new_rb_segment, "IN_SEGMENT"), @rule_based_segment_repository)
 
 # TODO: enable when telemetry spec is added
