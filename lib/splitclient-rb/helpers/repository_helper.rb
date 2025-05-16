@@ -13,7 +13,7 @@ module SplitIoClient
             next
           end
 
-          feature_flag = self.check_impressions_disabled(feature_flag, config)
+          feature_flag = check_impressions_disabled(feature_flag, config)
 
           config.logger.debug("storing feature flag (#{feature_flag[:name]})") if config.debug_enabled
           to_add.push(feature_flag)

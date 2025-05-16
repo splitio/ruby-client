@@ -28,7 +28,7 @@ module SplitIoClient
       key = update_key(args)
       return false if rule_based_segment[:excluded][:keys].include?(key)
 
-      return false unless check_excluded_segments(rule_based_segment)
+      return false unless check_excluded_segments(rule_based_segment, key, args)
 
       matches = false
       rule_based_segment[:conditions].each do |c|
@@ -44,7 +44,7 @@ module SplitIoClient
 
     private
 
-    def check_excluded_segments(rule_based_segment)
+    def check_excluded_segments(rule_based_segment, key, args)
       rule_based_segment[:excluded][:segments].each do |segment|
         return false if segment[:type] == 'standard' && @segments_repository.in_segment?(segment[:name], key)
 
@@ -52,7 +52,7 @@ module SplitIoClient
           @rule_based_segments_repository.get_rule_based_segment(segment[:name]), args
         )
       end
-      True
+      true
     end
 
     def update_key(args)

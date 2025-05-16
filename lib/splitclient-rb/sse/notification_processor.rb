@@ -27,7 +27,7 @@ module SplitIoClient
       private
 
       def process_split_update(notification)
-        @config.logger.debug("#{notification.type} notification received: #{notification}") if @config.debug_enabled
+        @config.logger.debug("#{notification.event_type} notification received: #{notification}") if @config.debug_enabled
         @splits_worker.add_to_queue(notification)
       end
 
