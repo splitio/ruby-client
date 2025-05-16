@@ -225,11 +225,38 @@ describe SplitIoClient::Api::Splits do
 
       SplitIoClient::Api::Splits::PROXY_CHECK_INTERVAL_SECONDS = 1
       sleep 1
-      parsed_splits = splits_api.since(-1, -1)
+      parsed_splits = splits_api.since(1457726098069, -1)
       expect(splits_api.clear_storage).to eq(true)
       expect(parsed_splits[:ff][:d].length()).to eq(2)
       expect(parsed_splits[:rbs][:d].length()).to eq(1)
       expect(splits_api.instance_variable_get(:@spec_version)).to eq(SplitIoClient::Spec::FeatureFlags::SPEC_VERSION)
+      expect(splits_api.instance_variable_get(:@old_spec_since)).to eq(1457726098069)
+    end
+
+    it 'check using old_spec_since variable' do
+      old_spec_splits2 = File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/rule_based_segments/split_old_spec2.json')))
+
+      stub_request(:get, 'https://proxy-server/api/splitChanges?s=1.3&since=-1&rbSince=-1')
+        .to_return({status: 400, body: ''}, {status: 400, body: ''})
+      stub_request(:get, 'https://proxy-server/api/splitChanges?s=1.1&since=-1')
+        .to_return(status: 200, body: old_spec_splits)
+      stub_request(:get, 'https://proxy-server/api/splitChanges?s=1.1&since=1457726098069')
+        .to_return(status: 200, body: old_spec_splits2)
+
+      parsed_splits = splits_api.since(-1, -1)
+      expect(parsed_splits[:ff][:d].length()).to eq(6)
+      expect(splits_api.instance_variable_get(:@spec_version)).to eq(SplitIoClient::Api::Splits::SPEC_1_1)
+
+      SplitIoClient::Api::Splits::PROXY_CHECK_INTERVAL_SECONDS = 1
+      sleep 1
+      parsed_splits = splits_api.since(1457726098069, -1)
+      SplitIoClient::Api::Splits::PROXY_CHECK_INTERVAL_SECONDS = 100000
+
+      sleep 1
+      expect(splits_api.instance_variable_get(:@spec_version)).to eq(SplitIoClient::Api::Splits::SPEC_1_1)
+      expect(splits_api.instance_variable_get(:@old_spec_since)).to eq(nil)
+      expect(parsed_splits[:ff][:d].length()).to eq(1)
+      expect(log.string).to include 'Switching to new Feature flag spec 1.3 and fetching.'
     end
   end
 end

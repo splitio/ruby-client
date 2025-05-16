@@ -16,6 +16,7 @@ module SplitIoClient
         @spec_version = SplitIoClient::Spec::FeatureFlags::SPEC_VERSION
         @last_proxy_check_timestamp = 0
         @clear_storage = false
+        @old_spec_since = nil
       end
 
       def since(since, since_rbs, fetch_options = { cache_control_headers: false, till: nil, sets: nil})
@@ -24,13 +25,16 @@ module SplitIoClient
         if check_last_proxy_check_timestamp
             @spec_version = SplitIoClient::Spec::FeatureFlags::SPEC_VERSION
             @config.logger.debug("Switching to new Feature flag spec #{@spec_version} and fetching.")
+            @old_spec_since = since
             since = -1
             since_rbs = -1
             fetch_options = { cache_control_headers: false, till: nil, sets: nil}
         end
 
         if @spec_version == Splits::SPEC_1_1
+          since = @old_spec_since unless @old_spec_since.nil?
           params = { s: @spec_version, since: since }
+          @old_spec_since = nil
         else
           params = { s: @spec_version, since: since, rbSince: since_rbs }
         end
