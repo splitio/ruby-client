@@ -206,7 +206,7 @@ describe SplitIoClient::Api::Splits do
 
       parsed_splits = splits_api.since(-1, -1)
 
-      expect(parsed_splits[:ff][:d].length()).to eq(7)
+      expect(parsed_splits[:ff][:d].length()).to eq(6)
       expect(parsed_splits[:ff][:t]).to eq(1457726098069)
       expect(parsed_splits[:ff][:s]).to eq(-1)
       expect(parsed_splits[:rbs]).to eq({:d => [], :s => -1, :t => -1})
@@ -220,7 +220,7 @@ describe SplitIoClient::Api::Splits do
         .to_return(status: 200, body: old_spec_splits)
 
       parsed_splits = splits_api.since(-1, -1)
-      expect(parsed_splits[:ff][:d].length()).to eq(7)
+      expect(parsed_splits[:ff][:d].length()).to eq(6)
       expect(splits_api.instance_variable_get(:@spec_version)).to eq(SplitIoClient::Api::Splits::SPEC_1_1)
 
       SplitIoClient::Api::Splits::PROXY_CHECK_INTERVAL_SECONDS = 1

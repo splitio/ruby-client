@@ -70,7 +70,7 @@ module SplitIoClient
           return true if @feature_flags_repository.get_change_number.to_i >= notification.data['changeNumber']
           return false unless !notification.data['d'].nil? && @feature_flags_repository.get_change_number == notification.data['pcn']
 
-          update_feature_flag_repository(notification)
+          new_split = update_feature_flag_repository(notification)
           fetch_segments_if_not_exists(Helpers::Util.segment_names_by_object(new_split, 'IN_SEGMENT'), @feature_flags_repository)
           if fetch_rule_based_segments_if_not_exists(Helpers::Util.segment_names_by_object(new_split, 'IN_RULE_BASED_SEGMENT'),
                                                      notification.data['changeNumber'])
@@ -90,6 +90,7 @@ module SplitIoClient
           new_split = return_object_from_json(notification)
           SplitIoClient::Helpers::RepositoryHelper.update_feature_flag_repository(@feature_flags_repository, [new_split],
                                                                                   notification.data['changeNumber'], @config, false)
+          new_split
         end
 
         def update_rule_based_segment(notification)
