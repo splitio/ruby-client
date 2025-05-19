@@ -22,7 +22,7 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
   let(:event_split_update_no_definition)  { SplitIoClient::SSE::EventSource::StreamData.new("data", 123, JSON.parse('{"type":"SPLIT_UPDATE","changeNumber":5564531221,"pcn":1234,"c": 0, "d":null}'), 'test') }
   let(:event_split_update_segments) { SplitIoClient::SSE::EventSource::StreamData.new("data", 123, JSON.parse('{"type":"SPLIT_UPDATE","changeNumber":5564531221,"pcn":1234,"c":2,"d":"eJzcVFtr20wQ/SvhPK9AsnzTvpnPJp+po0DlppRgzFga2dusJLNapaRG/73Id7sOoU+FvmluZ3TOGXYDayhNVTx9W3NIGUOiKtlAQCWQSNq+FyeJ6yzcBTuex+T0qe86XrfrUkJBzH4AgXw3mVFlivl3eiWIA/BA6yImq4oc0nPdG/mIOYF0gpYfeO3AEyh3Ca/XDfxer+u2BUpLtiohMfhvOn4aQeBFad20paRLFkg4pUrbqWGyGecWEvbwPQ9cCMQrypccVtmCDaTX7feCnu+7nY7nCZBeFpAtgbjIU7WszPbPSshNvc0lah8/b05hoxkkvv4/no4m42gKgYxsvGJzb4pqDdn0ZguVNwsxCIenhh3SPriBk/OSLB/Z/Vgpy1qV9mE3MSRLDfwxD/kMSjKVb1dUpmgwVFxgVtezWmBNxp5RsDdlavkdCJTqJ2+tqmcCmhasIU+LOEEtftfg8+Nk8vjlzxV44beINce2ME3z2TEeDrEWVzKNw3k0un8YhTd0aiaGnKqck4iXDakrwcpdNjzdq9PChxIV+VEXt2F/UUvTC9Guyk/t90dfO+/Xro73w65z7y6cU/ndnvTdge7f9W8wmcw/jb5F1+79yybsX6c7U2lGPat/BQAA//9ygdKB"}'), 'test') }
   let(:event_split_update_rb_segments) { SplitIoClient::SSE::EventSource::StreamData.new("data", 123, JSON.parse('{"type":"SPLIT_UPDATE","changeNumber":5564531221,"pcn":1234,"c":0,"d":"eyJjaGFuZ2VOdW1iZXIiOiAxMCwgInRyYWZmaWNUeXBlTmFtZSI6ICJ1c2VyIiwgIm5hbWUiOiAicmJzX2ZsYWciLCAidHJhZmZpY0FsbG9jYXRpb24iOiAxMDAsICJ0cmFmZmljQWxsb2NhdGlvblNlZWQiOiAxODI4Mzc3MzgwLCAic2VlZCI6IC0yODY2MTc5MjEsICJzdGF0dXMiOiAiQUNUSVZFIiwgImtpbGxlZCI6IGZhbHNlLCAiZGVmYXVsdFRyZWF0bWVudCI6ICJvZmYiLCAiYWxnbyI6IDIsICJjb25kaXRpb25zIjogW3siY29uZGl0aW9uVHlwZSI6ICJST0xMT1VUIiwgIm1hdGNoZXJHcm91cCI6IHsiY29tYmluZXIiOiAiQU5EIiwgIm1hdGNoZXJzIjogW3sia2V5U2VsZWN0b3IiOiB7InRyYWZmaWNUeXBlIjogInVzZXIifSwgIm1hdGNoZXJUeXBlIjogIklOX1JVTEVfQkFTRURfU0VHTUVOVCIsICJuZWdhdGUiOiBmYWxzZSwgInVzZXJEZWZpbmVkU2VnbWVudE1hdGNoZXJEYXRhIjogeyJzZWdtZW50TmFtZSI6ICJzYW1wbGVfcnVsZV9iYXNlZF9zZWdtZW50In19XX0sICJwYXJ0aXRpb25zIjogW3sidHJlYXRtZW50IjogIm9uIiwgInNpemUiOiAxMDB9LCB7InRyZWF0bWVudCI6ICJvZmYiLCAic2l6ZSI6IDB9XSwgImxhYmVsIjogImluIHJ1bGUgYmFzZWQgc2VnbWVudCBzYW1wbGVfcnVsZV9iYXNlZF9zZWdtZW50In0sIHsiY29uZGl0aW9uVHlwZSI6ICJST0xMT1VUIiwgIm1hdGNoZXJHcm91cCI6IHsiY29tYmluZXIiOiAiQU5EIiwgIm1hdGNoZXJzIjogW3sia2V5U2VsZWN0b3IiOiB7InRyYWZmaWNUeXBlIjogInVzZXIifSwgIm1hdGNoZXJUeXBlIjogIkFMTF9LRVlTIiwgIm5lZ2F0ZSI6IGZhbHNlfV19LCAicGFydGl0aW9ucyI6IFt7InRyZWF0bWVudCI6ICJvbiIsICJzaXplIjogMH0sIHsidHJlYXRtZW50IjogIm9mZiIsICJzaXplIjogMTAwfV0sICJsYWJlbCI6ICJkZWZhdWx0IHJ1bGUifV0sICJjb25maWd1cmF0aW9ucyI6IHt9LCAic2V0cyI6IFtdLCAiaW1wcmVzc2lvbnNEaXNhYmxlZCI6IGZhbHNlfQ=="}'), 'test') }
-  let(:event_rb_segment_update) { SplitIoClient::SSE::EventSource::StreamData.new("data", 12345, JSON.parse('{"type":"RB_SEGMENT_UPDATE","changeNumber":5564531221,"pcn":1234,"c":0,"d":"eyJjaGFuZ2VOdW1iZXIiOiA1LCAibmFtZSI6ICJzYW1wbGVfcnVsZV9iYXNlZF9zZWdtZW50IiwgInN0YXR1cyI6ICJBQ1RJVkUiLCAidHJhZmZpY1R5cGVOYW1lIjogInVzZXIiLCAiZXhjbHVkZWQiOiB7ImtleXMiOiBbIm1hdXJvQHNwbGl0LmlvIl0sICJzZWdtZW50cyI6IFtdfSwgImNvbmRpdGlvbnMiOiBbeyJtYXRjaGVyR3JvdXAiOiB7ImNvbWJpbmVyIjogIkFORCIsICJtYXRjaGVycyI6IFt7ImtleVNlbGVjdG9yIjogeyJ0cmFmZmljVHlwZSI6ICJ1c2VyIiwgImF0dHJpYnV0ZSI6ICJlbWFpbCJ9LCAibWF0Y2hlclR5cGUiOiAiRU5EU19XSVRIIiwgIm5lZ2F0ZSI6IGZhbHNlLCAid2hpdGVsaXN0TWF0Y2hlckRhdGEiOiB7IndoaXRlbGlzdCI6IFsiQHNwbGl0LmlvIl19fV19fV19"}'), 'test') }
+  let(:event_rb_segment_update) { SplitIoClient::SSE::EventSource::StreamData.new("data", 12345, JSON.parse('{"type":"RB_SEGMENT_UPDATE","changeNumber":5564531221,"pcn":1234,"c":0,"d":"eyJjaGFuZ2VOdW1iZXIiOiA1LCAibmFtZSI6ICJzYW1wbGVfcnVsZV9iYXNlZF9zZWdtZW50IiwgInN0YXR1cyI6ICJBQ1RJVkUiLCAidHJhZmZpY1R5cGVOYW1lIjogInVzZXIiLCAiZXhjbHVkZWQiOiB7ImtleXMiOiBbIm1hdXJvQHNwbGl0LmlvIl0sICJzZWdtZW50cyI6IFt7InR5cGUiOiAic3RhbmRhcmQiLCAibmFtZSI6ICJzZWdtZW50MSJ9XX0sICJjb25kaXRpb25zIjogW3sibWF0Y2hlckdyb3VwIjogeyJjb21iaW5lciI6ICJBTkQiLCAibWF0Y2hlcnMiOiBbeyJrZXlTZWxlY3RvciI6IHsidHJhZmZpY1R5cGUiOiAidXNlciIsICJhdHRyaWJ1dGUiOiAiZW1haWwifSwgIm1hdGNoZXJUeXBlIjogIklOX1NFR01FTlQiLCAibmVnYXRlIjogZmFsc2UsICJ1c2VyRGVmaW5lZFNlZ21lbnRNYXRjaGVyRGF0YSI6IHsic2VnbWVudE5hbWUiOiAiZGVtbyJ9fV19fV19"}'), 'test') }
 
   context 'add change number to queue' do
     let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new([])}
@@ -309,7 +309,7 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
       "trafficTypeName": "user",
       "excluded":{
         "keys":["mauro@split.io","gaston@split.io"],
-        "segments":[]
+        "segments":["segment1"]
       },
       "conditions": [
         {
@@ -321,13 +321,11 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
                   "trafficType": "user",
                   "attribute": "email"
                 },
-                "matcherType": "ENDS_WITH",
+                "matcherType": "IN_SEGMENT",
                 "negate": false,
-                "whitelistMatcherData": {
-                  "whitelist": [
-                    "@split.io"
-                  ]
-                }
+                "userDefinedSegmentMatcherData":{
+                    "segmentName":"demo"
+                },
               }
             ]
           }
@@ -358,6 +356,8 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
     end
 
     it 'process rb segment update' do
+      stub_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=-1').to_return(status: 200, body: '{"name":"maur-2","added":["admin"],"removed":[],"since":-1,"till":-1}}')
+      stub_request(:get, 'https://sdk.split.io/api/segmentChanges/demo?since=-1').to_return(status: 200, body: '{"name":"maur-2","added":["admin"],"removed":[],"since":-1,"till":-1}}')
       worker = subject.new(synchronizer, config, splits_repository, telemetry_runtime_producer, segment_fetcher, rule_based_segments_repository)
       worker.start
 
@@ -366,6 +366,11 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
       sleep 2
       rb_segment = rule_based_segments_repository.get_rule_based_segment("sample_rule_based_segment")
       expect(rb_segment[:name] == 'sample_rule_based_segment')
+
+      expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/demo?since=-1')).to have_been_made.once
+      expect(segments_repository.used_segment_names[0]).to eq('demo')
+      expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=-1')).to have_been_made.once
+      expect(segments_repository.used_segment_names[1]).to eq('segment1')
     end
   end
 

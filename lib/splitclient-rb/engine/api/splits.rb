@@ -115,15 +115,7 @@ module SplitIoClient
           end.flatten
 
         parsed_objects[:rbs][:d].each do |rule_based_segment|
-          parsed_objects[:segment_names].merge Helpers::Util.segment_names_by_object(rule_based_segment, "IN_SEGMENT")
-        end
-
-        parsed_objects[:rbs][:d].each do |rule_based_segment| 
-          rule_based_segment[:excluded][:segments].each do |segment|
-            if segment[:type] == "standard"
-              parsed_objects[:segment_names].add(segment[:name])
-            end
-          end
+          parsed_objects[:segment_names].merge Helpers::Util.segment_names_in_rb_segment(rule_based_segment, "IN_SEGMENT")
         end
         
         parsed_objects

@@ -12,6 +12,17 @@ module SplitIoClient
           end
         end
       end
+
+      def self.segment_names_in_rb_segment(object, matcher_type)
+        names = Set.new 
+        names.merge segment_names_by_object(object, matcher_type)
+        object[:excluded][:segments].each do |segment|
+            if segment[:type] == 'standard'
+              names.add(segment[:name])
+            end
+        end
+        names
+      end
     end
   end
 end
