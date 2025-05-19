@@ -1,0 +1,66 @@
+{
+  "splits": [
+      {
+          "orgId": null,
+          "environment": null,
+          "trafficTypeId": null,
+          "trafficTypeName": null,
+          "name": "new_feature",
+          "seed": -1222652054,
+          "status": "ACTIVE",
+          "killed": false,
+          "changeNumber": 123,
+          "defaultTreatment": "off",
+          "conditions": [
+              {
+                  "matcherGroup": {
+                      "combiner": "AND",
+                      "matchers": [
+                          {
+                              "matcherType": "WHITELIST",
+                              "negate": false,
+                              "userDefinedSegmentMatcherData": null,
+                              "whitelistMatcherData": {
+                                  "whitelist": [
+                                      "whitelisted_user"
+                                  ]
+                              }
+                          }
+                      ]
+                  },
+                  "partitions": [
+                      {
+                          "treatment": "on",
+                          "size": 100
+                      }
+                  ]
+              },
+              {
+                  "matcherGroup": {
+                      "combiner": "AND",
+                      "matchers": [
+                          {
+                              "matcherType": "ALL_KEYS",
+                              "negate": false,
+                              "userDefinedSegmentMatcherData": null,
+                              "whitelistMatcherData": null
+                          }
+                      ]
+                  },
+                  "partitions": [
+                      {
+                          "treatment": "on",
+                          "size": 0
+                      },
+                      {
+                          "treatment": "off",
+                          "size": 100
+                      }
+                  ]
+              }
+          ],
+          "sets": ["set1", "set2"]
+      } ],
+  "since": -1,
+  "till": 1457726098069
+}
