@@ -50,6 +50,9 @@ module SplitIoClient
         raise e, 'Split SDK failed to connect to backend to post information', e.backtrace
       end
 
+      def sdk_url_overriden?
+        @config.sdk_url_overriden?
+      end
       private
 
       def api_client

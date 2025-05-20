@@ -8,7 +8,9 @@ module SplitIoClient
         segments_repository.adapter.pipelined do
           condition.matchers.each do |matcher|
             matchers << if matcher[:negate]
-                          condition.negation_matcher(matcher_instance(matcher[:matcherType], condition, matcher, segments_repository, rb_segment_repository))
+                          condition.negation_matcher(matcher_instance(matcher[:matcherType], condition,
+                                                                      matcher, segments_repository,
+                                                                      rb_segment_repository))
                         else
                           matcher_instance(matcher[:matcherType], condition, matcher, segments_repository, rb_segment_repository)
                         end

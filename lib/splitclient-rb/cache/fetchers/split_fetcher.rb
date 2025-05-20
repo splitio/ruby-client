@@ -25,7 +25,7 @@ module SplitIoClient
         def fetch_splits(fetch_options = { cache_control_headers: false, till: nil })
           @semaphore.synchronize do
             data = splits_since(@splits_repository.get_change_number, @rule_based_segments_repository.get_change_number, fetch_options)
-            SplitIoClient::Helpers::RepositoryHelper.update_feature_flag_repository(@splits_repository, data[:ff][:d], data[:ff][:t], @config)
+            SplitIoClient::Helpers::RepositoryHelper.update_feature_flag_repository(@splits_repository, data[:ff][:d], data[:ff][:t], @config, @splits_api.clear_storage)
             SplitIoClient::Helpers::RepositoryHelper.update_rule_based_segment_repository(@rule_based_segments_repository, data[:rbs][:d], data[:rbs][:t], @config)
             @splits_repository.set_segment_names(data[:segment_names])
             @rule_based_segments_repository.set_segment_names(data[:segment_names])
