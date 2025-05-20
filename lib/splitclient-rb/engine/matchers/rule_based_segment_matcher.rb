@@ -25,13 +25,10 @@ module SplitIoClient
       rule_based_segment = @rule_based_segments_repository.get_rule_based_segment(@segment_name)
       return false if rule_based_segment.nil?
 
-      return false if rule_based_segment[:excluded][:keys].include?([args[:value]])
+      key = update_key(args)
+      return false if rule_based_segment[:excluded][:keys].include?(key)
 
-      rule_based_segment[:excluded][:segments].each do |segment|
-        return false if segment[:type] == 'standard' and @segments_repository.in_segment?(segment[:name], args[:value])
-        
-        return false if segment[:type] == 'rule-based' and SplitIoClient::RuleBasedSegmentMatcher.new(@segments_repository, @rule_based_segments_repository, segment[:name], @config).match?(args)
-      end
+      return false unless check_excluded_segments(rule_based_segment, key, args)
 
       matches = false
       rule_based_segment[:conditions].each do |c|
@@ -41,6 +38,35 @@ module SplitIoClient
       end
       @logger.debug("[InRuleSegmentMatcher] #{@segment_name} is in rule based segment -> #{matches}")
       matches
+    end
+
+    private
+
+    def check_excluded_segments(rule_based_segment, key, args)
+      rule_based_segment[:excluded][:segments].each do |segment|
+        return false if segment[:type] == SplitIoClient::Engine::Models::SegmentType::STANDARD && @segments_repository.in_segment?(segment[:name], key)
+
+        return false if segment[:type] == SplitIoClient::Engine::Models::SegmentType::RULE_BASED_SEGMENT && match_rbs(
+          @rule_based_segments_repository.get_rule_based_segment(segment[:name]), args
+        )
+      end
+      true
+    end
+
+    def update_key(args)
+      if args[:value].nil? || args[:value].empty?
+        args[:matching_key]
+      else
+        args[:value]
+      end
+    end
+
+    def match_rbs(rule_based_segment, args)
+      rbs_matcher = RuleBasedSegmentMatcher.new(@segments_repository, @rule_based_segments_repository,
+                                                rule_based_segment[:name], @config)
+      rbs_matcher.match?(matching_key: args[:matching_key],
+                         bucketing_key: args[:value],
+                         attributes: args[:attributes])
     end
   end
 end

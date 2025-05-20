@@ -46,7 +46,7 @@ describe SplitIoClient, type: :client do
       @mode = cache_adapter.equal?(:memory) ? :standalone : :consumer
       stub_request(:any, /https:\/\/telemetry.*/).to_return(status: 200, body: 'ok')
       stub_request(:any, /https:\/\/events.*/).to_return(status: 200, body: '')
-      stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.1&since/)
+      stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.3&since=-1&rbSince=-1/)
       .to_return(status: 200, body: '')
       stub_request(:post, "https://telemetry.split.io/api/v1/metrics/config")
       .to_return(status: 200, body: '')
@@ -128,7 +128,7 @@ describe SplitIoClient, type: :client do
 
     context '#get_treatment' do
       before do
-        stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.1&since/).to_return(status: 200, body: '')
+        stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.3&since=-1&rbSince=-1/).to_return(status: 200, body: '')
 
         load_splits(all_keys_matcher_json, flag_sets_json)
         subject.block_until_ready
@@ -928,7 +928,7 @@ describe SplitIoClient, type: :client do
       end
 
       it 'returns control' do
-        stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.1&since/)
+        stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1")
           .to_return(status: 200, body: all_keys_matcher_json)
 
         subject.block_until_ready
@@ -942,7 +942,7 @@ describe SplitIoClient, type: :client do
 
     describe 'redis outage' do
       before do
-        stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.1&since/)
+        stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1")
           .to_return(status: 200, body: all_keys_matcher_json)
       end
 
@@ -955,7 +955,7 @@ describe SplitIoClient, type: :client do
 
     describe 'events' do
       before do
-        stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.1&since/)
+        stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1")
           .to_return(status: 200, body: all_keys_matcher_json)
         subject.block_until_ready
       end
@@ -985,7 +985,7 @@ describe SplitIoClient, type: :client do
 
     context '#track' do
       before do
-        stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.1&since/)
+        stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1")
           .to_return(status: 200, body: all_keys_matcher_json)
         subject.block_until_ready
       end
@@ -1192,7 +1192,7 @@ describe SplitIoClient, type: :client do
     end
 
     before do
-      stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.1&since.*/)
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1")
       .to_return(status: 200, body: all_keys_matcher_json)
     end
 
@@ -1270,7 +1270,7 @@ private
 def load_splits(splits_json, flag_sets_json)
   if @mode.equal?(:standalone)
 #    stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.1&since.*/)
-    stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=-1")
+    stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1")
     .to_return(status: 200, body: splits_json)
   else
     add_splits_to_repository(splits_json)
@@ -1288,7 +1288,7 @@ def load_segments(segments_json)
 end
 
 def add_splits_to_repository(splits_json)
-  splits = JSON.parse(splits_json, symbolize_names: true)[:splits]
+  splits = JSON.parse(splits_json, symbolize_names: true)[:ff][:d]
 
   splits_repository = subject.instance_variable_get(:@splits_repository)
 

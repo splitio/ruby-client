@@ -1,5 +1,6 @@
+{ "ff":{
+  "d": [
 {
-  "splits": [{
     "trafficTypeName": "user",
     "name": "PASSENGER_anding",
     "trafficAllocation": 100,
@@ -111,5 +112,6 @@
       }],
       "label": "in segment employees"
     }]
-  }]
+  }],"s":-1, "t":-1},
+ "rbs": {"d":[], "s":-1, "t":-1}
 }

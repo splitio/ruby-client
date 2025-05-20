@@ -37,7 +37,7 @@ describe SplitIoClient::EqualToMatcher do
     before do
       stub_request(:any, /https:\/\/telemetry.*/)
         .to_return(status: 200, body: 'ok')
-      stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.1&since/)
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')
         .to_return(status: 200, body: splits_json)
       stub_request(:any, /https:\/\/events.*/)
         .to_return(status: 200, body: 'ok')
@@ -64,7 +64,7 @@ describe SplitIoClient::EqualToMatcher do
     before do
       stub_request(:any, /https:\/\/telemetry.*/)
         .to_return(status: 200, body: 'ok')
-      stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.1&since/)
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')
         .to_return(status: 200, body: zero_splits_json)
       stub_request(:any, /https:\/\/events.*/)
         .to_return(status: 200, body: 'ok')
@@ -90,7 +90,7 @@ describe SplitIoClient::EqualToMatcher do
     before do
       stub_request(:any, /https:\/\/telemetry.*/)
         .to_return(status: 200, body: 'ok')
-      stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.1&since/)
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')
         .to_return(status: 200, body: negative_splits_json)
       stub_request(:any, /https:\/\/events.*/)
         .to_return(status: 200, body: 'ok')
@@ -117,7 +117,7 @@ describe SplitIoClient::EqualToMatcher do
     before do
       stub_request(:any, /https:\/\/telemetry.*/)
           .to_return(status: 200, body: 'ok')
-      stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.1&since/)
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')
         .to_return(status: 200, body: date_splits_json)
       stub_request(:any, /https:\/\/events.*/)
         .to_return(status: 200, body: 'ok')

@@ -55,7 +55,7 @@ module SplitIoClient
 
       @status_manager = Engine::StatusManager.new(@config)
       @split_validator = SplitIoClient::Validators.new(@config)
-      @evaluator = Engine::Parser::Evaluator.new(@segments_repository, @splits_repository, @config)
+      @evaluator = Engine::Parser::Evaluator.new(@segments_repository, @splits_repository, @rule_based_segment_repository, @config)
 
       start!
 
@@ -179,7 +179,7 @@ module SplitIoClient
     end
 
     def build_fetchers
-      @split_fetcher = SplitFetcher.new(@splits_repository, @rule_based_segments_repository, @api_key, @config, @runtime_producer)
+      @split_fetcher = SplitFetcher.new(@splits_repository, @rule_based_segment_repository, @api_key, @config, @runtime_producer)
       @segment_fetcher = SegmentFetcher.new(@segments_repository, @api_key, @config, @runtime_producer)
     end
 
@@ -221,7 +221,7 @@ module SplitIoClient
       end
       @splits_repository = SplitsRepository.new(@config, @flag_sets_repository, @flag_sets_filter)
       @segments_repository = SegmentsRepository.new(@config)
-      @rule_based_segment_repository = RuleBasedSegmentRepository.new(@config)
+      @rule_based_segment_repository = RuleBasedSegmentsRepository.new(@config)
       @impressions_repository = ImpressionsRepository.new(@config)
       @events_repository = EventsRepository.new(@config, @api_key, @runtime_producer)
     end

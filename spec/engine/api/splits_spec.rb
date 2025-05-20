@@ -21,7 +21,7 @@ describe SplitIoClient::Api::Splits do
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')
         .to_return(status: 200, body: splits)
 
-      parsed_splits = splits_api.send(:objects_with_segment_names, splits)
+      parsed_splits = splits_api.send(:objects_with_segment_names, JSON.parse(splits, symbolize_names: true))
 
       expect(parsed_splits[:segment_names]).to eq(Set.new(%w[demo employees]))
     end
@@ -181,6 +181,82 @@ describe SplitIoClient::Api::Splits do
       expect { splits_api.since(-1, -1) }.to raise_error(
         'Split SDK failed to connect to backend to retrieve information'
       )
+    end
+  end
+
+  context 'old spec tests' do
+    let(:old_spec_splits) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/rule_based_segments/split_old_spec.json'))) }
+    let(:config) do
+      SplitIoClient::SplitConfig.new(
+        logger: Logger.new(log),
+        debug_enabled: true,
+        transport_debug_enabled: true,
+        base_uri: "https://proxy-server/api"
+      )
+    end
+    let(:log) { StringIO.new }
+    let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
+    let(:splits_api) { described_class.new('', config, telemetry_runtime_producer) }
+
+    it 'switch to old spec url whith proper conditions' do
+      stub_request(:get, 'https://proxy-server/api/splitChanges?s=1.3&since=-1&rbSince=-1')
+        .to_return(status: 400, body: '')
+      stub_request(:get, 'https://proxy-server/api/splitChanges?s=1.1&since=-1')
+        .to_return(status: 200, body: old_spec_splits)
+
+      parsed_splits = splits_api.since(-1, -1)
+
+      expect(parsed_splits[:ff][:d].length()).to eq(6)
+      expect(parsed_splits[:ff][:t]).to eq(1457726098069)
+      expect(parsed_splits[:ff][:s]).to eq(-1)
+      expect(parsed_splits[:rbs]).to eq({:d => [], :s => -1, :t => -1})
+      expect(splits_api.clear_storage).to eq(false)
+    end
+
+    it 'check new spec after last proxy timestamp expires' do
+      stub_request(:get, 'https://proxy-server/api/splitChanges?s=1.3&since=-1&rbSince=-1')
+        .to_return({status: 400, body: ''}, {status: 200, body: splits})
+      stub_request(:get, 'https://proxy-server/api/splitChanges?s=1.1&since=-1')
+        .to_return(status: 200, body: old_spec_splits)
+
+      parsed_splits = splits_api.since(-1, -1)
+      expect(parsed_splits[:ff][:d].length()).to eq(6)
+      expect(splits_api.instance_variable_get(:@spec_version)).to eq(SplitIoClient::Api::Splits::SPEC_1_1)
+
+      SplitIoClient::Api::Splits::PROXY_CHECK_INTERVAL_SECONDS = 1
+      sleep 1
+      parsed_splits = splits_api.since(1457726098069, -1)
+      expect(splits_api.clear_storage).to eq(true)
+      expect(parsed_splits[:ff][:d].length()).to eq(2)
+      expect(parsed_splits[:rbs][:d].length()).to eq(1)
+      expect(splits_api.instance_variable_get(:@spec_version)).to eq(SplitIoClient::Spec::FeatureFlags::SPEC_VERSION)
+      expect(splits_api.instance_variable_get(:@old_spec_since)).to eq(1457726098069)
+    end
+
+    it 'check using old_spec_since variable' do
+      old_spec_splits2 = File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/rule_based_segments/split_old_spec2.json')))
+
+      stub_request(:get, 'https://proxy-server/api/splitChanges?s=1.3&since=-1&rbSince=-1')
+        .to_return({status: 400, body: ''}, {status: 400, body: ''})
+      stub_request(:get, 'https://proxy-server/api/splitChanges?s=1.1&since=-1')
+        .to_return(status: 200, body: old_spec_splits)
+      stub_request(:get, 'https://proxy-server/api/splitChanges?s=1.1&since=1457726098069')
+        .to_return(status: 200, body: old_spec_splits2)
+
+      parsed_splits = splits_api.since(-1, -1)
+      expect(parsed_splits[:ff][:d].length()).to eq(6)
+      expect(splits_api.instance_variable_get(:@spec_version)).to eq(SplitIoClient::Api::Splits::SPEC_1_1)
+
+      SplitIoClient::Api::Splits::PROXY_CHECK_INTERVAL_SECONDS = 1
+      sleep 1
+      parsed_splits = splits_api.since(1457726098069, -1)
+      SplitIoClient::Api::Splits::PROXY_CHECK_INTERVAL_SECONDS = 100000
+
+      sleep 1
+      expect(splits_api.instance_variable_get(:@spec_version)).to eq(SplitIoClient::Api::Splits::SPEC_1_1)
+      expect(splits_api.instance_variable_get(:@old_spec_since)).to eq(nil)
+      expect(parsed_splits[:ff][:d].length()).to eq(1)
+      expect(log.string).to include 'Switching to new Feature flag spec 1.3 and fetching.'
     end
   end
 end

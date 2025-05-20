@@ -253,7 +253,7 @@ module SplitIoClient
     # @return [void]
     def set_partitions
       partitions_list = []
-      return partitions_list unless @data.key?('partitions')
+      return partitions_list unless @data.key?(:partitions) or @data.key?('partitions')
       
       @data[:partitions].each do |p|
         partition = SplitIoClient::Partition.new(p)
