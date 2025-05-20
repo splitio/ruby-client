@@ -309,7 +309,7 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
       "trafficTypeName": "user",
       "excluded":{
         "keys":["mauro@split.io","gaston@split.io"],
-        "segments":["segment1"]
+        "segments":[{ "type": "standard", "name": "segment1"}]
       },
       "conditions": [
         {
