@@ -17,7 +17,7 @@ module SplitIoClient
         names = Set.new 
         names.merge segment_names_by_object(object, matcher_type)
         object[:excluded][:segments].each do |segment|
-            if segment[:type] == 'standard'
+            if segment[:type] == SplitIoClient::Engine::Models::SegmentType::STANDARD
               names.add(segment[:name])
             end
         end

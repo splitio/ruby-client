@@ -44,9 +44,9 @@ module SplitIoClient
 
     def check_excluded_segments(rule_based_segment, key, args)
       rule_based_segment[:excluded][:segments].each do |segment|
-        return false if segment[:type] == 'standard' && @segments_repository.in_segment?(segment[:name], key)
+        return false if segment[:type] == SplitIoClient::Engine::Models::SegmentType::STANDARD && @segments_repository.in_segment?(segment[:name], key)
 
-        return false if segment[:type] == 'rule-based' && match_rbs(
+        return false if segment[:type] == SplitIoClient::Engine::Models::SegmentType::RULE_BASED_SEGMENT && match_rbs(
           @rule_based_segments_repository.get_rule_based_segment(segment[:name]), args
         )
       end
