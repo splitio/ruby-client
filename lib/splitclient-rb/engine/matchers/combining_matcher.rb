@@ -57,9 +57,7 @@ module SplitIoClient
       @matchers.all? do |matcher|
         if match_with_key?(matcher)
           key = args[:value]
-          if args[:matching_key] != nil
-            key = args[:matching_key]
-          end
+          key = args[:matching_key] unless args[:matching_key].nil?
           matcher.match?(value: key)
         else
           matcher.match?(args)
