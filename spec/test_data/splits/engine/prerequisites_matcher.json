@@ -1,0 +1,79 @@
+{ "ff":{
+  "d": [
+    {
+       "orgId":"cee838c0-b3eb-11e5-855f-4eacec19f7bf",
+       "environment":"cf2d09f0-b3eb-11e5-855f-4eacec19f7bf",
+       "name":"test_whitelist",
+       "prerequisites": [],
+       "trafficTypeId":"u",
+       "trafficTypeName":"User",
+       "seed":-1245274114,
+       "status":"ACTIVE",
+       "killed":false,
+       "defaultTreatment":"off",
+       "conditions":[
+          {
+             "matcherGroup":{
+                "combiner":"AND",
+                "matchers":[
+                   {
+                      "matcherType":"WHITELIST",
+                      "negate":false,
+                      "userDefinedSegmentMatcherData":null,
+                      "whitelistMatcherData":{
+                         "whitelist":[
+                            "fake_user_id_1",
+                            "fake_user_id_3"
+                         ]
+                      }
+                   }
+                ]
+             },
+             "partitions":[
+                {
+                   "treatment":"on",
+                   "size":100
+                }
+             ]
+          }
+       ],
+       "sets": ["set_4"]
+    },
+    {
+       "orgId":"cee838c0-b3eb-11e5-855f-4eacec19f7bf",
+       "environment":"cf2d09f0-b3eb-11e5-855f-4eacec19f7bf",
+       "name":"test_prereq",
+       "prerequisites": [{"n": "test_whitelist", "ts": ["on"]}],
+       "trafficTypeId":"u",
+       "trafficTypeName":"User",
+       "seed":-1245274114,
+       "status":"ACTIVE",
+       "killed":false,
+       "defaultTreatment":"off_default",
+       "conditions":[
+          {
+             "matcherGroup":{
+                "combiner":"AND",
+                "matchers":[
+                   {
+                      "matcherType":"ALL_KEYS",
+                      "negate":false,
+                      "userDefinedSegmentMatcherData":null,
+                      "whitelistMatcherData":null
+                   }
+                ]
+             },
+             "partitions":[
+                {
+                   "treatment":"on",
+                   "size":100
+                }
+             ]
+          }
+       ]
+    }
+  ],
+  "s": -1,
+  "t": -1
+}, "rbs": {"d":[], "s":-1, "t": -1}
+}
