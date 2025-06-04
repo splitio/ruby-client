@@ -13,7 +13,7 @@ module SplitIoClient
             next
           end
 
-          feature_flag = check_impressions_disabled(feature_flag, config)
+          feature_flag = check_missing_elements(feature_flag, config)
 
           config.logger.debug("storing feature flag (#{feature_flag[:name]})") if config.debug_enabled
           to_add.push(feature_flag)
@@ -22,13 +22,21 @@ module SplitIoClient
         feature_flag_repository.update(to_add, to_delete, change_number)
       end
 
-      def self.check_impressions_disabled(feature_flag, config)
+      def self.check_missing_elements(feature_flag, config)
         unless feature_flag.key?(:impressionsDisabled)
           feature_flag[:impressionsDisabled] = false
           if config.debug_enabled
             config.logger.debug("feature flag (#{feature_flag[:name]}) does not have impressionsDisabled field, setting it to false")
           end
         end
+
+        unless feature_flag.key?(:prerequisites)
+          feature_flag[:prerequisites] = []
+          if config.debug_enabled
+            config.logger.debug("feature flag (#{feature_flag[:name]}) does not have prerequisites field, setting it to empty array")
+          end
+        end
+
         feature_flag
       end
 
