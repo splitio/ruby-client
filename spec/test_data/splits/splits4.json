@@ -3,6 +3,7 @@
   {
     "trafficTypeName": "user",
     "name": "uber_feature",
+    "prerequisites": [],
     "trafficAllocation": 100,
     "trafficAllocationSeed": 834650759,
     "seed": 1165259858,

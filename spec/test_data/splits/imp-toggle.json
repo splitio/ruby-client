@@ -3,6 +3,7 @@
     {
       "trafficTypeName": "user",
       "name": "with_track_disabled",
+      "prerequisites": [],
       "impressionsDisabled": true,
       "trafficAllocation": 100,
       "trafficAllocationSeed": 1068038034,
@@ -53,6 +54,7 @@
     {
       "trafficTypeName": "user",
       "name": "with_track_enabled",
+      "prerequisites": [],
       "impressionsDisabled": false,
       "trafficAllocation": 100,
       "trafficAllocationSeed": 1068038034,
@@ -103,6 +105,7 @@
     {
       "trafficTypeName": "user",
       "name": "without_track",
+      "prerequisites": [],
       "trafficAllocation": 100,
       "trafficAllocationSeed": 1068038034,
       "seed": -1053389887,

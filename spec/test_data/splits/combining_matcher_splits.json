@@ -3,6 +3,7 @@
 {
     "trafficTypeName": "user",
     "name": "PASSENGER_anding",
+    "prerequisites": [],
     "trafficAllocation": 100,
     "trafficAllocationSeed": -1740914610,
     "seed": 1288528654,

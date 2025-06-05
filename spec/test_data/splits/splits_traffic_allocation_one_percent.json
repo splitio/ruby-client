@@ -2,6 +2,7 @@
   "d": [
     {
       "name": "Traffic_Allocation_One_Percent",
+      "prerequisites": [],
       "algo": 1,
       "trafficAllocation": 1,
       "trafficAllocationSeed": -1,

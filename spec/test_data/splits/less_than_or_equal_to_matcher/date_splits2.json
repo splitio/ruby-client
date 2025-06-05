@@ -6,6 +6,7 @@
        "trafficTypeId":null,
        "trafficTypeName":null,
        "name":"RUBY_isOnOrBeforeDateTimeWithAttributeValueThatDoesNotMatch",
+       "prerequisites": [],
        "seed":338948780,
        "status":"ACTIVE",
        "killed":false,

@@ -3,6 +3,7 @@
         {
             "trafficTypeName": "user",
             "name": "mauro_test",
+            "prerequisites": [],
             "trafficAllocation": 100,
             "trafficAllocationSeed": 1683824785,
             "seed": 1681260525,
