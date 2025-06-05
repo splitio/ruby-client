@@ -3,7 +3,6 @@
     {
       "trafficTypeName": "user",
       "name": "semver_less_or_equalto",
-      "prerequisites": [],
       "trafficAllocation": 100,
       "trafficAllocationSeed": 1068038034,
       "seed": -1053389887,

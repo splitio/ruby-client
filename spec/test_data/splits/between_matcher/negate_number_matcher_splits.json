@@ -4,7 +4,6 @@
        "orgId":"cee838c0-b3eb-11e5-855f-4eacec19f7bf",
        "environment":"cf2d09f0-b3eb-11e5-855f-4eacec19f7bf",
        "name":"test_feature",
-       "prerequisites": [],
        "trafficTypeId":"u",
        "trafficTypeName":"User",
        "seed":-195840228,

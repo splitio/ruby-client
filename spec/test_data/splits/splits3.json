@@ -3,7 +3,6 @@
       {
          "trafficTypeName":"user",
          "name":"test_1_ruby",
-         "prerequisites": [],
          "seed":2089907429,
          "status":"ACTIVE",
          "killed":false,
@@ -106,7 +105,6 @@
       {
          "trafficTypeName":"user",
          "name":"sample_feature",
-         "prerequisites": [],
          "seed":-73470340,
          "status":"ACTIVE",
          "killed":false,

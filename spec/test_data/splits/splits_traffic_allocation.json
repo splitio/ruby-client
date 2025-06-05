@@ -3,7 +3,6 @@
         {
             "trafficTypeName": "account",
             "name": "Traffic_Allocation_UI",
-            "prerequisites": [],
             "trafficAllocation": 100,
             "trafficAllocationSeed": 1009780522,
             "seed": -1009780522,
@@ -81,7 +80,6 @@
         {
             "trafficTypeName": "account",
             "name": "Traffic_Allocation_UI2",
-            "prerequisites": [],
             "trafficAllocation": 90,
             "trafficAllocationSeed": null,
             "seed": -1009780522,
@@ -159,7 +157,6 @@
         {
             "trafficTypeName": "account",
             "name": "Traffic_Allocation_UI3",
-            "prerequisites": [],
             "trafficAllocation": 90,
             "trafficAllocationSeed": 1009780522,
             "seed": -1009780522,
@@ -237,7 +234,6 @@
         {
             "trafficTypeName": "account",
             "name": "Traffic_Allocation_UI4",
-            "prerequisites": [],
             "trafficAllocation": 0,
             "trafficAllocationSeed": null,
             "seed": -1009780522,
@@ -315,7 +311,6 @@
         {
             "trafficTypeName": "user",
             "name": "Test_on_off_on",
-            "prerequisites": [],
             "seed": 673896442,
             "status": "ACTIVE",
             "killed": false,

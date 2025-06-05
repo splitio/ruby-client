@@ -38,13 +38,15 @@ module SplitIoClient
         end
 
         def match(split, keys, attributes)
-          prerequisites_matcher = SplitIoClient::PrerequisitesMatcher.new(split[:prerequisites], @config.split_logger)
-          return treatment_hash(Models::Label::PREREQUISITES_NOT_MET, split[:defaultTreatment], split[:changeNumber], split_configurations(split[:defaultTreatment], split)) unless prerequisites_matcher.match?(
-              matching_key: keys[:matching_key],
-              bucketing_key: keys[:bucketing_key],
-              evaluator: self,
-              attributes: attributes
-            )
+          if split.key?(:prerequisites) && !split[:prerequisites].nil?
+              prerequisites_matcher = SplitIoClient::PrerequisitesMatcher.new(split[:prerequisites], @config.split_logger) 
+              return treatment_hash(Models::Label::PREREQUISITES_NOT_MET, split[:defaultTreatment], split[:changeNumber], split_configurations(split[:defaultTreatment], split)) unless prerequisites_matcher.match?(
+                  matching_key: keys[:matching_key],
+                  bucketing_key: keys[:bucketing_key],
+                  evaluator: self,
+                  attributes: attributes
+                )
+          end
 
           in_rollout = false
           key = keys[:bucketing_key] ? keys[:bucketing_key] : keys[:matching_key]

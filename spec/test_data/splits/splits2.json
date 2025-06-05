@@ -3,7 +3,6 @@
       {
          "trafficTypeName":"user",
          "name":"test_1_ruby",
-         "prerequisites": [],
          "seed":2089907429,
          "status":"ARCHIVED",
          "killed":false,
@@ -104,7 +103,6 @@
       {
          "trafficTypeName":"user",
          "name":"sample_feature",
-         "prerequisites": [],
          "seed":-73470340,
          "status":"ACTIVE",
          "killed":false,
@@ -266,7 +264,6 @@
    }, "rbs": {"t": 1457726098069, "s": -1, "d": [{
       "changeNumber": 123,
       "name": "sample_rule_based_segment",
-      "prerequisites": [],
       "status": "ACTIVE",
       "trafficTypeName": "user",
       "excluded":{
