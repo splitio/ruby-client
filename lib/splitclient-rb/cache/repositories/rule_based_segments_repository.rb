@@ -24,6 +24,9 @@ module SplitIoClient
               }]
           }
         }]
+        TILL_PREFIX = '.rbsegments.till'
+        RB_SEGMENTS_PREFIX = '.rbsegment.'
+        REGISTERED_PREFIX = '.segments.registered'
 
         def initialize(config)
           super(config)
@@ -34,8 +37,8 @@ module SplitIoClient
             @config.cache_adapter
           end
           unless @config.mode.equal?(:consumer)
-            @adapter.set_string(namespace_key('.rbsegments.till'), '-1')
-            @adapter.initialize_map(namespace_key('.segments.registered'))
+            @adapter.set_string(namespace_key(TILL_PREFIX), '-1')
+            @adapter.initialize_map(namespace_key(REGISTERED_PREFIX))
           end
         end
 
@@ -46,34 +49,34 @@ module SplitIoClient
         end
 
         def get_rule_based_segment(name)
-          rule_based_segment = @adapter.string(namespace_key(".rbsegment.#{name}"))
+          rule_based_segment = @adapter.string(namespace_key("#{RB_SEGMENTS_PREFIX}#{name}"))
 
           JSON.parse(rule_based_segment, symbolize_names: true) if rule_based_segment
         end
 
         def rule_based_segment_names
-          @adapter.find_strings_by_prefix(namespace_key('.rbsegment.'))
-            .map { |rule_based_segment_names| rule_based_segment_names.gsub(namespace_key('.rbsegment.'), '') }
+          @adapter.find_strings_by_prefix(namespace_key(RB_SEGMENTS_PREFIX))
+            .map { |rule_based_segment_names| rule_based_segment_names.gsub(namespace_key(RB_SEGMENTS_PREFIX), '') }
         end
 
         def set_change_number(since)
-          @adapter.set_string(namespace_key('.rbsegments.till'), since)
+          @adapter.set_string(namespace_key(TILL_PREFIX), since)
         end
 
         def get_change_number
-          @adapter.string(namespace_key('.rbsegments.till'))
+          @adapter.string(namespace_key(TILL_PREFIX))
         end
 
         def set_segment_names(names)
           return if names.nil? || names.empty?
 
           names.each do |name|
-            @adapter.add_to_set(namespace_key('.segments.registered'), name)
+            @adapter.add_to_set(namespace_key(REGISTERED_PREFIX), name)
           end
         end
 
         def exists?(name)
-          @adapter.exists?(namespace_key(".rbsegment.#{name}"))
+          @adapter.exists?(namespace_key("#{RB_SEGMENTS_PREFIX}#{name}"))
         end
 
         def clear
@@ -89,14 +92,13 @@ module SplitIoClient
 
         def add_rule_based_segment(rule_based_segment)
           return unless rule_based_segment[:name]
-          existing_rule_based_segment = get_rule_based_segment(rule_based_segment[:name])
 
           if check_undefined_matcher(rule_based_segment)
             @config.logger.warn("Rule based segment #{rule_based_segment[:name]} has undefined matcher, setting conditions to default template.")
             rule_based_segment[:conditions] = RuleBasedSegmentsRepository::DEFAULT_CONDITIONS_TEMPLATE
           end
 
-          @adapter.set_string(namespace_key(".rbsegment.#{rule_based_segment[:name]}"), rule_based_segment.to_json)
+          @adapter.set_string(namespace_key("#{RB_SEGMENTS_PREFIX}#{rule_based_segment[:name]}"), rule_based_segment.to_json)
         end
 
         def check_undefined_matcher(rule_based_segment)
@@ -112,7 +114,7 @@ module SplitIoClient
         end
 
         def remove_rule_based_segment(rule_based_segment)
-          @adapter.delete(namespace_key(".rbsegment.#{rule_based_segment[:name]}"))
+          @adapter.delete(namespace_key("#{RB_SEGMENTS_PREFIX}#{rule_based_segment[:name]}"))
         end
       end
     end

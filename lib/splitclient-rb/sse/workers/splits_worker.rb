@@ -105,7 +105,6 @@ module SplitIoClient
           fetch_segments_if_not_exists(Helpers::Util.segment_names_in_rb_segment(new_rb_segment, 'IN_SEGMENT'),
                                        @rule_based_segment_repository)
 
-          # TODO: enable when telemetry spec is added
           # @telemetry_runtime_producer.record_updates_from_sse(Telemetry::Domain::Constants::SPLITS)
 
           true

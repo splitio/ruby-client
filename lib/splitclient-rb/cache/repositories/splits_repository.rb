@@ -31,6 +31,9 @@ module SplitIoClient
           ],
           label: "targeting rule type unsupported by sdk"
         }]
+        TILL_PREFIX = '.splits.till'
+        SPLIT_PREFIX = '.splits.'
+        READY_PREFIX = '.splits.ready'
 
         def initialize(config, flag_sets_repository, flag_set_filter)
           super(config)
@@ -84,16 +87,16 @@ module SplitIoClient
 
         # Return an array of Split Names excluding control keys like splits.till
         def split_names
-          @adapter.find_strings_by_prefix(namespace_key('.split.'))
-            .map { |split| split.gsub(namespace_key('.split.'), '') }
+          @adapter.find_strings_by_prefix(namespace_key(SPLIT_PREFIX))
+            .map { |split| split.gsub(namespace_key(SPLIT_PREFIX), '') }
         end
 
         def set_change_number(since)
-          @adapter.set_string(namespace_key('.splits.till'), since)
+          @adapter.set_string(namespace_key(TILL_PREFIX), since)
         end
 
         def get_change_number
-          @adapter.string(namespace_key('.splits.till'))
+          @adapter.string(namespace_key(TILL_PREFIX))
         end
 
         def set_segment_names(names)
@@ -109,15 +112,15 @@ module SplitIoClient
         end
 
         def ready?
-          @adapter.string(namespace_key('.splits.ready')).to_i != -1
+          @adapter.string(namespace_key(READY_PREFIX)).to_i != -1
         end
 
         def not_ready!
-          @adapter.set_string(namespace_key('.splits.ready'), -1)
+          @adapter.set_string(namespace_key(READY_PREFIX), -1)
         end
 
         def ready!
-          @adapter.set_string(namespace_key('.splits.ready'), Time.now.utc.to_i)
+          @adapter.set_string(namespace_key(READY_PREFIX), Time.now.utc.to_i)
         end
 
         def clear
@@ -167,7 +170,7 @@ module SplitIoClient
 
         def initialize_keys
           unless @config.mode.equal?(:consumer)
-            @adapter.set_string(namespace_key('.splits.till'), '-1')
+            @adapter.set_string(namespace_key(TILL_PREFIX), '-1')
             @adapter.initialize_map(namespace_key('.segments.registered'))
           end
         end

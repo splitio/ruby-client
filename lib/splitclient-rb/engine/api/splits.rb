@@ -60,7 +60,7 @@ module SplitIoClient
         if response.success?
           result = JSON.parse(response.body, symbolize_names: true)
           if @spec_version == Splits::SPEC_1_1
-            result = convert_to_newSPEC(result)
+            result = convert_to_new_spec(result)
           end
           
           result[:rbs][:d] = check_rbs_data(result[:rbs][:d])
@@ -129,7 +129,7 @@ module SplitIoClient
         @spec_version == Splits::SPEC_1_1 and ((Time.now - @last_proxy_check_timestamp) >= Splits::PROXY_CHECK_INTERVAL_SECONDS)
       end
 
-      def convert_to_newSPEC(body)
+      def convert_to_new_spec(body)
         {:ff => {:d => body[:splits], :s => body[:since], :t => body[:till]}, :rbs => {:d => [], :s => -1, :t => -1}}
       end
     end
