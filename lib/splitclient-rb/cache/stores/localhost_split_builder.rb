@@ -22,7 +22,8 @@ module SplitIoClient
               seed: 2_089_907_429,
               defaultTreatment: 'control_treatment',
               configurations: build_configurations(treatments),
-              conditions: build_conditions(treatments)
+              conditions: build_conditions(treatments),
+              prerequisites: []
             }
           end
 

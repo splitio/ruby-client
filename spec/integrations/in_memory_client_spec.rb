@@ -90,6 +90,30 @@ describe SplitIoClient do
       expect(impressions[1][:treatment][:change_number]).to eq(1_506_703_262_916)
     end
 
+    it 'returns treatments with prereq_flag feature and check impressions' do
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262916&rbSince=-1").to_return(status: 200, body: 'ok')
+      client.block_until_ready
+      expect(client.get_treatment('nico_test', 'prereq_flag')).to eq 'on'
+      expect(client.get_treatment('bla', 'prereq_flag')).to eq 'off_default'
+
+      sleep 0.5
+      impressions = custom_impression_listener.queue
+
+      expect(impressions.size).to eq 2
+
+      expect(impressions[0][:matching_key]).to eq('nico_test')
+      expect(impressions[0][:split_name]).to eq('prereq_flag')
+      expect(impressions[0][:treatment][:treatment]).to eq('on')
+      expect(impressions[0][:treatment][:label]).to eq('in segment all')
+      expect(impressions[0][:treatment][:change_number]).to eq(1494593336752)
+
+      expect(impressions[1][:matching_key]).to eq('bla')
+      expect(impressions[1][:split_name]).to eq('prereq_flag')
+      expect(impressions[1][:treatment][:treatment]).to eq('off_default')
+      expect(impressions[1][:treatment][:label]).to eq('prerequisites not met')
+      expect(impressions[1][:treatment][:change_number]).to eq(1494593336752)
+    end
+
     it 'returns treatments with Test_Save_1 feature and check impressions' do
       stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262916&rbSince=-1").to_return(status: 200, body: 'ok')
       client.block_until_ready
