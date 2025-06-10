@@ -32,7 +32,7 @@ module SplitIoClient
           label: "targeting rule type unsupported by sdk"
         }]
         TILL_PREFIX = '.splits.till'
-        SPLIT_PREFIX = '.splits.'
+        SPLIT_PREFIX = '.split.'
         READY_PREFIX = '.splits.ready'
 
         def initialize(config, flag_sets_repository, flag_set_filter)
