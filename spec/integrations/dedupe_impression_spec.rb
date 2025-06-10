@@ -51,11 +51,8 @@ describe SplitIoClient do
       expect(debug_client.get_treatments_with_config_by_flag_sets('admin', ['set_3'])).to eq treatments
       expect(debug_client.get_treatment('24', 'Test_Save_1')).to eq 'off'
       expect(debug_client.get_treatment('24', 'Test_Save_1')).to eq 'off'
-
+      sleep 1
       impressions = debug_client.instance_variable_get(:@impressions_repository).batch
-
-      sleep 0.5
-
       expect(impressions.size).to eq 7
     end
 
@@ -74,7 +71,7 @@ describe SplitIoClient do
 
       impressions = debug_client.instance_variable_get(:@impressions_repository).batch
 
-      sleep 0.5
+      sleep 1
 
       expect(impressions.size).to eq 9
     end
