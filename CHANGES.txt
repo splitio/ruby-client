@@ -1,5 +1,9 @@
 CHANGES
 
+8.6.0 (Jun xx, 2025)
+- Added support for rule-based segments. These segments determine membership at runtime by evaluating their configured rules against the user attributes provided to the SDK.
+- Added support for feature flag prerequisites. This allows customers to define dependency conditions between flags, which are evaluated before any allowlists or targeting rules.
+
 8.5.0 (Jan 17, 2025)
 - Fixed high cpu usage when unique keys are cleared every 24 hours.
 - Added support for the new impressions tracking toggle available on feature flags, both respecting the setting and including the new field being returned on SplitView type objects. Read more in our docs.
