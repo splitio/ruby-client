@@ -645,6 +645,10 @@ module SplitIoClient
       @mode.equal?(:consumer)
     end
 
+    def sdk_url_overriden?
+      return @base_uri != SplitConfig.default_base_uri
+    end
+    
     #
     # gets the hostname where the sdk gem is running
     #

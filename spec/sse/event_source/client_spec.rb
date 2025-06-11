@@ -20,19 +20,20 @@ describe SplitIoClient::SSE::EventSource::Client do
       splits: SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter),
       segments: SplitIoClient::Cache::Repositories::SegmentsRepository.new(config),
       impressions: SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config),
-      events: SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key, telemetry_runtime_producer)
+      events: SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key, telemetry_runtime_producer),
+      rule_based_segments: SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config) 
     }
   end
   let(:parameters) do
     {
-      split_fetcher: SplitIoClient::Cache::Fetchers::SplitFetcher.new(repositories[:splits], api_key, config, telemetry_runtime_producer),
+      split_fetcher: SplitIoClient::Cache::Fetchers::SplitFetcher.new(repositories[:splits], repositories[:rule_based_segments], api_key, config, telemetry_runtime_producer),
       segment_fetcher: SplitIoClient::Cache::Fetchers::SegmentFetcher.new(repositories[:segments], api_key, config, telemetry_runtime_producer),
       imp_counter: SplitIoClient::Engine::Common::ImpressionCounter.new,
       telemetry_runtime_producer: telemetry_runtime_producer
     }
   end
   let(:synchronizer) { SplitIoClient::Engine::Synchronizer.new(repositories, config, parameters) }
-  let(:splits_worker) { SplitIoClient::SSE::Workers::SplitsWorker.new(synchronizer, config, repositories[:splits], telemetry_runtime_producer, parameters[:segment_fetcher]) }
+  let(:splits_worker) { SplitIoClient::SSE::Workers::SplitsWorker.new(synchronizer, config, repositories[:splits], telemetry_runtime_producer, parameters[:segment_fetcher], repositories[:rule_based_segments]) }
   let(:segments_worker) { SplitIoClient::SSE::Workers::SegmentsWorker.new(synchronizer, config, repositories[:segments]) }
   let(:push_status_queue) { Queue.new }
   let(:notification_manager_keeper) { SplitIoClient::SSE::NotificationManagerKeeper.new(config, telemetry_runtime_producer, push_status_queue) }
@@ -48,12 +49,12 @@ describe SplitIoClient::SSE::EventSource::Client do
 
   context 'tests' do
     it 'receive split update event' do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')
         .with(headers: { 'Authorization' => 'Bearer client-spec-key' })
-        .to_return(status: 200, body: '{"splits":[],"since":-1,"till":5564531221}')
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=5564531221')
+        .to_return(status: 200, body: '{"ff":{"d":[],"s":-1,"t":5564531221}, "rbs":{"d":[],"s":-1,"t":-1}}')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=5564531221&rbSince=-1')
         .with(headers: { 'Authorization' => 'Bearer client-spec-key' })
-        .to_return(status: 200, body: '{"splits":[],"since":5564531221,"till":5564531221}')
+        .to_return(status: 200, body: '{"ff":{"d":[],"s":5564531221,"t":5564531221}, "rbs":{"d":[],"s":-1,"t":-1}}')
 
       mock_server do |server|
         server.setup_response('/') do |_, res|
@@ -68,7 +69,7 @@ describe SplitIoClient::SSE::EventSource::Client do
         expect(sse_client.connected?).to eq(true)
         expect(push_status_queue.pop(true)).to eq(SplitIoClient::Constants::PUSH_CONNECTED)
         sleep 1
-        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1').with(headers: { 'Authorization' => 'Bearer client-spec-key' })).to have_been_made.times(1)
+        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1').with(headers: { 'Authorization' => 'Bearer client-spec-key' })).to have_been_made.times(1)
 
         sse_client.close
 
@@ -79,12 +80,12 @@ describe SplitIoClient::SSE::EventSource::Client do
     end
 
     it 'receive split kill event' do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')
         .with(headers: { 'Authorization' => 'Bearer client-spec-key' })
-        .to_return(status: 200, body: '{"splits":[],"since":-1,"till":5564531221}')
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=5564531221')
+        .to_return(status: 200, body: '{"ff":{"d":[],"since":-1,"till":5564531221}, "rbs":{"d":[],"s":-1,"t":-1}}')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=5564531221&rbSince=-1')
         .with(headers: { 'Authorization' => 'Bearer client-spec-key' })
-        .to_return(status: 200, body: '{"splits":[],"since":5564531221,"till":5564531221}')
+        .to_return(status: 200, body: '{"ff":{"d":[],"since":5564531221,"till":5564531221}, "rbs":{"d":[],"s":-1,"t":-1}}')
 
       mock_server do |server|
         server.setup_response('/') do |_, res|
@@ -99,7 +100,7 @@ describe SplitIoClient::SSE::EventSource::Client do
         expect(sse_client.connected?).to eq(true)
         expect(push_status_queue.pop(true)).to eq(SplitIoClient::Constants::PUSH_CONNECTED)
         sleep 1
-        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1').with(headers: { 'Authorization' => 'Bearer client-spec-key' })).to have_been_made.times(1)
+        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1').with(headers: { 'Authorization' => 'Bearer client-spec-key' })).to have_been_made.times(1)
 
         sse_client.close
 
@@ -150,7 +151,7 @@ describe SplitIoClient::SSE::EventSource::Client do
         expect(connected).to eq(true)
         expect(sse_client.connected?).to eq(true)
         expect(push_status_queue.pop(true)).to eq(SplitIoClient::Constants::PUSH_CONNECTED)
-        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1').with(headers: { 'Authorization' => 'Bearer client-spec-key' })).to have_been_made.times(0)
+        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1').with(headers: { 'Authorization' => 'Bearer client-spec-key' })).to have_been_made.times(0)
         expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment-test?since=-1').with(headers: { 'Authorization' => 'Bearer client-spec-key' })).to have_been_made.times(0)
 
         sse_client.close
@@ -172,7 +173,7 @@ describe SplitIoClient::SSE::EventSource::Client do
         expect(connected).to eq(true)
         expect(sse_client.connected?).to eq(true)
         expect(push_status_queue.pop(true)).to eq(SplitIoClient::Constants::PUSH_CONNECTED)
-        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1').with(headers: { 'Authorization' => 'Bearer client-spec-key' })).to have_been_made.times(0)
+        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1').with(headers: { 'Authorization' => 'Bearer client-spec-key' })).to have_been_made.times(0)
         expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment-test?since=-1').with(headers: { 'Authorization' => 'Bearer client-spec-key' })).to have_been_made.times(0)
 
         sse_client.close

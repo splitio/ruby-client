@@ -22,6 +22,7 @@ module SplitIoClient
       @api_key = sdk_key
       @splits_repository = repositories[:splits]
       @segments_repository = repositories[:segments]
+      @rule_based_segments_repository = repositories[:rule_based_segments]
       @impressions_repository = repositories[:impressions]
       @events_repository = repositories[:events]
       @status_manager = status_manager
@@ -115,6 +116,7 @@ module SplitIoClient
 
       @splits_repository.clear
       @segments_repository.clear
+      @rule_based_segments_repository.clear
 
       SplitIoClient.load_factory_registry
       SplitIoClient.split_factory_registry.remove(@api_key)

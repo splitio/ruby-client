@@ -15,6 +15,7 @@ module SplitIoClient
       )
         @splits_repository = repositories[:splits]
         @segments_repository = repositories[:segments]
+        @rule_based_segments_repository = repositories[:rule_based_segments]
         @impressions_repository = repositories[:impressions]
         @events_repository = repositories[:events]
         @config = config
@@ -63,12 +64,12 @@ module SplitIoClient
         @segment_fetcher.stop_segments_thread
       end
 
-      def fetch_splits(target_change_number)
-        return if target_change_number <= @splits_repository.get_change_number.to_i
+      def fetch_splits(target_change_number, rbs_target_change_number)
+        return if check_exit_conditions(target_change_number, rbs_target_change_number)
 
         fetch_options = { cache_control_headers: true, till: nil }
 
-        result = attempt_splits_sync(target_change_number,
+        result = attempt_splits_sync(target_change_number, rbs_target_change_number,
                                      fetch_options,
                                      @config.on_demand_fetch_max_retries,
                                      @config.on_demand_fetch_retry_delay_seconds,
@@ -82,8 +83,13 @@ module SplitIoClient
           return
         end
 
-        fetch_options[:till] = target_change_number
-        result = attempt_splits_sync(target_change_number,
+        if target_change_number != 0
+          fetch_options[:till] = target_change_number 
+        else
+          fetch_options[:till] = rbs_target_change_number 
+        end
+
+        result = attempt_splits_sync(target_change_number, rbs_target_change_number,
                                      fetch_options,
                                      ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES,
                                      nil,
@@ -91,12 +97,7 @@ module SplitIoClient
 
         attempts = ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES - result[:remaining_attempts]
 
-        if result[:success]
-          @segment_fetcher.fetch_segments_if_not_exists(result[:segment_names], true) unless result[:segment_names].empty?
-          @config.logger.debug("Refresh completed bypassing the CDN in #{attempts} attempts.") if @config.debug_enabled
-        else
-          @config.logger.debug("No changes fetched after #{attempts} attempts with CDN bypassed.") if @config.debug_enabled
-        end
+        process_result(result, attempts)
       rescue StandardError => e
         @config.log_found_exception(__method__.to_s, e)
       end
@@ -139,6 +140,15 @@ module SplitIoClient
 
       private
 
+      def process_result(result, attempts)
+        if result[:success]
+          @segment_fetcher.fetch_segments_if_not_exists(result[:segment_names], true) unless result[:segment_names].empty?
+          @config.logger.debug("Refresh completed bypassing the CDN in #{attempts} attempts.") if @config.debug_enabled
+        else
+          @config.logger.debug("No changes fetched after #{attempts} attempts with CDN bypassed.") if @config.debug_enabled
+        end
+      end
+
       def attempt_segment_sync(name, target_cn, fetch_options, max_retries, retry_delay_seconds, with_backoff)
         remaining_attempts = max_retries
         @segments_sync_backoff.reset
@@ -156,7 +166,7 @@ module SplitIoClient
         end
       end
 
-      def attempt_splits_sync(target_cn, fetch_options, max_retries, retry_delay_seconds, with_backoff)
+      def attempt_splits_sync(target_cn, rbs_target_cn, fetch_options, max_retries, retry_delay_seconds, with_backoff)
         remaining_attempts = max_retries
         @splits_sync_backoff.reset
 
@@ -165,7 +175,7 @@ module SplitIoClient
 
           result = @split_fetcher.fetch_splits(fetch_options)
 
-          return sync_result(true, remaining_attempts, result[:segment_names]) if target_cn <= @splits_repository.get_change_number
+          return sync_result(true, remaining_attempts, result[:segment_names]) if check_exit_conditions(target_cn, rbs_target_cn)
           return sync_result(false, remaining_attempts, result[:segment_names]) if remaining_attempts <= 0
 
           delay = with_backoff ? @splits_sync_backoff.interval : retry_delay_seconds
@@ -205,6 +215,16 @@ module SplitIoClient
         splits_result = @split_fetcher.fetch_splits
 
         splits_result[:success] && @segment_fetcher.fetch_segments
+      end
+
+      def check_exit_conditions(target_change_number, rbs_target_change_number)
+        return true if rbs_target_change_number == 0 and target_change_number == 0
+
+        return target_change_number <= @splits_repository.get_change_number.to_i if rbs_target_change_number == 0
+          
+        return rbs_target_change_number <= @rule_based_segments_repository.get_change_number.to_i if target_change_number == 0
+
+        return (target_change_number <= @splits_repository.get_change_number.to_i and rbs_target_change_number <= @rule_based_segments_repository.get_change_number.to_i)
       end
     end
   end
