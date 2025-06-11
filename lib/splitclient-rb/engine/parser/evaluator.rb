@@ -38,15 +38,8 @@ module SplitIoClient
         end
 
         def match(split, keys, attributes)
-          if split.key?(:prerequisites) && !split[:prerequisites].nil?
-              prerequisites_matcher = SplitIoClient::PrerequisitesMatcher.new(split[:prerequisites], @config.split_logger) 
-              return treatment_hash(Models::Label::PREREQUISITES_NOT_MET, split[:defaultTreatment], split[:changeNumber], split_configurations(split[:defaultTreatment], split)) unless prerequisites_matcher.match?(
-                  matching_key: keys[:matching_key],
-                  bucketing_key: keys[:bucketing_key],
-                  evaluator: self,
-                  attributes: attributes
-                )
-          end
+
+          return treatment_hash(Models::Label::PREREQUISITES_NOT_MET, split[:defaultTreatment], split[:changeNumber], split_configurations(split[:defaultTreatment], split)) unless check_prerequisites_matcher(split, keys, attributes)
 
           in_rollout = false
           key = keys[:bucketing_key] ? keys[:bucketing_key] : keys[:matching_key]
@@ -80,18 +73,38 @@ module SplitIoClient
 
             result = splitter.get_treatment(key, split[:seed], condition.partitions, split[:algo])
 
-            if result.nil?
-              return treatment_hash(Models::Label::NO_RULE_MATCHED, split[:defaultTreatment], split[:changeNumber], split_configurations(split[:defaultTreatment], split))
-            else
-              return treatment_hash(c[:label], result, split[:changeNumber],split_configurations(result, split))
-            end
+            return treatment_from_result(result, split, c)
           end
 
           treatment_hash(Models::Label::NO_RULE_MATCHED, split[:defaultTreatment], split[:changeNumber], split_configurations(split[:defaultTreatment], split))
         end
 
+        private
+
+        def treatment_from_result(result, split, condition)
+          if result.nil?
+            return treatment_hash(Models::Label::NO_RULE_MATCHED, split[:defaultTreatment], split[:changeNumber], split_configurations(split[:defaultTreatment], split))
+          else
+            return treatment_hash(condition[:label], result, split[:changeNumber],split_configurations(result, split))
+          end
+        end
+
         def treatment_hash(label, treatment, change_number = nil, configurations = nil)
           { label: label, treatment: treatment, change_number: change_number, config: configurations }
+        end
+
+        def check_prerequisites_matcher(split, keys, attributes)
+          if split.key?(:prerequisites) && !split[:prerequisites].nil?
+              prerequisites_matcher = SplitIoClient::PrerequisitesMatcher.new(split[:prerequisites], @config.split_logger) 
+              return prerequisites_matcher.match?(
+                  matching_key: keys[:matching_key],
+                  bucketing_key: keys[:bucketing_key],
+                  evaluator: self,
+                  attributes: attributes
+                )
+          end
+
+          true
         end
       end
     end

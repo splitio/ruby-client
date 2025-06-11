@@ -43,7 +43,6 @@ module SplitIoClient
         params[:till] = fetch_options[:till] unless fetch_options[:till].nil?
         @config.logger.debug("Fetching from splitChanges with #{params}: ")
         response = get_api("#{@config.base_uri}/splitChanges", @api_key, params, fetch_options[:cache_control_headers])
-
         if response.status == 414
           @config.logger.error("Error fetching feature flags; the amount of flag sets provided are too big, causing uri length error.")
           raise ApiException.new response.body, 414
@@ -56,44 +55,17 @@ module SplitIoClient
             return since(since, 0, fetch_options = {cache_control_headers: fetch_options[:cache_control_headers], till: fetch_options[:till],
                 sets: fetch_options[:sets]})          
         end
-
         if response.success?
           result = JSON.parse(response.body, symbolize_names: true)
-          if @spec_version == Splits::SPEC_1_1
-            result = convert_to_new_spec(result)
-          end
-          
-          result[:rbs][:d] = check_rbs_data(result[:rbs][:d])
-          result = objects_with_segment_names(result)
-          
-          if @spec_version == SplitIoClient::Spec::FeatureFlags::SPEC_VERSION
-            @clear_storage = @last_proxy_check_timestamp != 0
-            @last_proxy_check_timestamp = 0
-          end
 
-          unless result[:ff][:d].empty?
-            @config.split_logger.log_if_debug("#{result[:ff][:d].length} feature flags retrieved. since=#{since}")
-          end
-          @config.split_logger.log_if_transport("Feature flag changes response: #{result[:ff].to_s}")
-
-          unless result[:rbs][:d].empty?
-            @config.split_logger.log_if_debug("#{result[:rbs][:d].length} rule based segments retrieved. since=#{since_rbs}")
-          end
-          @config.split_logger.log_if_transport("rule based segments changes response: #{result[:rbs].to_s}")
-
-          bucket = BinarySearchLatencyTracker.get_bucket((Time.now - start) * 1000.0)
-          @telemetry_runtime_producer.record_sync_latency(Telemetry::Domain::Constants::SPLIT_SYNC, bucket)
-          @telemetry_runtime_producer.record_successful_sync(Telemetry::Domain::Constants::SPLIT_SYNC, (Time.now.to_f * 1000.0).to_i)
-
-          result
-        else
-          @telemetry_runtime_producer.record_sync_error(Telemetry::Domain::Constants::SPLIT_SYNC, response.status)
-
-          @config.logger.error("Unexpected status code while fetching feature flags: #{response.status}. " \
-          'Check your API key and base URI')
-
-          raise 'Split SDK failed to connect to backend to fetch feature flags definitions'
+          return process_result(result, since, since_rbs, start)
         end
+        @telemetry_runtime_producer.record_sync_error(Telemetry::Domain::Constants::SPLIT_SYNC, response.status)
+
+        @config.logger.error("Unexpected status code while fetching feature flags: #{response.status}. " \
+        'Check your API key and base URI')
+
+        raise 'Split SDK failed to connect to backend to fetch feature flags definitions'
       end
 
       def clear_storage
@@ -101,6 +73,36 @@ module SplitIoClient
       end
 
       private
+
+      def process_result(result, since, since_rbs, start)
+        if @spec_version == Splits::SPEC_1_1
+          result = convert_to_new_spec(result)
+        end
+        
+        result[:rbs][:d] = check_rbs_data(result[:rbs][:d])
+        result = objects_with_segment_names(result)
+        
+        if @spec_version == SplitIoClient::Spec::FeatureFlags::SPEC_VERSION
+          @clear_storage = @last_proxy_check_timestamp != 0
+          @last_proxy_check_timestamp = 0
+        end
+
+        unless result[:ff][:d].empty?
+          @config.split_logger.log_if_debug("#{result[:ff][:d].length} feature flags retrieved. since=#{since}")
+        end
+        @config.split_logger.log_if_transport("Feature flag changes response: #{result[:ff].to_s}")
+
+        unless result[:rbs][:d].empty?
+          @config.split_logger.log_if_debug("#{result[:rbs][:d].length} rule based segments retrieved. since=#{since_rbs}")
+        end
+        @config.split_logger.log_if_transport("rule based segments changes response: #{result[:rbs].to_s}")
+
+        bucket = BinarySearchLatencyTracker.get_bucket((Time.now - start) * 1000.0)
+        @telemetry_runtime_producer.record_sync_latency(Telemetry::Domain::Constants::SPLIT_SYNC, bucket)
+        @telemetry_runtime_producer.record_successful_sync(Telemetry::Domain::Constants::SPLIT_SYNC, (Time.now.to_f * 1000.0).to_i)
+
+        result
+      end
 
       def check_rbs_data(rbs_data)
         rbs_data.each do |rb_segment|

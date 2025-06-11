@@ -97,12 +97,7 @@ module SplitIoClient
 
         attempts = ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES - result[:remaining_attempts]
 
-        if result[:success]
-          @segment_fetcher.fetch_segments_if_not_exists(result[:segment_names], true) unless result[:segment_names].empty?
-          @config.logger.debug("Refresh completed bypassing the CDN in #{attempts} attempts.") if @config.debug_enabled
-        else
-          @config.logger.debug("No changes fetched after #{attempts} attempts with CDN bypassed.") if @config.debug_enabled
-        end
+        process_result(result, attempts)
       rescue StandardError => e
         @config.log_found_exception(__method__.to_s, e)
       end
@@ -144,6 +139,15 @@ module SplitIoClient
       end
 
       private
+
+      def process_result(result, attempts)
+        if result[:success]
+          @segment_fetcher.fetch_segments_if_not_exists(result[:segment_names], true) unless result[:segment_names].empty?
+          @config.logger.debug("Refresh completed bypassing the CDN in #{attempts} attempts.") if @config.debug_enabled
+        else
+          @config.logger.debug("No changes fetched after #{attempts} attempts with CDN bypassed.") if @config.debug_enabled
+        end
+      end
 
       def attempt_segment_sync(name, target_cn, fetch_options, max_retries, retry_delay_seconds, with_backoff)
         remaining_attempts = max_retries
