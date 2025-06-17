@@ -1,5 +1,5 @@
-{
-  "splits": [
+{ "ff":{
+  "d": [
     {
       "trafficTypeName": "user",
       "name": "semver_inlist",
@@ -82,5 +82,6 @@
     }
   ],
   "since": -1,
-  "till": 1675259356568
+  "till": 1675259356568},
+ "rbs": {"d":[], "s":-1, "t":-1}
 }

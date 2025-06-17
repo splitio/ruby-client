@@ -10,6 +10,7 @@ describe SplitIoClient::SplitClient do
   let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
   let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
   let(:impressions_repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
+  let(:rule_based_segments_repository) { SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config) }
   let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
   let(:evaluation_producer) { SplitIoClient::Telemetry::EvaluationProducer.new(config) }
   let(:impression_observer) { SplitIoClient::Observers::ImpressionObserver.new }
@@ -19,7 +20,7 @@ describe SplitIoClient::SplitClient do
   let(:api_key) { 'SplitClient-key' }
   let(:telemetry_api) { SplitIoClient::Api::TelemetryApi.new(config, api_key, runtime_producer) }
   let(:impressions_api) { SplitIoClient::Api::Impressions.new(api_key, config, runtime_producer) }
-  let(:evaluator) { SplitIoClient::Engine::Parser::Evaluator.new(segments_repository, splits_repository, config) }
+  let(:evaluator) { SplitIoClient::Engine::Parser::Evaluator.new(segments_repository, splits_repository, rule_based_segments_repository, config) }
   let(:sender_adapter) do
     SplitIoClient::Cache::Senders::ImpressionsSenderAdapter.new(config,
                                                                 telemetry_api,

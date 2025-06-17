@@ -52,7 +52,7 @@ describe SplitIoClient do
 
   context '#get_treatment' do
     it 'returns CONTROL when server return 500' do
-    #  stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916").to_return(status: 200, body: 'ok')
+    #  stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262916").to_return(status: 200, body: 'ok')
       mock_split_changes_error
       expect(client.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'control'
 
@@ -67,7 +67,7 @@ describe SplitIoClient do
     end
 
     it 'returns treatments with FACUNDO_TEST feature and check impressions' do
-      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916").to_return(status: 200, body: 'ok')
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262916&rbSince=-1").to_return(status: 200, body: 'ok')
       client.block_until_ready
       expect(client.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
       expect(client.get_treatment('mauro_test', 'FACUNDO_TEST')).to eq 'off'
@@ -90,8 +90,32 @@ describe SplitIoClient do
       expect(impressions[1][:treatment][:change_number]).to eq(1_506_703_262_916)
     end
 
+    it 'returns treatments with prereq_flag feature and check impressions' do
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262916&rbSince=-1").to_return(status: 200, body: 'ok')
+      client.block_until_ready
+      expect(client.get_treatment('nico_test', 'prereq_flag')).to eq 'on'
+      expect(client.get_treatment('bla', 'prereq_flag')).to eq 'off_default'
+
+      sleep 0.5
+      impressions = custom_impression_listener.queue
+
+      expect(impressions.size).to eq 2
+
+      expect(impressions[0][:matching_key]).to eq('nico_test')
+      expect(impressions[0][:split_name]).to eq('prereq_flag')
+      expect(impressions[0][:treatment][:treatment]).to eq('on')
+      expect(impressions[0][:treatment][:label]).to eq('in segment all')
+      expect(impressions[0][:treatment][:change_number]).to eq(1494593336752)
+
+      expect(impressions[1][:matching_key]).to eq('bla')
+      expect(impressions[1][:split_name]).to eq('prereq_flag')
+      expect(impressions[1][:treatment][:treatment]).to eq('off_default')
+      expect(impressions[1][:treatment][:label]).to eq('prerequisites not met')
+      expect(impressions[1][:treatment][:change_number]).to eq(1494593336752)
+    end
+
     it 'returns treatments with Test_Save_1 feature and check impressions' do
-      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916").to_return(status: 200, body: 'ok')
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262916&rbSince=-1").to_return(status: 200, body: 'ok')
       client.block_until_ready
       expect(client.get_treatment('1', 'Test_Save_1')).to eq 'on'
       expect(client.get_treatment('24', 'Test_Save_1')).to eq 'off'
@@ -115,7 +139,7 @@ describe SplitIoClient do
     end
 
     it 'returns treatments with input validations' do
-      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916").to_return(status: 200, body: 'ok')
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262916&rbSince=-1").to_return(status: 200, body: 'ok')
       client.block_until_ready
       expect(client.get_treatment('nico_test', 'FACUNDO_TEST')).to eq 'on'
       expect(client.get_treatment('', 'FACUNDO_TEST')).to eq 'control'
@@ -143,7 +167,7 @@ describe SplitIoClient do
     end
 
     it 'returns CONTROL with treatment doesnt exist' do
-      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916").to_return(status: 200, body: 'ok')
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262916&rbSince=-1").to_return(status: 200, body: 'ok')
       expect(client.get_treatment('nico_test', 'random_treatment')).to eq 'control'
 
       impressions = custom_impression_listener.queue
@@ -151,7 +175,7 @@ describe SplitIoClient do
     end
 
     it 'with multiple factories returns on' do
-#      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916").to_return(status: 200, body: 'ok')
+#      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262916").to_return(status: 200, body: 'ok')
       local_log = StringIO.new
       logger = Logger.new(local_log)
 
@@ -231,7 +255,7 @@ describe SplitIoClient do
 
   context '#get_treatment_with_config' do
     it 'returns treatments and configs with FACUNDO_TEST treatment and check impressions' do
-      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916").to_return(status: 200, body: 'ok')
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262916&rbSince=-1").to_return(status: 200, body: 'ok')
       client.block_until_ready
       expect(client.get_treatment_with_config('nico_test', 'FACUNDO_TEST')).to eq(
         treatment: 'on',
@@ -261,7 +285,7 @@ describe SplitIoClient do
     end
 
     it 'returns treatments and configs with MAURO_TEST treatment and check impressions' do
-      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916").to_return(status: 200, body: 'ok')
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262916&rbSince=-1").to_return(status: 200, body: 'ok')
       client.block_until_ready
 
       expect(client.get_treatment_with_config('mauro', 'MAURO_TEST')).to eq(
@@ -292,7 +316,7 @@ describe SplitIoClient do
     end
 
     it 'returns treatments with input validations' do
-      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916").to_return(status: 200, body: 'ok')
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262916&rbSince=-1").to_return(status: 200, body: 'ok')
       client.block_until_ready
 
       expect(client.get_treatment_with_config('nico_test', 'FACUNDO_TEST')).to eq(
@@ -339,7 +363,7 @@ describe SplitIoClient do
     end
 
     it 'returns CONTROL with treatment doesnt exist' do
-      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916").to_return(status: 200, body: 'ok')
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262916&rbSince=-1").to_return(status: 200, body: 'ok')
       client.block_until_ready
 
       expect(client.get_treatment_with_config('nico_test', 'random_treatment')).to eq(
@@ -353,7 +377,7 @@ describe SplitIoClient do
     end
 
     it 'returns CONTROL when server return 500' do
-      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916").to_return(status: 200, body: 'ok')
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262916&rbSince=-1").to_return(status: 200, body: 'ok')
       mock_split_changes_error
 
       expect(client.get_treatment_with_config('nico_test', 'FACUNDO_TEST')).to eq(
@@ -375,7 +399,7 @@ describe SplitIoClient do
 
   context '#get_treatments' do
     before do
-      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916").to_return(status: 200, body: 'ok')
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262916&rbSince=-1").to_return(status: 200, body: 'ok')
     end
 
     it 'returns treatments and check impressions' do
@@ -479,7 +503,8 @@ describe SplitIoClient do
 
   context '#get_treatments_by_flag_set' do
     before do
-      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916").to_return(status: 200, body: 'ok')
+      mock_split_changes(splits)
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262916&rbSince=-1").to_return(status: 200, body: 'ok')
     end
 
     it 'returns treatments and check impressions' do
@@ -564,7 +589,7 @@ describe SplitIoClient do
 
   context '#get_treatments_by_flag_sets' do
     before do
-      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916").to_return(status: 200, body: 'ok')
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262916&rbSince=-1").to_return(status: 200, body: 'ok')
     end
 
     it 'returns treatments and check impressions' do
@@ -647,7 +672,8 @@ describe SplitIoClient do
 
   context '#get_treatments_with_config_by_flag_set' do
     before do
-      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916").to_return(status: 200, body: 'ok')
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262916&rbSince=-1").to_return(status: 200, body: 'ok')
+      stub_request(:post, "https://events.split.io/api/testImpressions/bulk").to_return(status: 200, body: "", headers: {})
     end
 
     it 'returns treatments and check impressions' do
@@ -757,7 +783,7 @@ describe SplitIoClient do
 
   context '#get_treatments_with_config_by_flag_sets' do
     before do
-      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916").to_return(status: 200, body: 'ok')
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262916&rbSince=-1").to_return(status: 200, body: 'ok')
     end
 
     it 'returns treatments and check impressions' do
@@ -861,7 +887,7 @@ describe SplitIoClient do
 
   context '#get_treatments_with_config' do
     it 'returns treatments and check impressions' do
-      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916").to_return(status: 200, body: 'ok')
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262916&rbSince=-1").to_return(status: 200, body: 'ok')
       client.block_until_ready
       result = client.get_treatments_with_config('nico_test', %w[FACUNDO_TEST MAURO_TEST Test_Save_1])
       expect(result[:FACUNDO_TEST]).to eq(
@@ -901,7 +927,7 @@ describe SplitIoClient do
     end
 
     it 'returns treatments with input validation' do
-      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916").to_return(status: 200, body: 'ok')
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262916&rbSince=-1").to_return(status: 200, body: 'ok')
       client.block_until_ready
       result1 = client.get_treatments_with_config('nico_test', %w[FACUNDO_TEST "" nil])
       result2 = client.get_treatments_with_config('', %w["" MAURO_TEST Test_Save_1])
@@ -940,7 +966,7 @@ describe SplitIoClient do
     end
 
     it 'returns CONTROL with treatment doesnt exist' do
-      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916").to_return(status: 200, body: 'ok')
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262916&rbSince=-1").to_return(status: 200, body: 'ok')
       client.block_until_ready
       result = client.get_treatments_with_config('nico_test', %w[FACUNDO_TEST random_treatment])
 
@@ -965,7 +991,7 @@ describe SplitIoClient do
     end
 
     it 'returns CONTROL when server return 500' do
-      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916").to_return(status: 200, body: 'ok')
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262916&rbSince=-1").to_return(status: 200, body: 'ok')
       mock_split_changes_error
 
       result = client.get_treatments_with_config('nico_test', %w[FACUNDO_TEST MAURO_TEST Test_Save_1])
@@ -1085,7 +1111,7 @@ describe SplitIoClient do
   context '#track' do
     it 'returns true' do
       stub_request(:post, 'https://events.split.io/api/events/bulk').to_return(status: 200, body: '')
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916').to_return(status: 200, body: '')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262916&rbSince=-1').to_return(status: 200, body: '')
 
       properties = {
         property_1: 1,
@@ -1144,7 +1170,7 @@ describe SplitIoClient do
         flag_sets_filter: ['set_3', '@3we'])
     end
       before do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1&sets=set_3')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1&sets=set_3')
       .to_return(status: 200, body: splits)
       mock_segment_changes('segment1', segment1, '-1')
       mock_segment_changes('segment1', segment1, '1470947453877')
@@ -1204,7 +1230,7 @@ describe SplitIoClient do
   context 'impressions toggle' do
     it 'optimized mode' do
       splits_imp_toggle = File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/imp-toggle.json'))
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')
           .to_return(status: 200, body: splits_imp_toggle)
       factory_imp_toggle =
         SplitIoClient::SplitFactory.new('test_api_key',
@@ -1236,9 +1262,10 @@ describe SplitIoClient do
       expect(imp_count.keys()[0].include? ('with_track_disabled')).to eq(true)
       expect(imp_count.length).to eq(1)
     end
+
     it 'debug mode' do
       splits_imp_toggle = File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/imp-toggle.json'))
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')
           .to_return(status: 200, body: splits_imp_toggle)
       factory_imp_toggle =
         SplitIoClient::SplitFactory.new('test_api_key',
@@ -1272,7 +1299,7 @@ describe SplitIoClient do
     end
     it 'none mode' do
       splits_imp_toggle = File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/imp-toggle.json'))
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')
           .to_return(status: 200, body: splits_imp_toggle)
       factory_imp_toggle =
         SplitIoClient::SplitFactory.new('test_api_key',
@@ -1306,17 +1333,127 @@ describe SplitIoClient do
       expect(imp_count.length).to eq(3)
     end
   end
+
+  context 'rule based segments' do
+    it 'using segment in excluded' do
+      splits_rbs = File.read(File.join(SplitIoClient.root, 'spec/test_data/rule_based_segments/rule_base_segments3.json'))
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')
+          .to_return(status: 200, body: splits_rbs)
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?rbSince=1506703262916&s=1.3&since=1506703262916")
+          .to_return(status: 200, body: "")
+      stub_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=-1')
+          .to_return(status: 200, body: '{"name": "segment1","added": ["pato@split.io"],"removed": [],"since": -1,"till": 1470947453877}')
+      stub_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=1470947453877')
+          .to_return(status: 200, body: '{"name": "segment1","added": [],"removed": [],"since": 1470947453877,"till": 1470947453877}')
+      factory_rbs =
+        SplitIoClient::SplitFactory.new('test_api_key',
+          impressions_mode: :optimized,
+          features_refresh_rate: 9999,
+          telemetry_refresh_rate: 99999,
+          impressions_refresh_rate: 99999,
+          streaming_enabled: false)
+
+      client_rbs = factory_rbs.client
+      client_rbs.block_until_ready
+
+      expect(client_rbs.get_treatment('bilal@split.io', 'rbs_feature_flag', {:email => 'bilal@split.io'})).to eq('on')
+      expect(client_rbs.get_treatment('mauro@split.io', 'rbs_feature_flag', {:email => 'mauro@split.io'})).to eq('off')
+      expect(client_rbs.get_treatment('pato@split.io', 'rbs_feature_flag', {:email => 'pato@split.io'})).to eq('off')
+    end
+
+    it 'using rb segment in excluded' do
+      splits_rbs = File.read(File.join(SplitIoClient.root, 'spec/test_data/rule_based_segments/rule_base_segments2.json'))
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')
+          .to_return(status: 200, body: splits_rbs)
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?rbSince=1506703262916&s=1.3&since=1506703262916")
+          .to_return(status: 200, body: "")
+      factory_rbs =
+        SplitIoClient::SplitFactory.new('test_api_key',
+          impressions_mode: :optimized,
+          features_refresh_rate: 9999,
+          telemetry_refresh_rate: 99999,
+          impressions_refresh_rate: 99999,
+          streaming_enabled: false)
+
+      client_rbs = factory_rbs.client
+      client_rbs.block_until_ready
+
+      expect(client_rbs.get_treatment('bilal@split.io', 'rbs_feature_flag', {:email => 'bilal@split.io'})).to eq('off')
+      expect(client_rbs.get_treatment('mauro@split.io', 'rbs_feature_flag', {:email => 'mauro@split.io'})).to eq('off')
+      expect(client_rbs.get_treatment('bilal', 'rbs_feature_flag', {:email => 'bilal'})).to eq('on')
+      expect(client_rbs.get_treatment('bilal2@split.io', 'rbs_feature_flag', {:email => 'bilal2split.io'})).to eq('on')
+    end
+
+    it 'using rb segment in condition' do
+      splits_rbs = File.read(File.join(SplitIoClient.root, 'spec/test_data/rule_based_segments/rule_base_segments.json'))
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')
+          .to_return(status: 200, body: splits_rbs)
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?rbSince=1506703262916&s=1.3&since=1506703262916")
+          .to_return(status: 200, body: "")
+      factory_rbs =
+        SplitIoClient::SplitFactory.new('test_api_key',
+          impressions_mode: :optimized,
+          features_refresh_rate: 9999,
+          telemetry_refresh_rate: 99999,
+          impressions_refresh_rate: 99999,
+          streaming_enabled: false)
+
+      client_rbs = factory_rbs.client
+      client_rbs.block_until_ready
+
+      expect(client_rbs.get_treatment('bilal@split.io', 'rbs_feature_flag', {:email => 'bilal@split.io'})).to eq('on')
+      expect(client_rbs.get_treatment('mauro@split.io', 'rbs_feature_flag', {:email => 'mauro@split.io'})).to eq('off')
+    end
+  end
+
+  context 'old spec tests' do
+    let(:old_spec_splits) { File.read(File.expand_path(File.join(File.dirname(__FILE__), '../test_data/rule_based_segments/split_old_spec.json'))) }
+
+    it 'check new spec after last proxy timestamp expires' do
+      splits_rbs = File.read(File.join(SplitIoClient.root, 'spec/test_data/rule_based_segments/rule_base_segments.json'))
+
+      stub_request(:get, 'https://proxy-server/api/splitChanges?s=1.3&since=-1&rbSince=-1')
+        .to_return({status: 400, body: ''}, {status: 200, body: splits_rbs})
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?rbSince=1506703262916&s=1.3&since=1506703262916")
+        .to_return(status: 200, body: '')
+        stub_request(:get, 'https://proxy-server/api/splitChanges?s=1.1&since=-1')
+        .to_return(status: 200, body: old_spec_splits)
+      stub_request(:get, "https://proxy-server/api/splitChanges?s=1.1&since=1457726098069")
+        .to_return(status: 200, body: '')
+      stub_request(:post, "https://telemetry.split.io/api/v1/metrics/config")
+        .to_return(status: 200, body: '')
+
+      factory_old_spec =
+        SplitIoClient::SplitFactory.new('test_api_key',
+          {impressions_mode: :none,
+          features_refresh_rate: 2,
+          base_uri: "https://proxy-server/api",
+          streaming_enabled: false})
+
+      SplitIoClient::Api::Splits::PROXY_CHECK_INTERVAL_SECONDS = 1
+      client_old_spec = factory_old_spec.client
+      client_old_spec.block_until_ready
+      expect(client_old_spec.get_treatment('whitelisted_user', 'whitelist_feature')).to eq('on')
+
+      sleep 1
+      split_fetcher = factory_old_spec.instance_variable_get(:@split_fetcher)
+      split_fetcher.fetch_splits
+      sleep 1
+      expect(client_old_spec.get_treatment('bilal@split.io', 'rbs_feature_flag', {:email => 'bilal@split.io'})).to eq('on')
+      expect(client_old_spec.get_treatment('whitelisted_user', 'whitelist_feature')).to eq('control')
+    end
+  end
 end
 
 private
 
 def mock_split_changes(splits_json)
-  stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
+  stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')
     .to_return(status: 200, body: splits_json)
 end
 
 def mock_split_changes_error
-  stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
+  stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')
     .to_return(status: 500)
 end
 

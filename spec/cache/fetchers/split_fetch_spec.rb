@@ -11,7 +11,7 @@ describe SplitIoClient::Cache::Fetchers::SplitFetcher do
   end
 
   before do
-    stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
+    stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')
       .to_return(status: 200, body: active_splits_json)
   end
 
@@ -26,20 +26,23 @@ describe SplitIoClient::Cache::Fetchers::SplitFetcher do
     let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new([]) }
     let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([]) }
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
+    let(:rule_based_segments_repository) { SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config) }
     let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
-    let(:store) { described_class.new(splits_repository, '', config, telemetry_runtime_producer) }
+    let(:store) { described_class.new(splits_repository, rule_based_segments_repository, '', config, telemetry_runtime_producer) }
 
     it 'returns splits since' do
-      splits = store.send(:splits_since, -1)
+      splits = store.send(:splits_since, -1, -1)
 
-      expect(splits[:splits].count).to eq(2)
+      expect(splits[:ff][:d].count).to eq(2)
+      expect(splits[:rbs][:d].count).to eq(1)
     end
 
     it 'fetch data in the cache' do
       store.send(:fetch_splits)
-
       expect(store.splits_repository.splits.size).to eq(2)
-      expect(store.splits_repository.get_change_number).to eq(store.send(:splits_since, -1)[:till])
+      expect(store.splits_repository.get_change_number).to eq(store.send(:splits_since, -1, -1)[:ff][:t])
+      expect(store.rule_based_segments_repository.rule_based_segment_names.size).to eq(1)
+      expect(store.rule_based_segments_repository.get_change_number).to eq(store.send(:splits_since, -1, -1)[:rbs][:t])
     end
 
     it 'refreshes splits' do
@@ -48,7 +51,7 @@ describe SplitIoClient::Cache::Fetchers::SplitFetcher do
       active_split = store.splits_repository.splits['test_1_ruby']
       expect(active_split[:status]).to eq('ACTIVE')
 
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1473413807667')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1473413807667&rbSince=1457726098069')
         .to_return(status: 200, body: archived_splits_json)
 
       store.send(:fetch_splits)
@@ -77,25 +80,26 @@ describe SplitIoClient::Cache::Fetchers::SplitFetcher do
     let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new(['set_2']) }
     let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new(['set_2']) }
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
+    let(:rule_based_segments_repository) { SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config) }
     let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
-    let(:store) { described_class.new(splits_repository, '', config, telemetry_runtime_producer) }
+    let(:store) { described_class.new(splits_repository, rule_based_segments_repository, '', config, telemetry_runtime_producer) }
 
     before do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1&sets=set_2')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1&sets=set_2')
       .to_return(status: 200, body: active_splits_json)
     end
 
     it 'returns splits since' do
-      splits = store.send(:splits_since, -1)
+      splits = store.send(:splits_since, -1, -1)
 
-      expect(splits[:splits].count).to eq(2)
+      expect(splits[:ff][:d].count).to eq(2)
     end
 
     it 'fetch data in the cache' do
       store.send(:fetch_splits)
 
       expect(store.splits_repository.splits.size).to eq(1)
-      expect(store.splits_repository.get_change_number).to eq(store.send(:splits_since, -1)[:till])
+      expect(store.splits_repository.get_change_number).to eq(store.send(:splits_since, -1, -1)[:ff][:t])
     end
 
     it 'refreshes splits' do
@@ -103,14 +107,15 @@ describe SplitIoClient::Cache::Fetchers::SplitFetcher do
       expect(store.splits_repository.get_split('sample_feature')[:name]).to eq('sample_feature')
       expect(store.splits_repository.get_split('test_1_ruby')).to eq(nil)
 
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1473413807667&sets=set_2')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1473413807667&rbSince=1457726098069&sets=set_2')
         .to_return(status: 200, body: archived_splits_json)
 
       store.send(:fetch_splits)
       expect(store.splits_repository.get_split('sample_feature')).to eq(nil)
 
       store.splits_repository.set_change_number(-1)
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1&sets=set_2')
+      store.rule_based_segments_repository.set_change_number(-1)
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1&sets=set_2')
         .to_return(status: 200, body: active_splits_json)
 
       store.send(:fetch_splits)
@@ -129,18 +134,19 @@ describe SplitIoClient::Cache::Fetchers::SplitFetcher do
     let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::RedisFlagSetsRepository.new(config) }
     let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([]) }
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
+    let(:rule_based_segments_repository) { SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config) }
     let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
-    let(:store) { described_class.new(splits_repository, '', config, telemetry_runtime_producer) }
+    let(:store) { described_class.new(splits_repository, rule_based_segments_repository, '', config, telemetry_runtime_producer) }
 
     it 'returns splits since' do
-      splits = store.send(:splits_since, -1)
-      expect(splits[:splits].count).to eq(2)
+      splits = store.send(:splits_since, -1, -1)
+      expect(splits[:ff][:d].count).to eq(2)
     end
 
     it 'fetch data in the cache' do
       store.send(:fetch_splits)
       expect(store.splits_repository.splits.size).to eq(2)
-      expect(store.splits_repository.get_change_number).to eq(store.send(:splits_since, -1)[:till].to_s)
+      expect(store.splits_repository.get_change_number).to eq(store.send(:splits_since, -1, -1)[:ff][:t].to_s)
     end
 
     it 'refreshes splits' do
@@ -149,7 +155,7 @@ describe SplitIoClient::Cache::Fetchers::SplitFetcher do
       active_split = store.splits_repository.splits['test_1_ruby']
       expect(active_split[:status]).to eq('ACTIVE')
 
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1473413807667')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1473413807667&rbSince=1457726098069')
         .to_return(status: 200, body: archived_splits_json)
 
       store.send(:fetch_splits)

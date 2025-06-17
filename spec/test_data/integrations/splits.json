@@ -1,5 +1,5 @@
-{
-    "splits": [
+{"ff": {
+    "d": [
       {
         "impressionsDisabled": false,
         "trafficTypeName": "account",
@@ -2521,8 +2521,62 @@
             "label": "in segment all"
           }
         ]
+      },
+      {
+        "impressionsDisabled": false,
+        "trafficTypeName": "account",
+        "name": "prereq_flag",
+        "prerequisites": [
+          {"n": "MAURO_TEST", "ts": ["off"]}, 
+          {"n": "FACUNDO_TEST", "ts": ["on"]}
+        ],
+        "trafficAllocation": 100,
+        "trafficAllocationSeed": -285565213,
+        "seed": -1992295819,
+        "status": "ACTIVE",
+        "killed": false,
+        "defaultTreatment": "off_default",
+        "changeNumber": 1494593336752,
+        "algo": 2,
+        "conditions": [
+          {
+            "conditionType": "ROLLOUT",
+            "matcherGroup": {
+              "combiner": "AND",
+              "matchers": [
+                {
+                  "keySelector": {
+                    "trafficType": "user",
+                    "attribute": null
+                  },
+                  "matcherType": "ALL_KEYS",
+                  "negate": false,
+                  "userDefinedSegmentMatcherData": null,
+                  "whitelistMatcherData": null,
+                  "unaryNumericMatcherData": null,
+                  "betweenMatcherData": null,
+                  "booleanMatcherData": null,
+                  "dependencyMatcherData": null,
+                  "stringMatcherData": null
+                }
+              ]
+            },
+            "partitions": [
+              {
+                "treatment": "on",
+                "size": 100
+              },
+              {
+                "treatment": "off",
+                "size": 0
+              }
+            ],
+            "label": "in segment all"
+          }
+        ]
       }
     ],
-    "since": -1,
-    "till": 1506703262916
-  }
+    "s": -1,
+    "t": 1506703262916
+  }, "rbs": {"d":[], "t":-1, "s":-1}
+}

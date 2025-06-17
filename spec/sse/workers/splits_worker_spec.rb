@@ -21,13 +21,16 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
   let(:event_split_archived_no_compression)  { SplitIoClient::SSE::EventSource::StreamData.new("data", 123, JSON.parse('{"type":"SPLIT_UPDATE","changeNumber":5564531221,"pcn":1234,"c": 0,"d":"eyJ0cmFmZmljVHlwZU5hbWUiOiAidXNlciIsICJpZCI6ICIzM2VhZmE1MC0xYTY1LTExZWQtOTBkZi1mYTMwZDk2OTA0NDUiLCAibmFtZSI6ICJiaWxhbF9zcGxpdCIsICJ0cmFmZmljQWxsb2NhdGlvbiI6IDEwMCwgInRyYWZmaWNBbGxvY2F0aW9uU2VlZCI6IC0xMzY0MTE5MjgyLCAic2VlZCI6IC02MDU5Mzg4NDMsICJzdGF0dXMiOiAiQVJDSElWRUQiLCAia2lsbGVkIjogZmFsc2UsICJkZWZhdWx0VHJlYXRtZW50IjogIm9mZiIsICJjaGFuZ2VOdW1iZXIiOiAxNjg0Mjc1ODM5OTUyLCAiYWxnbyI6IDIsICJjb25maWd1cmF0aW9ucyI6IHt9LCAiY29uZGl0aW9ucyI6IFt7ImNvbmRpdGlvblR5cGUiOiAiUk9MTE9VVCIsICJtYXRjaGVyR3JvdXAiOiB7ImNvbWJpbmVyIjogIkFORCIsICJtYXRjaGVycyI6IFt7ImtleVNlbGVjdG9yIjogeyJ0cmFmZmljVHlwZSI6ICJ1c2VyIn0sICJtYXRjaGVyVHlwZSI6ICJJTl9TRUdNRU5UIiwgIm5lZ2F0ZSI6IGZhbHNlLCAidXNlckRlZmluZWRTZWdtZW50TWF0Y2hlckRhdGEiOiB7InNlZ21lbnROYW1lIjogImJpbGFsX3NlZ21lbnQifX1dfSwgInBhcnRpdGlvbnMiOiBbeyJ0cmVhdG1lbnQiOiAib24iLCAic2l6ZSI6IDB9LCB7InRyZWF0bWVudCI6ICJvZmYiLCAic2l6ZSI6IDEwMH1dLCAibGFiZWwiOiAiaW4gc2VnbWVudCBiaWxhbF9zZWdtZW50In0sIHsiY29uZGl0aW9uVHlwZSI6ICJST0xMT1VUIiwgIm1hdGNoZXJHcm91cCI6IHsiY29tYmluZXIiOiAiQU5EIiwgIm1hdGNoZXJzIjogW3sia2V5U2VsZWN0b3IiOiB7InRyYWZmaWNUeXBlIjogInVzZXIifSwgIm1hdGNoZXJUeXBlIjogIkFMTF9LRVlTIiwgIm5lZ2F0ZSI6IGZhbHNlfV19LCAicGFydGl0aW9ucyI6IFt7InRyZWF0bWVudCI6ICJvbiIsICJzaXplIjogMH0sIHsidHJlYXRtZW50IjogIm9mZiIsICJzaXplIjogMTAwfV0sICJsYWJlbCI6ICJkZWZhdWx0IHJ1bGUifV19"}'), 'test') }
   let(:event_split_update_no_definition)  { SplitIoClient::SSE::EventSource::StreamData.new("data", 123, JSON.parse('{"type":"SPLIT_UPDATE","changeNumber":5564531221,"pcn":1234,"c": 0, "d":null}'), 'test') }
   let(:event_split_update_segments) { SplitIoClient::SSE::EventSource::StreamData.new("data", 123, JSON.parse('{"type":"SPLIT_UPDATE","changeNumber":5564531221,"pcn":1234,"c":2,"d":"eJzcVFtr20wQ/SvhPK9AsnzTvpnPJp+po0DlppRgzFga2dusJLNapaRG/73Id7sOoU+FvmluZ3TOGXYDayhNVTx9W3NIGUOiKtlAQCWQSNq+FyeJ6yzcBTuex+T0qe86XrfrUkJBzH4AgXw3mVFlivl3eiWIA/BA6yImq4oc0nPdG/mIOYF0gpYfeO3AEyh3Ca/XDfxer+u2BUpLtiohMfhvOn4aQeBFad20paRLFkg4pUrbqWGyGecWEvbwPQ9cCMQrypccVtmCDaTX7feCnu+7nY7nCZBeFpAtgbjIU7WszPbPSshNvc0lah8/b05hoxkkvv4/no4m42gKgYxsvGJzb4pqDdn0ZguVNwsxCIenhh3SPriBk/OSLB/Z/Vgpy1qV9mE3MSRLDfwxD/kMSjKVb1dUpmgwVFxgVtezWmBNxp5RsDdlavkdCJTqJ2+tqmcCmhasIU+LOEEtftfg8+Nk8vjlzxV44beINce2ME3z2TEeDrEWVzKNw3k0un8YhTd0aiaGnKqck4iXDakrwcpdNjzdq9PChxIV+VEXt2F/UUvTC9Guyk/t90dfO+/Xro73w65z7y6cU/ndnvTdge7f9W8wmcw/jb5F1+79yybsX6c7U2lGPat/BQAA//9ygdKB"}'), 'test') }
+  let(:event_split_update_rb_segments) { SplitIoClient::SSE::EventSource::StreamData.new("data", 123, JSON.parse('{"type":"SPLIT_UPDATE","changeNumber":5564531221,"pcn":1234,"c":0,"d":"eyJjaGFuZ2VOdW1iZXIiOiAxMCwgInRyYWZmaWNUeXBlTmFtZSI6ICJ1c2VyIiwgIm5hbWUiOiAicmJzX2ZsYWciLCAidHJhZmZpY0FsbG9jYXRpb24iOiAxMDAsICJ0cmFmZmljQWxsb2NhdGlvblNlZWQiOiAxODI4Mzc3MzgwLCAic2VlZCI6IC0yODY2MTc5MjEsICJzdGF0dXMiOiAiQUNUSVZFIiwgImtpbGxlZCI6IGZhbHNlLCAiZGVmYXVsdFRyZWF0bWVudCI6ICJvZmYiLCAiYWxnbyI6IDIsICJjb25kaXRpb25zIjogW3siY29uZGl0aW9uVHlwZSI6ICJST0xMT1VUIiwgIm1hdGNoZXJHcm91cCI6IHsiY29tYmluZXIiOiAiQU5EIiwgIm1hdGNoZXJzIjogW3sia2V5U2VsZWN0b3IiOiB7InRyYWZmaWNUeXBlIjogInVzZXIifSwgIm1hdGNoZXJUeXBlIjogIklOX1JVTEVfQkFTRURfU0VHTUVOVCIsICJuZWdhdGUiOiBmYWxzZSwgInVzZXJEZWZpbmVkU2VnbWVudE1hdGNoZXJEYXRhIjogeyJzZWdtZW50TmFtZSI6ICJzYW1wbGVfcnVsZV9iYXNlZF9zZWdtZW50In19XX0sICJwYXJ0aXRpb25zIjogW3sidHJlYXRtZW50IjogIm9uIiwgInNpemUiOiAxMDB9LCB7InRyZWF0bWVudCI6ICJvZmYiLCAic2l6ZSI6IDB9XSwgImxhYmVsIjogImluIHJ1bGUgYmFzZWQgc2VnbWVudCBzYW1wbGVfcnVsZV9iYXNlZF9zZWdtZW50In0sIHsiY29uZGl0aW9uVHlwZSI6ICJST0xMT1VUIiwgIm1hdGNoZXJHcm91cCI6IHsiY29tYmluZXIiOiAiQU5EIiwgIm1hdGNoZXJzIjogW3sia2V5U2VsZWN0b3IiOiB7InRyYWZmaWNUeXBlIjogInVzZXIifSwgIm1hdGNoZXJUeXBlIjogIkFMTF9LRVlTIiwgIm5lZ2F0ZSI6IGZhbHNlfV19LCAicGFydGl0aW9ucyI6IFt7InRyZWF0bWVudCI6ICJvbiIsICJzaXplIjogMH0sIHsidHJlYXRtZW50IjogIm9mZiIsICJzaXplIjogMTAwfV0sICJsYWJlbCI6ICJkZWZhdWx0IHJ1bGUifV0sICJjb25maWd1cmF0aW9ucyI6IHt9LCAic2V0cyI6IFtdLCAiaW1wcmVzc2lvbnNEaXNhYmxlZCI6IGZhbHNlfQ=="}'), 'test') }
+  let(:event_rb_segment_update) { SplitIoClient::SSE::EventSource::StreamData.new("data", 12345, JSON.parse('{"type":"RB_SEGMENT_UPDATE","changeNumber":5564531221,"pcn":1234,"c":0,"d":"eyJjaGFuZ2VOdW1iZXIiOiA1LCAibmFtZSI6ICJzYW1wbGVfcnVsZV9iYXNlZF9zZWdtZW50IiwgInN0YXR1cyI6ICJBQ1RJVkUiLCAidHJhZmZpY1R5cGVOYW1lIjogInVzZXIiLCAiZXhjbHVkZWQiOiB7ImtleXMiOiBbIm1hdXJvQHNwbGl0LmlvIl0sICJzZWdtZW50cyI6IFt7InR5cGUiOiAic3RhbmRhcmQiLCAibmFtZSI6ICJzZWdtZW50MSJ9XX0sICJjb25kaXRpb25zIjogW3sibWF0Y2hlckdyb3VwIjogeyJjb21iaW5lciI6ICJBTkQiLCAibWF0Y2hlcnMiOiBbeyJrZXlTZWxlY3RvciI6IHsidHJhZmZpY1R5cGUiOiAidXNlciIsICJhdHRyaWJ1dGUiOiAiZW1haWwifSwgIm1hdGNoZXJUeXBlIjogIklOX1NFR01FTlQiLCAibmVnYXRlIjogZmFsc2UsICJ1c2VyRGVmaW5lZFNlZ21lbnRNYXRjaGVyRGF0YSI6IHsic2VnbWVudE5hbWUiOiAiZGVtbyJ9fV19fV19"}'), 'test') }
 
   context 'add change number to queue' do
     let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new([])}
     let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([])}
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
     let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
-    let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, telemetry_runtime_producer) }
+    let(:rule_based_segments_repository) { SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config) }
+    let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, rule_based_segments_repository, api_key, config, telemetry_runtime_producer) }
     let(:segment_fetcher) { SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, telemetry_runtime_producer) }
     let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
     let(:synchronizer) do
@@ -36,7 +39,8 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
 
       repositories = {
         splits: splits_repository,
-        segments: segments_repository
+        segments: segments_repository,
+        rule_based_segments: rule_based_segments_repository
       }
 
       params = {
@@ -51,49 +55,49 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
     end
 
     it 'add change number - must tigger fetch - with retries' do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1').to_return(status: 200, body: '{"splits": [],"since": -1,"till": 1506703262918}')
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262918').to_return(status: 200, body: '{"splits": [],"since": 1506703262918,"till": 1506703262918}')
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262918&till=1506703262919').to_return(status: 200, body: '{"splits": [],"since": 1506703262919,"till": 1506703262919}')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1').to_return(status: 200, body: '{"ff":{"d": [],"s": -1,"t": 1506703262918}, "rbs":{"d":[],"s":-1,"t":-1}}')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262918&rbSince=-1').to_return(status: 200, body: '{"ff":{"d": [],"s": 1506703262918,"t": 1506703262918}, "rbs":{"d":[],"s":-1,"t":-1}}')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262918&rbSince=-1&till=1506703262919').to_return(status: 200, body: '{"ff":{"d": [],"s": 1506703262919,"t": 1506703262919}, "rbs":{"d":[],"s":-1,"t":-1}}')
 
-      worker = subject.new(synchronizer, config, splits_repository, telemetry_runtime_producer, segment_fetcher)
+      worker = subject.new(synchronizer, config, splits_repository, telemetry_runtime_producer, segment_fetcher, rule_based_segments_repository)
       worker.start
       worker.add_to_queue(SplitIoClient::SSE::EventSource::StreamData.new("SPLIT_UPDATE", 123, JSON.parse('{"type":"SPLIT_UPDATE","changeNumber":1506703262919}'), 'test'))
 
       sleep 1
 
-      expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')).to have_been_made.times(1)
-      expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262918')).to have_been_made.at_least_times(2)
-      expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262918&till=1506703262919')).to have_been_made.times(1)
+      expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')).to have_been_made.times(1)
+      expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262918&rbSince=-1')).to have_been_made.at_least_times(2)
+      expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262918&rbSince=-1&till=1506703262919')).to have_been_made.times(1)
     end
 
     it 'must trigger fetch' do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1').to_return(status: 200, body: '{"splits": [],"since": -1,"till": 1506703262916}')
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916').to_return(status: 200, body: '{"splits": [],"since": 1506703262916,"till": 1506703262918}')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1').to_return(status: 200, body: '{"ff":{"d": [],"s": -1,"t": 1506703262916}, "rbs":{"d":[],"s":-1,"t":-1}}')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262916&rbSince=-1').to_return(status: 200, body: '{"ff":{"d": [],"s": 1506703262916,"t": 1506703262918}, "rbs":{"d":[],"s":-1,"t":-1}}')
 
-      worker = subject.new(synchronizer, config, splits_repository, telemetry_runtime_producer, segment_fetcher)
+      worker = subject.new(synchronizer, config, splits_repository, telemetry_runtime_producer, segment_fetcher, rule_based_segments_repository)
       worker.start
       worker.add_to_queue(SplitIoClient::SSE::EventSource::StreamData.new("SPLIT_UPDATE", 123, JSON.parse('{"type":"SPLIT_UPDATE","changeNumber":1506703262918}'), 'test'))
       sleep 1
 
-      expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916')).to have_been_made.once
+      expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262916&rbSince=-1')).to have_been_made.once
     end
 
     it 'must not trigger fetch' do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1').to_return(status: 200, body: '{"splits": [],"since": -1,"till": 1506703262916}')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1').to_return(status: 200, body: '{"ff":{"d": [],"s": -1,"t": 1506703262916}, "rbs":{"d":[],"s":-1,"t":-1}}')
 
-      worker = subject.new(synchronizer, config, splits_repository, telemetry_runtime_producer, segment_fetcher)
+      worker = subject.new(synchronizer, config, splits_repository, telemetry_runtime_producer, segment_fetcher, rule_based_segments_repository)
       worker.start
       worker.add_to_queue(SplitIoClient::SSE::EventSource::StreamData.new("SPLIT_UPDATE", 123, JSON.parse('{"type":"SPLIT_UPDATE","changeNumber":1506703262916}'), 'test'))
       sleep 1
 
-      expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916')).to have_been_made.times(0)
+      expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262916&rbSince=-1')).to have_been_made.times(0)
     end
 
     it 'without start, must not fetch' do
-      worker = subject.new(synchronizer, config, splits_repository, telemetry_runtime_producer, segment_fetcher)
+      worker = subject.new(synchronizer, config, splits_repository, telemetry_runtime_producer, segment_fetcher, rule_based_segments_repository)
       worker.add_to_queue(SplitIoClient::SSE::EventSource::StreamData.new("SPLIT_UPDATE", 123, JSON.parse('{"type":"SPLIT_UPDATE","changeNumber":1506703262918}'), 'test'))
 
-      expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916')).to have_been_made.times(0)
+      expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262916&rbSince=-1')).to have_been_made.times(0)
     end
   end
 
@@ -102,16 +106,18 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
     let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([])}
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
     let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
-    let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, telemetry_runtime_producer) }
+    let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, rule_based_segments_repository, api_key, config, telemetry_runtime_producer) }
     let(:segment_fetcher) { SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, telemetry_runtime_producer) }
     let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
+    let(:rule_based_segments_repository) { SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config) }
     let(:synchronizer) do
       telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, api_key, telemetry_runtime_producer)
       impressions_api = SplitIoClient::Api::Impressions.new(api_key, config, telemetry_runtime_producer)
 
       repositories = {
         splits: splits_repository,
-        segments: segments_repository
+        segments: segments_repository,
+        rule_based_segments: rule_based_segments_repository
       }
 
       params = {
@@ -136,9 +142,9 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
     end
 
     it 'must kill split and trigger fetch' do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916').to_return(status: 200, body: '{"splits": [],"since": 1506703262916,"till": 1506703262918}')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262916&rbSince=-1').to_return(status: 200, body: '{"ff":{"d": [],"s": 1506703262916,"t": 1506703262918}, "rbs":{"d":[],"s":-1,"t":-1}}')
 
-      worker = subject.new(synchronizer, config, splits_repository, telemetry_runtime_producer, segment_fetcher)
+      worker = subject.new(synchronizer, config, splits_repository, telemetry_runtime_producer, segment_fetcher, rule_based_segments_repository)
       worker.start
       worker.send :kill_feature_flag, SplitIoClient::SSE::EventSource::StreamData.new("SPLIT_KILL", 123, JSON.parse('{"splitName":"FACUNDO_TEST", "defaultTreatment":"on", "type":"SPLIT_KILL","changeNumber":1506703262918}'), 'test')
 
@@ -148,11 +154,11 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
       expect(split[:killed]).to be_truthy
       expect(split[:defaultTreatment]).to eq('on')
       expect(split[:changeNumber]).to eq(1_506_703_262_918)
-      expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916')).to have_been_made.once
+      expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262916&rbSince=-1')).to have_been_made.once
     end
 
     it 'must kill split and must not trigger fetch' do
-      worker = subject.new(synchronizer, config, splits_repository, telemetry_runtime_producer, segment_fetcher)
+      worker = subject.new(synchronizer, config, splits_repository, telemetry_runtime_producer, segment_fetcher, rule_based_segments_repository)
 
       worker.start
       worker.send :kill_feature_flag, SplitIoClient::SSE::EventSource::StreamData.new("SPLIT_KILL", 123, JSON.parse('{"splitName":"FACUNDO_TEST", "defaultTreatment":"on", "type":"SPLIT_KILL","changeNumber":1506703262916}'), 'test')
@@ -163,7 +169,7 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
       expect(split[:killed]).to be_truthy
       expect(split[:defaultTreatment]).to eq('on')
       expect(split[:changeNumber]).to eq(1_506_703_262_916)
-      expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1506703262916')).to have_been_made.times(0)
+      expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262916&rbSince=-1')).to have_been_made.times(0)
     end
   end
 
@@ -172,16 +178,18 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
     let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new(["set_1"])}
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
     let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
-    let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, telemetry_runtime_producer) }
+    let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, rule_based_segments_repository, api_key, config, telemetry_runtime_producer) }
     let(:segment_fetcher) { SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, telemetry_runtime_producer) }
     let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
+    let(:rule_based_segments_repository) { SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config) }
     let(:synchronizer) do
       telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, api_key, telemetry_runtime_producer)
       impressions_api = SplitIoClient::Api::Impressions.new(api_key, config, telemetry_runtime_producer)
 
       repositories = {
         splits: splits_repository,
-        segments: segments_repository
+        segments: segments_repository,
+        rule_based_segments: rule_based_segments_repository
       }
 
       params = {
@@ -195,10 +203,10 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
       SplitIoClient::Engine::Synchronizer.new(repositories, config, params)
     end
     it 'update split with and without flagset' do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1234').to_return(status: 200, body: '{"splits": [],"since": 1234,"till": 1234}')
-      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=1234&till=5564531221").to_return(status: 200, body: '{"splits": [],"since": 1234,"till": 5564531221}')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1234&rbSince=-1').to_return(status: 200, body: '{"ff":{"d": [],"s": 1234,"t": 1234}, "rbs":{"d":[],"s":-1,"t":-1}}')
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=1234&rbSince=-1&till=5564531221").to_return(status: 200, body: '{"ff":{"d": [],"s": 1234,"t": 5564531221}, "rbs":{"d":[],"s":-1,"t":-1}}')
       stub_request(:get, "https://sdk.split.io/api/segmentChanges/bilal_segment?since=-1").to_return(status: 200, body: "")
-      worker = subject.new(synchronizer, config, splits_repository, telemetry_runtime_producer, segment_fetcher)
+      worker = subject.new(synchronizer, config, splits_repository, telemetry_runtime_producer, segment_fetcher, rule_based_segments_repository)
       worker.start
 
       splits_repository.set_change_number(1234)
@@ -224,16 +232,18 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
     let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([])}
     let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
     let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
-    let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, telemetry_runtime_producer) }
+    let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, rule_based_segments_repository, api_key, config, telemetry_runtime_producer) }
     let(:segment_fetcher) { SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, telemetry_runtime_producer) }
     let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
+    let(:rule_based_segments_repository) { SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config) }
     let(:synchronizer) do
       telemetry_api = SplitIoClient::Api::TelemetryApi.new(config, api_key, telemetry_runtime_producer)
       impressions_api = SplitIoClient::Api::Impressions.new(api_key, config, telemetry_runtime_producer)
 
       repositories = {
         splits: splits_repository,
-        segments: segments_repository
+        segments: segments_repository,
+        rule_based_segments: rule_based_segments_repository
       }
 
       params = {
@@ -246,9 +256,10 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
 
       SplitIoClient::Engine::Synchronizer.new(repositories, config, params)
     end
+    
     it 'decode and decompress split update data' do
       stub_request(:get, "https://sdk.split.io/api/segmentChanges/bilal_segment?since=-1").to_return(status: 200, body: "")
-      worker = subject.new(synchronizer, config, splits_repository, telemetry_runtime_producer, segment_fetcher)
+      worker = subject.new(synchronizer, config, splits_repository, telemetry_runtime_producer, segment_fetcher, rule_based_segments_repository)
       worker.start
 
       splits_repository.set_change_number(1234)
@@ -276,9 +287,9 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
     end
 
     it 'instant ff update split notification with segment matcher.' do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1234').to_return(status: 200, body: '{"splits": [],"since": 1234,"till": 1234}')
-      stub_request(:get, 'https://sdk.split.io/api/segmentChanges/maur-2?since=-1').to_return(status: 200, body: '{"name":"maur-2","added":["admin"],"removed":[],"since":-1,"till":-1}')
-      worker = subject.new(synchronizer, config, splits_repository, telemetry_runtime_producer, segment_fetcher)
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1234&rbSince=-1').to_return(status: 200, body: '{"ff":{"d": [],"s": 1234,"t": 1234}, "rbs":{"d":[],"s":-1,"t":-1}}')
+      stub_request(:get, 'https://sdk.split.io/api/segmentChanges/maur-2?since=-1').to_return(status: 200, body: '{"name":"maur-2","added":["admin"],"removed":[],"since":-1,"till":-1}}')
+      worker = subject.new(synchronizer, config, splits_repository, telemetry_runtime_producer, segment_fetcher, rule_based_segments_repository)
       worker.start
 
       splits_repository.set_change_number(1234)
@@ -289,9 +300,53 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
       expect(segments_repository.used_segment_names[0]).to eq('maur-2')
     end
 
+    it 'instant ff update split notification with rule based segment matcher.' do
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1234&rbSince=-1').to_return(status: 200, body: '{"ff":{"d": [],"s": 1234,"t": 1234}, "rbs":{"d":[],"s":-1,"t":5564531221}}')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=5564531221&rbSince=-1').to_return(status: 200, body: '{"ff":{"d": [],"s": 5564531221,"t": 5564531221}, "rbs":{"d":[{"{
+      "changeNumber": 123,
+      "name": "sample_rule_based_segment",
+      "status": "ACTIVE",
+      "trafficTypeName": "user",
+      "excluded":{
+        "keys":["mauro@split.io","gaston@split.io"],
+        "segments":[{ "type": "standard", "name": "segment1"}]
+      },
+      "conditions": [
+        {
+          "matcherGroup": {
+            "combiner": "AND",
+            "matchers": [
+              {
+                "keySelector": {
+                  "trafficType": "user",
+                  "attribute": "email"
+                },
+                "matcherType": "IN_SEGMENT",
+                "negate": false,
+                "userDefinedSegmentMatcherData":{
+                    "segmentName":"demo"
+                },
+              }
+            ]
+          }
+        }
+      ]
+      }"}],"s":-1,"t":5564531221}}')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=5564531221&rbSince=5564531221').to_return(status: 200, body: '{"ff":{"d": [],"s": 5564531221,"t": 5564531221}, "rbs":{"d":[],"s":5564531221,"t":5564531221}}')
+      worker = subject.new(synchronizer, config, splits_repository, telemetry_runtime_producer, segment_fetcher, rule_based_segments_repository)
+      worker.start
+
+      splits_repository.set_change_number(1234)
+      expect(rule_based_segments_repository.get_rule_based_segment("sample_rule_based_segment") == nil)
+  
+      worker.add_to_queue(event_split_update_rb_segments)
+      sleep 1
+      expect(rule_based_segments_repository.get_rule_based_segment("sample_rule_based_segment") != nil)
+    end
+
     it 'should not update if definition is nil' do
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1234').to_return(status: 200, body: '{"splits": [],"since": -1,"till": 1506703262918}')
-      worker = subject.new(synchronizer, config, splits_repository, telemetry_runtime_producer, segment_fetcher)
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1234&rbSince=-1').to_return(status: 200, body: '{"ff":{"d": [],"s": -1,"t": 1506703262918}, "rbs":{"d":[],"s":-1,"t":-1}}')
+      worker = subject.new(synchronizer, config, splits_repository, telemetry_runtime_producer, segment_fetcher, rule_based_segments_repository)
       worker.start
 
       splits_repository.set_change_number(1234)
@@ -299,12 +354,30 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
       sleep 1
       expect(splits_repository.exists?('bilal_split') == false)
     end
+
+    it 'process rb segment update' do
+      stub_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=-1').to_return(status: 200, body: '{"name":"maur-2","added":["admin"],"removed":[],"since":-1,"till":-1}}')
+      stub_request(:get, 'https://sdk.split.io/api/segmentChanges/demo?since=-1').to_return(status: 200, body: '{"name":"maur-2","added":["admin"],"removed":[],"since":-1,"till":-1}}')
+      worker = subject.new(synchronizer, config, splits_repository, telemetry_runtime_producer, segment_fetcher, rule_based_segments_repository)
+      worker.start
+
+      rule_based_segments_repository.set_change_number(1234)
+      worker.add_to_queue(event_rb_segment_update)
+      sleep 2
+      rb_segment = rule_based_segments_repository.get_rule_based_segment("sample_rule_based_segment")
+      expect(rb_segment[:name] == 'sample_rule_based_segment')
+
+      expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/demo?since=-1')).to have_been_made.once
+      expect(segments_repository.used_segment_names[0]).to eq('demo')
+      expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=-1')).to have_been_made.once
+      expect(segments_repository.used_segment_names[1]).to eq('segment1')
+    end
   end
 
   private
 
   def mock_split_changes(splits_json)
-    stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
+    stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')
       .to_return(status: 200, body: splits_json)
   end
 
