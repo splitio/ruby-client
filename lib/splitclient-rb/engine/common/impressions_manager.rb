@@ -18,7 +18,8 @@ module SplitIoClient
           @unique_keys_tracker = unique_keys_tracker
         end
 
-        def build_impression(matching_key, bucketing_key, split_name, treatment_data, impressions_disabled, params = {}, properties = nil)
+        def build_impression(matching_key, bucketing_key, split_name, treatment_data, impressions_disabled, params = {},
+                             properties = nil)
           impression_data = impression_data(matching_key, bucketing_key, split_name, treatment_data, params[:time], properties)
           begin
             if @config.impressions_mode == :none || impressions_disabled
@@ -83,7 +84,8 @@ module SplitIoClient
         end
 
         # added param time for test
-        def impression_data(matching_key, bucketing_key, split_name, treatment, time = nil, properties = nil)
+        def impression_data(matching_key, bucketing_key, split_name, treatment, time = nil,
+                            properties = nil)
           {
             k: matching_key,
             b: bucketing_key,

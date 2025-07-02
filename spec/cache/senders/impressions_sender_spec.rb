@@ -75,8 +75,7 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
                 b: 'foo1',
                 r: 'custom_label1',
                 c: 123_456,
-                pt: nil,
-                properties: "null"
+                pt: nil
               }
             ]
           },
