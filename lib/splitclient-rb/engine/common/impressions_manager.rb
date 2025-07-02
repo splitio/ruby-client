@@ -18,15 +18,20 @@ module SplitIoClient
           @unique_keys_tracker = unique_keys_tracker
         end
 
-        def build_impression(matching_key, bucketing_key, split_name, treatment_data, impressions_disabled, params = {})
-          impression_data = impression_data(matching_key, bucketing_key, split_name, treatment_data, params[:time])
+        def build_impression(matching_key, bucketing_key, split_name, treatment_data, impressions_disabled, params = {},
+                             properties = nil)
+          impression_data = impression_data(matching_key, bucketing_key, split_name, treatment_data, params[:time], properties)
           begin
             if @config.impressions_mode == :none || impressions_disabled
               @impression_counter.inc(split_name, impression_data[:m])
               @unique_keys_tracker.track(split_name, matching_key)
             elsif @config.impressions_mode == :debug #  In DEBUG mode we should calculate the pt only.
+              return impression(impression_data, params[:attributes]) unless properties.nil?
+
               impression_data[:pt] = @impression_observer.test_and_set(impression_data)
             else # In OPTIMIZED mode we should track the total amount of evaluations and deduplicate the impressions.
+              return impression(impression_data, params[:attributes]) unless properties.nil?
+
               impression_data[:pt] = @impression_observer.test_and_set(impression_data)
               @impression_counter.inc(split_name, impression_data[:m]) unless impression_data[:pt].nil?
             end
@@ -79,7 +84,8 @@ module SplitIoClient
         end
 
         # added param time for test
-        def impression_data(matching_key, bucketing_key, split_name, treatment, time = nil)
+        def impression_data(matching_key, bucketing_key, split_name, treatment, time = nil,
+                            properties = nil)
           {
             k: matching_key,
             b: bucketing_key,
@@ -88,7 +94,8 @@ module SplitIoClient
             r: applied_rule(treatment[:label]),
             c: treatment[:change_number],
             m: time || (Time.now.to_f * 1000.0).to_i,
-            pt: nil
+            pt: nil,
+            properties: properties
           }
         end
 

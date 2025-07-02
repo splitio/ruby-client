@@ -36,16 +36,30 @@ module SplitIoClient
         end
 
         def current_impressions(feature_impressions)
+          formatted = []
           feature_impressions.map do |impression|
-            {
-              k: impression[:i][:k],
-              t: impression[:i][:t],
-              m: impression[:i][:m],
-              b: impression[:i][:b],
-              r: impression[:i][:r],
-              c: impression[:i][:c],
-              pt: impression[:i][:pt]
-            }
+            if impression[:i][:properties].nil?
+              impression = {
+                k: impression[:i][:k],
+                t: impression[:i][:t],
+                m: impression[:i][:m],
+                b: impression[:i][:b],
+                r: impression[:i][:r],
+                c: impression[:i][:c],
+                pt: impression[:i][:pt]
+              }
+            else
+              impression = {
+                k: impression[:i][:k],
+                t: impression[:i][:t],
+                m: impression[:i][:m],
+                b: impression[:i][:b],
+                r: impression[:i][:r],
+                c: impression[:i][:c],
+                pt: impression[:i][:pt],
+                properties: impression[:i][:properties].to_json.to_s
+              }
+            end
           end
         end
 
@@ -73,7 +87,8 @@ module SplitIoClient
           "#{impression[:i][:b]}:" \
           "#{impression[:i][:c]}:" \
           "#{impression[:i][:t]}:" \
-          "#{impression[:i][:pt]}"
+          "#{impression[:i][:pt]}" \
+          "#{impression[:i][:properties]}" \
         end
       end
     end
