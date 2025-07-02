@@ -44,7 +44,8 @@ module SplitIoClient
               b: impression[:i][:b],
               r: impression[:i][:r],
               c: impression[:i][:c],
-              pt: impression[:i][:pt]
+              pt: impression[:i][:pt],
+              properties: impression[:i][:properties].to_json.to_s
             }
           end
         end
@@ -73,7 +74,8 @@ module SplitIoClient
           "#{impression[:i][:b]}:" \
           "#{impression[:i][:c]}:" \
           "#{impression[:i][:t]}:" \
-          "#{impression[:i][:pt]}"
+          "#{impression[:i][:pt]}" \
+          "#{impression[:i][:properties]}" \
         end
       end
     end
