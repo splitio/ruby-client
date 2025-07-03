@@ -72,7 +72,7 @@ describe SplitIoClient::Engine::Common::ImpressionManager do
                                                        'split_name_test',
                                                        treatment,
                                                        false,
-                                                       params, {"prop":"val"})
+                                                       params, {"properties": {"prop":"val"}})
       expect(impression).to match(expected)
 
       result_count = impression_counter.pop_all

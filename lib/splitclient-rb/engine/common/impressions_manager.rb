@@ -19,7 +19,8 @@ module SplitIoClient
         end
 
         def build_impression(matching_key, bucketing_key, split_name, treatment_data, impressions_disabled, params = {},
-                             properties = nil)
+                             options = nil)
+          properties = options.nil? ? nil : options[:properties]
           impression_data = impression_data(matching_key, bucketing_key, split_name, treatment_data, params[:time], properties)
           begin
             if @config.impressions_mode == :none || impressions_disabled
