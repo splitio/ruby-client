@@ -46,7 +46,7 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
       params2 = { attributes: {}, time: 1_478_113_518_285 }
       impressions = []
       impressions << { :impression => impressions_manager.build_impression('matching_key', 'foo1', 'foo1', treatment1, false, params), :disabled => false }
-      impressions << { :impression => impressions_manager.build_impression('matching_key2', 'foo2', 'foo2', treatment2, false, params2, {:prop=>"val"}), :disabled => false }
+      impressions << { :impression => impressions_manager.build_impression('matching_key2', 'foo2', 'foo2', treatment2, false, params2, {:properties => {:prop => "val"}}), :disabled => false }
       impressions_manager.track(impressions)
     end
 

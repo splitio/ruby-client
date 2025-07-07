@@ -273,6 +273,7 @@ module SplitIoClient
       bucketing_key, matching_key = keys_from_key(key)
       bucketing_key = bucketing_key ? bucketing_key.to_s : nil
       matching_key = matching_key ? matching_key.to_s : nil
+      attributes = parsed_attributes(attributes)
 
       if !@config.split_validator.valid_get_treatments_parameters(calling_method, key, sanitized_feature_flag_names, matching_key, bucketing_key, attributes)
         to_return = Hash.new
@@ -379,7 +380,7 @@ module SplitIoClient
           impressions_disabled = false
         end
 
-        options, size = validate_options(options)
+        options, size = validate_options(options) unless options.nil?
         options[:properties] = nil unless options.nil? or check_properties_size((EVENT_AVERAGE_SIZE + size), "Properties are ignored")
 
         record_latency(calling_method, start)
