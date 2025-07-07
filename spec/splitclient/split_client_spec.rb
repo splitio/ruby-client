@@ -35,6 +35,24 @@ describe SplitIoClient::SplitClient do
       expect(split_client.get_treatments_by_flag_sets('key', ['set_2'])).to eq({:testing222 => 'off'})
       expect(split_client.get_treatments_with_config_by_flag_set('key', 'set_1')).to eq({:testing222 => {:treatment => 'off', :config => nil}})
       expect(split_client.get_treatments_with_config_by_flag_sets('key', ['set_2'])).to eq({:testing222 => {:treatment => 'off', :config => nil}})
+      imps = impressions_repository.batch
+
+      expect(split_client.get_treatment('key', 'testing222', {}, {:properties => {:prop => "value"}})).to eq('off')
+      check_properties(impressions_repository.batch)
+      expect(split_client.get_treatments('key_prop', ['testing222'], {}, {:properties => {:prop => "value"}})).to eq({:testing222 => 'off'})
+      check_properties(impressions_repository.batch)
+      expect(split_client.get_treatment_with_config('key', 'testing222', {}, {:properties => {:prop => "value"}})).to eq({:treatment => 'off', :config => nil})
+      check_properties(impressions_repository.batch)
+      expect(split_client.get_treatments_with_config('key', ['testing222'], {}, {:properties => {:prop => "value"}})).to eq({:testing222 => {:treatment => 'off', :config => nil}})
+      check_properties(impressions_repository.batch)
+      expect(split_client.get_treatments_by_flag_set('key', 'set_1', {}, {:properties => {:prop => "value"}})).to eq({:testing222 => 'off'})
+      check_properties(impressions_repository.batch)
+      expect(split_client.get_treatments_by_flag_sets('key', ['set_2'], {}, {:properties => {:prop => "value"}})).to eq({:testing222 => 'off'})
+      check_properties(impressions_repository.batch)
+      expect(split_client.get_treatments_with_config_by_flag_set('key', 'set_1', {}, {:properties => {:prop => "value"}})).to eq({:testing222 => {:treatment => 'off', :config => nil}})
+      check_properties(impressions_repository.batch)
+      expect(split_client.get_treatments_with_config_by_flag_sets('key', ['set_2'], {}, {:properties => {:prop => "value"}})).to eq({:testing222 => {:treatment => 'off', :config => nil}})
+      check_properties(impressions_repository.batch)
     end
 
     it 'check track' do
@@ -220,4 +238,8 @@ end
 def mock_segment_changes(segment_name, segment_json, since)
   stub_request(:get, "https://sdk.split.io/api/segmentChanges/#{segment_name}?since=#{since}")
     .to_return(status: 200, body: segment_json)
+end
+
+def check_properties(imps)
+  expect(imps[0][:i][:properties]).to eq({:prop => "value"})
 end
