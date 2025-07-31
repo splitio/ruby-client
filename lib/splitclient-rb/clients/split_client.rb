@@ -38,6 +38,8 @@ module SplitIoClient
         key, split_name, attributes = {}, evaluation_options = nil, split_data = nil, store_impressions = true,
         multiple = false, evaluator = nil
       )
+      log_deprecated_warning(GET_TREATMENT, evaluator, 'evaluator')
+    
       result = treatment(key, split_name, attributes, split_data, store_impressions, GET_TREATMENT, multiple, evaluation_options)
       return result.tap { |t| t.delete(:config) } if multiple
       result[:treatment]
@@ -47,6 +49,7 @@ module SplitIoClient
         key, split_name, attributes = {}, evaluation_options = nil, split_data = nil, store_impressions = true,
         multiple = false, evaluator = nil
       )
+      log_deprecated_warning(GET_TREATMENT, evaluator, 'evaluator')
       treatment(key, split_name, attributes, split_data, store_impressions, GET_TREATMENT_WITH_CONFIG, multiple, evaluation_options)
     end
 
@@ -332,6 +335,10 @@ module SplitIoClient
     # @return [String/Hash] Treatment as String or Hash of treatments in case of array of features
     def treatment(key, feature_flag_name, attributes = {}, split_data = nil, store_impressions = true,
                    calling_method = 'get_treatment', multiple = false, evaluation_options = nil)
+
+      log_deprecated_warning(calling_method, split_data, 'split_data')
+      log_deprecated_warning(calling_method, store_impressions'store_impressions')
+        
       impressions = []
       bucketing_key, matching_key = keys_from_key(key)
 
@@ -353,6 +360,10 @@ module SplitIoClient
 
       @impressions_manager.track(impressions_decorator) unless impressions_decorator.nil?
       treatments
+    end
+
+    def log_deprecated_warning(calling_method, parameter, parameter_name)
+        @config.logger.warn("#{calling_method}: detected #{parameter_name} parameter used, this parameter is deprecated and its value is ignored.") unless parameter.nil?
     end
 
     def evaluate_treatment(feature_flag, feature_flag_name, bucketing_key, matching_key, attributes, calling_method, multiple = false, evaluation_options = nil)
