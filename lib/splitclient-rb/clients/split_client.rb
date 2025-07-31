@@ -337,7 +337,7 @@ module SplitIoClient
                    calling_method = 'get_treatment', multiple = false, evaluation_options = nil)
 
       log_deprecated_warning(calling_method, split_data, 'split_data')
-      log_deprecated_warning(calling_method, store_impressions'store_impressions')
+      log_deprecated_warning(calling_method, store_impressions, 'store_impressions')
         
       impressions = []
       bucketing_key, matching_key = keys_from_key(key)
