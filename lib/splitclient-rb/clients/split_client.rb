@@ -35,7 +35,7 @@ module SplitIoClient
     end
 
     def get_treatment(
-        key, split_name, attributes = {}, evaluation_options = nil, split_data = nil, store_impressions = true,
+        key, split_name, attributes = {}, evaluation_options = nil, split_data = nil, store_impressions = nil,
         multiple = false, evaluator = nil
       )
       log_deprecated_warning(GET_TREATMENT, evaluator, 'evaluator')
@@ -46,7 +46,7 @@ module SplitIoClient
     end
 
     def get_treatment_with_config(
-        key, split_name, attributes = {}, evaluation_options = nil, split_data = nil, store_impressions = true,
+        key, split_name, attributes = {}, evaluation_options = nil, split_data = nil, store_impressions = nil,
         multiple = false, evaluator = nil
       )
       log_deprecated_warning(GET_TREATMENT, evaluator, 'evaluator')
@@ -333,7 +333,7 @@ module SplitIoClient
     # @param split_data [Hash] split data, when provided this method doesn't fetch splits_repository for the data
     # @param store_impressions [Boolean] impressions aren't stored if this flag is false
     # @return [String/Hash] Treatment as String or Hash of treatments in case of array of features
-    def treatment(key, feature_flag_name, attributes = {}, split_data = nil, store_impressions = true,
+    def treatment(key, feature_flag_name, attributes = {}, split_data = nil, store_impressions = nil,
                    calling_method = 'get_treatment', multiple = false, evaluation_options = nil)
 
       log_deprecated_warning(calling_method, split_data, 'split_data')
