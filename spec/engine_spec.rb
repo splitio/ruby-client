@@ -77,6 +77,22 @@ describe SplitIoClient, type: :client do
           treatment: 'off',
           config: nil
         )
+        expect(subject.get_treatment_with_config('nicolas', 'mauro_test', {}, nil)).to eq(
+          treatment: 'off',
+          config: nil
+        )
+        expect(subject.get_treatment_with_config('nicolas', 'mauro_test', {}, {})).to eq(
+          treatment: 'off',
+          config: nil
+        )
+        expect(subject.get_treatment_with_config('nicolas', 'mauro_test', {}, "prop")).to eq(
+          treatment: 'off',
+          config: nil
+        )
+        expect(subject.get_treatment_with_config('nicolas', 'mauro_test', {}, 123)).to eq(
+          treatment: 'off',
+          config: nil
+        )
         close_redis
       end
 
@@ -84,6 +100,10 @@ describe SplitIoClient, type: :client do
         expect(subject.get_treatment('nicolas', 'mauro_test', nil)).to eq 'off'
         expect(subject.get_treatment('nicolas', 'mauro_test')).to eq 'off'
         expect(subject.get_treatment('nicolas', 'mauro_test', {})).to eq 'off'
+        expect(subject.get_treatment('nicolas', 'mauro_test', {}, nil)).to eq 'off'
+        expect(subject.get_treatment('nicolas', 'mauro_test', {}, {})).to eq 'off'
+        expect(subject.get_treatment('nicolas', 'mauro_test', {}, "prop")).to eq 'off'
+        expect(subject.get_treatment('nicolas', 'mauro_test', {}, 123)).to eq 'off'
       end
 
       it 'get_treatments returns off' do
@@ -94,6 +114,18 @@ describe SplitIoClient, type: :client do
           mauro_test: 'off'
         )
         expect(subject.get_treatments('nicolas', ['mauro_test'], {})).to eq(
+          mauro_test: 'off'
+        )
+        expect(subject.get_treatments('nicolas', ['mauro_test'], {}, nil)).to eq(
+          mauro_test: 'off'
+        )
+        expect(subject.get_treatments('nicolas', ['mauro_test'], {}, {})).to eq(
+          mauro_test: 'off'
+        )
+        expect(subject.get_treatments('nicolas', ['mauro_test'], {}, "prop")).to eq(
+          mauro_test: 'off'
+        )
+        expect(subject.get_treatments('nicolas', ['mauro_test'], {}, 123)).to eq(
           mauro_test: 'off'
         )
         close_redis
@@ -109,6 +141,18 @@ describe SplitIoClient, type: :client do
         expect(subject.get_treatments_by_flag_set('nicolas', 'set_2', {})).to eq(
           mauro_test: 'off'
         )
+        expect(subject.get_treatments_by_flag_set('nicolas', 'set_2', {}, {})).to eq(
+          mauro_test: 'off'
+        )
+        expect(subject.get_treatments_by_flag_set('nicolas', 'set_2', {}, nil)).to eq(
+          mauro_test: 'off'
+        )
+        expect(subject.get_treatments_by_flag_set('nicolas', 'set_2', {}, "prop")).to eq(
+          mauro_test: 'off'
+        )
+        expect(subject.get_treatments_by_flag_set('nicolas', 'set_2', {}, 123)).to eq(
+          mauro_test: 'off'
+        )
         close_redis
       end
 
@@ -120,6 +164,18 @@ describe SplitIoClient, type: :client do
           mauro_test: 'off'
         )
         expect(subject.get_treatments_by_flag_sets('nicolas', ['set_2'], {})).to eq(
+          mauro_test: 'off'
+        )
+        expect(subject.get_treatments_by_flag_sets('nicolas', ['set_2'], {}, {})).to eq(
+          mauro_test: 'off'
+        )
+        expect(subject.get_treatments_by_flag_sets('nicolas', ['set_2'], {}, nil)).to eq(
+          mauro_test: 'off'
+        )
+        expect(subject.get_treatments_by_flag_sets('nicolas', ['set_2'], {}, "prop")).to eq(
+          mauro_test: 'off'
+        )
+        expect(subject.get_treatments_by_flag_sets('nicolas', ['set_2'], {}, 123)).to eq(
           mauro_test: 'off'
         )
         close_redis
@@ -141,8 +197,7 @@ describe SplitIoClient, type: :client do
       end
 
       it 'returns CONTROL and label for incorrect feature name' do
-        treatment = subject.get_treatment('random_user_id', 'test_featur', nil, nil, false, true)
-        puts treatment
+        treatment = subject.get_treatment('random_user_id', 'test_featur', nil, nil, nil, false, true)
         expect(treatment).to eq(
           treatment: SplitIoClient::Engine::Models::Treatment::CONTROL,
           label: SplitIoClient::Engine::Models::Label::NOT_FOUND,
@@ -229,7 +284,7 @@ describe SplitIoClient, type: :client do
 
       #TODO We will remove multiple param in the future.
       it 'returns CONTROL and label on nil key' do
-        expect(subject.get_treatment(nil, 'test_feature', nil, nil, false, true)).to eq(
+        expect(subject.get_treatment(nil, 'test_feature', nil, nil, nil, false, true)).to eq(
           treatment: SplitIoClient::Engine::Models::Treatment::CONTROL,
           label: nil,
           change_number: nil
@@ -289,7 +344,7 @@ describe SplitIoClient, type: :client do
 
       #TODO We will remove multiple param in the future.
       it 'returns CONTROL and label on nil split_name' do
-        expect(subject.get_treatment('random_user_id', nil, nil, nil, false, true)).to eq(
+        expect(subject.get_treatment('random_user_id', nil, nil, nil, nil, false, true)).to eq(
           treatment: SplitIoClient::Engine::Models::Treatment::CONTROL,
           label: nil,
           change_number: nil
