@@ -244,7 +244,7 @@ module SplitIoClient
         return nil, 0
       end
       evaluation_options.properties = evaluation_options.properties.transform_keys(&:to_sym)
-      evaluation_options.properties, size = validate_properties(evaluation_options.properties, method = 'Treatment')
+      evaluation_options.properties, size = validate_properties(evaluation_options.properties, 'Treatment')
       return evaluation_options, size
     end
 

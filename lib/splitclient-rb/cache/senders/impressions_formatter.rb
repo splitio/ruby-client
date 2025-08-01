@@ -36,7 +36,6 @@ module SplitIoClient
         end
 
         def current_impressions(feature_impressions)
-          formatted = []
           feature_impressions.map do |impression|
             if impression[:i][:properties].nil?
               impression = {
