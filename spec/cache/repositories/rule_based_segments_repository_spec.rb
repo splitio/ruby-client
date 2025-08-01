@@ -40,6 +40,11 @@ describe SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository do
       )
     end
 
+    it 'contains' do
+      expect(repository.contains?(['foo', 'bar'].to_set)).to eq(true)
+      expect(repository.contains?(['foo', 'oof'].to_set)).to eq(false)
+    end
+
     it 'remove undefined matcher with template condition' do
       rule_based_segment = { name: 'corge', trafficTypeName: 'tt_name_5', conditions: [
         {

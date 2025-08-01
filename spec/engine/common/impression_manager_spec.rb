@@ -59,7 +59,8 @@ describe SplitIoClient::Engine::Common::ImpressionManager do
             r: 'default label',
             c: 1_478_113_516_002,
             m: 1_478_113_516_222,
-            pt: nil
+            pt: nil,
+            properties: {"prop":"val"}
           },
           attributes: {}
         }
@@ -71,7 +72,7 @@ describe SplitIoClient::Engine::Common::ImpressionManager do
                                                        'split_name_test',
                                                        treatment,
                                                        false,
-                                                       params)
+                                                       params, SplitIoClient::Engine::Models::EvaluationOptions.new({"prop":"val"}))
       expect(impression).to match(expected)
 
       result_count = impression_counter.pop_all
@@ -97,7 +98,8 @@ describe SplitIoClient::Engine::Common::ImpressionManager do
           r: 'default label',
           c: 1_478_113_516_002,
           m: 1_478_113_516_222,
-          pt: nil
+          pt: nil,
+          properties: nil
         },
         attributes: {}
       }
@@ -155,7 +157,8 @@ describe SplitIoClient::Engine::Common::ImpressionManager do
           r: 'default label',
           c: 1_478_113_516_002,
           m: 1_478_113_516_222,
-          pt: nil
+          pt: nil,
+          properties: nil
         },
         attributes: {}
       }
@@ -297,7 +300,8 @@ describe SplitIoClient::Engine::Common::ImpressionManager do
           r: 'default label',
           c: 1_478_113_516_002,
           m: 1_478_113_516_222,
-          pt: nil
+          pt: nil,
+          properties: nil
         },
         attributes: {}
       }
