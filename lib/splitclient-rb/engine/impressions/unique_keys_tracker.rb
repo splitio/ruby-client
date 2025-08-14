@@ -106,10 +106,11 @@ module SplitIoClient
               sub_bulks.each do |sub_bulk|
                 unique_updated.add({ key: sub_bulk })
               end
+              break
+
             end
             unique_updated.add({ key: value })
           end
-          return [unique] if unique_updated == {}
 
           unique_updated
         end
