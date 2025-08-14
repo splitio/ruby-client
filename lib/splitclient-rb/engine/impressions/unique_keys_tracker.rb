@@ -14,9 +14,9 @@ module SplitIoClient
           @filter_adapter = filter_adapter
           @sender_adapter = sender_adapter
           @cache = cache
-          @cache_max_size = config.unique_keys_cache_max_size
           @max_bulk_size = config.unique_keys_bulk_size
           @semaphore = Mutex.new
+          @keys_size = 0
         end
 
         def call
@@ -30,8 +30,9 @@ module SplitIoClient
           @filter_adapter.add(feature_name, key)
 
           add_or_update(feature_name, key)
+          @keys_size += 1
 
-          send_bulk_data if @cache.size >= @cache_max_size
+          send_bulk_data if @keys_size >= @max_bulk_size
 
           true
         rescue StandardError => e
@@ -75,14 +76,19 @@ module SplitIoClient
             return if @cache.empty?
 
             uniques = @cache.clone
+            keys_size = @keys_size
             @cache.clear
+            @keys_size = 0
 
-            if uniques.size <= @max_bulk_size
+            if keys_size <= @max_bulk_size
               @sender_adapter.record_uniques_key(uniques)
               return
             end
 
-            bulks = SplitIoClient::Utilities.split_bulk_to_send(uniques, uniques.size / @max_bulk_size)
+            bulks = []
+            uniques.each do |unique|
+              bulks += check_keys_and_split_to_bulks(unique)
+            end
 
             bulks.each do |b|
               @sender_adapter.record_uniques_key(b)
@@ -90,6 +96,22 @@ module SplitIoClient
           end
         rescue StandardError => e
           @config.log_found_exception(__method__.to_s, e)
+        end
+
+        def check_keys_and_split_to_bulks(unique)
+          unique_updated = []
+          unique.each do |_, value|
+            if value.size > @max_bulk_size
+              sub_bulks = SplitIoClient::Utilities.split_bulk_to_send(value, value.size / @max_bulk_size)
+              sub_bulks.each do |sub_bulk|
+                unique_updated.add({ key: sub_bulk })
+              end
+            end
+            unique_updated.add({ key: value })
+          end
+          return [unique] if unique_updated == {}
+
+          unique_updated
         end
       end
     end

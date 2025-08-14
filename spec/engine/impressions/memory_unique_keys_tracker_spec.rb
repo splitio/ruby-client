@@ -21,13 +21,17 @@ describe SplitIoClient::Engine::Impressions::UniqueKeysTracker do
     it 'track - full cache and send bulk' do
       post_url = 'https://telemetry.split.io/api/v1/keys/ss'
       body_expect = {
-        keys: [{ f: 'feature-test-0', ks: ['key_test-1', 'key_test-2'] }, { f: 'feature-test-1', ks: ['key_test-1'] }]
+        keys: [{ f: 'feature-test-0', ks: ['key_test-1', 'key_test-2'] }]
+      }.to_json
+
+      body_expect2 = {
+        keys: [{ f: 'feature-test-1', ks: ['key_test-1', 'key_test-2'] }]
       }.to_json
 
       stub_request(:post, post_url).with(body: body_expect).to_return(status: 200, body: '')
+      stub_request(:post, post_url).with(body: body_expect2).to_return(status: 200, body: '')
 
       cache = Concurrent::Hash.new
-      config.unique_keys_cache_max_size = 2
       config.unique_keys_bulk_size = 2
       tracker = subject.new(config, filter_adapter, sender_adapter, cache)
 
@@ -36,36 +40,61 @@ describe SplitIoClient::Engine::Impressions::UniqueKeysTracker do
         expect(tracker.track("feature-test-#{i}", 'key_test-2')).to eq(true)
       end
 
+      expect(a_request(:post, post_url).with(body: body_expect2)).to have_been_made
       expect(a_request(:post, post_url).with(body: body_expect)).to have_been_made
 
       cache.clear
     end
 
-    it 'track - full cache and send 2 bulks' do
+    it 'track - full cache and send 4 bulks' do
       post_url = 'https://telemetry.split.io/api/v1/keys/ss'
       body_expect1 = {
-        keys: [{ f: 'feature-test-0', ks: ['key-1', 'key-2'] }, { f: 'feature-test-2', ks: ['key-1', 'key-2'] }]
+        keys: [{ f: 'feature-test-0', ks: ['key-1', 'key-2'] }]
       }.to_json
 
       body_expect2 = {
-        keys: [{ f: 'feature-test-1', ks: ['key-1', 'key-2'] }, { f: 'feature-test-3', ks: ['key-1'] }]
+        keys: [{ f: 'feature-test-0', ks: ['key-3'] }, { f: 'feature-test-1', ks: ['key-1'] }]
+      }.to_json
+
+      body_expect3 = {
+        keys: [{ f: 'feature-test-1', ks: ['key-2', 'key-3'] }]
+      }.to_json
+
+      body_expect4 = {
+        keys: [{ f: 'feature-test-2', ks: ['key-1', 'key-2'] }]
+      }.to_json
+
+      body_expect5 = {
+        keys: [{ f: 'feature-test-2', ks: ['key-3'] }, { f: 'feature-test-3', ks: ['key-1'] }]
+      }.to_json
+
+      body_expect6 = {
+        keys: [{ f: 'feature-test-3', ks: ['key-2', 'key-3'] }]
       }.to_json
 
       stub_request(:post, post_url).with(body: body_expect1).to_return(status: 200, body: '')
       stub_request(:post, post_url).with(body: body_expect2).to_return(status: 200, body: '')
+      stub_request(:post, post_url).with(body: body_expect3).to_return(status: 200, body: '')
+      stub_request(:post, post_url).with(body: body_expect4).to_return(status: 200, body: '')
+      stub_request(:post, post_url).with(body: body_expect5).to_return(status: 200, body: '')
+      stub_request(:post, post_url).with(body: body_expect6).to_return(status: 200, body: '')
 
       cache = Concurrent::Hash.new
-      config.unique_keys_cache_max_size = 4
       config.unique_keys_bulk_size = 2
       tracker = subject.new(config, filter_adapter, sender_adapter, cache)
 
       4.times do |i|
         expect(tracker.track("feature-test-#{i}", 'key-1')).to eq(true)
         expect(tracker.track("feature-test-#{i}", 'key-2')).to eq(true)
+        expect(tracker.track("feature-test-#{i}", 'key-3')).to eq(true)
       end
 
       expect(a_request(:post, post_url).with(body: body_expect1)).to have_been_made
       expect(a_request(:post, post_url).with(body: body_expect2)).to have_been_made
+      expect(a_request(:post, post_url).with(body: body_expect3)).to have_been_made
+      expect(a_request(:post, post_url).with(body: body_expect4)).to have_been_made
+      expect(a_request(:post, post_url).with(body: body_expect5)).to have_been_made
+      expect(a_request(:post, post_url).with(body: body_expect6)).to have_been_made
 
       cache.clear
     end
@@ -74,9 +103,8 @@ describe SplitIoClient::Engine::Impressions::UniqueKeysTracker do
   context 'with sender_adapter_test' do
     let(:sender_adapter_test) { MemoryUniqueKeysSenderTest.new }
 
-    it 'track - should add elemets to cache' do
+    it 'track - should trigger send when bulk size reached and add elemets to cache' do
       cache = Concurrent::Hash.new
-      config.unique_keys_cache_max_size = 5
       config.unique_keys_bulk_size = 5
       tracker = subject.new(config, filter_adapter, sender_adapter_test, cache)
 
@@ -85,24 +113,26 @@ describe SplitIoClient::Engine::Impressions::UniqueKeysTracker do
       expect(tracker.track('feature_name_test', 'key_test-1')).to eq(true)
       expect(tracker.track('feature_name_test', 'key_test-2')).to eq(true)
       expect(tracker.track('other_test', 'key_test-2')).to eq(true)
-      expect(tracker.track('other_test', 'key_test-35')).to eq(true)
-
       expect(cache.size).to eq(2)
+      expect(tracker.instance_variable_get(:@keys_size)).to eq(4)
+
       expect(cache['feature_name_test'].include?('key_test')).to eq(true)
       expect(cache['feature_name_test'].include?('key_test-1')).to eq(true)
       expect(cache['feature_name_test'].include?('key_test-2')).to eq(true)
       expect(cache['feature_name_test'].include?('key_test-35')).to eq(false)
 
       expect(cache['other_test'].include?('key_test-2')).to eq(true)
-      expect(cache['other_test'].include?('key_test-35')).to eq(true)
       expect(cache['other_test'].include?('key_test-1')).to eq(false)
+
+      expect(tracker.track('other_test', 'key_test-35')).to eq(true)
+      expect(cache.size).to eq(0)
+      expect(tracker.instance_variable_get(:@keys_size)).to eq(0)
 
       cache.clear
     end
 
     it 'track - full cache and send bulk' do
       cache = Concurrent::Hash.new
-      config.unique_keys_cache_max_size = 10
       config.unique_keys_bulk_size = 5
       tracker = subject.new(config, filter_adapter, sender_adapter_test, cache)
 
