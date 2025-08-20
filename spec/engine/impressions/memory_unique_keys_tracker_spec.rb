@@ -146,5 +146,26 @@ describe SplitIoClient::Engine::Impressions::UniqueKeysTracker do
 
       cache.clear
     end
+
+    it 'track - split chunks if above limit' do
+      cache = Concurrent::Hash.new
+      config.unique_keys_bulk_size = 1000
+      tracker = subject.new(config, filter_adapter, sender_adapter_test, cache)
+
+      10.times { |i| expect(tracker.track("feature-test-#{i}", 'key_test')).to eq(true) }
+      5.times { |i| expect(tracker.track("feature-test-1", "key_test-#{i}")).to eq(true) }
+
+      tracker.instance_variable_set(:@max_bulk_size, 5)
+      tracker.send(:send_bulk_data)
+
+      result = sender_adapter_test.bulks
+      expect(result[0].size).to eq(1)
+      expect(result[1].size).to eq(1)
+      expect(result[1]["feature-test-1"].size).to eq(5)      
+      expect(result[2].size).to eq(5)
+      expect(result[3].size).to eq(4)
+
+      cache.clear
+    end
   end
 end
