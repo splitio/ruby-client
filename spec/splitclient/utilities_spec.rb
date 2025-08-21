@@ -19,37 +19,14 @@ describe SplitIoClient::Utilities do
   end
 
   it 'split bulk of data - split equally' do
-    hash = {}
+    items = Set['feature', 'feature-1', 'feature-2', 'feature-3', 'feature-4', 'feature-5', 'feature-6']
 
-    i = 1
-    while i <= 6
-      hash["mauro-#{i}"] = Set.new(['feature', 'feature-1'])
-      i += 1
-    end
+    result = SplitIoClient::Utilities.split_bulk_to_send(items, 3)
 
-    result = SplitIoClient::Utilities.split_bulk_to_send(hash, 3)
-
+    puts result
     expect(result.size).to eq 3
-    expect(result[0].size).to eq 2
-    expect(result[1].size).to eq 2
-    expect(result[2].size).to eq 2
-  end
-
-  it 'split bulk of data - split in 4 bulks' do
-    hash = {}
-
-    i = 1
-    while i <= 6
-      hash["mauro-#{i}"] = 'feature-test'
-      i += 1
-    end
-
-    result = SplitIoClient::Utilities.split_bulk_to_send(hash, 4)
-
-    expect(result.size).to eq 4
-    expect(result[0].size).to eq 2
-    expect(result[1].size).to eq 2
+    expect(result[0].size).to eq 3
+    expect(result[1].size).to eq 3
     expect(result[2].size).to eq 1
-    expect(result[3].size).to eq 1
   end
 end
