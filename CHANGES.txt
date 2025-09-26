@@ -1,5 +1,8 @@
 CHANGES
 
+8.8.0 (Sep 26, 2025)
+- Added a maximum size payload when posting unique keys telemetry in batches
+
 8.7.0 (Aug 1, 2025)
 - Added a new optional argument to the client `getTreatment` methods to allow passing additional evaluation options, such as a map of properties to append to the generated impressions sent to Split backend. Read more in our docs.
 
