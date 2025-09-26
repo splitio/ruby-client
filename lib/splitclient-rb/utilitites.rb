@@ -38,16 +38,12 @@ module SplitIoClient
       interval * random_factor
     end
 
-    def split_bulk_to_send(hash, divisions)
-      count = 0
-
-      hash.each_with_object([]) do |key_value, final|
-        final[count % divisions] ||= {}
-        final[count % divisions][key_value[0]] = key_value[1]
-        count += 1
-      end
-    rescue StandardError
-      []
+    def split_bulk_to_send(items, divisions)
+      to_return = []
+      items.to_a.each_slice(divisions) {|bulk|
+        to_return.push(bulk.to_set)
+      }
+      to_return
     end
   end  
 end
