@@ -4,6 +4,8 @@ module SplitIoClient
   class Validators
 
     Flagset_regex = /^[a-z0-9][_a-z0-9]{0,49}$/
+    Fallback_treatment_regex = /^[0-9]+[.a-zA-Z0-9_-]*$|^[a-zA-Z]+[a-zA-Z0-9_-]*$/
+    Fallback_treatment_size = 100
 
     def initialize(config)
       @config = config
@@ -68,7 +70,7 @@ module SplitIoClient
           log_invalid_flag_set_type(method)
         elsif flag_set.is_a?(String) && flag_set.empty?
           log_invalid_flag_set_type(method)
-        elsif !flag_set.empty? && string_match?(flag_set.strip.downcase, method)
+        elsif !flag_set.empty? && string_match?(flag_set.strip.downcase, method, Flagset_regex, log_invalid_match)
           valid_flag_sets.add(flag_set.strip.downcase)
         else
           log_invalid_flag_set_type(method)
@@ -91,9 +93,9 @@ module SplitIoClient
       (value.is_a?(Numeric) && !value.to_f.nan?) || string?(value)
     end
 
-    def string_match?(value, method)
-      if Flagset_regex.match(value) == nil
-        log_invalid_match(value, method)
+    def string_match?(value, method, regex_exp, log_if_invalid)
+      if regex_exp.match(value) == nil
+        log_if_invalid(value, method)
         false
       else
         true
@@ -325,6 +327,31 @@ module SplitIoClient
       end
 
       true
+    end
+
+    def validate_fallback_treatment(method, fallback_treatment)
+      if !fallback_treatment.is_a? Engine::Models::FallbackTreatment
+          @config.logger.warn("#{method}: Fallback treatment instance should be FallbackTreatment, input is discarded")
+          return false
+      end
+
+      if !fallback_treatment.treatment.is_a? String
+          @config.logger.warn("#{method}: Fallback treatment value should be str type, input is discarded")
+          return false
+      end    
+
+      return false unless string_match?(fallback_treatment.treatment, method, Fallback_treatment_regex)
+
+      if fallback_treatment.treatment.size > Fallback_treatment_size
+          @config.logger.warn("#{method}: Fallback treatment size should not exceed %s characters", Fallback_treatment_size)
+          return false
+      end            
+      
+      true
+    end
+
+    def log_invalid_fallback_treatment(key, method)
+      @config.logger.warn("#{method}: Invalid treatment #{key}, Fallback treatment should match regex %s", Fallback_treatment_regex)
     end
   end
 end

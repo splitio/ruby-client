@@ -123,6 +123,8 @@ module SplitIoClient
       @on_demand_fetch_max_retries = SplitConfig.default_on_demand_fetch_max_retries
 
       @flag_sets_filter = SplitConfig.sanitize_flag_set_filter(opts[:flag_sets_filter], @split_validator, opts[:cache_adapter], @logger)
+
+      @fallback_treatments_configuration = SplitConfig.sanitize_fallback_config(opts[:fallback_treatments], @split_validator, @logger)
       startup_log
     end
 
@@ -302,6 +304,8 @@ module SplitIoClient
     #
     # @return [Array]
     attr_accessor :flag_sets_filter
+
+    attr_accessor :fallback_treatments_configuration
 
     def self.default_counter_refresh_rate(adapter)
       return 300 if adapter == :redis # Send bulk impressions count - Refresh rate: 5 min.
@@ -696,6 +700,37 @@ module SplitIoClient
       end
 
       return ''.freeze
+    end
+
+    def self.sanitize_fallback_config(fallback_config, validator, logger)
+      return fallback_config if fallback_config.nil?
+      
+      processed = Engine::Models::FallbackTreatmentsConfiguration.new
+      if !fallback_config.is_a?(Engine::Models::FallbackTreatmentsConfiguration)
+        logger.warn('Config: fallbackTreatments parameter should be of `FallbackTreatmentsConfiguration` class.')
+        return processed        
+      end
+
+      sanitized_global_fallback_treatment = fallback_config.global_fallback_treatment
+      if !fallback_config.global_fallback_treatment.nil? && !validator.validate_fallback_treatment(fallback_config.global_fallback_treatment)
+        logger.warn('Config: global fallbacktreatment parameter is discarded.')
+        sanitized_global_fallback_treatment = None
+      end
+
+      sanitized_flag_fallback_treatments = Hash.new
+      if !fallback_config.by_flag_fallback_treatment.nil? && fallback_config.by_flag_fallback_treatment.is_a?(Hash)
+        for feature_name in fallback_config.by_flag_fallback_treatment.keys()
+          if !validator.valid_split_name?('Config', feature_name) || !validator.validate_fallback_treatment(fallback_config.by_flag_fallback_treatment[feature_name])
+            logger.warn("Config: fallback treatment parameter for feature flag #{feature_name} is discarded.")
+            next
+          end   
+
+          sanitized_flag_fallback_treatments[feature_name] = fallback_config.by_flag_fallback_treatment[feature_name]
+        end
+      end          
+      processed = Engine::Models::FallbackTreatmentsConfiguration.new(sanitized_global_fallback_treatment, sanitized_flag_fallback_treatments)
+
+      processed
     end
   end
 end
