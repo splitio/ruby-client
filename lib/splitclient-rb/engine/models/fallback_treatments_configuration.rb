@@ -18,7 +18,7 @@ module SplitIoClient::Engine::Models
     end
 
     def build_by_flag_fallback_treatment(by_flag_fallback_treatment)
-      return nil unless by_flag_fallback_treatment.is_a? Hash
+      return nil unless by_flag_fallback_treatment.is_a?(Hash)
       processed_by_flag_fallback_treatment = Hash.new
       
       by_flag_fallback_treatment.each do |key, value|

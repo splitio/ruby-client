@@ -712,15 +712,16 @@ module SplitIoClient
       end
 
       sanitized_global_fallback_treatment = fallback_config.global_fallback_treatment
-      if !fallback_config.global_fallback_treatment.nil? && !validator.validate_fallback_treatment(fallback_config.global_fallback_treatment)
+      if !fallback_config.global_fallback_treatment.nil? && !validator.validate_fallback_treatment('Config', fallback_config.global_fallback_treatment)
         logger.warn('Config: global fallbacktreatment parameter is discarded.')
-        sanitized_global_fallback_treatment = None
+        sanitized_global_fallback_treatment = nil
       end
 
-      sanitized_flag_fallback_treatments = Hash.new
+      sanitized_flag_fallback_treatments = nil
       if !fallback_config.by_flag_fallback_treatment.nil? && fallback_config.by_flag_fallback_treatment.is_a?(Hash)
+        sanitized_flag_fallback_treatments = Hash.new
         for feature_name in fallback_config.by_flag_fallback_treatment.keys()
-          if !validator.valid_split_name?('Config', feature_name) || !validator.validate_fallback_treatment(fallback_config.by_flag_fallback_treatment[feature_name])
+          if !validator.valid_split_name?('Config', feature_name) || !validator.validate_fallback_treatment('Config', fallback_config.by_flag_fallback_treatment[feature_name])
             logger.warn("Config: fallback treatment parameter for feature flag #{feature_name} is discarded.")
             next
           end   
