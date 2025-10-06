@@ -1443,6 +1443,122 @@ describe SplitIoClient do
       expect(client_old_spec.get_treatment('whitelisted_user', 'whitelist_feature')).to eq('control')
     end
   end
+
+  context 'fallback treatments' do
+    it 'feature not found' do
+      splits_fallback = File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/imp-toggle.json'))
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')
+          .to_return(status: 200, body: splits_fallback)
+      factory_fallback =
+        SplitIoClient::SplitFactory.new('test_api_key',
+          fallback_treatments: SplitIoClient::Engine::Models::FallbackTreatmentsConfiguration.new(
+            SplitIoClient::Engine::Models::FallbackTreatment.new(
+              "on-global", '{"prop": "global"}'
+            ), 
+            {:feature => SplitIoClient::Engine::Models::FallbackTreatment.new(
+              "on-local", '{"prop": "local"}'
+              )
+            }
+          ),
+          impressions_mode: :optimized,
+          features_refresh_rate: 9999,
+          telemetry_refresh_rate: 99999,
+          impressions_refresh_rate: 99999,
+          streaming_enabled: false
+        )
+
+      client_fallback = factory_fallback.client
+      client_fallback.block_until_ready
+      result = client_fallback.get_treatment_with_config('key2', 'feature')
+      expect(result[:treatment]).to eq('on-local')
+      expect(result[:config]).to eq('{"prop": "local"}')
+
+      result = client_fallback.get_treatment_with_config('key3', 'feature2')
+      expect(result[:treatment]).to eq('on-global')
+      expect(result[:config]).to eq('{"prop": "global"}')
+
+      impressions_repository = client_fallback.instance_variable_get(:@impressions_repository)
+      imps = impressions_repository.batch
+      expect(imps.length()).to eq(0)
+    end
+
+    it 'exception' do
+      splits_fallback = File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/imp-toggle.json'))
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')
+          .to_return(status: 200, body: splits_fallback)
+      factory_fallback =
+        SplitIoClient::SplitFactory.new('test_api_key',
+          fallback_treatments: SplitIoClient::Engine::Models::FallbackTreatmentsConfiguration.new(
+            SplitIoClient::Engine::Models::FallbackTreatment.new(
+              "on-global", '{"prop": "global"}'
+            ), 
+            {:feature => SplitIoClient::Engine::Models::FallbackTreatment.new(
+              "on-local", '{"prop": "local"}'
+              )
+            }
+          ),
+          impressions_mode: :optimized,
+          features_refresh_rate: 9999,
+          telemetry_refresh_rate: 99999,
+          impressions_refresh_rate: 99999,
+          streaming_enabled: false
+        )
+
+      client_fallback = factory_fallback.client
+      client_fallback.block_until_ready
+
+      splits_repository = client_fallback.instance_variable_get(:@splits_repository)
+      splits = File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/imp-toggle.json'))
+      split = JSON.parse(splits,:symbolize_names => true)[:ff][:d][0]
+      split[:trafficAllocation] = nil
+      splits_repository.update([split], [], -1)
+
+      result = client_fallback.get_treatment_with_config('key3', 'with_track_disabled')
+      expect(result[:treatment]).to eq('on-global')
+      expect(result[:config]).to eq('{"prop": "global"}')
+
+      impressions_repository = client_fallback.instance_variable_get(:@impressions_repository)
+      imps = impressions_repository.batch
+      expect(imps.length()).to eq(1)
+      expect(imps[0][:i][:f]).to eq('with_track_disabled')
+      expect(imps[0][:i][:r]).to eq('fallback - exception')
+    end
+
+    it 'client not ready' do
+      splits_fallback = File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/imp-toggle.json'))
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')
+          .to_return(status: 200, body: splits_fallback)
+      factory_fallback =
+        SplitIoClient::SplitFactory.new('test_api_key',
+          fallback_treatments: SplitIoClient::Engine::Models::FallbackTreatmentsConfiguration.new(
+            SplitIoClient::Engine::Models::FallbackTreatment.new(
+              "on-global", '{"prop": "global"}'
+            ), 
+            {:feature => SplitIoClient::Engine::Models::FallbackTreatment.new(
+              "on-local", '{"prop": "local"}'
+              )
+            }
+          ),
+          impressions_mode: :optimized,
+          features_refresh_rate: 9999,
+          telemetry_refresh_rate: 99999,
+          impressions_refresh_rate: 99999,
+          streaming_enabled: false
+        )
+
+      client_fallback = factory_fallback.client
+
+      result = client_fallback.get_treatment_with_config('key3', 'with_track_disabled')
+      expect(result[:treatment]).to eq('on-global')
+      expect(result[:config]).to eq('{"prop": "global"}')
+
+      impressions_repository = client_fallback.instance_variable_get(:@impressions_repository)
+      imps = impressions_repository.batch
+      expect(imps.length()).to eq(1)
+      expect(imps[0][:i][:f]).to eq('with_track_disabled')
+      expect(imps[0][:i][:r]).to eq('fallback - not ready')
+    end
+  end
 end
 
 private

@@ -21,6 +21,7 @@ describe SplitIoClient::SplitClient do
   let(:telemetry_api) { SplitIoClient::Api::TelemetryApi.new(config, api_key, runtime_producer) }
   let(:impressions_api) { SplitIoClient::Api::Impressions.new(api_key, config, runtime_producer) }
   let(:evaluator) { SplitIoClient::Engine::Parser::Evaluator.new(segments_repository, splits_repository, rule_based_segments_repository, config) }
+  let(:fallback_treatment_calculator) { SplitIoClient::Engine::FallbackTreatmentCalculator.new(SplitIoClient::Engine::Models::FallbackTreatmentsConfiguration.new) }
   let(:sender_adapter) do
     SplitIoClient::Cache::Senders::ImpressionsSenderAdapter.new(config,
                                                                 telemetry_api,
@@ -41,7 +42,7 @@ describe SplitIoClient::SplitClient do
                                                          unique_keys_tracker)
   end
   let(:client) do
-    SplitIoClient::SplitClient.new('', {:splits => splits_repository, :segments => segments_repository, :impressions => impressions_repository, :events => nil}, nil, config, impressions_manager, evaluation_producer, evaluator, SplitIoClient::Validators.new(config))
+    SplitIoClient::SplitClient.new('', {:splits => splits_repository, :segments => segments_repository, :impressions => impressions_repository, :events => nil}, nil, config, impressions_manager, evaluation_producer, evaluator, SplitIoClient::Validators.new(config), fallback_treatment_calculator)
   end
 
   context 'control' do
