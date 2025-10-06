@@ -18,7 +18,7 @@ module SplitIoClient
     # @param sdk_key [String] the SDK key for your split account
     #
     # @return [SplitIoClient] split.io client instance
-    def initialize(sdk_key, repositories, status_manager, config, impressions_manager, telemetry_evaluation_producer, evaluator, split_validator)
+    def initialize(sdk_key, repositories, status_manager, config, impressions_manager, telemetry_evaluation_producer, evaluator, split_validator, fallback_treatment_calculator)
       @api_key = sdk_key
       @splits_repository = repositories[:splits]
       @segments_repository = repositories[:segments]
@@ -32,6 +32,7 @@ module SplitIoClient
       @telemetry_evaluation_producer = telemetry_evaluation_producer
       @split_validator = split_validator
       @evaluator = evaluator
+      @fallback_treatment_calculator = fallback_treatment_calculator
     end
 
     def get_treatment(
@@ -277,7 +278,7 @@ module SplitIoClient
       if !@config.split_validator.valid_get_treatments_parameters(calling_method, key, sanitized_feature_flag_names, matching_key, bucketing_key, attributes)
         to_return = Hash.new
         sanitized_feature_flag_names.each {|name|
-          to_return[name.to_sym] = control_treatment_with_config
+          to_return[name.to_sym] = check_fallback_treatment(name, '')
         }
         return to_return
       end
@@ -286,9 +287,11 @@ module SplitIoClient
         impressions = []
         to_return = Hash.new
         sanitized_feature_flag_names.each {|name|
-          to_return[name.to_sym] = control_treatment_with_config
+          treatment_data = check_fallback_treatment(name, Engine::Models::Label::NOT_READY)
+          to_return[name.to_sym] = treatment_data
+
           impressions << { :impression => @impressions_manager.build_impression(matching_key, bucketing_key, name.to_sym, 
-                                                               control_treatment_with_config.merge({ :label => Engine::Models::Label::NOT_READY }), false, { attributes: attributes, time: nil },
+                                                               get_treatment_without_config(treatment_data), false, { attributes: attributes, time: nil },
                                                                evaluation_options), :disabled => false }
         }
         @impressions_manager.track(impressions)
@@ -308,7 +311,7 @@ module SplitIoClient
         if feature_flag.nil?
           @config.logger.warn("#{calling_method}: you passed #{key} that " \
             'does not exist in this environment, please double check what feature flags exist in the Split user interface')
-            invalid_treatments[key] = control_treatment_with_config
+            invalid_treatments[key] = check_fallback_treatment(key, Engine::Models::Label::NOT_FOUND)
           next
         end
         treatments_labels_change_numbers, impressions = evaluate_treatment(feature_flag, key, bucketing_key, matching_key, attributes, calling_method, false, evaluation_options)
@@ -344,7 +347,7 @@ module SplitIoClient
 
       attributes = parsed_attributes(attributes)
 
-      return parsed_treatment(control_treatment, multiple) unless valid_client && @config.split_validator.valid_get_treatment_parameters(calling_method, key, feature_flag_name, matching_key, bucketing_key, attributes)
+      return parsed_treatment(check_fallback_treatment(feature_flag_name, ""), multiple) unless valid_client && @config.split_validator.valid_get_treatment_parameters(calling_method, key, feature_flag_name, matching_key, bucketing_key, attributes)
 
       bucketing_key = bucketing_key ? bucketing_key.to_s : nil
       matching_key = matching_key.to_s
@@ -373,7 +376,7 @@ module SplitIoClient
         if feature_flag.nil? && ready?
           @config.logger.warn("#{calling_method}: you passed #{feature_flag_name} that " \
             'does not exist in this environment, please double check what feature flags exist in the Split user interface')
-          return parsed_treatment(control_treatment.merge({ :label => Engine::Models::Label::NOT_FOUND }), multiple), nil
+          return check_fallback_treatment(feature_flag_name, Engine::Models::Label::NOT_FOUND), nil
         end
 
         if !feature_flag.nil? && ready?
@@ -383,7 +386,7 @@ module SplitIoClient
           impressions_disabled = feature_flag[:impressionsDisabled]
         else
           @config.logger.error("#{calling_method}: the SDK is not ready, results may be incorrect for feature flag #{feature_flag_name}. Make sure to wait for SDK readiness before using this method.")
-          treatment_data = control_treatment.merge({ :label => Engine::Models::Label::NOT_READY })
+          treatment_data = check_fallback_treatment(feature_flag_name, Engine::Models::Label::NOT_READY)
           impressions_disabled = false
         end
 
@@ -396,20 +399,14 @@ module SplitIoClient
       rescue StandardError => e
         @config.log_found_exception(__method__.to_s, e)
         record_exception(calling_method)
-        impression_decorator = { :impression => @impressions_manager.build_impression(matching_key, bucketing_key, feature_flag_name, control_treatment, false, { attributes: attributes, time: nil }, evaluation_options), :disabled => false }
+        treatment_data = check_fallback_treatment(feature_flag_name, Engine::Models::Label::EXCEPTION)
+        impression_decorator = { :impression => @impressions_manager.build_impression(matching_key, bucketing_key, feature_flag_name, get_treatment_without_config(treatment_data), false, { attributes: attributes, time: nil }, evaluation_options), :disabled => false }
+
         impressions_decorator << impression_decorator unless impression_decorator.nil?
 
-        return parsed_treatment(control_treatment.merge({ :label => Engine::Models::Label::EXCEPTION }), multiple), impressions_decorator
+        return parsed_treatment(treatment_data, multiple), impressions_decorator
       end
       return parsed_treatment(treatment_data, multiple), impressions_decorator
-    end
-
-    def control_treatment
-      { :treatment => Engine::Models::Treatment::CONTROL }
-    end
-
-    def control_treatment_with_config
-      {:treatment => Engine::Models::Treatment::CONTROL, :config => nil}
     end
 
     def variable_size(value)
@@ -472,5 +469,31 @@ module SplitIoClient
         @telemetry_evaluation_producer.record_exception(Telemetry::Domain::Constants::TRACK)
       end
     end
+
+    def check_fallback_treatment(feature_name, label)
+      fallback_treatment = @fallback_treatment_calculator.resolve(feature_name.to_sym, label)
+
+      { 
+        label: fallback_treatment.label, 
+        treatment: fallback_treatment.treatment, 
+        config: get_fallback_config(fallback_treatment) 
+      }        
+    end
+
+    def get_treatment_without_config(treatment)
+      { 
+        label: treatment[:label], 
+        treatment: treatment[:treatment], 
+      }        
+    end
+
+    def get_fallback_config(fallback_treatment)
+      if fallback_treatment.config != nil
+          return fallback_treatment.config
+      end
+
+      return nil
+    end
+
   end
 end

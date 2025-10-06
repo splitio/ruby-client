@@ -192,15 +192,15 @@ describe SplitIoClient do
       expect(configs.fallback_treatments_configuration.global_fallback_treatment).to eq nil
       expect(configs.fallback_treatments_configuration.by_flag_fallback_treatment).to eq nil
 
-      configs = SplitIoClient::SplitConfig.new(fallback_treatments: SplitIoClient::Engine::Models::FallbackTreatmentsConfiguration.new('on-global', {'feature' => 'on_45-c'}))
+      configs = SplitIoClient::SplitConfig.new(fallback_treatments: SplitIoClient::Engine::Models::FallbackTreatmentsConfiguration.new('on-global', {:feature => 'on_45-c'}))
       expect(configs.fallback_treatments_configuration.global_fallback_treatment.is_a?(SplitIoClient::Engine::Models::FallbackTreatment)).to eq true
       expect(configs.fallback_treatments_configuration.global_fallback_treatment.treatment).to eq 'on-global'
       expect(configs.fallback_treatments_configuration.global_fallback_treatment.config).to eq nil
-      expect(configs.fallback_treatments_configuration.by_flag_fallback_treatment['feature'].is_a?(SplitIoClient::Engine::Models::FallbackTreatment)).to eq true
-      expect(configs.fallback_treatments_configuration.by_flag_fallback_treatment['feature'].treatment).to eq 'on_45-c'
-      expect(configs.fallback_treatments_configuration.by_flag_fallback_treatment['feature'].config).to eq nil
+      expect(configs.fallback_treatments_configuration.by_flag_fallback_treatment[:feature].is_a?(SplitIoClient::Engine::Models::FallbackTreatment)).to eq true
+      expect(configs.fallback_treatments_configuration.by_flag_fallback_treatment[:feature].treatment).to eq 'on_45-c'
+      expect(configs.fallback_treatments_configuration.by_flag_fallback_treatment[:feature].config).to eq nil
 
-      configs = SplitIoClient::SplitConfig.new(fallback_treatments: SplitIoClient::Engine::Models::FallbackTreatmentsConfiguration.new('on-gl/obal', {'feature' => "0" * 300}))
+      configs = SplitIoClient::SplitConfig.new(fallback_treatments: SplitIoClient::Engine::Models::FallbackTreatmentsConfiguration.new('on-gl/obal', {:feature => "0" * 300}))
       expect(configs.fallback_treatments_configuration.global_fallback_treatment).to eq nil
       expect(configs.fallback_treatments_configuration.by_flag_fallback_treatment).to eq Hash.new
 
