@@ -1,5 +1,5 @@
-{
-  "splits": [
+{ "ff":{
+  "d": [
     {
       "name": "Traffic_Allocation_One_Percent",
       "algo": 1,
@@ -37,5 +37,6 @@
         }
       ]
     }
-  ]
+  ], "s":-1, "t":-1},
+ "rbs": {"d":[], "s":-1, "t":-1}
 }

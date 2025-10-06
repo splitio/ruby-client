@@ -14,9 +14,9 @@ module SplitIoClient
           @filter_adapter = filter_adapter
           @sender_adapter = sender_adapter
           @cache = cache
-          @cache_max_size = config.unique_keys_cache_max_size
           @max_bulk_size = config.unique_keys_bulk_size
           @semaphore = Mutex.new
+          @keys_size = 0
         end
 
         def call
@@ -30,8 +30,9 @@ module SplitIoClient
           @filter_adapter.add(feature_name, key)
 
           add_or_update(feature_name, key)
+          @keys_size += 1
 
-          send_bulk_data if @cache.size >= @cache_max_size
+          send_bulk_data if @keys_size >= @max_bulk_size
 
           true
         rescue StandardError => e
@@ -70,26 +71,72 @@ module SplitIoClient
           end
         end
 
+        def clear_cache
+          uniques = @cache.clone
+          keys_size = @keys_size
+          @cache.clear
+          @keys_size = 0
+
+          [uniques, keys_size]
+        end
+
         def send_bulk_data
           @semaphore.synchronize do
             return if @cache.empty?
 
-            uniques = @cache.clone
-            @cache.clear
-
-            if uniques.size <= @max_bulk_size
+            uniques, keys_size = clear_cache
+            if keys_size <= @max_bulk_size
               @sender_adapter.record_uniques_key(uniques)
               return
-            end
 
-            bulks = SplitIoClient::Utilities.split_bulk_to_send(uniques, uniques.size / @max_bulk_size)
-
-            bulks.each do |b|
-              @sender_adapter.record_uniques_key(b)
             end
+            bulks = flatten_bulks(uniques)
+            bulks_to_post = group_bulks_by_max_size(bulks)
+            @sender_adapter.record_uniques_key(bulks_to_post)
           end
         rescue StandardError => e
           @config.log_found_exception(__method__.to_s, e)
+        end
+
+        def group_bulks_by_max_size(bulks)
+          current_size = 0
+          bulks_to_post = Concurrent::Hash.new
+          bulks.each do |bulk|
+            key, value = bulk.first
+            if (value.size + current_size) > @max_bulk_size
+              @sender_adapter.record_uniques_key(bulks_to_post)
+              bulks_to_post = Concurrent::Hash.new
+              current_size = 0
+            end
+            bulks_to_post[key] = value
+            current_size += value.size
+          end
+
+          bulks_to_post
+        end
+
+        def flatten_bulks(uniques)
+          bulks = []
+          uniques.each_key do |unique_key|
+            bulks += check_keys_and_split_to_bulks(uniques[unique_key], unique_key)
+          end
+
+          bulks
+        end
+
+        def check_keys_and_split_to_bulks(value, key)
+          unique_updated = []
+          if value.size > @max_bulk_size
+            sub_bulks = SplitIoClient::Utilities.split_bulk_to_send(value, @max_bulk_size)
+            sub_bulks.each do |sub_bulk|
+              unique_updated << { key => sub_bulk.to_set }
+            end
+            return unique_updated
+
+          end
+          unique_updated << { key => value }
+
+          unique_updated
         end
       end
     end

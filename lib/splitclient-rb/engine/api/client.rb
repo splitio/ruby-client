@@ -20,6 +20,11 @@ module SplitIoClient
 
           @config.split_logger.log_if_debug("GET #{url} proxy: #{api_client.proxy}")
         end
+      
+      rescue Zlib::GzipFile::Error => e
+        @config.logger.warn("Incorrect formatted response exception: #{e}\n")
+        SplitIoClient::Engine::Models::SplitHttpResponse.new(400, '', true)
+
       rescue StandardError => e
         @config.logger.warn("#{e}\nURL:#{url}\nparams:#{params}")
         raise e, 'Split SDK failed to connect to backend to retrieve information', e.backtrace
@@ -50,6 +55,9 @@ module SplitIoClient
         raise e, 'Split SDK failed to connect to backend to post information', e.backtrace
       end
 
+      def sdk_url_overriden?
+        @config.sdk_url_overriden?
+      end
       private
 
       def api_client

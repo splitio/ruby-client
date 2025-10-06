@@ -6,4 +6,5 @@ class SplitIoClient::Engine::Models::Label
   NOT_IN_SPLIT = 'not in split'.freeze
   NOT_READY = 'not ready'.freeze
   NOT_FOUND = 'definition not found'.freeze
+  PREREQUISITES_NOT_MET = 'prerequisites not met'.freeze
 end

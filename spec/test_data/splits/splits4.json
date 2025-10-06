@@ -1,5 +1,6 @@
-{
-  "splits": [{
+{"ff": {
+   "d":[
+  {
     "trafficTypeName": "user",
     "name": "uber_feature",
     "trafficAllocation": 100,
@@ -83,4 +84,6 @@
       "label": "category in list [expert] and last_ride on or after 2017-07-27 01:18AM"
     }]
   }
-]}
+]
+}, "rbs": {"d":[], "s":-1, "t":-1}
+}

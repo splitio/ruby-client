@@ -22,6 +22,7 @@ module SplitIoClient
       @api_key = sdk_key
       @splits_repository = repositories[:splits]
       @segments_repository = repositories[:segments]
+      @rule_based_segments_repository = repositories[:rule_based_segments]
       @impressions_repository = repositories[:impressions]
       @events_repository = repositories[:events]
       @status_manager = status_manager
@@ -34,23 +35,26 @@ module SplitIoClient
     end
 
     def get_treatment(
-        key, split_name, attributes = {}, split_data = nil, store_impressions = true,
+        key, split_name, attributes = {}, evaluation_options = nil, split_data = nil, store_impressions = nil,
         multiple = false, evaluator = nil
       )
-      result = treatment(key, split_name, attributes, split_data, store_impressions, GET_TREATMENT, multiple)
+      log_deprecated_warning(GET_TREATMENT, evaluator, 'evaluator')
+    
+      result = treatment(key, split_name, attributes, split_data, store_impressions, GET_TREATMENT, multiple, evaluation_options)
       return result.tap { |t| t.delete(:config) } if multiple
       result[:treatment]
     end
 
     def get_treatment_with_config(
-        key, split_name, attributes = {}, split_data = nil, store_impressions = true,
+        key, split_name, attributes = {}, evaluation_options = nil, split_data = nil, store_impressions = nil,
         multiple = false, evaluator = nil
       )
-      treatment(key, split_name, attributes, split_data, store_impressions, GET_TREATMENT_WITH_CONFIG, multiple)
+      log_deprecated_warning(GET_TREATMENT, evaluator, 'evaluator')
+      treatment(key, split_name, attributes, split_data, store_impressions, GET_TREATMENT_WITH_CONFIG, multiple, evaluation_options)
     end
 
-    def get_treatments(key, split_names, attributes = {})
-      treatments = treatments(key, split_names, attributes)
+    def get_treatments(key, split_names, attributes = {}, evaluation_options = nil)
+      treatments = treatments(key, split_names, attributes, evaluation_options)
 
       return treatments if treatments.nil?
       keys = treatments.keys
@@ -58,40 +62,40 @@ module SplitIoClient
       Hash[keys.zip(treats)]
     end
 
-    def get_treatments_with_config(key, split_names, attributes = {})
-      treatments(key, split_names, attributes, GET_TREATMENTS_WITH_CONFIG)
+    def get_treatments_with_config(key, split_names, attributes = {}, evaluation_options = nil)
+      treatments(key, split_names, attributes, evaluation_options, GET_TREATMENTS_WITH_CONFIG)
     end
 
-    def get_treatments_by_flag_set(key, flag_set, attributes = {})
+    def get_treatments_by_flag_set(key, flag_set, attributes = {}, evaluation_options = nil)
       valid_flag_set = @split_validator.valid_flag_sets(GET_TREATMENTS_BY_FLAG_SET, [flag_set])
       split_names = @splits_repository.get_feature_flags_by_sets(valid_flag_set)
-      treatments = treatments(key, split_names, attributes, GET_TREATMENTS_BY_FLAG_SET)
+      treatments = treatments(key, split_names, attributes, evaluation_options, GET_TREATMENTS_BY_FLAG_SET)
       return treatments if treatments.nil?
       keys = treatments.keys
       treats = treatments.map { |_,t| t[:treatment]  }
       Hash[keys.zip(treats)]
     end
 
-    def get_treatments_by_flag_sets(key, flag_sets, attributes = {})
+    def get_treatments_by_flag_sets(key, flag_sets, attributes = {}, evaluation_options = nil)
       valid_flag_set = @split_validator.valid_flag_sets(GET_TREATMENTS_BY_FLAG_SETS, flag_sets)
       split_names = @splits_repository.get_feature_flags_by_sets(valid_flag_set)
-      treatments = treatments(key, split_names, attributes, GET_TREATMENTS_BY_FLAG_SETS)
+      treatments = treatments(key, split_names, attributes, evaluation_options, GET_TREATMENTS_BY_FLAG_SETS)
       return treatments if treatments.nil?
       keys = treatments.keys
       treats = treatments.map { |_,t| t[:treatment]  }
       Hash[keys.zip(treats)]
     end
 
-    def get_treatments_with_config_by_flag_set(key, flag_set, attributes = {})
+    def get_treatments_with_config_by_flag_set(key, flag_set, attributes = {}, evaluation_options = nil)
       valid_flag_set = @split_validator.valid_flag_sets(GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SET, [flag_set])
       split_names = @splits_repository.get_feature_flags_by_sets(valid_flag_set)
-      treatments(key, split_names, attributes, GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SET)
+      treatments(key, split_names, attributes, evaluation_options, GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SET)
     end
 
-    def get_treatments_with_config_by_flag_sets(key, flag_sets, attributes = {})
+    def get_treatments_with_config_by_flag_sets(key, flag_sets, attributes = {}, evaluation_options = nil)
       valid_flag_set = @split_validator.valid_flag_sets(GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SETS, flag_sets)
       split_names = @splits_repository.get_feature_flags_by_sets(valid_flag_set)
-      treatments(key, split_names, attributes, GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SETS)
+      treatments(key, split_names, attributes, evaluation_options, GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SETS)
     end
 
     def destroy
@@ -115,6 +119,7 @@ module SplitIoClient
 
       @splits_repository.clear
       @segments_repository.clear
+      @rule_based_segments_repository.clear
 
       SplitIoClient.load_factory_registry
       SplitIoClient.split_factory_registry.remove(@api_key)
@@ -133,10 +138,7 @@ module SplitIoClient
       if !properties.nil?
         properties, size = validate_properties(properties)
         properties_size += size
-        if (properties_size > EVENTS_SIZE_THRESHOLD)
-          @config.logger.error("The maximum size allowed for the properties is #{EVENTS_SIZE_THRESHOLD}. Current is #{properties_size}. Event not queued")
-          return false
-        end
+        return false unless check_properties_size(properties_size)
       end
 
       if ready? && !@config.localhost_mode && !@splits_repository.traffic_type_exists(traffic_type_name)
@@ -160,6 +162,14 @@ module SplitIoClient
     end
 
     private
+
+    def check_properties_size(properties_size, msg = "Event not queued")
+      if (properties_size > EVENTS_SIZE_THRESHOLD)
+        @config.logger.error("The maximum size allowed for the properties is #{EVENTS_SIZE_THRESHOLD}. Current is #{properties_size}. #{msg}")
+        return false
+      end
+      return true
+    end
 
     def keys_from_key(key)
       case key
@@ -204,7 +214,7 @@ module SplitIoClient
       end
     end
 
-    def validate_properties(properties)
+    def validate_properties(properties, method = 'Event')
       properties_count = 0
       size = 0
 
@@ -223,9 +233,19 @@ module SplitIoClient
         end
       }
 
-      @config.logger.warn('Event has more than 300 properties. Some of them will be trimmed when processed') if properties_count > 300
+      @config.logger.warn("#{method} has more than 300 properties. Some of them will be trimmed when processed") if properties_count > 300
 
       return fixed_properties, size
+    end
+
+    def validate_evaluation_options(evaluation_options)
+      if !evaluation_options.is_a?(SplitIoClient::Engine::Models::EvaluationOptions)
+        @config.logger.warn("Option #{evaluation_options} should be a EvaluationOptions type. Setting value to nil")
+        return nil, 0
+      end
+      evaluation_options.properties = evaluation_options.properties.transform_keys(&:to_sym)
+      evaluation_options.properties, size = validate_properties(evaluation_options.properties, 'Treatment')
+      return evaluation_options, size
     end
 
     def valid_client
@@ -236,8 +256,7 @@ module SplitIoClient
       @config.valid_mode
     end
 
-    def treatments(key, feature_flag_names, attributes = {}, calling_method = 'get_treatments')
-      attributes = {} if attributes.nil?
+    def treatments(key, feature_flag_names, attributes = {}, evaluation_options = nil, calling_method = 'get_treatments')
       sanitized_feature_flag_names = sanitize_split_names(calling_method, feature_flag_names)
 
       if sanitized_feature_flag_names.nil?
@@ -253,6 +272,7 @@ module SplitIoClient
       bucketing_key, matching_key = keys_from_key(key)
       bucketing_key = bucketing_key ? bucketing_key.to_s : nil
       matching_key = matching_key ? matching_key.to_s : nil
+      attributes = parsed_attributes(attributes)
 
       if !@config.split_validator.valid_get_treatments_parameters(calling_method, key, sanitized_feature_flag_names, matching_key, bucketing_key, attributes)
         to_return = Hash.new
@@ -267,7 +287,9 @@ module SplitIoClient
         to_return = Hash.new
         sanitized_feature_flag_names.each {|name|
           to_return[name.to_sym] = control_treatment_with_config
-          impressions << @impressions_manager.build_impression(matching_key, bucketing_key, name.to_sym, control_treatment_with_config.merge({ label: Engine::Models::Label::NOT_READY }), { attributes: attributes, time: nil })
+          impressions << { :impression => @impressions_manager.build_impression(matching_key, bucketing_key, name.to_sym, 
+                                                               control_treatment_with_config.merge({ :label => Engine::Models::Label::NOT_READY }), false, { attributes: attributes, time: nil },
+                                                               evaluation_options), :disabled => false }
         }
         @impressions_manager.track(impressions)
         return to_return
@@ -278,7 +300,6 @@ module SplitIoClient
         valid_feature_flag_names << feature_flag_name unless feature_flag_name.nil?
       }
       start = Time.now
-      impressions_total = []
 
       feature_flags = @splits_repository.splits(valid_feature_flag_names)
       treatments = Hash.new
@@ -290,16 +311,15 @@ module SplitIoClient
             invalid_treatments[key] = control_treatment_with_config
           next
         end
-        treatments_labels_change_numbers, impressions = evaluate_treatment(feature_flag, key, bucketing_key, matching_key, attributes, calling_method)
-        impressions_total.concat(impressions) unless impressions.nil?
+        treatments_labels_change_numbers, impressions = evaluate_treatment(feature_flag, key, bucketing_key, matching_key, attributes, calling_method, false, evaluation_options)
         treatments[key] =
         {
           treatment: treatments_labels_change_numbers[:treatment],
           config: treatments_labels_change_numbers[:config]
         }
+        @impressions_manager.track(impressions) unless impressions.empty?
       end
       record_latency(calling_method, start)
-      @impressions_manager.track(impressions_total) unless impressions_total.empty?
 
       treatments.merge(invalid_treatments)
     end
@@ -313,8 +333,12 @@ module SplitIoClient
     # @param split_data [Hash] split data, when provided this method doesn't fetch splits_repository for the data
     # @param store_impressions [Boolean] impressions aren't stored if this flag is false
     # @return [String/Hash] Treatment as String or Hash of treatments in case of array of features
-    def treatment(key, feature_flag_name, attributes = {}, split_data = nil, store_impressions = true,
-                   calling_method = 'get_treatment', multiple = false)
+    def treatment(key, feature_flag_name, attributes = {}, split_data = nil, store_impressions = nil,
+                   calling_method = 'get_treatment', multiple = false, evaluation_options = nil)
+
+      log_deprecated_warning(calling_method, split_data, 'split_data')
+      log_deprecated_warning(calling_method, store_impressions, 'store_impressions')
+        
       impressions = []
       bucketing_key, matching_key = keys_from_key(key)
 
@@ -332,50 +356,56 @@ module SplitIoClient
       end
 
       feature_flag = @splits_repository.get_split(feature_flag_name)
-      treatments, impressions = evaluate_treatment(feature_flag, feature_flag_name, bucketing_key, matching_key, attributes, calling_method, multiple)
+      treatments, impressions_decorator = evaluate_treatment(feature_flag, feature_flag_name, bucketing_key, matching_key, attributes, calling_method, multiple, evaluation_options)
 
-      @impressions_manager.track(impressions) unless impressions.nil?
+      @impressions_manager.track(impressions_decorator) unless impressions_decorator.nil?
       treatments
     end
 
-    def evaluate_treatment(feature_flag, feature_flag_name, bucketing_key, matching_key, attributes, calling_method, multiple = false)
-      impressions = []
+    def log_deprecated_warning(calling_method, parameter, parameter_name)
+        @config.logger.warn("#{calling_method}: detected #{parameter_name} parameter used, this parameter is deprecated and its value is ignored.") unless parameter.nil?
+    end
+
+    def evaluate_treatment(feature_flag, feature_flag_name, bucketing_key, matching_key, attributes, calling_method, multiple = false, evaluation_options = nil)
+      impressions_decorator = []
       begin
         start = Time.now
         if feature_flag.nil? && ready?
           @config.logger.warn("#{calling_method}: you passed #{feature_flag_name} that " \
             'does not exist in this environment, please double check what feature flags exist in the Split user interface')
-          return parsed_treatment(control_treatment.merge({ label: Engine::Models::Label::NOT_FOUND }), multiple), nil
+          return parsed_treatment(control_treatment.merge({ :label => Engine::Models::Label::NOT_FOUND }), multiple), nil
         end
-        treatment_data =
+
         if !feature_flag.nil? && ready?
-          @evaluator.evaluate_feature_flag(
+          treatment_data = @evaluator.evaluate_feature_flag(
             { bucketing_key: bucketing_key, matching_key: matching_key }, feature_flag, attributes
           )
+          impressions_disabled = feature_flag[:impressionsDisabled]
         else
           @config.logger.error("#{calling_method}: the SDK is not ready, results may be incorrect for feature flag #{feature_flag_name}. Make sure to wait for SDK readiness before using this method.")
-          control_treatment.merge({ label: Engine::Models::Label::NOT_READY })
+          treatment_data = control_treatment.merge({ :label => Engine::Models::Label::NOT_READY })
+          impressions_disabled = false
         end
 
+        evaluation_options, size = validate_evaluation_options(evaluation_options) unless evaluation_options.nil?
+        evaluation_options.properties = nil unless evaluation_options.nil? or check_properties_size((EVENT_AVERAGE_SIZE + size), "Properties are ignored")
+
         record_latency(calling_method, start)
-        impression = @impressions_manager.build_impression(matching_key, bucketing_key, feature_flag_name, treatment_data, { attributes: attributes, time: nil })
-        impressions << impression unless impression.nil?
+        impression_decorator = { :impression => @impressions_manager.build_impression(matching_key, bucketing_key, feature_flag_name, treatment_data, impressions_disabled, { attributes: attributes, time: nil }, evaluation_options), :disabled => impressions_disabled }
+        impressions_decorator << impression_decorator unless impression_decorator.nil?
       rescue StandardError => e
         @config.log_found_exception(__method__.to_s, e)
-
         record_exception(calling_method)
+        impression_decorator = { :impression => @impressions_manager.build_impression(matching_key, bucketing_key, feature_flag_name, control_treatment, false, { attributes: attributes, time: nil }, evaluation_options), :disabled => false }
+        impressions_decorator << impression_decorator unless impression_decorator.nil?
 
-        impression = @impressions_manager.build_impression(matching_key, bucketing_key, feature_flag_name, control_treatment, { attributes: attributes, time: nil })
-        impressions << impression unless impression.nil?
-
-        return parsed_treatment(control_treatment.merge({ label: Engine::Models::Label::EXCEPTION }), multiple), impressions
+        return parsed_treatment(control_treatment.merge({ :label => Engine::Models::Label::EXCEPTION }), multiple), impressions_decorator
       end
-
-      return parsed_treatment(treatment_data, multiple), impressions
+      return parsed_treatment(treatment_data, multiple), impressions_decorator
     end
 
     def control_treatment
-      { treatment: Engine::Models::Treatment::CONTROL }
+      { :treatment => Engine::Models::Treatment::CONTROL }
     end
 
     def control_treatment_with_config

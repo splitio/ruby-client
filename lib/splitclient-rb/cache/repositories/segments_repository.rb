@@ -83,6 +83,13 @@ module SplitIoClient
           0
         end
 
+        def contains?(segment_names)
+          if segment_names.empty?
+            return false
+          end
+          return segment_names.to_set.subset?(used_segment_names.to_set)
+        end
+
         private
 
         def segment_data(name)

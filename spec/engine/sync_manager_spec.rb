@@ -20,6 +20,7 @@ describe SplitIoClient::Engine::SyncManager do
   let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([]) }
   let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
   let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
+  let(:rule_based_segments_repository) { SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config) }
   let(:impressions_repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
   let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
   let(:events_repository) { SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key, telemetry_runtime_producer) }
@@ -29,12 +30,13 @@ describe SplitIoClient::Engine::SyncManager do
       splits: splits_repository,
       segments: segments_repository,
       impressions: impressions_repository,
-      events: events_repository
+      events: events_repository,
+      rule_based_segments: rule_based_segments_repository
     }
   end
   let(:sync_params) do
     {
-      split_fetcher: SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, telemetry_runtime_producer),
+      split_fetcher: SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, rule_based_segments_repository, api_key, config, telemetry_runtime_producer),
       segment_fetcher: SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, telemetry_runtime_producer),
       imp_counter: impression_counter,
       telemetry_runtime_producer: telemetry_runtime_producer,
@@ -50,7 +52,7 @@ describe SplitIoClient::Engine::SyncManager do
   let(:telemetry_api) { SplitIoClient::Api::TelemetryApi.new(config, api_key, telemetry_runtime_producer) }
   let(:telemetry_synchronizer) { SplitIoClient::Telemetry::Synchronizer.new(config, telemetry_consumers, init_producer, repositories, telemetry_api, 0, 0) }
   let(:status_manager) { SplitIoClient::Engine::StatusManager.new(config) }
-  let(:splits_worker) { SplitIoClient::SSE::Workers::SplitsWorker.new(synchronizer, config, splits_repository, telemetry_runtime_producer, sync_params[:segment_fetcher]) }
+  let(:splits_worker) { SplitIoClient::SSE::Workers::SplitsWorker.new(synchronizer, config, splits_repository, telemetry_runtime_producer, sync_params[:segment_fetcher], rule_based_segments_repository) }
   let(:segments_worker) { SplitIoClient::SSE::Workers::SegmentsWorker.new(synchronizer, config, segments_repository) }
   let(:notification_processor) { SplitIoClient::SSE::NotificationProcessor.new(config, splits_worker, segments_worker) }
   let(:event_parser) { SplitIoClient::SSE::EventSource::EventParser.new(config) }
@@ -68,7 +70,7 @@ describe SplitIoClient::Engine::SyncManager do
     mock_segment_changes('segment2', segment2, '-1')
     mock_segment_changes('segment2', segment2, '1470947453878')
     mock_segment_changes('segment3', segment3, '-1')
-    stub_request(:get, config.auth_service_url + "?s=1.1").to_return(status: 200, body: body_response)
+    stub_request(:get, config.auth_service_url + "?s=1.3").to_return(status: 200, body: body_response)
     stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
   end
 
@@ -84,7 +86,7 @@ describe SplitIoClient::Engine::SyncManager do
       sync_manager.start
 
       sleep(2)
-      expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')).to have_been_made.once
+      expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')).to have_been_made.once
 
       expect(config.threads.size).to eq(11)
       config.threads.values.each { |thread| Thread.kill(thread) }
@@ -104,7 +106,7 @@ describe SplitIoClient::Engine::SyncManager do
       sync_manager.start
 
       sleep(2)
-      expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')).to have_been_made.once
+      expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')).to have_been_made.once
 
       expect(config.threads.size).to eq(8)
       config.threads.values.each { |thread| Thread.kill(thread) }
@@ -136,7 +138,7 @@ describe SplitIoClient::Engine::SyncManager do
   private
 
   def mock_split_changes_with_since(splits_json, since)
-    stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=#{since}")
+    stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=#{since}&rbSince=-1")
       .to_return(status: 200, body: splits_json)
   end
 

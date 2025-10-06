@@ -8,6 +8,7 @@ module SplitIoClient
         SPLIT_KILL = 'SPLIT_KILL'
         SEGMENT_UPDATE = 'SEGMENT_UPDATE'
         CONTROL = 'CONTROL'
+        RB_SEGMENT_UPDATE = 'RB_SEGMENT_UPDATE'
       end
     end
   end

@@ -1,6 +1,7 @@
-{
-  "splits": [
-    {
+{"ff": {
+  "d": [
+  {
+      "impressionsDisabled": false,
       "trafficTypeName": "user",
       "name": "push_test",
       "trafficAllocation": 44,
@@ -86,6 +87,7 @@
       ]
     },
     {
+      "impressionsDisabled": false,
       "trafficTypeName": "user",
       "name": "tinchotest",
       "trafficAllocation": 24,
@@ -135,6 +137,7 @@
       ]
     },
     {
+      "impressionsDisabled": false,
       "trafficTypeName": "user",
       "name": "test_split",
       "trafficAllocation": 100,
@@ -184,6 +187,7 @@
       ]
     },
     {
+      "impressionsDisabled": false,
       "name":"feature_segment",
       "trafficTypeId":"u",
       "trafficTypeName":"User",
@@ -221,6 +225,7 @@
       ]
    }
   ],
-  "since": -1,
-  "till": 1585948850109
+  "s": -1,
+  "t": 1585948850109
+  }, "rbs": {"d":[], "t":-1, "s":-1}
 }

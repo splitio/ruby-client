@@ -18,20 +18,24 @@ module SplitIoClient
           @unique_keys_tracker = unique_keys_tracker
         end
 
-        def build_impression(matching_key, bucketing_key, split_name, treatment, params = {})
-          impression_data = impression_data(matching_key, bucketing_key, split_name, treatment, params[:time])
+        def build_impression(matching_key, bucketing_key, split_name, treatment_data, impressions_disabled, params = {},
+                             evaluation_options = nil)
+          properties = get_properties(evaluation_options)
+          impression_data = impression_data(matching_key, bucketing_key, split_name, treatment_data, params[:time], properties)
+          return impression(impression_data, params[:attributes]) if check_return_conditions(properties)
 
           begin
-            case @config.impressions_mode
-            when :debug #  In DEBUG mode we should calculate the pt only.
-              impression_data[:pt] = @impression_observer.test_and_set(impression_data)
-            when :none # In NONE mode we should track the total amount of evaluations and the unique keys.
+            if check_none_mode(impressions_disabled)
               @impression_counter.inc(split_name, impression_data[:m])
               @unique_keys_tracker.track(split_name, matching_key)
-            else # In OPTIMIZED mode we should track the total amount of evaluations and deduplicate the impressions.
+            end
+            if check_observe_impressions
+              # In DEBUG mode we should calculate the pt only.
               impression_data[:pt] = @impression_observer.test_and_set(impression_data)
-
-              @impression_counter.inc(split_name, impression_data[:m]) unless impression_data[:pt].nil?
+            end
+            if check_impression_counter(impression_data)
+              # In OPTIMIZED mode we should track the total amount of evaluations and deduplicate the impressions.
+              @impression_counter.inc(split_name, impression_data[:m])
             end
           rescue StandardError => e
             @config.log_found_exception(__method__.to_s, e)
@@ -40,28 +44,49 @@ module SplitIoClient
           impression(impression_data, params[:attributes])
         end
 
-        def track(impressions)
-          return if impressions.empty?
+        def track(impressions_decorator)
+          return if impressions_decorator.empty?
 
-          stats = { dropped: 0, queued: 0, dedupe: 0 }
-          begin
-            case @config.impressions_mode
-            when :none
-              return
-            when :debug
-              track_debug_mode(impressions, stats)
-            when :optimized
-              track_optimized_mode(impressions, stats)
+          impressions_decorator.each do |impression_decorator|
+            impression_router.add_bulk([impression_decorator[:impression]])
+            stats = { dropped: 0, queued: 0, dedupe: 0 }
+            begin
+              next if @config.impressions_mode == :none || impression_decorator[:disabled]
+
+              if @config.impressions_mode == :debug
+                track_debug_mode([impression_decorator[:impression]], stats)
+              else
+                track_optimized_mode([impression_decorator[:impression]], stats)
+              end
+            rescue StandardError => e
+              @config.log_found_exception(__method__.to_s, e)
+            ensure
+              record_stats(stats)
             end
-          rescue StandardError => e
-            @config.log_found_exception(__method__.to_s, e)
-          ensure
-            record_stats(stats)
-            impression_router.add_bulk(impressions)
           end
         end
 
         private
+
+        def check_return_conditions(properties)
+          return (@config.impressions_mode == :debug || @config.impressions_mode == :optimized) && !properties.nil?
+        end
+
+        def check_none_mode(impressions_disabled)
+          return @config.impressions_mode == :none || impressions_disabled
+        end
+
+        def check_observe_impressions
+          return @config.impressions_mode == :debug || @config.impressions_mode == :optimized
+        end
+
+        def check_impression_counter(impression_data)
+          return @config.impressions_mode == :optimized && !impression_data[:pt].nil?
+        end
+
+        def get_properties(evaluation_options)
+          return evaluation_options.nil? ? nil : evaluation_options.properties
+        end
 
         def impression_router
           @impression_router ||= SplitIoClient::ImpressionRouter.new(@config)
@@ -81,7 +106,8 @@ module SplitIoClient
         end
 
         # added param time for test
-        def impression_data(matching_key, bucketing_key, split_name, treatment, time = nil)
+        def impression_data(matching_key, bucketing_key, split_name, treatment, time = nil,
+                            properties = nil)
           {
             k: matching_key,
             b: bucketing_key,
@@ -90,7 +116,8 @@ module SplitIoClient
             r: applied_rule(treatment[:label]),
             c: treatment[:change_number],
             m: time || (Time.now.to_f * 1000.0).to_i,
-            pt: nil
+            pt: nil,
+            properties: properties
           }
         end
 
@@ -126,11 +153,10 @@ module SplitIoClient
 
         def track_optimized_mode(impressions, stats)
           optimized_impressions = impressions.select { |imp| should_queue_impression?(imp[:i]) }
-
+          stats[:dedupe] = impressions.length - optimized_impressions.length
           return if optimized_impressions.empty?
 
           stats[:dropped] = @impressions_repository.add_bulk(optimized_impressions)
-          stats[:dedupe] = impressions.length - optimized_impressions.length
           stats[:queued] = optimized_impressions.length - stats[:dropped]
         end
       end

@@ -2,9 +2,10 @@ module SplitIoClient
   module Engine
     module Parser
       class Evaluator
-        def initialize(segments_repository, splits_repository, config)
+        def initialize(segments_repository, splits_repository, rb_segment_repository, config)
           @splits_repository = splits_repository
           @segments_repository = segments_repository
+          @rb_segment_repository = rb_segment_repository
           @config = config
         end
 
@@ -37,6 +38,9 @@ module SplitIoClient
         end
 
         def match(split, keys, attributes)
+
+          return treatment_hash(Models::Label::PREREQUISITES_NOT_MET, split[:defaultTreatment], split[:changeNumber], split_configurations(split[:defaultTreatment], split)) unless check_prerequisites_matcher(split, keys, attributes)
+
           in_rollout = false
           key = keys[:bucketing_key] ? keys[:bucketing_key] : keys[:matching_key]
           legacy_algo = (split[:algo] == 1 || split[:algo] == nil) ? true : false
@@ -58,8 +62,7 @@ module SplitIoClient
 
               in_rollout = true
             end
-
-            condition_matched = matcher_type(condition).match?(
+            condition_matched = Helpers::EvaluatorHelper::matcher_type(condition, @segments_repository, @rb_segment_repository).match?(
               matching_key: keys[:matching_key],
               bucketing_key: keys[:bucketing_key],
               evaluator: self,
@@ -70,35 +73,19 @@ module SplitIoClient
 
             result = splitter.get_treatment(key, split[:seed], condition.partitions, split[:algo])
 
-            if result.nil?
-              return treatment_hash(Models::Label::NO_RULE_MATCHED, split[:defaultTreatment], split[:changeNumber], split_configurations(split[:defaultTreatment], split))
-            else
-              return treatment_hash(c[:label], result, split[:changeNumber],split_configurations(result, split))
-            end
+            return treatment_from_result(result, split, c)
           end
 
           treatment_hash(Models::Label::NO_RULE_MATCHED, split[:defaultTreatment], split[:changeNumber], split_configurations(split[:defaultTreatment], split))
         end
 
-        def matcher_type(condition)
-          matchers = []
+        private
 
-          @segments_repository.adapter.pipelined do
-            condition.matchers.each do |matcher|
-              matchers << if matcher[:negate]
-                condition.negation_matcher(matcher_instance(matcher[:matcherType], condition, matcher))
-              else
-                matcher_instance(matcher[:matcherType], condition, matcher)
-              end
-            end
-          end
-
-          final_matcher = condition.create_condition_matcher(matchers)
-
-          if final_matcher.nil?
-            @logger.error('Invalid matcher type')
+        def treatment_from_result(result, split, condition)
+          if result.nil?
+            return treatment_hash(Models::Label::NO_RULE_MATCHED, split[:defaultTreatment], split[:changeNumber], split_configurations(split[:defaultTreatment], split))
           else
-            final_matcher
+            return treatment_hash(condition[:label], result, split[:changeNumber],split_configurations(result, split))
           end
         end
 
@@ -106,11 +93,18 @@ module SplitIoClient
           { label: label, treatment: treatment, change_number: change_number, config: configurations }
         end
 
-        def matcher_instance(type, condition, matcher)
-          condition.send(
-            "matcher_#{type.downcase}",
-            matcher: matcher, segments_repository: @segments_repository
-          )
+        def check_prerequisites_matcher(split, keys, attributes)
+          if split.key?(:prerequisites) && !split[:prerequisites].nil?
+              prerequisites_matcher = SplitIoClient::PrerequisitesMatcher.new(split[:prerequisites], @config.split_logger) 
+              return prerequisites_matcher.match?(
+                  matching_key: keys[:matching_key],
+                  bucketing_key: keys[:bucketing_key],
+                  evaluator: self,
+                  attributes: attributes
+                )
+          end
+
+          true
         end
       end
     end

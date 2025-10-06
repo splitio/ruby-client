@@ -26,7 +26,6 @@ describe SplitIoClient::Engine::Impressions::UniqueKeysTracker do
     key = "#{config.redis_namespace}.uniquekeys"
 
     cache = Concurrent::Hash.new
-    config.unique_keys_cache_max_size = 20
     config.unique_keys_bulk_size = 2
     tracker = subject.new(config, filter_adapter, sender_adapter, cache)
 

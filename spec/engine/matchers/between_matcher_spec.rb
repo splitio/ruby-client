@@ -41,9 +41,7 @@ describe SplitIoClient::BetweenMatcher do
     before do
 #      stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?since/)
 #        .to_return(status: 200, body: number_matcher_splits)
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges')
-        .to_return(status: 200, body: number_matcher_splits)
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')
         .to_return(status: 200, body: number_matcher_splits)
       subject.block_until_ready
       sleep 1
@@ -69,7 +67,9 @@ describe SplitIoClient::BetweenMatcher do
     let(:non_matching_low_value_negative_attributes) { { income: -999 } }
 
     before do
-       stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.1&since.*/)
+       stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.3&since.*/)
+        .to_return(status: 200, body: negative_number_matcher_splits)
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')
         .to_return(status: 200, body: negative_number_matcher_splits)
       subject.block_until_ready
       sleep 1
@@ -97,7 +97,9 @@ describe SplitIoClient::BetweenMatcher do
     let(:non_matching_high_value_attributes) { { created: 1_459_775_460 } } # "2016/04/04T13:11Z"
 
     before do
-      stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.1&since/)
+      stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.3&since/)
+        .to_return(status: 200, body: datetime_matcher_splits)
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')
         .to_return(status: 200, body: datetime_matcher_splits)
       subject.block_until_ready
       sleep 1

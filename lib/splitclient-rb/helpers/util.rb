@@ -3,14 +3,23 @@
 module SplitIoClient
   module Helpers
     class Util
-      def self.segment_names_by_feature_flag(feature_flag)
-        feature_flag[:conditions].each_with_object(Set.new) do |condition, names|
+      def self.segment_names_by_object(object, matcher_type)
+        object[:conditions].each_with_object(Set.new) do |condition, names|
           condition[:matcherGroup][:matchers].each do |matcher|
-            next if matcher[:userDefinedSegmentMatcherData].nil?
+            next if matcher[:userDefinedSegmentMatcherData].nil? || matcher[:matcherType] != matcher_type
 
             names << matcher[:userDefinedSegmentMatcherData][:segmentName]
           end
         end
+      end
+
+      def self.segment_names_in_rb_segment(object, matcher_type)
+        names = Set.new
+        names.merge segment_names_by_object(object, matcher_type)
+        object[:excluded][:segments].each do |segment|
+          names.add(segment[:name]) if segment[:type] == SplitIoClient::Engine::Models::SegmentType::STANDARD
+        end
+        names
       end
     end
   end

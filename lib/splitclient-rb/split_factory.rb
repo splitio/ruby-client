@@ -55,7 +55,7 @@ module SplitIoClient
 
       @status_manager = Engine::StatusManager.new(@config)
       @split_validator = SplitIoClient::Validators.new(@config)
-      @evaluator = Engine::Parser::Evaluator.new(@segments_repository, @splits_repository, @config)
+      @evaluator = Engine::Parser::Evaluator.new(@segments_repository, @splits_repository, @rule_based_segment_repository, @config)
 
       start!
 
@@ -154,6 +154,7 @@ module SplitIoClient
         segments: @segments_repository,
         impressions: @impressions_repository,
         events: @events_repository,
+        rule_based_segments: @rule_based_segment_repository
       }
     end
 
@@ -178,7 +179,7 @@ module SplitIoClient
     end
 
     def build_fetchers
-      @split_fetcher = SplitFetcher.new(@splits_repository, @api_key, @config, @runtime_producer)
+      @split_fetcher = SplitFetcher.new(@splits_repository, @rule_based_segment_repository, @api_key, @config, @runtime_producer)
       @segment_fetcher = SegmentFetcher.new(@segments_repository, @api_key, @config, @runtime_producer)
     end
 
@@ -198,7 +199,7 @@ module SplitIoClient
 
     def build_streaming_components
       @push_status_queue = Queue.new
-      splits_worker = SSE::Workers::SplitsWorker.new(@synchronizer, @config, @splits_repository, @runtime_producer, @segment_fetcher)
+      splits_worker = SSE::Workers::SplitsWorker.new(@synchronizer, @config, @splits_repository, @runtime_producer, @segment_fetcher, @rule_based_segment_repository)
       segments_worker = SSE::Workers::SegmentsWorker.new(@synchronizer, @config, @segments_repository)
       notification_manager_keeper = SSE::NotificationManagerKeeper.new(@config, @runtime_producer, @push_status_queue)
       notification_processor = SSE::NotificationProcessor.new(@config, splits_worker, segments_worker)
@@ -220,6 +221,7 @@ module SplitIoClient
       end
       @splits_repository = SplitsRepository.new(@config, @flag_sets_repository, @flag_sets_filter)
       @segments_repository = SegmentsRepository.new(@config)
+      @rule_based_segment_repository = RuleBasedSegmentsRepository.new(@config)
       @impressions_repository = ImpressionsRepository.new(@config)
       @events_repository = EventsRepository.new(@config, @api_key, @runtime_producer)
     end
@@ -230,11 +232,6 @@ module SplitIoClient
     end
 
     def build_unique_keys_tracker
-      if @config.impressions_mode != :none
-        @unique_keys_tracker = Engine::Impressions::NoopUniqueKeysTracker.new
-        return
-      end
-
       bf = Cache::Filter::BloomFilter.new(30_000_000)
       filter_adapter = Cache::Filter::FilterAdapter.new(@config, bf)
       cache = Concurrent::Hash.new
@@ -242,8 +239,7 @@ module SplitIoClient
     end
 
     def build_impressions_observer
-      if (@config.cache_adapter == :redis && @config.impressions_mode != :optimized) ||
-         (@config.cache_adapter == :memory && @config.impressions_mode == :none)
+      if (@config.cache_adapter == :redis && @config.impressions_mode != :optimized)
         @impression_observer = Observers::NoopImpressionObserver.new
       else
         @impression_observer = Observers::ImpressionObserver.new
@@ -251,12 +247,7 @@ module SplitIoClient
     end
 
     def build_impression_counter
-      case @config.impressions_mode
-      when :debug
-        @impression_counter = Engine::Common::NoopImpressionCounter.new
-      else
-        @impression_counter = Engine::Common::ImpressionCounter.new
-      end
+      @impression_counter = Engine::Common::ImpressionCounter.new
     end
 
     def build_impressions_sender_adapter

@@ -51,14 +51,14 @@ describe SplitIoClient do
       mock_splits_request(splits2, '1585948850109')
       mock_splits_request(splits3, '1585948850110')
       mock_segment_changes('segment3', segment3, '-1')
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1585948850111').to_return(status: 200, body: '')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1585948850111&rbSince=-1').to_return(status: 200, body: '')
 
       mock_server do |server|
         server.setup_response('/') do |_, res|
           send_content(res, event_split_update_must_fetch)
         end
 
-        stub_request(:get, auth_service_url + "?s=1.1").to_return(status: 200, body: auth_body_response)
+        stub_request(:get, auth_service_url + "?s=1.3").to_return(status: 200, body: auth_body_response)
 
         streaming_service_url = server.base_uri
         factory = SplitIoClient::SplitFactory.new(
@@ -74,9 +74,9 @@ describe SplitIoClient do
         client.block_until_ready
         sleep(2)
         expect(client.get_treatment('admin', 'push_test')).to eq('after_fetch')
-        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')).to have_been_made.at_least_times(1)
-        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1585948850109')).to have_been_made.times(1)
-        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1585948850110')).to have_been_made.times(1)
+        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')).to have_been_made.at_least_times(1)
+        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1585948850109&rbSince=-1')).to have_been_made.times(1)
+        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1585948850110&rbSince=-1')).to have_been_made.times(1)
         client.destroy
       end
     end
@@ -91,7 +91,7 @@ describe SplitIoClient do
           send_content(res, event_split_update_must_not_fetch)
         end
 
-        stub_request(:get, auth_service_url + "?s=1.1").to_return(status: 200, body: auth_body_response)
+        stub_request(:get, auth_service_url + "?s=1.3").to_return(status: 200, body: auth_body_response)
 
         streaming_service_url = server.base_uri
         factory = SplitIoClient::SplitFactory.new(
@@ -105,9 +105,9 @@ describe SplitIoClient do
         client.block_until_ready(1)
         sleep(1)
         expect(client.get_treatment('admin', 'push_test')).to eq('on')
-        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')).to have_been_made.times(1)
-        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1585948850109')).to have_been_made.times(1)
-        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1585948850110')).to have_been_made.times(0)
+        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')).to have_been_made.times(1)
+        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1585948850109&rbSince=-1')).to have_been_made.times(1)
+        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1585948850110&rbSince=-1')).to have_been_made.times(0)
         client.destroy
       end
     end
@@ -123,7 +123,7 @@ describe SplitIoClient do
           send_content(res, event_split_update_missing_change_number)
         end
 
-        stub_request(:get, auth_service_url + "?s=1.1").to_return(status: 200, body: auth_body_response)
+        stub_request(:get, auth_service_url + "?s=1.3").to_return(status: 200, body: auth_body_response)
 
         streaming_service_url = server.base_uri
         factory = SplitIoClient::SplitFactory.new(
@@ -137,9 +137,9 @@ describe SplitIoClient do
         client.block_until_ready(1)
         sleep(1)
         expect(client.get_treatment('admin', 'push_test')).to eq('on')
-        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')).to have_been_made.times(1)
-        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1585948850109')).to have_been_made.times(1)
-        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1585948850110')).to have_been_made.times(0)
+        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')).to have_been_made.times(1)
+        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1585948850109&rbSince=-1')).to have_been_made.times(1)
+        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1585948850110&rbSince=-1')).to have_been_made.times(0)
       end
     end
 
@@ -149,9 +149,9 @@ describe SplitIoClient do
       mock_splits_request(splits3, '1585948850110')
       mock_segment_changes('segment3', segment3, '-1')
       stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
-      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=1585948850111").to_return(status: 200, body: '')
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=1585948850111&rbSince=-1").to_return(status: 200, body: '')
       stub_request(:get, "https://sdk.split.io/api/segmentChanges/bilal_segment?since=-1").to_return(status: 200, body: '')
-      stub_request(:get, auth_service_url + "?s=1.1").to_return(status: 200, body: auth_body_response)
+      stub_request(:get, auth_service_url + "?s=1.3").to_return(status: 200, body: auth_body_response)
 
       mock_server do |server|
 
@@ -186,13 +186,13 @@ describe SplitIoClient do
       mock_splits_request(splits3, '1585948850110')
       mock_segment_changes('segment3', segment3, '-1')
       stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1585948850111').to_return(status: 200, body: '')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1585948850111&rbSince=-1').to_return(status: 200, body: '')
       mock_server do |server|
         server.setup_response('/') do |_, res|
           send_content(res, event_split_iff_update_incorrect_pcn)
         end
 
-        stub_request(:get, auth_service_url + "?s=1.1").to_return(status: 200, body: auth_body_response)
+        stub_request(:get, auth_service_url + "?s=1.3").to_return(status: 200, body: auth_body_response)
 
         streaming_service_url = server.base_uri
         factory = SplitIoClient::SplitFactory.new(
@@ -215,13 +215,13 @@ describe SplitIoClient do
       mock_splits_request(splits3, '1585948850110')
       mock_segment_changes('segment3', segment3, '-1')
       stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1585948850111').to_return(status: 200, body: '')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1585948850111&rbSince=-1').to_return(status: 200, body: '')
       mock_server do |server|
         server.setup_response('/') do |_, res|
           send_content(res, event_split_iff_update_missing_definition)
         end
 
-        stub_request(:get, auth_service_url + "?s=1.1").to_return(status: 200, body: auth_body_response)
+        stub_request(:get, auth_service_url + "?s=1.3").to_return(status: 200, body: auth_body_response)
 
         streaming_service_url = server.base_uri
         factory = SplitIoClient::SplitFactory.new(
@@ -244,13 +244,13 @@ describe SplitIoClient do
       mock_splits_request(splits3, '1585948850110')
       mock_segment_changes('segment3', segment3, '-1')
       stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1585948850111').to_return(status: 200, body: '')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1585948850111&rbSince=-1').to_return(status: 200, body: '')
       mock_server do |server|
         server.setup_response('/') do |_, res|
           send_content(res, event_split_iff_update_incorrect_compression)
         end
 
-        stub_request(:get, auth_service_url + "?s=1.1").to_return(status: 200, body: auth_body_response)
+        stub_request(:get, auth_service_url + "?s=1.3").to_return(status: 200, body: auth_body_response)
 
         streaming_service_url = server.base_uri
         factory = SplitIoClient::SplitFactory.new(
@@ -280,7 +280,7 @@ describe SplitIoClient do
           send_content(res, event_split_kill_must_fetch)
         end
 
-        stub_request(:get, auth_service_url + "?s=1.1").to_return(status: 200, body: auth_body_response)
+        stub_request(:get, auth_service_url + "?s=1.3").to_return(status: 200, body: auth_body_response)
 
         streaming_service_url = server.base_uri
         factory = SplitIoClient::SplitFactory.new(
@@ -293,9 +293,9 @@ describe SplitIoClient do
         client.block_until_ready
         sleep(2)
         expect(client.get_treatment('admin', 'push_test')).to eq('after_fetch')
-        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')).to have_been_made.times(1)
-        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1585948850109')).to have_been_made.times(1)
-        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1585948850110')).to have_been_made.at_least_times(1)
+        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')).to have_been_made.times(1)
+        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1585948850109&rbSince=-1')).to have_been_made.times(1)
+        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1585948850110&rbSince=-1')).to have_been_made.at_least_times(1)
         client.destroy
       end
     end
@@ -304,14 +304,14 @@ describe SplitIoClient do
       mock_splits_request(splits, -1)
       mock_splits_request(splits2, 1_585_948_850_109)
       mock_segment_changes('segment3', segment3, '-1')
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1585948850110').to_return(status: 200, body: '')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1585948850110&rbSince=-1').to_return(status: 200, body: '')
 
       mock_server do |server|
         server.setup_response('/') do |_, res|
           send_content(res, event_split_kill_must_not_fetch)
         end
 
-        stub_request(:get, auth_service_url + "?s=1.1").to_return(status: 200, body: auth_body_response)
+        stub_request(:get, auth_service_url + "?s=1.3").to_return(status: 200, body: auth_body_response)
 
         streaming_service_url = server.base_uri
         factory = SplitIoClient::SplitFactory.new(
@@ -325,9 +325,9 @@ describe SplitIoClient do
         client.block_until_ready(1)
         sleep(2)
         expect(client.get_treatment('admin', 'push_test')).to eq('on')
-        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=-1')).to have_been_made.times(1)
-        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1585948850109')).to have_been_made.times(1)
-        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1585948850110')).to have_been_made.times(0)
+        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')).to have_been_made.times(1)
+        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1585948850109&rbSince=-1')).to have_been_made.times(1)
+        expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1585948850110&rbSince=-1')).to have_been_made.times(0)
         client.destroy
       end
     end
@@ -346,7 +346,7 @@ describe SplitIoClient do
           send_content(res, event_segment_update_must_fetch)
         end
 
-        stub_request(:get, auth_service_url + "?s=1.1").to_return(status: 200, body: auth_body_response)
+        stub_request(:get, auth_service_url + "?s=1.3").to_return(status: 200, body: auth_body_response)
 
         streaming_service_url = server.base_uri
         factory = SplitIoClient::SplitFactory.new(
@@ -375,7 +375,7 @@ describe SplitIoClient do
           send_content(res, event_segment_update_must_not_fetch)
         end
 
-        stub_request(:get, auth_service_url + "?s=1.1").to_return(status: 200, body: auth_body_response)
+        stub_request(:get, auth_service_url + "?s=1.3").to_return(status: 200, body: auth_body_response)
 
         streaming_service_url = server.base_uri
         factory = SplitIoClient::SplitFactory.new(
@@ -400,14 +400,14 @@ describe SplitIoClient do
       mock_splits_request(splits2, 1_585_948_850_109)
       mock_splits_request(splits3, 1_585_948_850_110)
       mock_segment_changes('segment3', segment3, '-1')
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1585948850111').to_return(status: 200, body: '')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1585948850111&rbSince=-1').to_return(status: 200, body: '')
 
       mock_server do |server|
         server.setup_response('/') do |_, res|
           send_content(res, event_occupancy_with_publishers)
         end
 
-        stub_request(:get, auth_service_url + "?s=1.1").to_return(status: 200, body: auth_body_response)
+        stub_request(:get, auth_service_url + "?s=1.3").to_return(status: 200, body: auth_body_response)
 
         streaming_service_url = server.base_uri
         factory = SplitIoClient::SplitFactory.new(
@@ -436,7 +436,7 @@ describe SplitIoClient do
           send_content(res, event_occupancy_without_publishers)
         end
 
-        stub_request(:get, auth_service_url + "?s=1.1").to_return(status: 200, body: auth_body_response)
+        stub_request(:get, auth_service_url + "?s=1.3").to_return(status: 200, body: auth_body_response)
 
         streaming_service_url = server.base_uri
         factory = SplitIoClient::SplitFactory.new(
@@ -467,7 +467,7 @@ describe SplitIoClient do
           send_content(res, event_control_STREAMING_PAUSED)
         end
 
-        stub_request(:get, auth_service_url + "?s=1.1").to_return(status: 200, body: auth_body_response)
+        stub_request(:get, auth_service_url + "?s=1.3").to_return(status: 200, body: auth_body_response)
 
         streaming_service_url = server.base_uri
         factory = SplitIoClient::SplitFactory.new(
@@ -496,7 +496,7 @@ describe SplitIoClient do
           send_content(res, event_control_STREAMING_RESUMED)
         end
 
-        stub_request(:get, auth_service_url + "?s=1.1").to_return(status: 200, body: auth_body_response)
+        stub_request(:get, auth_service_url + "?s=1.3").to_return(status: 200, body: auth_body_response)
 
         streaming_service_url = server.base_uri
         factory = SplitIoClient::SplitFactory.new(
@@ -519,14 +519,14 @@ describe SplitIoClient do
       mock_splits_request(splits2, 1_585_948_850_109)
       mock_splits_request(splits3, 1_585_948_850_110)
       mock_segment_changes('segment3', segment3, '-1')
-      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.1&since=1585948850111').to_return(status: 200, body: '')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1585948850111&rbSince=-1').to_return(status: 200, body: '')
 
       mock_server do |server|
         server.setup_response('/') do |_, res|
           send_content(res, event_control_STREAMING_DISABLED)
         end
 
-        stub_request(:get, auth_service_url + "?s=1.1").to_return(status: 200, body: auth_body_response)
+        stub_request(:get, auth_service_url + "?s=1.3").to_return(status: 200, body: auth_body_response)
 
         streaming_service_url = server.base_uri
         factory = SplitIoClient::SplitFactory.new(
@@ -559,7 +559,7 @@ describe SplitIoClient do
   end
 
   def mock_splits_request(splits_json, since)
-    stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.1&since=#{since}")
+    stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=#{since}&rbSince=-1")
       .to_return(status: 200, body: splits_json)
   end
 

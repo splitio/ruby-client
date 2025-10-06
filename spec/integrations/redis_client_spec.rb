@@ -997,7 +997,7 @@ end
 private
 
 def load_splits_redis(splits_json, cli)
-  splits = JSON.parse(splits_json, symbolize_names: true)[:splits]
+  splits = JSON.parse(splits_json, symbolize_names: true)[:ff][:d]
 
   splits_repository = cli.instance_variable_get(:@splits_repository)
 

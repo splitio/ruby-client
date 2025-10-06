@@ -46,7 +46,9 @@ describe SplitIoClient, type: :client do
       @mode = cache_adapter.equal?(:memory) ? :standalone : :consumer
       stub_request(:any, /https:\/\/telemetry.*/).to_return(status: 200, body: 'ok')
       stub_request(:any, /https:\/\/events.*/).to_return(status: 200, body: '')
-      stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.1&since/)
+      stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.3&since=-1&rbSince=-1/)
+      .to_return(status: 200, body: '')
+      stub_request(:post, "https://telemetry.split.io/api/v1/metrics/config")
       .to_return(status: 200, body: '')
     end
 
@@ -75,6 +77,22 @@ describe SplitIoClient, type: :client do
           treatment: 'off',
           config: nil
         )
+        expect(subject.get_treatment_with_config('nicolas', 'mauro_test', {}, nil)).to eq(
+          treatment: 'off',
+          config: nil
+        )
+        expect(subject.get_treatment_with_config('nicolas', 'mauro_test', {}, {})).to eq(
+          treatment: 'off',
+          config: nil
+        )
+        expect(subject.get_treatment_with_config('nicolas', 'mauro_test', {}, "prop")).to eq(
+          treatment: 'off',
+          config: nil
+        )
+        expect(subject.get_treatment_with_config('nicolas', 'mauro_test', {}, 123)).to eq(
+          treatment: 'off',
+          config: nil
+        )
         close_redis
       end
 
@@ -82,6 +100,10 @@ describe SplitIoClient, type: :client do
         expect(subject.get_treatment('nicolas', 'mauro_test', nil)).to eq 'off'
         expect(subject.get_treatment('nicolas', 'mauro_test')).to eq 'off'
         expect(subject.get_treatment('nicolas', 'mauro_test', {})).to eq 'off'
+        expect(subject.get_treatment('nicolas', 'mauro_test', {}, nil)).to eq 'off'
+        expect(subject.get_treatment('nicolas', 'mauro_test', {}, {})).to eq 'off'
+        expect(subject.get_treatment('nicolas', 'mauro_test', {}, "prop")).to eq 'off'
+        expect(subject.get_treatment('nicolas', 'mauro_test', {}, 123)).to eq 'off'
       end
 
       it 'get_treatments returns off' do
@@ -92,6 +114,18 @@ describe SplitIoClient, type: :client do
           mauro_test: 'off'
         )
         expect(subject.get_treatments('nicolas', ['mauro_test'], {})).to eq(
+          mauro_test: 'off'
+        )
+        expect(subject.get_treatments('nicolas', ['mauro_test'], {}, nil)).to eq(
+          mauro_test: 'off'
+        )
+        expect(subject.get_treatments('nicolas', ['mauro_test'], {}, {})).to eq(
+          mauro_test: 'off'
+        )
+        expect(subject.get_treatments('nicolas', ['mauro_test'], {}, "prop")).to eq(
+          mauro_test: 'off'
+        )
+        expect(subject.get_treatments('nicolas', ['mauro_test'], {}, 123)).to eq(
           mauro_test: 'off'
         )
         close_redis
@@ -107,6 +141,18 @@ describe SplitIoClient, type: :client do
         expect(subject.get_treatments_by_flag_set('nicolas', 'set_2', {})).to eq(
           mauro_test: 'off'
         )
+        expect(subject.get_treatments_by_flag_set('nicolas', 'set_2', {}, {})).to eq(
+          mauro_test: 'off'
+        )
+        expect(subject.get_treatments_by_flag_set('nicolas', 'set_2', {}, nil)).to eq(
+          mauro_test: 'off'
+        )
+        expect(subject.get_treatments_by_flag_set('nicolas', 'set_2', {}, "prop")).to eq(
+          mauro_test: 'off'
+        )
+        expect(subject.get_treatments_by_flag_set('nicolas', 'set_2', {}, 123)).to eq(
+          mauro_test: 'off'
+        )
         close_redis
       end
 
@@ -120,13 +166,25 @@ describe SplitIoClient, type: :client do
         expect(subject.get_treatments_by_flag_sets('nicolas', ['set_2'], {})).to eq(
           mauro_test: 'off'
         )
+        expect(subject.get_treatments_by_flag_sets('nicolas', ['set_2'], {}, {})).to eq(
+          mauro_test: 'off'
+        )
+        expect(subject.get_treatments_by_flag_sets('nicolas', ['set_2'], {}, nil)).to eq(
+          mauro_test: 'off'
+        )
+        expect(subject.get_treatments_by_flag_sets('nicolas', ['set_2'], {}, "prop")).to eq(
+          mauro_test: 'off'
+        )
+        expect(subject.get_treatments_by_flag_sets('nicolas', ['set_2'], {}, 123)).to eq(
+          mauro_test: 'off'
+        )
         close_redis
       end
     end
 
     context '#get_treatment' do
       before do
-        stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.1&since/).to_return(status: 200, body: '')
+        stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.3&since=-1&rbSince=-1/).to_return(status: 200, body: '')
 
         load_splits(all_keys_matcher_json, flag_sets_json)
         subject.block_until_ready
@@ -139,8 +197,7 @@ describe SplitIoClient, type: :client do
       end
 
       it 'returns CONTROL and label for incorrect feature name' do
-        treatment = subject.get_treatment('random_user_id', 'test_featur', nil, nil, false, true)
-        puts treatment
+        treatment = subject.get_treatment('random_user_id', 'test_featur', nil, nil, nil, false, true)
         expect(treatment).to eq(
           treatment: SplitIoClient::Engine::Models::Treatment::CONTROL,
           label: SplitIoClient::Engine::Models::Label::NOT_FOUND,
@@ -227,7 +284,7 @@ describe SplitIoClient, type: :client do
 
       #TODO We will remove multiple param in the future.
       it 'returns CONTROL and label on nil key' do
-        expect(subject.get_treatment(nil, 'test_feature', nil, nil, false, true)).to eq(
+        expect(subject.get_treatment(nil, 'test_feature', nil, nil, nil, false, true)).to eq(
           treatment: SplitIoClient::Engine::Models::Treatment::CONTROL,
           label: nil,
           change_number: nil
@@ -287,7 +344,7 @@ describe SplitIoClient, type: :client do
 
       #TODO We will remove multiple param in the future.
       it 'returns CONTROL and label on nil split_name' do
-        expect(subject.get_treatment('random_user_id', nil, nil, nil, false, true)).to eq(
+        expect(subject.get_treatment('random_user_id', nil, nil, nil, nil, false, true)).to eq(
           treatment: SplitIoClient::Engine::Models::Treatment::CONTROL,
           label: nil,
           change_number: nil
@@ -726,6 +783,7 @@ describe SplitIoClient, type: :client do
 
     context 'whitelist matcher' do
       before do
+        stub_request(:get, "https://sdk.split.io/api/segmentChanges/demo?since=-1").to_return(status: 200, body: "")
         whitelist_matcher_json = File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/engine/whitelist_matcher.json'))
         load_splits(whitelist_matcher_json, flag_sets_json)
         subject.block_until_ready
@@ -832,20 +890,18 @@ describe SplitIoClient, type: :client do
       before do
         impressions_test_json = File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/engine/impressions_test.json'))
         load_splits(impressions_test_json, flag_sets_json)
-        stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.1&since/).to_return(status: 200, body: '')
+        subject.block_until_ready(5)
       end
 
       it 'returns correct impressions for get_treatments checking ' do
-        subject.get_treatments('26', %w[sample_feature beta_feature])
         # Need this because we're storing impressions in the Set
         # Without sleep we may have identical impressions (including time)
         # In that case only one impression with key "26" would be stored
         sleep 1
 
         subject.get_treatments('26', %w[sample_feature beta_feature])
-
+        sleep 1
         impressions = customer_impression_listener.queue
-
         expect(impressions.size >= 2).to be true
         close_redis
       end
@@ -872,7 +928,8 @@ describe SplitIoClient, type: :client do
         before do
           traffic_allocation_json = File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/splits_traffic_allocation.json'))
           load_splits(traffic_allocation_json, flag_sets_json)
-          subject.block_until_ready
+          subject.block_until_ready(5)
+          add_splits_to_repository(traffic_allocation_json)
         end
 
         it 'returns expected treatment' do
@@ -926,7 +983,7 @@ describe SplitIoClient, type: :client do
       end
 
       it 'returns control' do
-        stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.1&since/)
+        stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1")
           .to_return(status: 200, body: all_keys_matcher_json)
 
         subject.block_until_ready
@@ -940,7 +997,7 @@ describe SplitIoClient, type: :client do
 
     describe 'redis outage' do
       before do
-        stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.1&since/)
+        stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1")
           .to_return(status: 200, body: all_keys_matcher_json)
       end
 
@@ -953,7 +1010,7 @@ describe SplitIoClient, type: :client do
 
     describe 'events' do
       before do
-        stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.1&since/)
+        stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1")
           .to_return(status: 200, body: all_keys_matcher_json)
         subject.block_until_ready
       end
@@ -983,7 +1040,7 @@ describe SplitIoClient, type: :client do
 
     context '#track' do
       before do
-        stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.1&since/)
+        stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1")
           .to_return(status: 200, body: all_keys_matcher_json)
         subject.block_until_ready
       end
@@ -1190,7 +1247,7 @@ describe SplitIoClient, type: :client do
     end
 
     before do
-      stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.1&since.*/)
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1")
       .to_return(status: 200, body: all_keys_matcher_json)
     end
 
@@ -1267,7 +1324,8 @@ private
 
 def load_splits(splits_json, flag_sets_json)
   if @mode.equal?(:standalone)
-    stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.1&since.*/)
+#    stub_request(:get, /https:\/\/sdk\.split\.io\/api\/splitChanges\?s=1\.1&since.*/)
+    stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1")
     .to_return(status: 200, body: splits_json)
   else
     add_splits_to_repository(splits_json)
@@ -1285,7 +1343,7 @@ def load_segments(segments_json)
 end
 
 def add_splits_to_repository(splits_json)
-  splits = JSON.parse(splits_json, symbolize_names: true)[:splits]
+  splits = JSON.parse(splits_json, symbolize_names: true)[:ff][:d]
 
   splits_repository = subject.instance_variable_get(:@splits_repository)
 

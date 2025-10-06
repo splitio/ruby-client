@@ -43,8 +43,8 @@ describe SplitIoClient::Cache::Senders::ImpressionsFormatter do
       params2 = { attributes: {}, time: 1_478_113_518_285 }
 
       @impressions = []
-      @impressions << impressions_manager.build_impression('matching_key', 'foo1', 'foo1', treatment1, params)
-      @impressions << impressions_manager.build_impression('matching_key2', 'foo2', 'foo2', treatment2, params2)
+      @impressions << { :impression => impressions_manager.build_impression('matching_key', 'foo1', 'foo1', treatment1, false, params), :disabled => false }
+      @impressions << { :impression => impressions_manager.build_impression('matching_key2', 'foo2', 'foo2', treatment2, false, params2), :disabled => false }
       impressions_manager.track(@impressions)
     end
 
@@ -58,7 +58,7 @@ describe SplitIoClient::Cache::Senders::ImpressionsFormatter do
                                 b: 'foo1',
                                 r: 'custom_label1',
                                 c: 123_456,
-                                pt: nil }]
+                                pt: nil}]
                         },
                          {
                            f: :foo2,
@@ -68,14 +68,14 @@ describe SplitIoClient::Cache::Senders::ImpressionsFormatter do
                                  b: 'foo2',
                                  r: 'custom_label2',
                                  c: 123_499,
-                                 pt: nil }]
+                                pt: nil}]
                          }])
     end
 
     it 'formats multiple impressions for one key' do
       params = { attributes: {}, time: 1_478_113_518_900 }
       impressions = []
-      impressions << impressions_manager.build_impression('matching_key3', nil, 'foo2', treatment3, params)
+      impressions << { :impression => impressions_manager.build_impression('matching_key3', nil, 'foo2', treatment3, false, params, SplitIoClient::Engine::Models::EvaluationOptions.new({:prop => "val"})), :disabled => false }
       impressions_manager.track(impressions)
 
       expect(formatted_impressions.find { |i| i[:f] == :foo1 }[:i]).to match_array(
@@ -110,7 +110,8 @@ describe SplitIoClient::Cache::Senders::ImpressionsFormatter do
             b: nil,
             r: nil,
             c: nil,
-            pt: nil
+            pt: nil,
+            properties: '{"prop":"val"}'
           }
         ]
       )

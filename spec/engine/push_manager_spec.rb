@@ -14,14 +14,15 @@ describe SplitIoClient::Engine::PushManager do
   let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([]) }
   let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
   let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
+  let(:rule_based_segments_repository) { SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config) }
   let(:runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
-  let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, api_key, config, runtime_producer) }
+  let(:split_fetcher) { SplitIoClient::Cache::Fetchers::SplitFetcher.new(splits_repository, rule_based_segments_repository, api_key, config, runtime_producer) }
   let(:segment_fetcher) { SplitIoClient::Cache::Fetchers::SegmentFetcher.new(segments_repository, api_key, config, runtime_producer) }
-  let(:splits_worker) { SplitIoClient::SSE::Workers::SplitsWorker.new(split_fetcher, config, splits_repository, runtime_producer, segment_fetcher) }
+  let(:splits_worker) { SplitIoClient::SSE::Workers::SplitsWorker.new(split_fetcher, config, splits_repository, runtime_producer, segment_fetcher, rule_based_segments_repository) }
   let(:segments_worker) { SplitIoClient::SSE::Workers::SegmentsWorker.new(segment_fetcher, config, segments_repository) }
   let(:push_status_queue) { Queue.new }
   let(:notification_manager_keeper) { SplitIoClient::SSE::NotificationManagerKeeper.new(config, runtime_producer, push_status_queue) }
-  let(:repositories) { { splits: splits_repository, segments: segments_repository } }
+  let(:repositories) { { splits: splits_repository, segments: segments_repository, rule_based_segments: rule_based_segments_repository } }
   let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
   let(:params) do
     {
@@ -43,7 +44,7 @@ describe SplitIoClient::Engine::PushManager do
           send_mock_content(res, 'content')
         end
 
-        stub_request(:get, config.auth_service_url + "?s=1.1").to_return(status: 200, body: body_response)
+        stub_request(:get, config.auth_service_url + "?s=1.3").to_return(status: 200, body: body_response)
         config.streaming_service_url = server.base_uri
 
         sse_handler = SplitIoClient::SSE::SSEHandler.new(config, splits_worker, segments_worker, sse_client)
@@ -51,7 +52,7 @@ describe SplitIoClient::Engine::PushManager do
         push_manager = subject.new(config, sse_handler, api_key, runtime_producer)
         connected = push_manager.start_sse
 
-        expect(a_request(:get, config.auth_service_url + "?s=1.1")).to have_been_made.times(1)
+        expect(a_request(:get, config.auth_service_url + "?s=1.3")).to have_been_made.times(1)
 
         sleep(1.5)
         expect(connected).to eq(true)
@@ -61,14 +62,14 @@ describe SplitIoClient::Engine::PushManager do
     end
 
     it 'must not connect to server. Auth server return 500' do
-      stub_request(:get, config.auth_service_url + "?s=1.1").to_return(status: 500)
+      stub_request(:get, config.auth_service_url + "?s=1.3").to_return(status: 500)
 
       sse_handler = SplitIoClient::SSE::SSEHandler.new(config, splits_worker, segments_worker, sse_client)
 
       push_manager = subject.new(config, sse_handler, api_key, runtime_producer)
       connected = push_manager.start_sse
 
-      expect(a_request(:get, config.auth_service_url + "?s=1.1")).to have_been_made.times(1)
+      expect(a_request(:get, config.auth_service_url + "?s=1.3")).to have_been_made.times(1)
 
       sleep(1.5)
 
@@ -77,14 +78,14 @@ describe SplitIoClient::Engine::PushManager do
     end
 
     it 'must not connect to server. Auth server return 401' do
-      stub_request(:get, config.auth_service_url + "?s=1.1").to_return(status: 401)
+      stub_request(:get, config.auth_service_url + "?s=1.3").to_return(status: 401)
 
       sse_handler = SplitIoClient::SSE::SSEHandler.new(config, splits_worker, segments_worker, sse_client)
 
       push_manager = subject.new(config, sse_handler, api_key, runtime_producer)
       connected = push_manager.start_sse
 
-      expect(a_request(:get, config.auth_service_url + "?s=1.1")).to have_been_made.times(1)
+      expect(a_request(:get, config.auth_service_url + "?s=1.3")).to have_been_made.times(1)
 
       sleep(1.5)
 
@@ -100,14 +101,14 @@ describe SplitIoClient::Engine::PushManager do
           send_mock_content(res, 'content')
         end
 
-        stub_request(:get, config.auth_service_url + "?s=1.1").to_return(status: 200, body: body_response)
+        stub_request(:get, config.auth_service_url + "?s=1.3").to_return(status: 200, body: body_response)
         config.streaming_service_url = server.base_uri
 
         sse_handler = SplitIoClient::SSE::SSEHandler.new(config, splits_worker, segments_worker, sse_client)
         push_manager = subject.new(config, sse_handler, api_key, runtime_producer)
         connected = push_manager.start_sse
 
-        expect(a_request(:get, config.auth_service_url + "?s=1.1")).to have_been_made.times(1)
+        expect(a_request(:get, config.auth_service_url + "?s=1.3")).to have_been_made.times(1)
 
         sleep(1.5)
 
