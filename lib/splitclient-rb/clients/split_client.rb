@@ -51,7 +51,9 @@ module SplitIoClient
         multiple = false, evaluator = nil
       )
       log_deprecated_warning(GET_TREATMENT, evaluator, 'evaluator')
-      treatment(key, split_name, attributes, split_data, store_impressions, GET_TREATMENT_WITH_CONFIG, multiple, evaluation_options)
+      result = treatment(key, split_name, attributes, split_data, store_impressions, GET_TREATMENT_WITH_CONFIG, multiple, evaluation_options)
+
+      { :config => result[:config], :treatment => result[:treatment] }
     end
 
     def get_treatments(key, split_names, attributes = {}, evaluation_options = nil)
@@ -64,7 +66,11 @@ module SplitIoClient
     end
 
     def get_treatments_with_config(key, split_names, attributes = {}, evaluation_options = nil)
-      treatments(key, split_names, attributes, evaluation_options, GET_TREATMENTS_WITH_CONFIG)
+      results = treatments(key, split_names, attributes, evaluation_options, GET_TREATMENTS_WITH_CONFIG)
+
+      results.map{|key, value|
+        [key, { treatment: value[:treatment], config: value[:config] }]
+      }.to_h
     end
 
     def get_treatments_by_flag_set(key, flag_set, attributes = {}, evaluation_options = nil)
@@ -90,13 +96,21 @@ module SplitIoClient
     def get_treatments_with_config_by_flag_set(key, flag_set, attributes = {}, evaluation_options = nil)
       valid_flag_set = @split_validator.valid_flag_sets(GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SET, [flag_set])
       split_names = @splits_repository.get_feature_flags_by_sets(valid_flag_set)
-      treatments(key, split_names, attributes, evaluation_options, GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SET)
+      results = treatments(key, split_names, attributes, evaluation_options, GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SET)
+
+      results.map{|key, value|
+        [key, { treatment: value[:treatment], config: value[:config] }]
+      }.to_h
     end
 
     def get_treatments_with_config_by_flag_sets(key, flag_sets, attributes = {}, evaluation_options = nil)
       valid_flag_set = @split_validator.valid_flag_sets(GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SETS, flag_sets)
       split_names = @splits_repository.get_feature_flags_by_sets(valid_flag_set)
-      treatments(key, split_names, attributes, evaluation_options, GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SETS)
+      results = treatments(key, split_names, attributes, evaluation_options, GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SETS)
+
+      results.map{|key, value|
+        [key, { treatment: value[:treatment], config: value[:config] }]
+      }.to_h
     end
 
     def destroy
@@ -471,12 +485,20 @@ module SplitIoClient
     end
 
     def check_fallback_treatment(feature_name, label)
+      return  { 
+        label: (label != '')? label : nil,  
+        treatment: Engine::Models::Treatment::CONTROL, 
+        config: nil,
+        change_number: nil
+      } unless feature_name.is_a?(Symbol) || feature_name.is_a?(String)
+
       fallback_treatment = @fallback_treatment_calculator.resolve(feature_name.to_sym, label)
 
       { 
-        label: fallback_treatment.label, 
+        label: (label != '')? fallback_treatment.label : nil, 
         treatment: fallback_treatment.treatment, 
-        config: get_fallback_config(fallback_treatment) 
+        config: get_fallback_config(fallback_treatment),
+        change_number: nil
       }        
     end
 
