@@ -140,6 +140,7 @@ describe SplitIoClient do
         expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')).to have_been_made.times(1)
         expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1585948850109&rbSince=-1')).to have_been_made.times(1)
         expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1585948850110&rbSince=-1')).to have_been_made.times(0)
+        client.destroy
       end
     end
 
@@ -177,6 +178,7 @@ describe SplitIoClient do
         end
 
         expect(treatment).to eq('off')
+        client.destroy
       end
     end
 
@@ -206,6 +208,7 @@ describe SplitIoClient do
         sleep(2)
         expect(client.get_treatment('admin', 'bilal_split')).to eq('control')
         expect(client.get_treatment('admin', 'push_test')).to eq('after_fetch')
+        client.destroy
       end
     end
 
@@ -235,6 +238,7 @@ describe SplitIoClient do
         sleep(2)
         expect(client.get_treatment('admin', 'bilal_split')).to eq('control')
         expect(client.get_treatment('admin', 'push_test')).to eq('after_fetch')
+        client.destroy
       end
     end
 
@@ -264,6 +268,7 @@ describe SplitIoClient do
         sleep(2)
         expect(client.get_treatment('admin', 'bilal_split')).to eq('control')
         expect(client.get_treatment('admin', 'push_test')).to eq('after_fetch')
+        client.destroy
       end
     end
   end
