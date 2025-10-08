@@ -57,8 +57,12 @@ module SplitIoClient
       end
       without_nil = Array.new
       flag_sets.each { |flag_set|
-        without_nil.push(flag_set) if !flag_set.nil?
-        log_nil("flag set", method) if flag_set.nil?
+        if !flag_set.nil?
+          without_nil.push(flag_set) 
+          next
+        end
+        
+        log_nil("flag set", method)
       }
       if without_nil.length() == 0
         log_invalid_flag_set_type(method)
