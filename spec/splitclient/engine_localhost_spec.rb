@@ -160,4 +160,31 @@ describe SplitIoClient do
       end
     end
   end
+
+  context 'fallback treatment' do
+    subject { SplitIoClient::SplitFactoryBuilder.build('localhost', 
+          fallback_treatments: SplitIoClient::Engine::Models::FallbackTreatmentsConfiguration.new(
+            SplitIoClient::Engine::Models::FallbackTreatment.new(
+              "on-global", '{"prop": "global"}'
+            ), 
+            {:feature => SplitIoClient::Engine::Models::FallbackTreatment.new(
+              "on-local", '{"prop": "local"}'
+              )
+            }
+          ),
+          split_file: split_file).client 
+    }
+
+    let(:split_file) { File.expand_path(File.join(File.dirname(__FILE__), '../test_data/local_treatments/split.yaml')) }
+
+    it 'feature does not exist' do
+      result = subject.get_treatment_with_config('john_doe', 'feature')
+      expect(result[:treatment]).to eq('on-local')
+      expect(result[:config]).to eq('{"prop": "local"}')
+
+      result = subject.get_treatment_with_config('john_doe', 'feature2')
+      expect(result[:treatment]).to eq('on-global')
+      expect(result[:config]).to eq('{"prop": "global"}')
+    end
+  end
 end
