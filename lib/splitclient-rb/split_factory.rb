@@ -58,8 +58,8 @@ module SplitIoClient
       @evaluator = Engine::Parser::Evaluator.new(@segments_repository, @splits_repository, @rule_based_segment_repository, @config)
 
       start!
-
-      @client = SplitClient.new(@api_key, repositories, @status_manager, @config, @impressions_manager, @evaluation_producer, @evaluator, @split_validator)
+      fallback_treatment_calculator = SplitIoClient::Engine::FallbackTreatmentCalculator.new(@config.fallback_treatments_configuration) 
+      @client = SplitClient.new(@api_key, repositories, @status_manager, @config, @impressions_manager, @evaluation_producer, @evaluator, @split_validator, fallback_treatment_calculator)
       @manager = SplitManager.new(@splits_repository, @status_manager, @config)
     end
 
