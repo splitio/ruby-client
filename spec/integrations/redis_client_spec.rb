@@ -992,6 +992,94 @@ describe SplitIoClient do
       expect(events.size).to eq 0
     end
   end
+
+  context 'fallback treatments' do
+    it 'feature not found' do
+      factory_fallback =
+        SplitIoClient::SplitFactory.new('test_api_key',
+          fallback_treatments: SplitIoClient::Engine::Models::FallbackTreatmentsConfiguration.new(
+            SplitIoClient::Engine::Models::FallbackTreatment.new(
+              "on-global", '{"prop": "global"}'
+            ), 
+            {:feature => SplitIoClient::Engine::Models::FallbackTreatment.new(
+              "on-local", '{"prop": "local"}'
+              )
+            }
+          ),
+          logger: Logger.new(log),
+          cache_adapter: :redis,
+          redis_namespace: 'test',
+          mode: :consumer,
+          redis_url: 'redis://127.0.0.1:6379/0',
+          impression_listener: custom_impression_listener
+        )
+
+      client_fallback = factory_fallback.client
+      load_splits_redis(splits, client_fallback)
+      load_segment_redis(segment1, client_fallback)
+      load_segment_redis(segment2, client_fallback)
+      load_segment_redis(segment3, client_fallback)
+      load_flag_sets_redis(flag_sets, client_fallback)
+      client_fallback.block_until_ready
+
+      result = client_fallback.get_treatment_with_config('key2', 'feature')
+      expect(result[:treatment]).to eq('on-local')
+      expect(result[:config]).to eq('{"prop": "local"}')
+
+      result = client_fallback.get_treatment_with_config('key3', 'feature2')
+      expect(result[:treatment]).to eq('on-global')
+      expect(result[:config]).to eq('{"prop": "global"}')
+
+      sleep 0.5
+      impressions = custom_impression_listener.queue
+      expect(impressions.size).to eq 0
+    end
+
+    it 'exception' do
+      factory_fallback =
+        SplitIoClient::SplitFactory.new('test_api_key',
+          fallback_treatments: SplitIoClient::Engine::Models::FallbackTreatmentsConfiguration.new(
+            SplitIoClient::Engine::Models::FallbackTreatment.new(
+              "on-global", '{"prop": "global"}'
+            ), 
+            {:feature => SplitIoClient::Engine::Models::FallbackTreatment.new(
+              "on-local", '{"prop": "local"}'
+              )
+            }
+          ),
+          logger: Logger.new(log),
+          cache_adapter: :redis,
+          redis_namespace: 'test',
+          mode: :consumer,
+          redis_url: 'redis://127.0.0.1:6379/0',
+          impression_listener: custom_impression_listener
+        )
+
+      client_fallback = factory_fallback.client
+      load_splits_redis(splits, client_fallback)
+      load_segment_redis(segment1, client_fallback)
+      load_segment_redis(segment2, client_fallback)
+      load_segment_redis(segment3, client_fallback)
+      load_flag_sets_redis(flag_sets, client_fallback)
+      client_fallback.block_until_ready
+
+      splits_repository = client_fallback.instance_variable_get(:@splits_repository)
+      splits = File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/imp-toggle.json'))
+      split = JSON.parse(splits,:symbolize_names => true)[:ff][:d][0]
+      split[:trafficAllocation] = nil
+      splits_repository.update([split], [], -1)
+
+      result = client_fallback.get_treatment_with_config('key3', 'with_track_disabled')
+      expect(result[:treatment]).to eq('on-global')
+      expect(result[:config]).to eq('{"prop": "global"}')
+
+      sleep 0.5
+      impressions = custom_impression_listener.queue
+      expect(impressions.size).to eq 1
+      expect(impressions[0][:split_name]).to eq('with_track_disabled')
+      expect(impressions[0][:treatment][:label]).to eq('fallback - exception')
+    end
+  end
 end
 
 private

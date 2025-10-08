@@ -48,7 +48,8 @@
           ],
           "label": "default rule"
         }
-      ]
+      ],
+      "sets": ["set1"]
     },
     {
       "trafficTypeName": "user",
