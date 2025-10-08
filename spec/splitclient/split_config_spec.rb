@@ -180,5 +180,33 @@ describe SplitIoClient do
       configs = SplitIoClient::SplitConfig.new(flag_sets_filter: ['1set', 12])
       expect(configs.flag_sets_filter).to eq ['1set']
     end
+
+    it 'test fallback treatment validations' do
+      configs = SplitIoClient::SplitConfig.new(fallback_treatments: 0)
+      expect(configs.fallback_treatments_configuration.is_a?(SplitIoClient::Engine::Models::FallbackTreatmentsConfiguration)).to eq true
+      expect(configs.fallback_treatments_configuration.global_fallback_treatment).to eq nil
+      expect(configs.fallback_treatments_configuration.by_flag_fallback_treatment).to eq nil
+
+      configs = SplitIoClient::SplitConfig.new(fallback_treatments: SplitIoClient::Engine::Models::FallbackTreatmentsConfiguration.new)
+      expect(configs.fallback_treatments_configuration.is_a?(SplitIoClient::Engine::Models::FallbackTreatmentsConfiguration)).to eq true
+      expect(configs.fallback_treatments_configuration.global_fallback_treatment).to eq nil
+      expect(configs.fallback_treatments_configuration.by_flag_fallback_treatment).to eq nil
+
+      configs = SplitIoClient::SplitConfig.new(fallback_treatments: SplitIoClient::Engine::Models::FallbackTreatmentsConfiguration.new('on-global', {:feature => 'on_45-c'}))
+      expect(configs.fallback_treatments_configuration.global_fallback_treatment.is_a?(SplitIoClient::Engine::Models::FallbackTreatment)).to eq true
+      expect(configs.fallback_treatments_configuration.global_fallback_treatment.treatment).to eq 'on-global'
+      expect(configs.fallback_treatments_configuration.global_fallback_treatment.config).to eq nil
+      expect(configs.fallback_treatments_configuration.by_flag_fallback_treatment[:feature].is_a?(SplitIoClient::Engine::Models::FallbackTreatment)).to eq true
+      expect(configs.fallback_treatments_configuration.by_flag_fallback_treatment[:feature].treatment).to eq 'on_45-c'
+      expect(configs.fallback_treatments_configuration.by_flag_fallback_treatment[:feature].config).to eq nil
+
+      configs = SplitIoClient::SplitConfig.new(fallback_treatments: SplitIoClient::Engine::Models::FallbackTreatmentsConfiguration.new('on-gl/obal', {:feature => "0" * 300}))
+      expect(configs.fallback_treatments_configuration.global_fallback_treatment).to eq nil
+      expect(configs.fallback_treatments_configuration.by_flag_fallback_treatment).to eq Hash.new
+
+      configs = SplitIoClient::SplitConfig.new(fallback_treatments: SplitIoClient::Engine::Models::FallbackTreatmentsConfiguration.new(SplitIoClient::Engine::Models::FallbackTreatment.new('on-gl$#obal'), {"" => "treat"}))
+      expect(configs.fallback_treatments_configuration.global_fallback_treatment).to eq nil
+      expect(configs.fallback_treatments_configuration.by_flag_fallback_treatment).to eq Hash.new
+    end
   end
 end
