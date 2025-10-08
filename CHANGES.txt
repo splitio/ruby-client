@@ -1,5 +1,8 @@
 CHANGES
 
+8.9.0 (Oct 8, 2025)
+- Added new configuration for Fallback Treatments, which allows setting a treatment value and optional config to be returned in place of "control", either globally or by flag. Read more in our docs.
+
 8.8.0 (Sep 26, 2025)
 - Added a maximum size payload when posting unique keys telemetry in batches
 
