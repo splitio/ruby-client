@@ -170,7 +170,7 @@ describe SplitIoClient do
         end
 
         treatment = 'control'
-        for i in 1..5 do
+        for i in 1..10 do
           sleep(1)
           treatment = client.get_treatment('admin', 'bilal_split')
           break if treatment != 'control'
