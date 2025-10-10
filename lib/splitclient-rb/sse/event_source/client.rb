@@ -1,7 +1,9 @@
 # frozen_string_literal: false
 
-require 'socketry'
+require 'socket'
+require 'openssl'
 require 'uri'
+require 'timeout'
 
 module SplitIoClient
   module SSE
@@ -41,7 +43,7 @@ module SplitIoClient
           end
 
           @connected.make_false
-          @socket&.close
+          @socket.close
           push_status(status)
         rescue StandardError => e
           @config.logger.error("SSEClient close Error: #{e.inspect}")
@@ -83,14 +85,24 @@ module SplitIoClient
 
         def connect_stream(latch)
           return Constants::PUSH_NONRETRYABLE_ERROR unless socket_write(latch)
-
           while connected? || @first_event.value
             begin
-              partial_data = @socket.readpartial(10_000, timeout: @read_timeout)
-
+              partial_data = ""
+              Timeout::timeout @read_timeout do
+                partial_data = @socket.readpartial(10_000)
+              end
               read_first_event(partial_data, latch)
 
               raise 'eof exception' if partial_data == :eof
+            rescue Timeout::Error => e
+              @config.logger.error("SSE read operation timed out!: #{e.inspect}") if @config.debug_enabled
+              return nil
+            rescue EOFError
+              break            
+            rescue  Errno::EAGAIN => e
+              @config.logger.debug("SSE client transient error: #{e.inspect}") if @config.debug_enabled
+              IO.select([tcp_socket])
+              retry
             rescue Errno::EBADF, IOError => e
               @config.logger.error(e.inspect) if @config.debug_enabled
               return nil
@@ -109,7 +121,7 @@ module SplitIoClient
         def socket_write(latch)
           @first_event.make_true
           @socket = socket_connect
-          @socket.write(build_request(@uri))
+          @socket.puts(build_request(@uri))
           true
         rescue StandardError => e
           @config.logger.error("Error during connecting to #{@uri.host}. Error: #{e.inspect}")
@@ -138,9 +150,22 @@ module SplitIoClient
         end
 
         def socket_connect
-          return Socketry::SSL::Socket.connect(@uri.host, @uri.port) if @uri.scheme.casecmp('https').zero?
+          tcp_socket = TCPSocket.new(@uri.host, @uri.port)
+          if @uri.scheme.casecmp('https').zero?
+            begin
+              ssl_context = OpenSSL::SSL::SSLContext.new
+              ssl_socket = OpenSSL::SSL::SSLSocket.new(tcp_socket, ssl_context)
+              ssl_socket.hostname = @uri.host
+              ssl_socket.connect 
+              return ssl_socket.connect 
+            rescue Exception => e
+              @config.logger.error("socket connect error: #{e.inspect}")
+              puts e.inspect
+              return nil
+            end
+          end
 
-          Socketry::TCP::Socket.connect(@uri.host, @uri.port)
+          tcp_socket
         end
 
         def process_data(partial_data)
