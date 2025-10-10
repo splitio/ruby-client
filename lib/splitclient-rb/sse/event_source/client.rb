@@ -96,9 +96,9 @@ module SplitIoClient
               raise 'eof exception' if partial_data == :eof
             rescue Timeout::Error => e
               log_if_debug("SSE read operation timed out!: #{e.inspect}", 3)
-              return nil
+              return Constants::PUSH_RETRYABLE_ERROR
             rescue EOFError
-              break            
+              raise 'eof exception'
             rescue  Errno::EAGAIN => e
               log_if_debug("SSE client transient error: #{e.inspect}", 1)
               IO.select([tcp_socket])
@@ -233,7 +233,7 @@ module SplitIoClient
               @config.logger.debug(text)
             when 2
               @config.logger.info(text)
-            when 3
+            else
               @config.logger.error(text)
             end
           end
