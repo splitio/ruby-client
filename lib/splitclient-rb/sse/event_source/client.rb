@@ -156,11 +156,21 @@ module SplitIoClient
               ssl_context = OpenSSL::SSL::SSLContext.new
               ssl_socket = OpenSSL::SSL::SSLSocket.new(tcp_socket, ssl_context)
               ssl_socket.hostname = @uri.host
-              ssl_socket.connect 
-              return ssl_socket.connect 
+
+              begin
+                ssl_socket.connect_nonblock
+              rescue IO::WaitReadable
+                IO.select([ssl_socket])
+                retry
+              rescue IO::WaitWritable
+                IO.select(nil, [ssl_socket])
+                retry
+              end
+
+              return ssl_socket
+#              return ssl_socket.connect 
             rescue Exception => e
               @config.logger.error("socket connect error: #{e.inspect}")
-              puts e.inspect
               return nil
             end
           end
