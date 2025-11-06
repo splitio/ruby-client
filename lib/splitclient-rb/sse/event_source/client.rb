@@ -97,16 +97,18 @@ module SplitIoClient
             rescue Timeout::Error => e
               log_if_debug("SSE read operation timed out!: #{e.inspect}", 3)
               return Constants::PUSH_RETRYABLE_ERROR
-            rescue EOFError
+            rescue EOFError => e
+              log_if_debug("SSE read operation EOF Exception!: #{e.inspect}", 3)
               raise 'eof exception'
             rescue  Errno::EAGAIN => e
               log_if_debug("SSE client transient error: #{e.inspect}", 1)
               IO.select([tcp_socket])
               retry
             rescue Errno::EBADF, IOError => e
-              log_if_debug(e.inspect, 3)
+              log_if_debug("SSE read operation EBADF or IOError: #{e.inspect}", 3)
               return nil
             rescue StandardError => e
+              log_if_debug("SSE read operation StandardError: #{e.inspect}", 3)
               return nil if ENV['SPLITCLIENT_ENV'] == 'test'
 
               log_if_debug("Error reading partial data: #{e.inspect}", 3)
@@ -115,6 +117,8 @@ module SplitIoClient
 
             process_data(partial_data)
           end
+          log_if_debug("SSE read operation exited: #{connected}")
+
           nil
         end
 
