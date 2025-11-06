@@ -86,6 +86,7 @@ module SplitIoClient
         def connect_stream(latch)
           return Constants::PUSH_NONRETRYABLE_ERROR unless socket_write(latch)
           while connected? || @first_event.value
+            log_if_debug("Inside coonnect_stream while loop.", 3)
             begin
               partial_data = ""
               Timeout::timeout @read_timeout do
@@ -117,7 +118,7 @@ module SplitIoClient
 
             process_data(partial_data)
           end
-          log_if_debug("SSE read operation exited: #{connected}")
+          log_if_debug("SSE read operation exited: #{connected?}", 3)
 
           nil
         end
@@ -146,6 +147,7 @@ module SplitIoClient
 
           if response_code == OK_CODE && !error_event
             @connected.make_true
+            @config.logger.debug("SSE client first event Connected is true")
             @telemetry_runtime_producer.record_streaming_event(Telemetry::Domain::Constants::SSE_CONNECTION_ESTABLISHED, nil)
             push_status(Constants::PUSH_CONNECTED)
           end
@@ -183,9 +185,9 @@ module SplitIoClient
         end
 
         def process_data(partial_data)
+          log_if_debug("Event partial data: #{partial_data}", 1)
           return if partial_data.nil? || partial_data == KEEP_ALIVE_RESPONSE
 
-          log_if_debug("Event partial data: #{partial_data}", 1)
           events = @event_parser.parse(partial_data)
           events.each { |event| process_event(event) }
         rescue StandardError => e
