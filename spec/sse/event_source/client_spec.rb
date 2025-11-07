@@ -221,6 +221,36 @@ describe SplitIoClient::SSE::EventSource::Client do
       end
     end
 
+    it 'client timeout and reconnect' do
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')
+        .with(headers: { 'Authorization' => 'Bearer client-spec-key' })
+        .to_return(status: 200, body: '{"ff":{"d":[],"s":-1,"t":5564531221}, "rbs":{"d":[],"s":-1,"t":-1}}')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=5564531221&rbSince=-1')
+        .with(headers: { 'Authorization' => 'Bearer client-spec-key' })
+        .to_return(status: 200, body: '{"ff":{"d":[],"s":5564531221,"t":5564531221}, "rbs":{"d":[],"s":-1,"t":-1}}')
+
+      mock_server do |server|
+        start_workers
+        server.setup_response('/') do |_, res|
+          send_stream_content(res, event_split_update)
+        end
+
+        sse_client = subject.new(config, api_token, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor, push_status_queue, read_timeout: 0.1)
+        connected = sse_client.start(server.base_uri)
+        sleep 1
+        expect(connected).to eq(true)
+        expect(sse_client.connected?).to eq(true)
+        expect(push_status_queue.pop(true)).to eq(SplitIoClient::Constants::PUSH_CONNECTED)
+        sleep 3
+        expect(log.string).to include 'SSE read operation timed out, no data available'
+        expect(sse_client.connected?).to eq(true)
+        sse_client.close
+        expect(sse_client.connected?).to eq(false)
+
+        stop_workers
+      end
+    end
+
     it 'first event - when server return 400' do
       mock_server do |server|
         server.setup_response('/') do |_, res|

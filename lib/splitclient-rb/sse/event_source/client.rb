@@ -86,35 +86,45 @@ module SplitIoClient
         def connect_stream(latch)
           return Constants::PUSH_NONRETRYABLE_ERROR unless socket_write(latch)
           while connected? || @first_event.value
-            begin
-              partial_data = ""
-              Timeout::timeout @read_timeout do
+            if IO.select([@socket], nil, nil, @read_timeout)
+              begin
                 partial_data = @socket.readpartial(10_000)
+                read_first_event(partial_data, latch)
+
+                raise 'eof exception' if partial_data == :eof
+              rescue IO::WaitReadable => e
+                log_if_debug("SSE client transient error: #{e.inspect}", 1)
+                IO.select([@socket], nil, nil, @read_timeout)
+                retry
+              rescue Errno::ETIMEDOUT => e
+                log_if_debug("SSE read operation timed out!: #{e.inspect}", 3)
+                return Constants::PUSH_RETRYABLE_ERROR
+              rescue EOFError => e
+                log_if_debug("SSE read operation EOF Exception!: #{e.inspect}", 3)
+                raise 'eof exception'
+              rescue  Errno::EAGAIN => e
+                log_if_debug("SSE client transient error: #{e.inspect}", 1)
+                IO.select([@socket], nil, nil, @read_timeout)
+                retry
+              rescue Errno::EBADF, IOError => e
+                log_if_debug("SSE read operation EBADF or IOError: #{e.inspect}", 3)
+                return nil
+              rescue StandardError => e
+                log_if_debug("SSE read operation StandardError: #{e.inspect}", 3)
+                return nil if ENV['SPLITCLIENT_ENV'] == 'test'
+
+                log_if_debug("Error reading partial data: #{e.inspect}", 3)
+                return Constants::PUSH_RETRYABLE_ERROR
               end
-              read_first_event(partial_data, latch)
-
-              raise 'eof exception' if partial_data == :eof
-            rescue Timeout::Error => e
-              log_if_debug("SSE read operation timed out!: #{e.inspect}", 3)
-              return Constants::PUSH_RETRYABLE_ERROR
-            rescue EOFError
-              raise 'eof exception'
-            rescue  Errno::EAGAIN => e
-              log_if_debug("SSE client transient error: #{e.inspect}", 1)
-              IO.select([tcp_socket])
-              retry
-            rescue Errno::EBADF, IOError => e
-              log_if_debug(e.inspect, 3)
-              return nil
-            rescue StandardError => e
-              return nil if ENV['SPLITCLIENT_ENV'] == 'test'
-
-              log_if_debug("Error reading partial data: #{e.inspect}", 3)
+            else
+              @config.logger.debug("SSE read operation timed out, no data available.")
               return Constants::PUSH_RETRYABLE_ERROR
             end
 
             process_data(partial_data)
           end
+          log_if_debug("SSE read operation exited: #{connected?}", 1)
+
           nil
         end
 
@@ -142,6 +152,7 @@ module SplitIoClient
 
           if response_code == OK_CODE && !error_event
             @connected.make_true
+            @config.logger.debug("SSE client first event Connected is true")
             @telemetry_runtime_producer.record_streaming_event(Telemetry::Domain::Constants::SSE_CONNECTION_ESTABLISHED, nil)
             push_status(Constants::PUSH_CONNECTED)
           end
@@ -166,9 +177,8 @@ module SplitIoClient
                 IO.select(nil, [ssl_socket])
                 retry
               end
-
               return ssl_socket
-#              return ssl_socket.connect 
+
             rescue Exception => e
               @config.logger.error("socket connect error: #{e.inspect}")
               return nil
@@ -179,9 +189,9 @@ module SplitIoClient
         end
 
         def process_data(partial_data)
+          log_if_debug("Event partial data: #{partial_data}", 1)
           return if partial_data.nil? || partial_data == KEEP_ALIVE_RESPONSE
 
-          log_if_debug("Event partial data: #{partial_data}", 1)
           events = @event_parser.parse(partial_data)
           events.each { |event| process_event(event) }
         rescue StandardError => e
