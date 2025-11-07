@@ -86,7 +86,6 @@ module SplitIoClient
         def connect_stream(latch)
           return Constants::PUSH_NONRETRYABLE_ERROR unless socket_write(latch)
           while connected? || @first_event.value
-            log_if_debug("Inside coonnect_stream while loop.", 3)
             if IO.select([@socket], nil, nil, @read_timeout)
               begin
                 partial_data = @socket.readpartial(10_000)
@@ -118,14 +117,13 @@ module SplitIoClient
                 return Constants::PUSH_RETRYABLE_ERROR
               end
             else
-              # Timeout occurred, no data available
-              log_if_debug("SSE read operation timed out, no data available.", 3)
+              @config.logger.debug("SSE read operation timed out, no data available.")
               return Constants::PUSH_RETRYABLE_ERROR
             end
 
             process_data(partial_data)
           end
-          log_if_debug("SSE read operation exited: #{connected?}", 3)
+          log_if_debug("SSE read operation exited: #{connected?}", 1)
 
           nil
         end
@@ -179,9 +177,8 @@ module SplitIoClient
                 IO.select(nil, [ssl_socket])
                 retry
               end
-
               return ssl_socket
-#              return ssl_socket.connect 
+
             rescue Exception => e
               @config.logger.error("socket connect error: #{e.inspect}")
               return nil
