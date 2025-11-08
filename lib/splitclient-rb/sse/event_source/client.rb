@@ -38,7 +38,7 @@ module SplitIoClient
 
         def close(status = nil)
           unless connected?
-            log_if_debug('SSEClient already disconected.', 3)
+            @config.logger.debug('SSEClient already disconected.')
             return
           end
 
@@ -76,10 +76,10 @@ module SplitIoClient
 
         def connect_thread(latch)
           @config.threads[:connect_stream] = Thread.new do
-            log_if_debug('Starting connect_stream thread ...', 2)
+            @config.logger.info('Starting connect_stream thread ...')
             new_status = connect_stream(latch)
             push_status(new_status)
-            log_if_debug('connect_stream thread finished.', 2)
+            @config.logger.info('connect_stream thread finished.')
           end
         end
 
@@ -93,37 +93,38 @@ module SplitIoClient
 
                 raise 'eof exception' if partial_data == :eof
               rescue IO::WaitReadable => e
-                log_if_debug("SSE client transient error: #{e.inspect}", 1)
+                @config.logger.debug("SSE client transient error: #{e.inspect}")
                 IO.select([@socket], nil, nil, @read_timeout)
                 retry
               rescue Errno::ETIMEDOUT => e
-                log_if_debug("SSE read operation timed out!: #{e.inspect}", 3)
+                @config.logger.error("SSE read operation timed out!: #{e.inspect}")
                 return Constants::PUSH_RETRYABLE_ERROR
               rescue EOFError => e
-                log_if_debug("SSE read operation EOF Exception!: #{e.inspect}", 3)
+                @config.logger.error("SSE read operation EOF Exception!: #{e.inspect}")
                 raise 'eof exception'
               rescue  Errno::EAGAIN => e
-                log_if_debug("SSE client transient error: #{e.inspect}", 1)
+                puts "transient error"
+                @config.logger.debug("SSE client transient error: #{e.inspect}")
                 IO.select([@socket], nil, nil, @read_timeout)
                 retry
               rescue Errno::EBADF, IOError => e
-                log_if_debug("SSE read operation EBADF or IOError: #{e.inspect}", 3)
+                @config.logger.error("SSE read operation EBADF or IOError: #{e.inspect}")
                 return nil
               rescue StandardError => e
-                log_if_debug("SSE read operation StandardError: #{e.inspect}", 3)
+                @config.logger.error("SSE read operation StandardError: #{e.inspect}")
                 return nil if ENV['SPLITCLIENT_ENV'] == 'test'
 
-                log_if_debug("Error reading partial data: #{e.inspect}", 3)
+                @config.logger.error("Error reading partial data: #{e.inspect}")
                 return Constants::PUSH_RETRYABLE_ERROR
               end
             else
-              @config.logger.debug("SSE read operation timed out, no data available.")
+              @config.logger.error("SSE read operation timed out, no data available.")
               return Constants::PUSH_RETRYABLE_ERROR
             end
 
             process_data(partial_data)
           end
-          log_if_debug("SSE read operation exited: #{connected?}", 1)
+          @config.logger.info("SSE read operation exited: #{connected?}")
 
           nil
         end
@@ -134,7 +135,7 @@ module SplitIoClient
           @socket.puts(build_request(@uri))
           true
         rescue StandardError => e
-          log_if_debug("Error during connecting to #{@uri.host}. Error: #{e.inspect}", 3)
+          @config.logger.error("Error during connecting to #{@uri.host}. Error: #{e.inspect}")
           latch.count_down
           false
         end
@@ -189,7 +190,7 @@ module SplitIoClient
         end
 
         def process_data(partial_data)
-          log_if_debug("Event partial data: #{partial_data}", 1)
+          @config.logger.debug("Event partial data: #{partial_data}")
           return if partial_data.nil? || partial_data == KEEP_ALIVE_RESPONSE
 
           events = @event_parser.parse(partial_data)
@@ -207,7 +208,7 @@ module SplitIoClient
           req << "SplitSDKMachineName: #{@config.machine_name}\r\n"
           req << "SplitSDKClientKey: #{@api_key.split(//).last(4).join}\r\n" unless @api_key.nil?
           req << "Cache-Control: no-cache\r\n\r\n"
-          log_if_debug("Request info: #{req}", 1)
+          @config.logger.debug("Request info: #{req}")
           req
         end
 
@@ -244,19 +245,6 @@ module SplitIoClient
           
           @config.logger.debug("Pushing new sse status: #{status}")
           @status_queue.push(status)
-        end
-
-        def log_if_debug(text, level)
-          if @config.debug_enabled
-            case level
-            when 1
-              @config.logger.debug(text)
-            when 2
-              @config.logger.info(text)
-            else
-              @config.logger.error(text)
-            end
-          end
         end
       end
     end
