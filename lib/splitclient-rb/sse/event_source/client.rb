@@ -93,6 +93,10 @@ module SplitIoClient
 
                 raise 'eof exception' if partial_data == :eof
               rescue IO::WaitReadable => e
+                @config.logger.debug("SSE client IO::WaitReadable transient error: #{e.inspect}")
+                IO.select([@socket], nil, nil, @read_timeout)
+                retry
+              rescue  Errno::EAGAIN => e
                 @config.logger.debug("SSE client transient error: #{e.inspect}")
                 IO.select([@socket], nil, nil, @read_timeout)
                 retry
@@ -102,14 +106,9 @@ module SplitIoClient
               rescue EOFError => e
                 @config.logger.error("SSE read operation EOF Exception!: #{e.inspect}")
                 raise 'eof exception'
-              rescue  Errno::EAGAIN => e
-                puts "transient error"
-                @config.logger.debug("SSE client transient error: #{e.inspect}")
-                IO.select([@socket], nil, nil, @read_timeout)
-                retry
               rescue Errno::EBADF, IOError => e
                 @config.logger.error("SSE read operation EBADF or IOError: #{e.inspect}")
-                return nil
+                return Constants::PUSH_RETRYABLE_ERROR
               rescue StandardError => e
                 @config.logger.error("SSE read operation StandardError: #{e.inspect}")
                 return nil if ENV['SPLITCLIENT_ENV'] == 'test'
