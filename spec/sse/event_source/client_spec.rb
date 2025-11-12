@@ -304,10 +304,10 @@ describe SplitIoClient::SSE::EventSource::Client do
       end
     end
 
-    it 'test retry with EAGAIN and IO::WaitReadable exceptions' do
+    it 'test retry with EAGAIN exceptions' do
       mock_server do |server|
         server.setup_response('/') do |_, res|
-          send_stream_content(res, event_split_update)
+          send_stream_content(res, event_occupancy)
         end
         start_workers
 
@@ -317,18 +317,41 @@ describe SplitIoClient::SSE::EventSource::Client do
         latch = Concurrent::CountDownLatch.new(1)
 
         allow(sse_client).to receive(:read_first_event).and_raise(Errno::EAGAIN)
+        sleep(1)
         thr1 = Thread.new do
           sse_client.send(:connect_stream, latch)
         end        
+        sleep(1)
         allow(sse_client).to receive(:read_first_event).and_return(true)
-        expect(thr1.status).to eq('run')
-        
-        allow(sse_client).to receive(:read_first_event).and_raise(IO::WaitReadable)
+        expect(log.string).to include 'SSE client transient error'
+
+        stop_workers
+      end
+    end
+
+    it 'test retry with IO::WaitReadable exceptions' do
+      log2 = StringIO.new
+      config2 = SplitIoClient::SplitConfig.new(logger: Logger.new(log2))
+
+      mock_server do |server|
+        server.setup_response('/') do |_, res|
+          send_stream_content(res, event_occupancy)
+        end
+        start_workers
+
+        sse_client2 = subject.new(config2, api_token, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor, push_status_queue)
+
+        sse_client2.instance_variable_set(:@uri, URI(server.base_uri))
+        latch = Concurrent::CountDownLatch.new(1)
+
+        allow(sse_client2).to receive(:read_first_event).and_raise(IO::EWOULDBLOCKWaitReadable)
+        sleep(1)
         thr2 = Thread.new do
-          sse_client.send(:connect_stream, latch)
+          sse_client2.send(:connect_stream, latch)
         end        
-        allow(sse_client).to receive(:read_first_event).and_return(true)
-        expect(thr2.status).to eq('run')
+        sleep(1)
+        allow(sse_client2).to receive(:read_first_event).and_return(true)
+        expect(log2.string).to include 'SSE client IO::WaitReadable transient error'
 
         stop_workers
       end
