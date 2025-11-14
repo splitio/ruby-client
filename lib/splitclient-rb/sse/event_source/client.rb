@@ -126,6 +126,8 @@ module SplitIoClient
               end
             rescue Errno::EBADF
               @config.logger.debug("SSE socket is not connected (Errno::EBADF)")
+            finally
+              break
             end
 
             process_data(partial_data)
