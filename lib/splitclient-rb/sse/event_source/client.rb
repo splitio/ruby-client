@@ -41,9 +41,12 @@ module SplitIoClient
             @config.logger.debug('SSEClient already disconected.')
             return
           end
+          @config.logger.debug("Closing SSEClient socket")
 
           @connected.make_false
+          @socket.sync_close = true
           @socket.close
+          @config.logger.debug("SSEClient socket state #{@socket.state}")
           push_status(status)
         rescue StandardError => e
           @config.logger.error("SSEClient close Error: #{e.inspect}")
@@ -86,39 +89,43 @@ module SplitIoClient
         def connect_stream(latch)
           return Constants::PUSH_NONRETRYABLE_ERROR unless socket_write(latch)
           while connected? || @first_event.value
-            if IO.select([@socket], nil, nil, @read_timeout)
-              begin
-                partial_data = @socket.readpartial(10_000)
-                read_first_event(partial_data, latch)
+            begin 
+              if IO.select([@socket], nil, nil, @read_timeout)
+                begin
+                  partial_data = @socket.readpartial(10_000)
+                  read_first_event(partial_data, latch)
 
-                raise 'eof exception' if partial_data == :eof
-              rescue IO::WaitReadable => e
-                @config.logger.debug("SSE client IO::WaitReadable transient error: #{e.inspect}")
-                IO.select([@socket], nil, nil, @read_timeout)
-                retry
-              rescue  Errno::EAGAIN => e
-                @config.logger.debug("SSE client transient error: #{e.inspect}")
-                IO.select([@socket], nil, nil, @read_timeout)
-                retry
-              rescue Errno::ETIMEDOUT => e
-                @config.logger.error("SSE read operation timed out!: #{e.inspect}")
-                return Constants::PUSH_RETRYABLE_ERROR
-              rescue EOFError => e
-                @config.logger.error("SSE read operation EOF Exception!: #{e.inspect}")
-                raise 'eof exception'
-              rescue Errno::EBADF, IOError => e
-                @config.logger.error("SSE read operation EBADF or IOError: #{e.inspect}")
-                return Constants::PUSH_RETRYABLE_ERROR
-              rescue StandardError => e
-                @config.logger.error("SSE read operation StandardError: #{e.inspect}")
-                return nil if ENV['SPLITCLIENT_ENV'] == 'test'
+                  raise 'eof exception' if partial_data == :eof
+                rescue IO::WaitReadable => e
+                  @config.logger.debug("SSE client IO::WaitReadable transient error: #{e.inspect}")
+                  IO.select([@socket], nil, nil, @read_timeout)
+                  retry
+                rescue  Errno::EAGAIN => e
+                  @config.logger.debug("SSE client transient error: #{e.inspect}")
+                  IO.select([@socket], nil, nil, @read_timeout)
+                  retry
+                rescue Errno::ETIMEDOUT => e
+                  @config.logger.error("SSE read operation timed out!: #{e.inspect}")
+                  return Constants::PUSH_RETRYABLE_ERROR
+                rescue EOFError => e
+                  @config.logger.error("SSE read operation EOF Exception!: #{e.inspect}")
+                  raise 'eof exception'
+                rescue Errno::EBADF, IOError => e
+                  @config.logger.error("SSE read operation EBADF or IOError: #{e.inspect}")
+                  return Constants::PUSH_RETRYABLE_ERROR
+                rescue StandardError => e
+                  @config.logger.error("SSE read operation StandardError: #{e.inspect}")
+                  return nil if ENV['SPLITCLIENT_ENV'] == 'test'
 
-                @config.logger.error("Error reading partial data: #{e.inspect}")
+                  @config.logger.error("Error reading partial data: #{e.inspect}")
+                  return Constants::PUSH_RETRYABLE_ERROR
+                end
+              else
+                @config.logger.error("SSE read operation timed out, no data available.")
                 return Constants::PUSH_RETRYABLE_ERROR
               end
-            else
-              @config.logger.error("SSE read operation timed out, no data available.")
-              return Constants::PUSH_RETRYABLE_ERROR
+            rescue Errno::EBADF
+              @config.logger.debug("SSE socket is not connected (Errno::EBADF)")
             end
 
             process_data(partial_data)
