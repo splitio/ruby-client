@@ -44,9 +44,9 @@ module SplitIoClient
           @config.logger.debug("Closing SSEClient socket")
 
           @connected.make_false
-          @socket.sync_close = true
+          @socket.sync_close = true if @socket.is_a? OpenSSL::SSL::SSLSocket
           @socket.close
-          @config.logger.debug("SSEClient socket state #{@socket.state}")
+          @config.logger.debug("SSEClient socket state #{@socket.state}") if @socket.is_a? OpenSSL::SSL::SSLSocket
           push_status(status)
         rescue StandardError => e
           @config.logger.error("SSEClient close Error: #{e.inspect}")
@@ -60,7 +60,6 @@ module SplitIoClient
 
           @uri = URI(url)
           latch = Concurrent::CountDownLatch.new(1)
-
           connect_thread(latch)
 
           return false unless latch.wait(CONNECT_TIMEOUT)
@@ -108,6 +107,7 @@ module SplitIoClient
                   @config.logger.error("SSE read operation timed out!: #{e.inspect}")
                   return Constants::PUSH_RETRYABLE_ERROR
                 rescue EOFError => e
+                  puts "SSE read operation EOF Exception!: #{e.inspect}"
                   @config.logger.error("SSE read operation EOF Exception!: #{e.inspect}")
                   raise 'eof exception'
                 rescue Errno::EBADF, IOError => e
@@ -126,7 +126,11 @@ module SplitIoClient
               end
             rescue Errno::EBADF
               @config.logger.debug("SSE socket is not connected (Errno::EBADF)")
-            finally
+              break
+            rescue RuntimeError
+              raise 'eof exception'
+            rescue Exception => e
+              @config.logger.debug("SSE socket is not connected: #{e.inspect}")
               break
             end
 
