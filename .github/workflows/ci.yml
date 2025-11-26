@@ -35,6 +35,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up Java
+        uses: actions/setup-java@v2
+        with:
+          java-version: 17
+          distribution: "temurin"
+
       - name: Setup Ruby ${{ matrix.version }}
         uses: ruby/setup-ruby@v1
         with:
@@ -57,7 +63,7 @@ jobs:
 
       - name: SonarQube Scan (Push)
         if: matrix.version == '3.2.2' && github.event_name == 'push'
-        uses: SonarSource/sonarcloud-github-action@v1.9
+        uses: SonarSource/sonarcloud-github-action@v5.0.0
         env:
           SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -69,13 +75,14 @@ jobs:
 
       - name: SonarQube Scan (Pull Request)
         if: matrix.version == '3.2.2' && github.event_name == 'pull_request'
-        uses: SonarSource/sonarcloud-github-action@v1.9
+        uses: SonarSource/sonarcloud-github-action@v5.0.0
         env:
           SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           projectBaseDir: .
           args: >
+            -Dsonar.java.source=17
             -Dsonar.host.url=${{ secrets.SONARQUBE_HOST }}
             -Dsonar.projectVersion=${{ env.VERSION }}
             -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}

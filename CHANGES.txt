@@ -1,5 +1,8 @@
 CHANGES
 
+8.10.0 (Nov 28, 2025)
+- Replaced socketry gem used in streaming feature with built-in socket lib.  
+
 8.9.0 (Oct 8, 2025)
 - Added new configuration for Fallback Treatments, which allows setting a treatment value and optional config to be returned in place of "control", either globally or by flag. Read more in our docs.
 
