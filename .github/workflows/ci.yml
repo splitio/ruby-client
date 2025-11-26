@@ -82,6 +82,7 @@ jobs:
         with:
           projectBaseDir: .
           args: >
+            -Dsonar.java.source=17
             -Dsonar.host.url=${{ secrets.SONARQUBE_HOST }}
             -Dsonar.projectVersion=${{ env.VERSION }}
             -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
