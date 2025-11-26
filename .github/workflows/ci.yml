@@ -35,6 +35,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up Java
+        uses: actions/setup-java@v2
+        with:
+          java-version: 17
+          distribution: "temurin"
+
       - name: Setup Ruby ${{ matrix.version }}
         uses: ruby/setup-ruby@v1
         with:
@@ -66,12 +72,6 @@ jobs:
           args: >
             -Dsonar.host.url=${{ secrets.SONARQUBE_HOST }}
             -Dsonar.projectVersion=${{ env.VERSION }}
-
-      - name: Set up Java
-        uses: actions/setup-java@v2
-        with:
-          java-version: 17
-          distribution: "temurin"
 
       - name: SonarQube Scan (Pull Request)
         if: matrix.version == '3.2.2' && github.event_name == 'pull_request'
