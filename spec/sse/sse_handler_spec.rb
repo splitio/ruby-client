@@ -48,7 +48,6 @@ describe SplitIoClient::SSE::SSEHandler do
 
       config.streaming_service_url = server.base_uri
       sse_handler = subject.new(config, splits_worker, segments_worker, sse_client)
-
       connected = sse_handler.start('token-test', 'channel-test')
       expect(connected).to eq(true)
       expect(sse_handler.connected?).to eq(true)
