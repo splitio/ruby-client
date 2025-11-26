@@ -49,6 +49,22 @@ jobs:
       - name: Install dependencies
         run: bundle install
 
+      - name: SonarQube Scan (Pull Request)
+        if: matrix.version == '3.2.2' && github.event_name == 'pull_request'
+        uses: SonarSource/sonarcloud-github-action@v5.0.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectBaseDir: .
+          args: >
+            -Dsonar.java.source=17
+            -Dsonar.host.url=${{ secrets.SONARQUBE_HOST }}
+            -Dsonar.projectVersion=${{ env.VERSION }}
+            -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
+            -Dsonar.pullrequest.branch=${{ github.event.pull_request.head.ref }}
+            -Dsonar.pullrequest.base=${{ github.event.pull_request.base.ref }}
+
       - name: Run tests
         run: bundle exec rake
 
@@ -73,18 +89,3 @@ jobs:
             -Dsonar.host.url=${{ secrets.SONARQUBE_HOST }}
             -Dsonar.projectVersion=${{ env.VERSION }}
 
-      - name: SonarQube Scan (Pull Request)
-        if: matrix.version == '3.2.2' && github.event_name == 'pull_request'
-        uses: SonarSource/sonarcloud-github-action@v5.0.0
-        env:
-          SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          projectBaseDir: .
-          args: >
-            -Dsonar.java.source=17
-            -Dsonar.host.url=${{ secrets.SONARQUBE_HOST }}
-            -Dsonar.projectVersion=${{ env.VERSION }}
-            -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
-            -Dsonar.pullrequest.branch=${{ github.event.pull_request.head.ref }}
-            -Dsonar.pullrequest.base=${{ github.event.pull_request.base.ref }}
