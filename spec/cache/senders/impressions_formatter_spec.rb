@@ -92,29 +92,55 @@ describe SplitIoClient::Cache::Senders::ImpressionsFormatter do
         ]
       )
 
-      expect(formatted_impressions.find { |i| i[:f] == :foo2 }[:i]).to match_array(
-        [
-          {
-            k: 'matching_key2',
-            t: 'off',
-            m: 1_478_113_518_285,
-            b: 'foo2',
-            r: 'custom_label2',
-            c: 123_499,
-            pt: nil
-          },
-          {
-            k: 'matching_key3',
-            t: 'off',
-            m: 1_478_113_518_900,
-            b: nil,
-            r: nil,
-            c: nil,
-            pt: nil,
-            properties: '{"prop":"val"}'
-          }
-        ]
-      )
+      if cache_adapter == :redis        
+        expect(formatted_impressions.find { |i| i[:f] == :foo2 }[:i]).to match_array(
+          [
+            {
+              k: 'matching_key2',
+              t: 'off',
+              m: 1_478_113_518_285,
+              b: 'foo2',
+              r: 'custom_label2',
+              c: 123_499,
+              pt: nil
+            },
+            {
+              k: 'matching_key3',
+              t: 'off',
+              m: 1_478_113_518_900,
+              b: nil,
+              r: nil,
+              c: nil,
+              pt: nil,
+              properties: '"{\"prop\":\"val\"}"'
+            }
+          ]
+        )
+      else
+        expect(formatted_impressions.find { |i| i[:f] == :foo2 }[:i]).to match_array(
+          [
+            {
+              k: 'matching_key2',
+              t: 'off',
+              m: 1_478_113_518_285,
+              b: 'foo2',
+              r: 'custom_label2',
+              c: 123_499,
+              pt: nil
+            },
+            {
+              k: 'matching_key3',
+              t: 'off',
+              m: 1_478_113_518_900,
+              b: nil,
+              r: nil,
+              c: nil,
+              pt: nil,
+              properties: '{"prop":"val"}'
+            }
+          ]
+        )
+      end
     end
 
     it 'filters out impressions with the same key/treatment' do
