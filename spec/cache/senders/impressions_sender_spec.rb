@@ -55,6 +55,8 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
     end
 
     it 'post impressions with corresponding impressions metadata' do
+      skip "Test is not relevant for redis" if cache_adapter == :redis
+
       stub_request(:post, 'https://events.split.io/api/testImpressions/bulk')
         .to_return(status: 200, body: 'ok')
 
@@ -99,6 +101,7 @@ describe SplitIoClient::Cache::Senders::ImpressionsSender do
     end
 
     it 'calls #post_impressions upon destroy' do
+      skip "Test is not relevant for redis" if cache_adapter == :redis
       stub_request(:post, 'https://events.split.io/api/testImpressions/bulk').to_return(status: 200, body: '')
 
       sender.call
