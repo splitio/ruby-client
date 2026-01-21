@@ -177,6 +177,61 @@ describe SplitIoClient::RuleBasedSegmentMatcher do
       matcher = described_class.new(segments_repository, rbs_repositoy, 'sample_rule_based_segment', config)
       expect(matcher.match?(value: 'bilal@split.io', attributes: {'email': 'bilal@split.io'})).to be true
       expect(matcher.match?(value: 'bilal', attributes: {'email': 'bilal'})).to be false
-    end        
+    end
+
+    it 'return true if has multiple conditions' do
+      rbs_repositoy = SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config)
+      rbs = {
+        :name => 'sample_rule_based_segment',
+        :trafficTypeName => 'tt_name_1',
+        :conditions => [
+          {
+            :matcherGroup => {
+              :combiner => "AND",
+              :matchers => [
+                {
+                  :matcherType => "WHITELIST",
+                  :negate => false,
+                  :userDefinedSegmentMatcherData => nil,
+                  :whitelistMatcherData => {
+                      :whitelist => [
+                        "bilal"
+                      ]
+                  },
+                  :unaryNumericMatcherData => nil,
+                  :betweenMatcherData => nil
+                }
+              ]
+            }
+          },
+          {
+            :matcherGroup => {
+              :combiner => "AND",
+              :matchers => [
+                {
+                  :matcherType => "WHITELIST",
+                  :negate => false,
+                  :userDefinedSegmentMatcherData => nil,
+                  :whitelistMatcherData => {
+                      :whitelist => [
+                        "mauro"
+                      ]
+                  },
+                  :unaryNumericMatcherData => nil,
+                  :betweenMatcherData => nil
+                }
+              ]
+            }
+          }
+        ],
+        :excluded => {:keys => [], :segments => []}
+      }
+
+      rbs_repositoy.update([rbs], [], -1)
+      matcher = described_class.new(segments_repository, rbs_repositoy, 'sample_rule_based_segment', config)
+      expect(matcher.match?(value: 'mauro', attributes: {})).to be true
+      expect(matcher.match?(value: 'bilal', attributes: {})).to be true
+      expect(matcher.match?(value: 'nicolas', attributes: {})).to be false
+    end
   end
 end
