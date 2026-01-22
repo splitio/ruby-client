@@ -1401,8 +1401,8 @@ describe SplitIoClient do
       client_rbs = factory_rbs.client
       client_rbs.block_until_ready
 
-      expect(client_rbs.get_treatment('bilal@split.io', 'rbs_feature_flag', {:email => 'bilal@split.io'})).to eq('on')
-      expect(client_rbs.get_treatment('mauro@split.io', 'rbs_feature_flag', {:email => 'mauro@split.io'})).to eq('off')
+      expect(client_rbs.get_treatment('bilal', 'rbs_feature_flag', {:email => 'bilal@split.io'})).to eq('on')
+      expect(client_rbs.get_treatment('mauro', 'rbs_feature_flag', {:email => 'mauro@split.io'})).to eq('off')
     end
   end
 
