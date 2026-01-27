@@ -14,6 +14,7 @@ module SplitIoClient
 
           def add_bulk(impressions)
             impressions_json = impressions.map do |impression|
+              impression[:i][:properties] = impression[:i][:properties].to_json.to_s unless impression[:i][:properties].nil?
               impression.to_json
             end
 
