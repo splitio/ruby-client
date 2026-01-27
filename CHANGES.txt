@@ -1,7 +1,8 @@
 CHANGES
 
-8.10.1 (Jan 21, 2025)
-- Fixed rule-based segment matcher.
+8.10.1 (Jan 28, 2025)
+- Fixed rule-based segment matcher to exit when a conition is met.
+- Fixed impressions properties format in redis mode. 
 
 8.10.0 (Nov 28, 2025)
 - Updated socketry gem used in streaming feature with built-in socket lib.  
