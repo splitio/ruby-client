@@ -42,21 +42,11 @@ pipeline:
                     command: |
                       # Install dependencies using Bundle
                       cd /harness
+                      ls -ail
                       bundle install
-                  timeout: 10m
-              - step:
-                  identifier: run_tests
-                  name: Run tests with RSpec
-                  type: RunTests
-                  timeout: 10m
-                  spec:
-                    language: Ruby
-                    buildTool: Rspec
-                    reports:
-                      type: JUnit
-                      spec:
-                        paths:
-                          - spec/reports/*.xml
+                      rake compile:murmurhash
+                      bundle exec rake
+                  timeout: 30m
               - step:
                   type: Run
                   name: Run RuboCop
