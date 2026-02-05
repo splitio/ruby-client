@@ -42,12 +42,17 @@ pipeline:
                     command: |
                       apk update
                       apk add git
+                      apk add build-base
                       # Install dependencies using Bundle
                       cd /harness
-                      git ls-files -z
-                      ls -ail
+
+                      echo "running bundle install"
                       bundle install
+
+                      echo "running rake compile"
                       rake compile:murmurhash
+
+                      echo "running tests"
                       bundle exec rake
                   timeout: 30m
               - step:
