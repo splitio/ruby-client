@@ -43,6 +43,9 @@ pipeline:
                       apk update
                       apk add git
                       apk add build-base
+                      apk add redis 
+                      redis-server /etc/redis.conf &
+
                       # Install dependencies using Bundle
                       cd /harness
 
