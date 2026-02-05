@@ -42,6 +42,7 @@ pipeline:
                     command: |
                       # Install dependencies using Bundle
                       cd /harness
+                      git ls-files -z
                       ls -ail
                       bundle install
                       rake compile:murmurhash
