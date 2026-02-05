@@ -12,7 +12,7 @@ pipeline:
         repoName: ruby-client
         build: <+input>
         branch: harness-pipeline
-        filePath: .harness/pipelines/ruby-client.yaml
+        filePath: .harness/orgs/PROD/projects/Harness_Split/pipelines/rubyclient.yaml
   stages:
     - stage:
         name: Build and Test
