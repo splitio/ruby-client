@@ -11,6 +11,8 @@ pipeline:
         connectorRef: fmegithubharnessgitops
         repoName: ruby-client
         build: <+input>
+        branch: harness-pipeline
+        filePath: .harness/pipelines/ruby-client.yaml
   stages:
     - stage:
         name: Build and Test
