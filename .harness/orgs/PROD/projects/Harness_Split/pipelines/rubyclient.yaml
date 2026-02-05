@@ -41,6 +41,7 @@ pipeline:
                     shell: Sh
                     command: |
                       # Install dependencies using Bundle
+                      cd /harness
                       bundle install
                   timeout: 10m
               - step:
