@@ -69,9 +69,11 @@ pipeline:
                         image: ruby:2.5.0
                         shell: Sh
                         command: |-
-                          apt-get update
+                          #apt-get update
+                          echo "install git"
                           apk-get install git
                           #apk add build-base
+                          echo "install redis"
                           apt-get install redis 
                           redis-server /etc/redis.conf &
 
