@@ -41,9 +41,9 @@ pipeline:
                         image: ruby:3.2.2-alpine
                         shell: Sh
                         command: |-
-                          apt-get update
-                          apt-get install git
-                          apt-get install redis 
+                          apk update
+                          apk add git
+                          apk add redis 
                           redis-server /etc/redis.conf &
 
                           # Install dependencies using Bundle
@@ -69,10 +69,10 @@ pipeline:
                         image: ruby:2.5
                         shell: Sh
                         command: |-
-                          apk update
-                          apk add git
-                          apk add build-base
-                          apk add redis 
+                          apt-get update
+                          apk-get install git
+                          #apk add build-base
+                          apt-get install redis 
                           redis-server /etc/redis.conf &
 
                           # Install dependencies using Bundle
