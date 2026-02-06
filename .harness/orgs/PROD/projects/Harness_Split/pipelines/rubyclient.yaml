@@ -80,7 +80,7 @@ pipeline:
                           cd /harness
 
                           echo "running bundle install"
-                          gem install bundler
+                          gem install bundler -v 2.3.27
                           bundle install
 
                           echo "running rake compile"
