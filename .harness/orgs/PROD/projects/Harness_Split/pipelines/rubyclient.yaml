@@ -74,7 +74,7 @@ pipeline:
                           apt-get install git
                           #apk add build-base
                           echo "install redis"
-                          apt-get install redis 
+                          apt-get install -y redis-server
                           redis-server /etc/redis.conf &
 
                           # Install dependencies using Bundle
