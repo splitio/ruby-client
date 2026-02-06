@@ -87,10 +87,10 @@ pipeline:
                           /usr/local/lib/ruby/gems/2.5.0/gems/bundler-2.3.27/exe/bundle install
 
                           echo "running rake compile"
-                          rake compile:murmurhash
+                          # rake compile:murmurhash
 
                           echo "running tests"
-                          bundle exec rake
+                          /usr/local/lib/ruby/gems/2.5.0/gems/bundler-2.3.27/exe/bundle/bundle exec rake
                       timeout: 30m
               - step:
                   type: Run
