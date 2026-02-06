@@ -80,17 +80,16 @@ pipeline:
                           cd /harness
 
                           echo "running bundle install"
-                          gem uninstall -i /usr/local/lib/ruby/gems/2.5.0 bundler
-                          gem install bundler -v 2.3.27 -i /usr/local/lib/ruby/gems/2.5.0 --force
+                          gem uninstall bundler
+                          gem install bundler -v 2.3.27
 
-                          ls -ail /usr/local/lib/ruby/gems/2.5.0/gems/bundler-2.3.27
-                          /usr/local/lib/ruby/gems/2.5.0/gems/bundler-2.3.27/exe/bundle install
+                          bundle install
 
                           echo "running rake compile"
                           # rake compile:murmurhash
 
                           echo "running tests"
-                          /usr/local/lib/ruby/gems/2.5.0/gems/bundler-2.3.27/exe/bundle exec rake
+                          bundle exec rake
                       timeout: 30m
               - step:
                   type: Run
