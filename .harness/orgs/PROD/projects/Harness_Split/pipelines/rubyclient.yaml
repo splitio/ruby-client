@@ -79,7 +79,7 @@ pipeline:
                           #apt-get install git
                           #apk add build-base
                           echo "install redis"
-                          apt-get install -y redis-server
+                          apt-get install -y redis-server --allow-unauthenticated
                           redis-server /etc/redis.conf &
 
                           # Install dependencies using Bundle
