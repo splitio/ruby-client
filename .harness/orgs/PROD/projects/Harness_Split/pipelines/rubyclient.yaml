@@ -84,9 +84,12 @@ pipeline:
                           export GEM_HOME=/usr/local/lib/ruby/gems/2.5.0
                           gem uninstall bundler
                           gem install bundler -v 2.3.27
+                          echo "copy bundle"
                           cp /usr/local/lib/ruby/gems/2.5.0/gems/bundler-2.3.27/exe/bundle /usr/local/bin
+                          echo "copy bundler"
                           cp /usr/local/lib/ruby/gems/2.5.0/gems/bundler-2.3.27/exe/bundler /usr/local/bin
 
+                          echo "run bundle install"
                           bundle install
 
                           echo "running rake compile"
