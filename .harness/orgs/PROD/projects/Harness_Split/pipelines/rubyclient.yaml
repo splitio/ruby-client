@@ -83,7 +83,7 @@ pipeline:
                           gem uninstall -i /usr/local/lib/ruby/gems/2.5.0 bundler
                           gem install bundler -v 2.3.27 -i /usr/local/lib/ruby/gems/2.5.0 --force
 
-                          bundle install
+                          /usr/local/lib/ruby/gems/2.5.0/bundler-2.3.27/exe/bundle install
 
                           echo "running rake compile"
                           rake compile:murmurhash
