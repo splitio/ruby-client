@@ -81,7 +81,7 @@ pipeline:
 
                           echo "running bundle install"
                           gem uninstall -i /usr/local/lib/ruby/gems/2.5.0 bundler
-                          gem install bundler -v 2.3.27 -i /usr/local/lib/ruby/gems --force
+                          gem install bundler -v 2.3.27 -i /usr/local/lib/ruby/gems/2.5.0 --force
 
                           bundle install
 
