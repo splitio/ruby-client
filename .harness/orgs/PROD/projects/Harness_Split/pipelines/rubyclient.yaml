@@ -80,6 +80,7 @@ pipeline:
                           cd /harness
 
                           echo "running bundle install"
+                          gem uninstall bundler --all --silent
                           gem install bundler -v 2.3.27
                           bundle install
 
