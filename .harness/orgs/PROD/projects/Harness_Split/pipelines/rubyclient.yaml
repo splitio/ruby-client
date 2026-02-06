@@ -80,8 +80,8 @@ pipeline:
                           cd /harness
 
                           echo "running bundle install"
-                          gem update --system && gem install bundler -v 2.3.27 --force
-                          # gem uninstall -i /usr/local/lib/ruby/gems/2.5.0 bundler
+                          gem uninstall -i /usr/local/lib/ruby/gems/2.5.0 bundler
+                          gem install bundler -v 2.3.27 -i /usr/local/lib/ruby/gems --force
 
                           bundle install
 
