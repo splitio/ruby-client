@@ -76,7 +76,7 @@ pipeline:
                           echo "running update"
                           apt-get update
                           #echo "install git"
-                          #apt-get install git
+                          #apt-get install git build-essential
                           #apk add build-base
                           echo "install redis"
                           apt-get install -y redis-server --allow-unauthenticated
