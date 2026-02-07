@@ -1,0 +1,14 @@
+inputSet:
+  name: ruby
+  identifier: ruby
+  orgIdentifier: PROD
+  projectIdentifier: Harness_Split
+  pipeline:
+    identifier: rubyclient
+    properties:
+      ci:
+        codebase:
+          build:
+            type: PR
+            spec:
+              number: <+trigger.prNumber>
