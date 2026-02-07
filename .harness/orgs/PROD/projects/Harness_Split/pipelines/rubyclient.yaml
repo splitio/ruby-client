@@ -75,8 +75,8 @@ pipeline:
                           sed -i '/stretch-updates/d' /etc/apt/sources.list
                           echo "running update"
                           apt-get update
-                          #echo "install git"
-                          apt-get install build-essential
+                          #echo "install build"
+                          apt-get install -y build-essential
 
                           echo "install redis"
                           apt-get install -y redis-server --allow-unauthenticated
