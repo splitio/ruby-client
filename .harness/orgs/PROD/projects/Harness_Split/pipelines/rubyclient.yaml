@@ -42,7 +42,7 @@ pipeline:
                         shell: Sh
                         command: |-
                           apk update
-                          apk add git
+                          apk add git build-base
                           apk add redis 
                           redis-server /etc/redis.conf &
 
