@@ -102,7 +102,7 @@ pipeline:
                           bundle install
 
                           echo "running rake compile"
-                          # rake compile:murmurhash
+                          rake compile:murmurhash
 
                           echo "running tests"
                           bundle exec rake
