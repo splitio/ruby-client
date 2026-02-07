@@ -101,10 +101,6 @@ pipeline:
                           echo "run bundle install"
                           bundle install
 
-                          echo "running rake compile"
-                          export BUNDLER_VERSION="2.2.3"
-                          rake compile:murmurhash
-
                           echo "running tests"
                           bundle exec rake
                       timeout: 30m
