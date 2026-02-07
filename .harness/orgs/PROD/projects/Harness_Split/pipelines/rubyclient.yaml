@@ -92,11 +92,11 @@ pipeline:
                           echo "install bundle"
                           #gem env
                           gem uninstall bundler
-                          gem install bundler -v 2.3.27
+                          gem install bundler -v 2.2.3
 
                           echo "link bundle"
                           rm /usr/local/bin/bundle
-                          ln -s /usr/local/lib/ruby/gems/2.5.0/gems/bundler-2.3.27/exe/bundle /usr/local/bin/bundle
+                          ln -s /usr/local/lib/ruby/gems/2.5.0/gems/bundler-2.2.3/exe/bundle /usr/local/bin/bundle
 
                           echo "run bundle install"
                           bundle install
