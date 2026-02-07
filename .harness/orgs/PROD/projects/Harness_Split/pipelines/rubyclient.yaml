@@ -97,6 +97,8 @@ pipeline:
                           #echo "copy bundler"
                           #cp /usr/local/lib/ruby/gems/2.5.0/gems/bundler-2.3.27/exe/bundler /usr/local/lib
 
+                          echo "update system gem"
+                          gem update --system 3.2.3
                           echo "run bundle install"
                           bundle install
 
