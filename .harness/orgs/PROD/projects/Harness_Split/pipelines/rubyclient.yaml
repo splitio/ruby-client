@@ -33,34 +33,6 @@ pipeline:
             steps:
               - step:
                   type: Run
-                  name: Run Tests 3_2_2
-                  identifier: setup_ruby
-                  spec:
-                    connectorRef: account.harnessImage
-                    image: ruby:3.2.2-alpine
-                    shell: Sh
-                    command: |-
-                      apk update
-                      apk add git build-base
-                      apk add redis 
-                      redis-server /etc/redis.conf &
-
-                      # Install dependencies using Bundle
-                      cd /harness
-
-                      echo "running bundle install"
-                      bundle install
-
-                      echo "running rake compile"
-                      rake compile:murmurhash
-
-                      bundle exec rubocop
-
-                      echo "running tests"
-                      bundle exec rake
-                  timeout: 30m
-              - step:
-                  type: Run
                   name: Run Tests 2_5_0
                   identifier: Run_Tests_2_5_0
                   spec:
@@ -96,7 +68,8 @@ pipeline:
                       echo "link bundle"
                       rm /usr/local/bin/bundle
                       ln -s /usr/local/lib/ruby/gems/2.5.0/gems/bundler-2.2.3/exe/bundle /usr/local/bin/bundle
-
+                      gem install public_suffix -v 1.5.3     
+                       
                       echo "run bundle install"
                       bundle install
 
@@ -104,6 +77,34 @@ pipeline:
                       bundle exec rake
                   timeout: 30m
                 contextType: Pipeline
+              - step:
+                  type: Run
+                  name: Run Tests 3_2_2
+                  identifier: setup_ruby
+                  spec:
+                    connectorRef: account.harnessImage
+                    image: ruby:3.2.2-alpine
+                    shell: Sh
+                    command: |-
+                      apk update
+                      apk add git build-base
+                      apk add redis 
+                      redis-server /etc/redis.conf &
+
+                      # Install dependencies using Bundle
+                      cd /harness
+
+                      echo "running bundle install"
+                      bundle install
+
+                      echo "running rake compile"
+                      rake compile:murmurhash
+
+                      bundle exec rubocop
+
+                      echo "running tests"
+                      bundle exec rake
+                  timeout: 30m
               - step:
                   type: Run
                   name: Install and Run SonarQube Scanner
