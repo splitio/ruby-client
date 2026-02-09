@@ -31,79 +31,79 @@ pipeline:
               nestedVirtualization: true
           execution:
             steps:
-              - parallel:
-                  - step:
-                      type: Run
-                      name: Run Tests 3_2_2
-                      identifier: setup_ruby
-                      spec:
-                        connectorRef: account.harnessImage
-                        image: ruby:3.2.2-alpine
-                        shell: Sh
-                        command: |-
-                          apk update
-                          apk add git build-base
-                          apk add redis 
-                          redis-server /etc/redis.conf &
+              - step:
+                  type: Run
+                  name: Run Tests 3_2_2
+                  identifier: setup_ruby
+                  spec:
+                    connectorRef: account.harnessImage
+                    image: ruby:3.2.2-alpine
+                    shell: Sh
+                    command: |-
+                      apk update
+                      apk add git build-base
+                      apk add redis 
+                      redis-server /etc/redis.conf &
 
-                          # Install dependencies using Bundle
-                          cd /harness
+                      # Install dependencies using Bundle
+                      cd /harness
 
-                          echo "running bundle install"
-                          bundle install
+                      echo "running bundle install"
+                      bundle install
 
-                          echo "running rake compile"
-                          rake compile:murmurhash
+                      echo "running rake compile"
+                      rake compile:murmurhash
 
-                          bundle exec rubocop
+                      bundle exec rubocop
 
-                          echo "running tests"
-                          bundle exec rake
-                      timeout: 30m
-                  - step:
-                      type: Run
-                      name: Run Tests 2_5_0
-                      identifier: Run_Tests_2_5_0
-                      spec:
-                        connectorRef: account.harnessImage
-                        image: ruby:2.5.0
-                        shell: Sh
-                        command: |-
-                          echo "running sources"
-                          sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list
-                          sed -i 's|security.debian.org|archive.debian.org/debian-security|g' /etc/apt/sources.list
-                          sed -i '/stretch-updates/d' /etc/apt/sources.list
-                          echo "running update"
-                          apt-get update
-                          #echo "install build"
-                          apt-get install -y build-essential --allow-unauthenticated
+                      echo "running tests"
+                      bundle exec rake
+                  timeout: 30m
+              - step:
+                  type: Run
+                  name: Run Tests 2_5_0
+                  identifier: Run_Tests_2_5_0
+                  spec:
+                    connectorRef: account.harnessImage
+                    image: ruby:2.5.0
+                    shell: Sh
+                    command: |-
+                      echo "running sources"
+                      sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list
+                      sed -i 's|security.debian.org|archive.debian.org/debian-security|g' /etc/apt/sources.list
+                      sed -i '/stretch-updates/d' /etc/apt/sources.list
+                      echo "running update"
+                      apt-get update
+                      #echo "install build"
+                      apt-get install -y build-essential --allow-unauthenticated
 
-                          echo "install redis"
-                          apt-get install -y redis-server --allow-unauthenticated
-                          redis-server /etc/redis/redis.conf &
+                      echo "install redis"
+                      apt-get install -y redis-server --allow-unauthenticated
+                      redis-server /etc/redis/redis.conf &
 
-                          # Install dependencies using Bundle
-                          cd /harness
-                          export GEM_HOME=/usr/local/lib/ruby/gems/2.5.0
+                      # Install dependencies using Bundle
+                      cd /harness
+                      export GEM_HOME=/usr/local/lib/ruby/gems/2.5.0
 
-                          echo "update system gem"
-                          gem update --system 3.2.3
+                      echo "update system gem"
+                      gem update --system 3.2.3
 
-                          echo "install bundle"
-                          #gem env
-                          gem uninstall bundler
-                          gem install bundler -v 2.2.3
+                      echo "install bundle"
+                      #gem env
+                      gem uninstall bundler
+                      gem install bundler -v 2.2.3
 
-                          echo "link bundle"
-                          rm /usr/local/bin/bundle
-                          ln -s /usr/local/lib/ruby/gems/2.5.0/gems/bundler-2.2.3/exe/bundle /usr/local/bin/bundle
+                      echo "link bundle"
+                      rm /usr/local/bin/bundle
+                      ln -s /usr/local/lib/ruby/gems/2.5.0/gems/bundler-2.2.3/exe/bundle /usr/local/bin/bundle
 
-                          echo "run bundle install"
-                          bundle install
+                      echo "run bundle install"
+                      bundle install
 
-                          echo "running tests"
-                          bundle exec rake
-                      timeout: 30m
+                      echo "running tests"
+                      bundle exec rake
+                  timeout: 30m
+                contextType: Pipeline
               - step:
                   type: Run
                   name: Install and Run SonarQube Scanner
@@ -177,5 +177,4 @@ pipeline:
                            \"target_url\": \"https://sonar.harness.io/dashboard?id=ruby-client&pullRequest=${<+codebase.prNumber>}\"
                          }" \
                          "https://api.github.com/repos/splitio/ruby-client/statuses/<+codebase.commitSha>"
-            rollbackSteps: []
   description: This pipeline was generated by Harness AI on 2026-02-05 18:40:52 UTC by Bilal Al-Shahwany.
