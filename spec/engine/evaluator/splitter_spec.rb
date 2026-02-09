@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# encoding: utf-16
 
 require 'spec_helper'
 
@@ -7,6 +7,7 @@ describe SplitIoClient::Splitter do
   RSpec.shared_examples 'Splitter' do |file, algorithm|
     it 'returns expected hash and bucket' do
       File.foreach(file) do |row|
+        puts row
         seed, key, hash, bucket = row.split(',')
 
         expect(described_class.new.count_hash(key, seed.to_i, algorithm)).to eq(hash.to_i)
