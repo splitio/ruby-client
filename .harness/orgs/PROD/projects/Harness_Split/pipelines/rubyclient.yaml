@@ -1,0 +1,181 @@
+pipeline:
+  name: ruby-client
+  identifier: rubyclient
+  projectIdentifier: Harness_Split
+  orgIdentifier: PROD
+  tags: {}
+  properties:
+    ci:
+      codebase:
+        connectorRef: fmegithubharnessgitops
+        repoName: ruby-client
+        build: <+input>
+        branch: harness-pipeline
+        filePath: .harness/orgs/PROD/projects/Harness_Split/pipelines/rubyclient.yaml
+  stages:
+    - stage:
+        name: Build and Test
+        identifier: build_and_test
+        type: CI
+        spec:
+          cloneCodebase: true
+          caching:
+            enabled: true
+            override: true
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Cloud
+            spec:
+              nestedVirtualization: true
+          execution:
+            steps:
+              - parallel:
+                  - step:
+                      type: Run
+                      name: Run Tests 3_2_2
+                      identifier: setup_ruby
+                      spec:
+                        connectorRef: account.harnessImage
+                        image: ruby:3.2.2-alpine
+                        shell: Sh
+                        command: |-
+                          apk update
+                          apk add git build-base
+                          apk add redis 
+                          redis-server /etc/redis.conf &
+
+                          # Install dependencies using Bundle
+                          cd /harness
+
+                          echo "running bundle install"
+                          bundle install
+
+                          echo "running rake compile"
+                          rake compile:murmurhash
+
+                          bundle exec rubocop
+
+                          echo "running tests"
+                          bundle exec rake
+                      timeout: 30m
+                  - step:
+                      type: Run
+                      name: Run Tests 2_5_0
+                      identifier: Run_Tests_2_5_0
+                      spec:
+                        connectorRef: account.harnessImage
+                        image: ruby:2.5.0
+                        shell: Sh
+                        command: |-
+                          echo "running sources"
+                          sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list
+                          sed -i 's|security.debian.org|archive.debian.org/debian-security|g' /etc/apt/sources.list
+                          sed -i '/stretch-updates/d' /etc/apt/sources.list
+                          echo "running update"
+                          apt-get update
+                          #echo "install build"
+                          apt-get install -y build-essential --allow-unauthenticated
+
+                          echo "install redis"
+                          apt-get install -y redis-server --allow-unauthenticated
+                          redis-server /etc/redis/redis.conf &
+
+                          # Install dependencies using Bundle
+                          cd /harness
+                          export GEM_HOME=/usr/local/lib/ruby/gems/2.5.0
+
+                          echo "update system gem"
+                          gem update --system 3.2.3
+
+                          echo "install bundle"
+                          #gem env
+                          gem uninstall bundler
+                          gem install bundler -v 2.2.3
+
+                          echo "link bundle"
+                          rm /usr/local/bin/bundle
+                          ln -s /usr/local/lib/ruby/gems/2.5.0/gems/bundler-2.2.3/exe/bundle /usr/local/bin/bundle
+
+                          echo "run bundle install"
+                          bundle install
+
+                          echo "running tests"
+                          bundle exec rake
+                      timeout: 30m
+              - step:
+                  type: Run
+                  name: Install and Run SonarQube Scanner
+                  identifier: install_sonarqube_scanner
+                  spec:
+                    connectorRef: account.harnessImage
+                    image: sonarsource/sonar-scanner-cli
+                    shell: Bash
+                    command: |
+                      cd /harness
+                      if [ "<+codebase.prNumber>" != "" ]; then
+                        echo "Pull Request Analysis"
+                        sonar-scanner -X \
+                          -Dsonar.host.url=https://sonar.harness.io \
+                          -Dsonar.token=<+secrets.getValue('sonarqube-token')> \
+                          -Dsonar.projectKey=ruby-client \
+                          -Dsonar.scanner.skipJreProvisioning=true \
+                          -Dsonar.pullrequest.key=<+codebase.prNumber> \
+                          -Dsonar.pullrequest.branch=<+codebase.sourceBranch> \
+                          -Dsonar.pullrequest.base=<+codebase.targetBranch> \
+                          -Dsonar.scanner.skipSystemTruststore=true
+                      else
+                        echo "Branch Analysis"
+                        sonar-scanner \
+                          -Dsonar.host.url=https://sonar.harness.io \
+                          -Dsonar.token=<+secrets.getValue('sonarqube-token')> \
+                          -Dsonar.projectKey=ruby-client \
+                          -Dsonar.scanner.skipJreProvisioning=true \
+                          -Dsonar.branch.name=<+codebase.branch> \
+                          -Dsonar.scanner.skipSystemTruststore=true
+                      fi
+                    envVariables:
+                      SONAR_TOKEN: <+pipeline.variables.sonarqube_token>
+                    outputVariables:
+                      - name: SONAR_SCANNER_PATH
+                  timeout: 10m
+              - step:
+                  type: Run
+                  name: Post Quality Gate to GitHub
+                  identifier: Post_Quality_Gate_to_GitHub
+                  spec:
+                    shell: Sh
+                    command: |-
+                      # Get SonarQube quality gate status
+                       curl -u <+secrets.getValue('sonarqube-token')>: \
+                         -s "https://sonar.harness.io/api/qualitygates/project_status?projectKey=ruby-client&pullRequest=${<+codebase.prNumber>}"
+
+                       curl -u <+secrets.getValue('sonarqube-token')>: -s 'https://sonar.harness.io/api/qualitygates/project_status?projectKey=ruby-client&pullRequest=${<+codebase.prNumber>}' | jq -r .projectStatus.status
+
+                       QUALITY_GATE_STATUS=$(curl -u <+secrets.getValue('sonarqube-token')>: -s 'https://sonar.harness.io/api/qualitygates/project_status?projectKey=ruby-client&pullRequest=${<+codebase.prNumber>}' | jq -r .projectStatus.status)
+
+                       echo "QUALITY_GATE_STATUS: $QUALITY_GATE_STATUS"
+
+                       # Set GitHub status based on quality gate
+                       if [ "$QUALITY_GATE_STATUS" = "OK" ]; then
+                         STATE="success"
+                         DESCRIPTION="SonarQube Quality Gate passed"
+                       else
+                         STATE="failure"
+                         DESCRIPTION="SonarQube Quality Gate failed"
+                       fi
+
+                       # Post status to GitHub
+                       curl -X POST \
+                         -H "Authorization: token ${<+secrets.getValue('github-devops-token')>}" \
+                         -H "Content-Type: application/json" \
+                         -d "{
+                           \"state\": \"${STATE}\",
+                           \"description\": \"${DESCRIPTION}\",
+                           \"context\": \"sonarqube/qualitygate\",
+                           \"target_url\": \"https://sonar.harness.io/dashboard?id=ruby-client&pullRequest=${<+codebase.prNumber>}\"
+                         }" \
+                         "https://api.github.com/repos/splitio/ruby-client/statuses/<+codebase.commitSha>"
+            rollbackSteps: []
+  description: This pipeline was generated by Harness AI on 2026-02-05 18:40:52 UTC by Bilal Al-Shahwany.
