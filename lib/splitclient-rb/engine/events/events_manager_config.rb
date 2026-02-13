@@ -77,7 +77,7 @@ module SplitIoClient
         def get_dependencies(sdk_event)
           dependencies = Set.new
           @prerequisites.each do |prerequisites_event_name, prerequisites_event_value|
-            skip unless prerequisites_event_name == sdk_event
+            next unless prerequisites_event_name == sdk_event
 
             prerequisites_event_value.each do |prereq_event|
               dependencies.add(prereq_event)
