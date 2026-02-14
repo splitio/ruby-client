@@ -88,14 +88,24 @@ describe SplitIoClient::Api::Segments do
       expect(log.string).to include ':added=>["max", "dan"]'
     end
 
-    it 'throws exception if request to fetch segments from API returns unexpected status code' do
+    it 'returns nil and logs warning when segment is not found (404)' do
       stub_request(:get, 'https://sdk.split.io/api/segmentChanges/employees?since=-1')
         .to_return(status: 404)
 
-      expect { segments_api.send(:fetch_segment_changes, 'employees', -1) }.to raise_error(
-        'Split SDK failed to connect to backend to fetch segments'
-      )
-      expect(log.string).to include 'Unexpected status code while fetching segments'
+      result = segments_api.send(:fetch_segment_changes, 'employees', -1)
+      expect(result).to be_nil
+      expect(log.string).to include "Segment 'employees' not found (404)"
+    end
+
+    it 'removes segment from registered set on 404 during fetch_segments_by_names' do
+      stub_request(:get, 'https://sdk.split.io/api/segmentChanges/employees?since=-1')
+        .to_return(status: 404)
+
+      segments_repository.instance_variable_get(:@adapter)
+        .add_to_set('SPLITIO.segments.registered', 'employees')
+
+      expect { segments_api.fetch_segments_by_names(['employees']) }.not_to raise_error
+      expect(segments_repository.used_segment_names).not_to include('employees')
     end
 
     it 'throws exception if request to get splits from API fails' do
