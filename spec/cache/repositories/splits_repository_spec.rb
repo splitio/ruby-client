@@ -8,7 +8,8 @@ describe SplitIoClient::Cache::Repositories::SplitsRepository do
     let(:config) { SplitIoClient::SplitConfig.new(cache_adapter: cache_adapter) }
     let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::RedisFlagSetsRepository.new(config)}
     let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([])}
-    let(:repository) { described_class.new(config, flag_sets_repository, flag_set_filter) }
+    let(:queue) {Queue.new}
+    let(:repository) { described_class.new(config, flag_sets_repository, flag_set_filter, queue) }
 
     before :all do
       redis = Redis.new
@@ -171,6 +172,39 @@ describe SplitIoClient::Cache::Repositories::SplitsRepository do
 
       repository.update([split2], [], -1)
       expect(repository.get_split('corge2')[:conditions]).to eq SplitIoClient::Cache::Repositories::SplitsRepository::DEFAULT_CONDITIONS_TEMPLATE
+    end
+
+    it 'push to internal event queue' do
+      queue.clear()
+
+      repository.update([{name: 'flag1', trafficTypeName: 'tt_name_1', conditions: []},
+        {name: 'flag2', trafficTypeName: 'tt_name_1', conditions: []}], [], -1)
+      event = queue.pop
+      expect(event.internal_event).to be(SplitIoClient::Engine::Models::SdkInternalEvent::FLAGS_UPDATED)
+      expect(event.metadata.type).to be(SplitIoClient::Engine::Models::SdkEventType::FLAG_UPDATE)
+      expect(event.metadata.names).to eq(['flag1', 'flag2'])
+
+      repository.update([{name: 'flag1', trafficTypeName: 'tt_name_1', killed: false, default_treatment: 'on', changeNumber: 1, conditions: []}],
+        [{name: 'flag2', trafficTypeName: 'tt_name_1', conditions: []}], -1)
+      event = queue.pop
+      expect(event.internal_event).to be(SplitIoClient::Engine::Models::SdkInternalEvent::FLAGS_UPDATED)
+      expect(event.metadata.type).to be(SplitIoClient::Engine::Models::SdkEventType::FLAG_UPDATE)
+      expect(event.metadata.names).to eq(['flag1', 'flag2'])
+
+      repository.update([], [], 123)
+      expect(queue.empty?).to eq(true)
+
+      repository.kill(123, 'flag1', 'off')
+      event = queue.pop
+      expect(event.internal_event).to be(SplitIoClient::Engine::Models::SdkInternalEvent::FLAG_KILLED_NOTIFICATION)
+      expect(event.metadata.type).to be(SplitIoClient::Engine::Models::SdkEventType::FLAG_UPDATE)
+      expect(event.metadata.names).to eq(['flag1'])
+
+      repository.update([], [{name: 'flag1', trafficTypeName: 'tt_name_1', killed: false, default_treatment: 'on', changeNumber: 1, conditions: []}], -1)
+      event = queue.pop
+      expect(event.internal_event).to be(SplitIoClient::Engine::Models::SdkInternalEvent::FLAGS_UPDATED)
+      expect(event.metadata.type).to be(SplitIoClient::Engine::Models::SdkEventType::FLAG_UPDATE)
+      expect(event.metadata.names).to eq(['flag1'])
     end
   end
 
