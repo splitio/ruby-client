@@ -2,8 +2,8 @@
 
 module SplitIoClient
   module Engine::Models
-    class EventsActiveSubscriptions
-      attr_reader :triggered, :handler
+    class EventActiveSubscriptions
+      attr_accessor :triggered, :handler
 
       def initialize(triggered, handler)
         @triggered = triggered

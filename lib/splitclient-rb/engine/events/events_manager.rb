@@ -4,8 +4,8 @@ module SplitIoClient
   module Engine
     module Events
       class EventsManager
-        def initialize(events_configurations, events_delivery, config)
-          @events_configurations = events_configurations
+        def initialize(events_manager_config, events_delivery, config)
+          @manager_config = events_manager_config
           @events_delivery = events_delivery
           @active_subscriptions = {}
           @internal_events_status = {}
@@ -18,7 +18,7 @@ module SplitIoClient
 
           @mutex.synchronize do
             # SDK ready already fired
-            if sdk_event == SdkEvent.SDK_READY && event_already_triggered(sdk_event)
+            if sdk_event == SplitIoClient::Engine::Models::SdkEvent::SDK_READY && event_already_triggered(sdk_event)
               @active_subscriptions[sdk_event] = SplitIoClient::Engine::Models::EventActiveSubscriptions.new(true, event_handler)
               @config.logger.debug('EventsManager: Firing SDK_READY event for new subscription') if @config.debug_enabled
               fire_sdk_event(sdk_event, nil)
@@ -49,7 +49,7 @@ module SplitIoClient
               # if client is not subscribed to SDK_READY
               if sorted_event == SplitIoClient::Engine::Models::SdkEvent::SDK_READY && get_event_handler(sorted_event).nil?
                 @config.logger.debug('EventsManager: Registering SDK_READY event as fired') if @config.debug_enabled
-                @active_subscriptions[Engine::Models::SdkEvent::SDK_READY] = Engine::Models::EventActiveSubscriptions.new(true, None)
+                @active_subscriptions[Engine::Models::SdkEvent::SDK_READY] = Engine::Models::EventActiveSubscriptions.new(true, nil)
               end
             end
           end
@@ -103,7 +103,7 @@ module SplitIoClient
         end
 
         def get_sdk_event_if_applicable(sdk_internal_event)
-          final_sdk_event = SplitIoClient::Engine::Models::ValidSdkEvent.new(None, false)
+          final_sdk_event = SplitIoClient::Engine::Models::ValidSdkEvent.new(nil, false)
 
           events_to_fire = []
           require_any_sdk_event = check_require_any(sdk_internal_event)
@@ -141,7 +141,7 @@ module SplitIoClient
             ((!event_already_triggered(require_name) &&
             execution_limit(require_name) == 1) ||
             execution_limit(require_name) == -1) &&
-            len(require_value).positive?
+            require_value.length.positive?
         end
 
         def check_prerequisites(sdk_event)
@@ -165,13 +165,13 @@ module SplitIoClient
         end
 
         def execution_limit(sdk_event)
-          return -1 if @manager_config.execution_limits.key?(sdk_event)
+          return -1 unless @manager_config.execution_limits.key?(sdk_event)
 
           @manager_config.execution_limits[sdk_event]
         end
 
         def check_require_any(sdk_internal_event)
-          valid_sdk_event = SplitIoClient::Engine::Models::ValidSdkEvent.new(None, false)
+          valid_sdk_event = SplitIoClient::Engine::Models::ValidSdkEvent.new(nil, false)
           @manager_config.require_any.each do |name, val|
             if val.include?(sdk_internal_event)
               valid_sdk_event = SplitIoClient::Engine::Models::ValidSdkEvent.new(name, true)
