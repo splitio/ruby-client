@@ -16,7 +16,7 @@ module SplitIoClient
         def start
           return if @running
 
-          @config.logger.info('Starting Internal Events Task.') if @config.debug_enabled
+          @config.logger.info('Starting Internal Events Task.')
           @running = true
           @config.threads[:internal_events_task] = Thread.new do
             worker_thread
@@ -26,7 +26,7 @@ module SplitIoClient
         def stop
           return unless @running
 
-          @config.logger.info('Stopping Internal Events Task.') if @config.debug_enabled
+          @config.logger.info('Stopping Internal Events Task.')
           @running = false
         end
 
@@ -36,7 +36,7 @@ module SplitIoClient
           while (event = @internal_events_queue.pop)
             break unless @running
 
-            @config.logger.info("Processing sdk internal event: #{event.internal_event}") if @config.debug_enabled
+            @config.logger.debug("Processing sdk internal event: #{event.internal_event}") if @config.debug_enabled
             begin
               @notify_internal_events.call(event.internal_event, event.metadata)
             rescue StandardError => e

@@ -22,7 +22,8 @@ module SplitIoClient
         @config.logger.info('SplitIO SDK is ready')
         @internal_events_queue.push(
           SplitIoClient::Engine::Models::SdkInternalEventNotification.new(
-            SplitIoClient::Engine::Models::SdkInternalEvent::SDK_READY, nil)
+            SplitIoClient::Engine::Models::SdkInternalEvent::SDK_READY, nil
+          )
         )
       end
 
