@@ -3,11 +3,12 @@
 require 'spec_helper'
 
 describe SplitIoClient::RuleBasedSegmentMatcher do
+  let(:events_queue) { Queue.new }
   let(:config) { SplitIoClient::SplitConfig.new(debug_enabled: true) }
-  let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
+  let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config, events_queue) }
   let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new([])}
   let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([])}
-  let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
+  let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter, events_queue) }
 
   context '#string_type' do
     it 'is not string type matcher' do
@@ -17,14 +18,14 @@ describe SplitIoClient::RuleBasedSegmentMatcher do
 
   context 'test_matcher' do
     it 'return false if excluded key is passed' do
-      rbs_repositoy = SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config)
+      rbs_repositoy = SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config, events_queue)
       rbs_repositoy.update([{name: 'foo', trafficTypeName: 'tt_name_1', conditions: [], excluded: {keys: ['key1'], segments: []}}], [], -1)
       matcher = described_class.new(segments_repository, rbs_repositoy, 'foo', config)
       expect(matcher.match?(value: 'key1')).to be false
     end
 
     it 'return false if excluded segment is passed' do
-      rbs_repositoy = SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config)
+      rbs_repositoy = SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config, events_queue)
       evaluator = SplitIoClient::Engine::Parser::Evaluator.new(segments_repository, splits_repository, rbs_repositoy, true)
       segments_repository.add_to_segment({:name => 'segment1', :added => [], :removed => []})
       rbs_repositoy.update([{:name => 'foo', :trafficTypeName => 'tt_name_1', :conditions => [], :excluded => {:keys => ['key1'], :segments => [{:name => 'segment1', :type => 'standard'}]}}], [], -1)
@@ -33,7 +34,7 @@ describe SplitIoClient::RuleBasedSegmentMatcher do
     end
 
     it 'return false if excluded rb segment is matched' do
-      rbs_repositoy = SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config)
+      rbs_repositoy = SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config, events_queue)
       rbs = {:name => 'sample_rule_based_segment', :trafficTypeName => 'tt_name_1', :conditions => [{
               :matcherGroup => {
                 :combiner => "AND",
@@ -106,7 +107,7 @@ describe SplitIoClient::RuleBasedSegmentMatcher do
         }]
       }
 
-      rbs_repositoy = SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config)
+      rbs_repositoy = SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config, events_queue)
       rbs_repositoy.update([rule_based_segment], [], -1)
       matcher = described_class.new(segments_repository, rbs_repositoy, 'corge', config)
       expect(matcher.match?({:matching_key => 'user', :attributes => {}})).to be false
@@ -114,7 +115,7 @@ describe SplitIoClient::RuleBasedSegmentMatcher do
     end
 
     it 'return true if dependent rb segment matches' do
-      rbs_repositoy = SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config)
+      rbs_repositoy = SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config, events_queue)
       rbs = {
         :changeNumber => 5,
         :name => "dependent_rbs",
@@ -180,7 +181,7 @@ describe SplitIoClient::RuleBasedSegmentMatcher do
     end
 
     it 'return true if has multiple conditions' do
-      rbs_repositoy = SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config)
+      rbs_repositoy = SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config, events_queue)
       rbs = {
         :name => 'sample_rule_based_segment',
         :trafficTypeName => 'tt_name_1',
