@@ -18,7 +18,7 @@ module SplitIoClient
     # @param sdk_key [String] the SDK key for your split account
     #
     # @return [SplitIoClient] split.io client instance
-    def initialize(sdk_key, repositories, status_manager, config, impressions_manager, telemetry_evaluation_producer, evaluator, split_validator, fallback_treatment_calculator)
+    def initialize(sdk_key, repositories, status_manager, config, impressions_manager, telemetry_evaluation_producer, evaluator, split_validator, fallback_treatment_calculator, events_manager)
       @api_key = sdk_key
       @splits_repository = repositories[:splits]
       @segments_repository = repositories[:segments]
@@ -33,6 +33,7 @@ module SplitIoClient
       @split_validator = split_validator
       @evaluator = evaluator
       @fallback_treatment_calculator = fallback_treatment_calculator
+      @events_manager = events_manager
     end
 
     def get_treatment(
@@ -174,6 +175,14 @@ module SplitIoClient
 
     def block_until_ready(time = nil)
       @status_manager.wait_until_ready(time) if @status_manager
+    end
+
+    def register(sdk_event, handler)
+      @events_manager.register(sdk_event, handler)
+    end
+
+    def unregister(sdk_event, handler)
+      @events_manager.unregister(sdk_event)
     end
 
     private

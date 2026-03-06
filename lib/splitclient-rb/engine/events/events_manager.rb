@@ -14,7 +14,7 @@ module SplitIoClient
         end
 
         def register(sdk_event, event_handler)
-          return unless !@active_subscriptions.key?(sdk_event) || get_event_handler(sdk_event).nil?
+          return if @active_subscriptions.key?(sdk_event) && !get_event_handler(sdk_event).nil?
 
           @mutex.synchronize do
             # SDK ready already fired
@@ -25,6 +25,7 @@ module SplitIoClient
               return
             end
 
+            @config.logger.debug("EventsManager: Register event: #{sdk_event}") if @config.debug_enabled
             @active_subscriptions[sdk_event] = SplitIoClient::Engine::Models::EventActiveSubscriptions.new(false, event_handler)
           end
         end
