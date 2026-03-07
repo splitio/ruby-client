@@ -4,7 +4,7 @@ require 'spec_helper'
 
 describe SplitIoClient::Engine::Synchronizer do
   subject { SplitIoClient::Engine::Synchronizer }
-
+  let(:events_queue) { Queue.new }
   let(:splits) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/splits.json')) }
   let(:segment1) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/segment1.json')) }
   let(:segment2) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/segment2.json')) }
@@ -16,9 +16,9 @@ describe SplitIoClient::Engine::Synchronizer do
     runtime_producer = SplitIoClient::Telemetry::RuntimeProducer.new(config)
     flag_sets_repository = SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new([])
     flag_set_filter = SplitIoClient::Cache::Filter::FlagSetsFilter.new([])
-    splits_repository = SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter)
-    segments_repository = SplitIoClient::Cache::Repositories::SegmentsRepository.new(config)
-    rule_based_segments_repository = SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config)
+    splits_repository = SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter, events_queue)
+    segments_repository = SplitIoClient::Cache::Repositories::SegmentsRepository.new(config, events_queue)
+    rule_based_segments_repository = SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config, events_queue)
 
     repositories = {
       splits: splits_repository,

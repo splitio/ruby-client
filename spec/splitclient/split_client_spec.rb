@@ -4,20 +4,24 @@ require 'spec_helper'
 
 describe SplitIoClient::SplitClient do
   context 'split client methods' do
+    let(:events_queue) { Queue.new }
     let(:config) { SplitIoClient::SplitConfig.new(cache_adapter: :memory, impressions_mode: :debug) }
-    let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
+    let(:events_manager) { SplitIoClient::Engine::Events::EventsManager.new(SplitIoClient::Engine::Events::EventsManagerConfig.new, 
+                            SplitIoClient::Engine::Events::EventsDelivery.new(config), 
+                            config) }
+    let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config, events_queue) }
     let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new([]) }
     let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([]) }
-    let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
+    let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter, events_queue) }
     let(:impressions_repository) {SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
-    let(:rule_based_segments_repository) { SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config) }
+    let(:rule_based_segments_repository) { SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config, events_queue) }
     let(:runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
     let(:events_repository) { SplitIoClient::Cache::Repositories::EventsRepository.new(config, 'sdk_key', runtime_producer) }
     let(:impression_manager) { SplitIoClient::Engine::Common::ImpressionManager.new(config, impressions_repository, SplitIoClient::Engine::Common::NoopImpressionCounter.new, runtime_producer, SplitIoClient::Observers::NoopImpressionObserver.new, SplitIoClient::Engine::Impressions::NoopUniqueKeysTracker.new) }
     let(:evaluation_producer) { SplitIoClient::Telemetry::EvaluationProducer.new(config) }
     let(:evaluator) { SplitIoClient::Engine::Parser::Evaluator.new(segments_repository, splits_repository, rule_based_segments_repository, config) }
     let(:fallback_treatment_calculator) { SplitIoClient::Engine::FallbackTreatmentCalculator.new(SplitIoClient::Engine::Models::FallbackTreatmentsConfiguration.new) }
-    let(:split_client) { SplitIoClient::SplitClient.new('sdk_key', {:splits => splits_repository, :segments => segments_repository, :impressions => impressions_repository, :events => events_repository, :rule_based_segments => rule_based_segments_repository}, nil, config, impression_manager, evaluation_producer, evaluator, SplitIoClient::Validators.new(config), fallback_treatment_calculator) }
+    let(:split_client) { SplitIoClient::SplitClient.new('sdk_key', {:splits => splits_repository, :segments => segments_repository, :impressions => impressions_repository, :events => events_repository, :rule_based_segments => rule_based_segments_repository}, nil, config, impression_manager, evaluation_producer, evaluator, SplitIoClient::Validators.new(config), fallback_treatment_calculator, events_manager) }
 
     let(:splits) do
       File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/splits.json'))
@@ -115,12 +119,16 @@ end
 context 'impressions toggle' do
   it 'optimized mode' do
     config = SplitIoClient::SplitConfig.new(cache_adapter: :memory, impressions_mode: :optimized)
-    segments_repository = SplitIoClient::Cache::Repositories::SegmentsRepository.new(config)
+    events_queue = Queue.new
+    events_manager = SplitIoClient::Engine::Events::EventsManager.new(SplitIoClient::Engine::Events::EventsManagerConfig.new, 
+                            SplitIoClient::Engine::Events::EventsDelivery.new(config), 
+                            config)
+    segments_repository = SplitIoClient::Cache::Repositories::SegmentsRepository.new(config, events_queue)
     flag_sets_repository = SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new([])
     flag_set_filter = SplitIoClient::Cache::Filter::FlagSetsFilter.new([])
-    splits_repository = SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter)
+    splits_repository = SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter, events_queue)
     impressions_repository = SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config)
-    rule_based_segments_repository = SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config)
+    rule_based_segments_repository = SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config, events_queue)
     runtime_producer = SplitIoClient::Telemetry::RuntimeProducer.new(config)
     events_repository = SplitIoClient::Cache::Repositories::EventsRepository.new(config, 'sdk_key', runtime_producer)
     impressions_counter = SplitIoClient::Engine::Common::ImpressionCounter.new
@@ -130,7 +138,7 @@ context 'impressions toggle' do
     evaluation_producer = SplitIoClient::Telemetry::EvaluationProducer.new(config)
     evaluator = SplitIoClient::Engine::Parser::Evaluator.new(segments_repository, splits_repository, rule_based_segments_repository, config)
     fallback_treatment_calculator = SplitIoClient::Engine::FallbackTreatmentCalculator.new(SplitIoClient::Engine::Models::FallbackTreatmentsConfiguration.new) 
-    split_client = SplitIoClient::SplitClient.new('sdk_key', {:splits => splits_repository, :segments => segments_repository, :impressions => impressions_repository, :events => events_repository}, nil, config, impression_manager, evaluation_producer, evaluator, SplitIoClient::Validators.new(config), fallback_treatment_calculator)
+    split_client = SplitIoClient::SplitClient.new('sdk_key', {:splits => splits_repository, :segments => segments_repository, :impressions => impressions_repository, :events => events_repository}, nil, config, impression_manager, evaluation_producer, evaluator, SplitIoClient::Validators.new(config), fallback_treatment_calculator, events_manager)
 
     splits = File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/imp-toggle.json'))
     splits_repository.update([JSON.parse(splits,:symbolize_names => true)[:ff][:d][0]], [], -1)
@@ -156,12 +164,16 @@ context 'impressions toggle' do
 
   it 'debug mode' do
     config = SplitIoClient::SplitConfig.new(cache_adapter: :memory, impressions_mode: :debug)
-    segments_repository = SplitIoClient::Cache::Repositories::SegmentsRepository.new(config)
+    events_queue = Queue.new
+    events_manager = SplitIoClient::Engine::Events::EventsManager.new(SplitIoClient::Engine::Events::EventsManagerConfig.new, 
+                            SplitIoClient::Engine::Events::EventsDelivery.new(config), 
+                            config)
+    segments_repository = SplitIoClient::Cache::Repositories::SegmentsRepository.new(config, events_queue)
     flag_sets_repository = SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new([])
     flag_set_filter = SplitIoClient::Cache::Filter::FlagSetsFilter.new([])
-    splits_repository = SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter)
+    splits_repository = SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter, events_queue)
     impressions_repository = SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config)
-    rule_based_segments_repository = SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config)
+    rule_based_segments_repository = SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config, events_queue)
     runtime_producer = SplitIoClient::Telemetry::RuntimeProducer.new(config)
     events_repository = SplitIoClient::Cache::Repositories::EventsRepository.new(config, 'sdk_key', runtime_producer)
     impressions_counter = SplitIoClient::Engine::Common::ImpressionCounter.new
@@ -171,7 +183,7 @@ context 'impressions toggle' do
     evaluation_producer = SplitIoClient::Telemetry::EvaluationProducer.new(config)
     evaluator = SplitIoClient::Engine::Parser::Evaluator.new(segments_repository, splits_repository, rule_based_segments_repository, config)
     fallback_treatment_calculator = SplitIoClient::Engine::FallbackTreatmentCalculator.new(SplitIoClient::Engine::Models::FallbackTreatmentsConfiguration.new) 
-    split_client = SplitIoClient::SplitClient.new('sdk_key', {:splits => splits_repository, :segments => segments_repository, :impressions => impressions_repository, :events => events_repository}, nil, config, impression_manager, evaluation_producer, evaluator, SplitIoClient::Validators.new(config), fallback_treatment_calculator)
+    split_client = SplitIoClient::SplitClient.new('sdk_key', {:splits => splits_repository, :segments => segments_repository, :impressions => impressions_repository, :events => events_repository}, nil, config, impression_manager, evaluation_producer, evaluator, SplitIoClient::Validators.new(config), fallback_treatment_calculator, events_manager)
 
     splits = File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/imp-toggle.json'))
     splits_repository.update([JSON.parse(splits,:symbolize_names => true)[:ff][:d][0]], [], -1)
@@ -197,12 +209,16 @@ context 'impressions toggle' do
 
   it 'none mode' do
     config = SplitIoClient::SplitConfig.new(cache_adapter: :memory, impressions_mode: :none)
-    segments_repository = SplitIoClient::Cache::Repositories::SegmentsRepository.new(config)
+    events_queue = Queue.new
+    events_manager = SplitIoClient::Engine::Events::EventsManager.new(SplitIoClient::Engine::Events::EventsManagerConfig.new, 
+                            SplitIoClient::Engine::Events::EventsDelivery.new(config), 
+                            config)
+    segments_repository = SplitIoClient::Cache::Repositories::SegmentsRepository.new(config, events_queue)
     flag_sets_repository = SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new([])
     flag_set_filter = SplitIoClient::Cache::Filter::FlagSetsFilter.new([])
-    splits_repository = SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter)
+    splits_repository = SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter, events_queue)
     impressions_repository = SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config)
-    rule_based_segments_repository = SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config)
+    rule_based_segments_repository = SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config, events_queue)
     runtime_producer = SplitIoClient::Telemetry::RuntimeProducer.new(config)
     events_repository = SplitIoClient::Cache::Repositories::EventsRepository.new(config, 'sdk_key', runtime_producer)
     impressions_counter = SplitIoClient::Engine::Common::ImpressionCounter.new
@@ -212,7 +228,7 @@ context 'impressions toggle' do
     evaluation_producer = SplitIoClient::Telemetry::EvaluationProducer.new(config)
     evaluator = SplitIoClient::Engine::Parser::Evaluator.new(segments_repository, splits_repository, rule_based_segments_repository, config)
     fallback_treatment_calculator = SplitIoClient::Engine::FallbackTreatmentCalculator.new(SplitIoClient::Engine::Models::FallbackTreatmentsConfiguration.new) 
-    split_client = SplitIoClient::SplitClient.new('sdk_key', {:splits => splits_repository, :segments => segments_repository, :impressions => impressions_repository, :events => events_repository}, nil, config, impression_manager, evaluation_producer, evaluator, SplitIoClient::Validators.new(config), fallback_treatment_calculator)
+    split_client = SplitIoClient::SplitClient.new('sdk_key', {:splits => splits_repository, :segments => segments_repository, :impressions => impressions_repository, :events => events_repository}, nil, config, impression_manager, evaluation_producer, evaluator, SplitIoClient::Validators.new(config), fallback_treatment_calculator, events_manager)
 
     splits = File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/imp-toggle.json'))
     splits_repository.update([JSON.parse(splits,:symbolize_names => true)[:ff][:d][0]], [], -1)
@@ -242,12 +258,16 @@ end
 context 'fallback treatments' do
   it 'feature not found ' do
     config = SplitIoClient::SplitConfig.new(cache_adapter: :memory, impressions_mode: :debug)
-    segments_repository = SplitIoClient::Cache::Repositories::SegmentsRepository.new(config)
+    events_queue = Queue.new
+    events_manager = SplitIoClient::Engine::Events::EventsManager.new(SplitIoClient::Engine::Events::EventsManagerConfig.new, 
+                            SplitIoClient::Engine::Events::EventsDelivery.new(config), 
+                            config)
+    segments_repository = SplitIoClient::Cache::Repositories::SegmentsRepository.new(config, events_queue)
     flag_sets_repository = SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new([])
     flag_set_filter = SplitIoClient::Cache::Filter::FlagSetsFilter.new([])
-    splits_repository = SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter)
+    splits_repository = SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter, events_queue)
     impressions_repository = SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config)
-    rule_based_segments_repository = SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config)
+    rule_based_segments_repository = SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config, events_queue)
     runtime_producer = SplitIoClient::Telemetry::RuntimeProducer.new(config)
     events_repository = SplitIoClient::Cache::Repositories::EventsRepository.new(config, 'sdk_key', runtime_producer)
     impressions_counter = SplitIoClient::Engine::Common::ImpressionCounter.new
@@ -257,7 +277,7 @@ context 'fallback treatments' do
     evaluation_producer = SplitIoClient::Telemetry::EvaluationProducer.new(config)
     evaluator = SplitIoClient::Engine::Parser::Evaluator.new(segments_repository, splits_repository, rule_based_segments_repository, config)
     fallback_treatment_calculator = SplitIoClient::Engine::FallbackTreatmentCalculator.new(SplitIoClient::Engine::Models::FallbackTreatmentsConfiguration.new(SplitIoClient::Engine::Models::FallbackTreatment.new("on-global", '{"prop": "global"}'), {:feature => SplitIoClient::Engine::Models::FallbackTreatment.new("on-local", '{"prop": "local"}')}))
-    split_client = SplitIoClient::SplitClient.new('sdk_key', {:splits => splits_repository, :segments => segments_repository, :impressions => impressions_repository, :events => events_repository}, nil, config, impression_manager, evaluation_producer, evaluator, SplitIoClient::Validators.new(config), fallback_treatment_calculator)
+    split_client = SplitIoClient::SplitClient.new('sdk_key', {:splits => splits_repository, :segments => segments_repository, :impressions => impressions_repository, :events => events_repository}, nil, config, impression_manager, evaluation_producer, evaluator, SplitIoClient::Validators.new(config), fallback_treatment_calculator, events_manager)
 
     treatment = split_client.get_treatment_with_config('key2', 'feature')
     expect(treatment[:treatment]).to eq('on-local')
@@ -286,12 +306,16 @@ context 'fallback treatments' do
 
   it 'exception' do
     config = SplitIoClient::SplitConfig.new(cache_adapter: :memory, impressions_mode: :debug)
-    segments_repository = SplitIoClient::Cache::Repositories::SegmentsRepository.new(config)
+    events_queue = Queue.new
+    events_manager = SplitIoClient::Engine::Events::EventsManager.new(SplitIoClient::Engine::Events::EventsManagerConfig.new, 
+                            SplitIoClient::Engine::Events::EventsDelivery.new(config), 
+                            config)
+    segments_repository = SplitIoClient::Cache::Repositories::SegmentsRepository.new(config, events_queue)
     flag_sets_repository = SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new([])
     flag_set_filter = SplitIoClient::Cache::Filter::FlagSetsFilter.new([])
-    splits_repository = SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter)
+    splits_repository = SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter, events_queue)
     impressions_repository = SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config)
-    rule_based_segments_repository = SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config)
+    rule_based_segments_repository = SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config, events_queue)
     runtime_producer = SplitIoClient::Telemetry::RuntimeProducer.new(config)
     events_repository = SplitIoClient::Cache::Repositories::EventsRepository.new(config, 'sdk_key', runtime_producer)
     impressions_counter = SplitIoClient::Engine::Common::ImpressionCounter.new
@@ -301,7 +325,7 @@ context 'fallback treatments' do
     evaluation_producer = SplitIoClient::Telemetry::EvaluationProducer.new(config)
     evaluator = SplitIoClient::Engine::Parser::Evaluator.new(segments_repository, splits_repository, rule_based_segments_repository, config)
     fallback_treatment_calculator = SplitIoClient::Engine::FallbackTreatmentCalculator.new(SplitIoClient::Engine::Models::FallbackTreatmentsConfiguration.new(SplitIoClient::Engine::Models::FallbackTreatment.new("on-global", '{"prop": "global"}'), {:feature => SplitIoClient::Engine::Models::FallbackTreatment.new("on-local", '{"prop": "local"}')}))
-    split_client = SplitIoClient::SplitClient.new('sdk_key', {:splits => splits_repository, :segments => segments_repository, :impressions => impressions_repository, :events => events_repository}, nil, config, impression_manager, evaluation_producer, evaluator, SplitIoClient::Validators.new(config), fallback_treatment_calculator)
+    split_client = SplitIoClient::SplitClient.new('sdk_key', {:splits => splits_repository, :segments => segments_repository, :impressions => impressions_repository, :events => events_repository}, nil, config, impression_manager, evaluation_producer, evaluator, SplitIoClient::Validators.new(config), fallback_treatment_calculator, events_manager)
 
     splits = File.read(File.join(SplitIoClient.root, 'spec/test_data/splits/imp-toggle.json'))
     split = JSON.parse(splits,:symbolize_names => true)[:ff][:d][0]
@@ -343,12 +367,16 @@ context 'fallback treatments' do
 
   it 'client not ready' do
     config = SplitIoClient::SplitConfig.new(cache_adapter: :memory, impressions_mode: :debug)
-    segments_repository = SplitIoClient::Cache::Repositories::SegmentsRepository.new(config)
+    events_queue = Queue.new
+    events_manager = SplitIoClient::Engine::Events::EventsManager.new(SplitIoClient::Engine::Events::EventsManagerConfig.new, 
+                            SplitIoClient::Engine::Events::EventsDelivery.new(config), 
+                            config)
+    segments_repository = SplitIoClient::Cache::Repositories::SegmentsRepository.new(config, events_queue)
     flag_sets_repository = SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new([])
     flag_set_filter = SplitIoClient::Cache::Filter::FlagSetsFilter.new([])
-    splits_repository = SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter)
+    splits_repository = SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter, events_queue)
     impressions_repository = SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config)
-    rule_based_segments_repository = SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config)
+    rule_based_segments_repository = SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config, events_queue)
     runtime_producer = SplitIoClient::Telemetry::RuntimeProducer.new(config)
     events_repository = SplitIoClient::Cache::Repositories::EventsRepository.new(config, 'sdk_key', runtime_producer)
     impressions_counter = SplitIoClient::Engine::Common::ImpressionCounter.new
@@ -367,7 +395,7 @@ context 'fallback treatments' do
         true
       end
     end
-    split_client = SplitIoClient::SplitClient.new('sdk_key', {:splits => splits_repository, :segments => segments_repository, :impressions => impressions_repository, :events => events_repository}, MyStatusManager.new, config, impression_manager, evaluation_producer, evaluator, SplitIoClient::Validators.new(config), fallback_treatment_calculator)
+    split_client = SplitIoClient::SplitClient.new('sdk_key', {:splits => splits_repository, :segments => segments_repository, :impressions => impressions_repository, :events => events_repository}, MyStatusManager.new, config, impression_manager, evaluation_producer, evaluator, SplitIoClient::Validators.new(config), fallback_treatment_calculator, events_manager)
 
     treatment = split_client.get_treatment_with_config('key2', 'feature')
     expect(treatment[:treatment]).to eq('on-local')

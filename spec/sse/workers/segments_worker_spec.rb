@@ -6,6 +6,7 @@ require 'http_server_mock'
 describe SplitIoClient::SSE::Workers::SegmentsWorker do
   subject { SplitIoClient::SSE::Workers::SegmentsWorker }
 
+  let(:events_queue) { Queue.new }
   let(:splits) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/splits.json')) }
   let(:segment1) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/segment1.json')) }
   let(:segment2) { File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/segment2.json')) }
@@ -15,9 +16,9 @@ describe SplitIoClient::SSE::Workers::SegmentsWorker do
   let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log)) }
   let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new([])}
   let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([])}
-  let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
-  let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
-  let(:rule_based_segments_repository) { SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config) }
+  let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter, events_queue) }
+  let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config, events_queue) }
+  let(:rule_based_segments_repository) { SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config, events_queue) }
   let(:impressions_repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
   let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
   let(:events_repository) { SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key, telemetry_runtime_producer) }

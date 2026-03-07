@@ -45,6 +45,7 @@ module SplitIoClient
 
       register_factory
 
+      build_events_manager
       build_telemetry_components
       build_flag_sets_filter
       build_repositories
@@ -53,13 +54,13 @@ module SplitIoClient
       build_unique_keys_tracker
       build_impressions_components
 
-      @status_manager = Engine::StatusManager.new(@config)
+      @status_manager = Engine::StatusManager.new(@config, @internal_events_queue)
       @split_validator = SplitIoClient::Validators.new(@config)
       @evaluator = Engine::Parser::Evaluator.new(@segments_repository, @splits_repository, @rule_based_segment_repository, @config)
 
       start!
       fallback_treatment_calculator = SplitIoClient::Engine::FallbackTreatmentCalculator.new(@config.fallback_treatments_configuration) 
-      @client = SplitClient.new(@api_key, repositories, @status_manager, @config, @impressions_manager, @evaluation_producer, @evaluator, @split_validator, fallback_treatment_calculator)
+      @client = SplitClient.new(@api_key, repositories, @status_manager, @config, @impressions_manager, @evaluation_producer, @evaluator, @split_validator, fallback_treatment_calculator, @events_manager)
       @manager = SplitManager.new(@splits_repository, @status_manager, @config)
     end
 
@@ -219,9 +220,9 @@ module SplitIoClient
       else
         @flag_sets_repository = SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new(@config.flag_sets_filter)
       end
-      @splits_repository = SplitsRepository.new(@config, @flag_sets_repository, @flag_sets_filter)
-      @segments_repository = SegmentsRepository.new(@config)
-      @rule_based_segment_repository = RuleBasedSegmentsRepository.new(@config)
+      @splits_repository = SplitsRepository.new(@config, @flag_sets_repository, @flag_sets_filter, @internal_events_queue)
+      @segments_repository = SegmentsRepository.new(@config, @internal_events_queue)
+      @rule_based_segment_repository = RuleBasedSegmentsRepository.new(@config, @internal_events_queue)
       @impressions_repository = ImpressionsRepository.new(@config)
       @events_repository = EventsRepository.new(@config, @api_key, @runtime_producer)
     end
@@ -264,6 +265,20 @@ module SplitIoClient
 
     def build_flag_sets_filter
       @flag_sets_filter = SplitIoClient::Cache::Filter::FlagSetsFilter.new(@config.flag_sets_filter)
+    end
+
+    def build_events_manager
+      @events_manager = Engine::Events::EventsManager.new(Engine::Events::EventsManagerConfig.new, 
+                            Engine::Events::EventsDelivery.new(@config), 
+                            @config)
+      if @config.consumer?
+        @internal_events_queue = Engine::Events::NoOpEventsQueue.new
+        return
+      end
+
+      @internal_events_queue = Queue.new
+      @events_task = Engine::Events::EventsTask.new(@events_manager.method(:notify_internal_event), @internal_events_queue, @config)
+      @events_task.start
     end
   end
 end

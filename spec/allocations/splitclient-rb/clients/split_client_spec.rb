@@ -4,13 +4,16 @@ require 'spec_helper'
 
 describe SplitIoClient::SplitClient do
   let(:config) { SplitIoClient::SplitConfig.new(impressions_queue_size: 10) }
-
+  let(:events_queue) { Queue.new }
+  let(:events_manager) { SplitIoClient::Engine::Events::EventsManager.new(SplitIoClient::Engine::Events::EventsManagerConfig.new, 
+                            SplitIoClient::Engine::Events::EventsDelivery.new(config), 
+                            config) }
   let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new([])}
   let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([])}
-  let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
-  let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
+  let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter, events_queue) }
+  let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config, events_queue) }
   let(:impressions_repository) { SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config) }
-  let(:rule_based_segments_repository) { SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config) }
+  let(:rule_based_segments_repository) { SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config, events_queue) }
   let(:impression_counter) { SplitIoClient::Engine::Common::ImpressionCounter.new }
   let(:evaluation_producer) { SplitIoClient::Telemetry::EvaluationProducer.new(config) }
   let(:impression_observer) { SplitIoClient::Observers::ImpressionObserver.new }
@@ -42,7 +45,7 @@ describe SplitIoClient::SplitClient do
                                                          unique_keys_tracker)
   end
   let(:client) do
-    SplitIoClient::SplitClient.new('', {:splits => splits_repository, :segments => segments_repository, :impressions => impressions_repository, :events => nil}, nil, config, impressions_manager, evaluation_producer, evaluator, SplitIoClient::Validators.new(config), fallback_treatment_calculator)
+    SplitIoClient::SplitClient.new('', {:splits => splits_repository, :segments => segments_repository, :impressions => impressions_repository, :events => nil}, nil, config, impressions_manager, evaluation_producer, evaluator, SplitIoClient::Validators.new(config), fallback_treatment_calculator, events_manager)
   end
 
   context 'control' do
