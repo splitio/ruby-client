@@ -1,6 +1,4 @@
 # frozen_string_literal: true
-require_relative './models/sdk_internal_event_notification.rb'
-require_relative './models/sdk_internal_event.rb'
 
 module SplitIoClient
   module Engine
@@ -23,8 +21,8 @@ module SplitIoClient
         @sdk_ready.count_down
         @config.logger.info('SplitIO SDK is ready')
         @internal_events_queue.push(
-          SdkInternalEventNotification.new(
-            SdkInternalEvent::SDK_READY, nil
+          SplitIoClient::Engine::Models::SdkInternalEventNotification.new(
+            SplitIoClient::Engine::Models::SdkInternalEvent::SDK_READY, nil
           )
         )
       end

@@ -1,8 +1,3 @@
-require_relative '../../engine/models/sdk_internal_event_notification.rb'
-require_relative '../../engine/models/events_metadata.rb'
-require_relative '../../engine/models/sdk_internal_event.rb'
-require_relative '../../engine/models/sdk_event_type.rb'
-
 module SplitIoClient
   module Cache
     module Repositories
@@ -32,10 +27,10 @@ module SplitIoClient
           remove_keys(name, segment[:removed])
           if segment[:added].length > 0 || segment[:removed].length > 0
             @internal_events_queue.push(
-              SdkInternalEventNotification.new(
-                SdkInternalEvent::SEGMENTS_UPDATED, 
-                EventsMetadata.new(
-                  SdkEventType::SEGMENTS_UPDATE,
+              SplitIoClient::Engine::Models::SdkInternalEventNotification.new(
+                SplitIoClient::Engine::Models::SdkInternalEvent::SEGMENTS_UPDATED, 
+                SplitIoClient::Engine::Models::EventsMetadata.new(
+                  SplitIoClient::Engine::Models::SdkEventType::SEGMENTS_UPDATE,
                   []
                 )
               )
