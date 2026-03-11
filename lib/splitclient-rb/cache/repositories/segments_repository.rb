@@ -23,18 +23,19 @@ module SplitIoClient
           name = segment[:name]
 
           @adapter.initialize_set(segment_data(name)) unless @adapter.exists?(segment_data(name))
-
           add_keys(name, segment[:added])
           remove_keys(name, segment[:removed])
-          @internal_events_queue.push(
-            SplitIoClient::Engine::Models::SdkInternalEventNotification.new(
-              SplitIoClient::Engine::Models::SdkInternalEvent::SEGMENTS_UPDATED, 
-              SplitIoClient::Engine::Models::EventsMetadata.new(
-                SplitIoClient::Engine::Models::SdkEventType::SEGMENTS_UPDATE,
-                []
+          if segment[:added].length > 0 || segment[:removed].length > 0
+            @internal_events_queue.push(
+              SplitIoClient::Engine::Models::SdkInternalEventNotification.new(
+                SplitIoClient::Engine::Models::SdkInternalEvent::SEGMENTS_UPDATED, 
+                SplitIoClient::Engine::Models::EventsMetadata.new(
+                  SplitIoClient::Engine::Models::SdkEventType::SEGMENTS_UPDATE,
+                  []
+                )
               )
             )
-          )
+          end
         end
 
         def get_segment_keys(name)

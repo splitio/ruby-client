@@ -18,7 +18,7 @@ module SplitIoClient
 
         def start
           if @running.value
-            @config.logger.debug('feature_flags_worker already running.')
+            @config.logger.debug('feature_flags_worker already running.') if @config.debug_enabled
             return
           end
 
@@ -28,7 +28,7 @@ module SplitIoClient
 
         def stop
           unless @running.value
-            @config.logger.debug('feature_flags_worker not running.')
+            @config.logger.debug('feature_flags_worker not running.') if @config.debug_enabled
             return
           end
 
@@ -37,7 +37,7 @@ module SplitIoClient
         end
 
         def add_to_queue(notification)
-          @config.logger.debug("feature_flags_worker add to queue #{notification.data['changeNumber']}")
+          @config.logger.debug("feature_flags_worker add to queue #{notification.data['changeNumber']}") if @config.debug_enabled
           @queue.push(notification)
         end
 
@@ -52,7 +52,7 @@ module SplitIoClient
 
         def perform
           while (notification = @queue.pop)
-            @config.logger.debug("feature_flags_worker change_number dequeue #{notification.data['changeNumber']}")
+            @config.logger.debug("feature_flags_worker change_number dequeue #{notification.data['changeNumber']}") if @config.debug_enabled
             case notification.data['type']
             when SSE::EventSource::EventTypes::SPLIT_UPDATE
               success = update_feature_flag(notification)
@@ -117,7 +117,7 @@ module SplitIoClient
         def kill_feature_flag(notification)
           return if @feature_flags_repository.get_change_number.to_i > notification.data['changeNumber']
 
-          @config.logger.debug("feature_flags_worker kill #{notification.data['splitName']}, #{notification.data['changeNumber']}")
+          @config.logger.debug("feature_flags_worker kill #{notification.data['splitName']}, #{notification.data['changeNumber']}") if @config.debug_enabled
           @feature_flags_repository.kill(notification.data['changeNumber'],
                                          notification.data['splitName'],
                                          notification.data['defaultTreatment'])

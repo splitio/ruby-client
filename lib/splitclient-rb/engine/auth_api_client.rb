@@ -21,10 +21,10 @@ module SplitIoClient
         return process_error(response) if response.status >= 400 && response.status < 500
 
         @telemetry_runtime_producer.record_sync_error(Telemetry::Domain::Constants::TOKEN_SYNC, response.status.to_i)
-        @config.logger.debug("Error connecting to: #{@config.auth_service_url}. Response status: #{response.status}")
+        @config.logger.debug("Error connecting to: #{@config.auth_service_url}. Response status: #{response.status}") if @config.debug_enabled
         { push_enabled: false, retry: true }
       rescue StandardError => e
-        @config.logger.debug("AuthApiClient error: #{e.inspect}.")
+        @config.logger.debug("AuthApiClient error: #{e.inspect}.") if @config.debug_enabled
         { push_enabled: false, retry: false }
       end
 
@@ -51,7 +51,7 @@ module SplitIoClient
       end
 
       def process_error(response)
-        @config.logger.debug("Error connecting to: #{@config.auth_service_url}. Response status: #{response.status}")
+        @config.logger.debug("Error connecting to: #{@config.auth_service_url}. Response status: #{response.status}") if @config.debug_enabled
         @telemetry_runtime_producer.record_auth_rejections if response.status == 401
 
         { push_enabled: false, retry: false }

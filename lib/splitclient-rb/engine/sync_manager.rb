@@ -47,13 +47,13 @@ module SplitIoClient
           connected = false
 
           if @config.streaming_enabled
-            @config.logger.debug('Starting Streaming mode ...')
+            @config.logger.debug('Starting Streaming mode ...') if @config.debug_enabled
             start_push_status_monitor
             connected = @push_manager.start_sse
           end
 
           unless connected
-            @config.logger.debug('Starting Polling mode ...')
+            @config.logger.debug('Starting Polling mode ...') if @config.debug_enabled
             @synchronizer.start_periodic_fetch
             record_telemetry(Telemetry::Domain::Constants::SYNC_MODE, SYNC_MODE_POLLING)
           end
@@ -92,7 +92,7 @@ module SplitIoClient
 
       def process_connected
         if @sse_connected.value
-          @config.logger.debug('Streaming already connected.')
+          @config.logger.debug('Streaming already connected.') if @config.debug_enabled
           return
         end
 
@@ -107,7 +107,7 @@ module SplitIoClient
 
       def process_forced_stop
         unless @sse_connected.value
-          @config.logger.debug('Streaming already disconnected.')
+          @config.logger.debug('Streaming already disconnected.') if @config.debug_enabled
           return
         end
 
@@ -120,7 +120,7 @@ module SplitIoClient
 
       def process_disconnect(reconnect)
         unless @sse_connected.value
-          @config.logger.debug('Streaming already disconnected.')
+          @config.logger.debug('Streaming already disconnected.') if @config.debug_enabled
           return
         end
 
@@ -169,7 +169,7 @@ module SplitIoClient
           when Constants::PUSH_SUBSYSTEM_OFF
             process_push_shutdown
           else
-            @config.logger.debug('Incorrect push status type.')
+            @config.logger.debug('Incorrect push status type.') if @config.debug_enabled
           end
         end
       rescue StandardError => e

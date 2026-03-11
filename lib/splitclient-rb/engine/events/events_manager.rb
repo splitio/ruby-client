@@ -48,7 +48,7 @@ module SplitIoClient
               end
 
               # if client is not subscribed to SDK_READY
-              if sorted_event == SplitIoClient::Engine::Models::SdkEvent::SDK_READY && get_event_handler(sorted_event).nil?
+              if check_if_register_needed(sorted_event)
                 @config.logger.debug('EventsManager: Registering SDK_READY event as fired') if @config.debug_enabled
                 @active_subscriptions[Engine::Models::SdkEvent::SDK_READY] = Engine::Models::EventActiveSubscriptions.new(true, nil)
               end
@@ -64,6 +64,12 @@ module SplitIoClient
         end
 
         private
+
+        def check_if_register_needed(sorted_event)
+          sorted_event == SplitIoClient::Engine::Models::SdkEvent::SDK_READY &&
+            get_event_handler(sorted_event).nil? &&
+            !@active_subscriptions.include?(sorted_event)
+        end
 
         def fire_sdk_event(sdk_event, event_metadata)
           @config.logger.debug("EventsManager: Firing Sdk event: #{sdk_event}") if @config.debug_enabled
