@@ -52,7 +52,9 @@ module SplitIoClient
 
         def perform
           while (notification = @queue.pop)
-            @config.logger.debug("feature_flags_worker change_number dequeue #{notification.data['changeNumber']}") if @config.debug_enabled
+            if @config.debug_enabled
+              @config.logger.debug("feature_flags_worker change_number dequeue #{notification.data['changeNumber']}")
+            end
             case notification.data['type']
             when SSE::EventSource::EventTypes::SPLIT_UPDATE
               success = update_feature_flag(notification)
@@ -117,7 +119,9 @@ module SplitIoClient
         def kill_feature_flag(notification)
           return if @feature_flags_repository.get_change_number.to_i > notification.data['changeNumber']
 
-          @config.logger.debug("feature_flags_worker kill #{notification.data['splitName']}, #{notification.data['changeNumber']}") if @config.debug_enabled
+          if @config.debug_enabled
+            @config.logger.debug("feature_flags_worker kill #{notification.data['splitName']}, #{notification.data['changeNumber']}")
+          end
           @feature_flags_repository.kill(notification.data['changeNumber'],
                                          notification.data['splitName'],
                                          notification.data['defaultTreatment'])

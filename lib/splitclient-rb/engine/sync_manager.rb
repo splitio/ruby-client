@@ -47,13 +47,13 @@ module SplitIoClient
           connected = false
 
           if @config.streaming_enabled
-            @config.logger.debug('Starting Streaming mode ...') if @config.debug_enabled
+            log_if_debug('Starting Streaming mode ...')
             start_push_status_monitor
             connected = @push_manager.start_sse
           end
 
           unless connected
-            @config.logger.debug('Starting Polling mode ...') if @config.debug_enabled
+            log_if_debug('Starting Polling mode ...')
             @synchronizer.start_periodic_fetch
             record_telemetry(Telemetry::Domain::Constants::SYNC_MODE, SYNC_MODE_POLLING)
           end
@@ -92,7 +92,7 @@ module SplitIoClient
 
       def process_connected
         if @sse_connected.value
-          @config.logger.debug('Streaming already connected.') if @config.debug_enabled
+          log_if_debug('Streaming already connected.')
           return
         end
 
@@ -107,7 +107,7 @@ module SplitIoClient
 
       def process_forced_stop
         unless @sse_connected.value
-          @config.logger.debug('Streaming already disconnected.') if @config.debug_enabled
+          log_if_debug('Streaming already disconnected.')
           return
         end
 
@@ -120,7 +120,7 @@ module SplitIoClient
 
       def process_disconnect(reconnect)
         unless @sse_connected.value
-          @config.logger.debug('Streaming already disconnected.') if @config.debug_enabled
+          log_if_debug('Streaming already disconnected.')
           return
         end
 
@@ -144,14 +144,14 @@ module SplitIoClient
 
       def start_push_status_monitor
         @config.threads[:push_status_handler] = Thread.new do
-          @config.logger.debug('Starting push status handler ...') if @config.debug_enabled
+          log_if_debug('Starting push status handler ...')
           incoming_push_status_handler
         end
       end
 
       def incoming_push_status_handler
         while (status = @status_queue.pop)
-          @config.logger.debug("Push status handler dequeue #{status}") if @config.debug_enabled
+          log_if_debug("Push status handler dequeue #{status}")
 
           case status
           when Constants::PUSH_CONNECTED
@@ -169,12 +169,16 @@ module SplitIoClient
           when Constants::PUSH_SUBSYSTEM_OFF
             process_push_shutdown
           else
-            @config.logger.debug('Incorrect push status type.') if @config.debug_enabled
+            log_if_debug('Incorrect push status type.')
           end
         end
       rescue StandardError => e
         @config.logger.error("Push status handler error: #{e.inspect}")
       end
+    end
+
+    def log_if_debug(msg)
+      @config.logger.debug(msg) if @config.debug_enabled
     end
   end
 end
