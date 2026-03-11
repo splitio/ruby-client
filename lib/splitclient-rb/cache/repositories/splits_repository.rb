@@ -1,4 +1,8 @@
 require 'concurrent'
+require_relative '../../engine/models/sdk_internal_event_notification.rb'
+require_relative '../../engine/models/events_metadata.rb'
+require_relative '../../engine/models/sdk_internal_event.rb'
+require_relative '../../engine/models/sdk_event_type.rb'
 
 module SplitIoClient
   module Cache
@@ -57,10 +61,10 @@ module SplitIoClient
 
           if to_add.length > 0 || to_delete.length > 0
             @internal_events_queue.push(
-              SplitIoClient::Engine::Models::SdkInternalEventNotification.new(
-                SplitIoClient::Engine::Models::SdkInternalEvent::FLAGS_UPDATED, 
-                SplitIoClient::Engine::Models::EventsMetadata.new(
-                  SplitIoClient::Engine::Models::SdkEventType::FLAG_UPDATE,
+              SdkInternalEventNotification.new(
+                SdkInternalEvent::FLAGS_UPDATED, 
+                EventsMetadata.new(
+                  SdkEventType::FLAG_UPDATE,
                   to_add.map {|flag| flag[:name]} | to_delete.map {|flag| flag[:name]}
                 )
               )
@@ -154,10 +158,10 @@ module SplitIoClient
 
           @adapter.set_string(namespace_key(".split.#{split_name}"), split.to_json)
           @internal_events_queue.push(
-            SplitIoClient::Engine::Models::SdkInternalEventNotification.new(
-              SplitIoClient::Engine::Models::SdkInternalEvent::FLAG_KILLED_NOTIFICATION, 
-              SplitIoClient::Engine::Models::EventsMetadata.new(
-                SplitIoClient::Engine::Models::SdkEventType::FLAG_UPDATE,
+            SdkInternalEventNotification.new(
+              SdkInternalEvent::FLAG_KILLED_NOTIFICATION, 
+              EventsMetadata.new(
+                SdkEventType::FLAG_UPDATE,
                 [split_name]
               )
             )

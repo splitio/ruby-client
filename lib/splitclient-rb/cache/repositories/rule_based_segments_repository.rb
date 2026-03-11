@@ -1,4 +1,8 @@
 require 'concurrent'
+require_relative '../../engine/models/sdk_internal_event_notification.rb'
+require_relative '../../engine/models/events_metadata.rb'
+require_relative '../../engine/models/sdk_internal_event.rb'
+require_relative '../../engine/models/sdk_event_type.rb'
 
 module SplitIoClient
   module Cache
@@ -50,10 +54,10 @@ module SplitIoClient
 
           if to_add.length > 0 || to_delete.length > 0
             @internal_events_queue.push(
-              SplitIoClient::Engine::Models::SdkInternalEventNotification.new(
-                SplitIoClient::Engine::Models::SdkInternalEvent::RB_SEGMENTS_UPDATED, 
-                SplitIoClient::Engine::Models::EventsMetadata.new(
-                  SplitIoClient::Engine::Models::SdkEventType::SEGMENTS_UPDATE,
+              SdkInternalEventNotification.new(
+                SdkInternalEvent::RB_SEGMENTS_UPDATED, 
+                EventsMetadata.new(
+                  SdkEventType::SEGMENTS_UPDATE,
                   []
                 )
               )

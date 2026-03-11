@@ -9,7 +9,7 @@ describe SplitIoClient::SSE::EventSource::Client do
 
   let(:log) { StringIO.new }
   let(:events_queue) { Queue.new }
-  let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log)) }
+  let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log), debug_enabled: true) }
   let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
   let(:telemetry_runtime_consumer) { SplitIoClient::Telemetry::RuntimeConsumer.new(config) }
   let(:api_token) { 'api-token-test' }
@@ -332,7 +332,7 @@ describe SplitIoClient::SSE::EventSource::Client do
 
     it 'test retry with IO::WaitReadable exceptions' do
       log2 = StringIO.new
-      config2 = SplitIoClient::SplitConfig.new(logger: Logger.new(log2))
+      config2 = SplitIoClient::SplitConfig.new(logger: Logger.new(log2), debug_enabled: true)
 
       mock_server do |server|
         server.setup_response('/') do |_, res|

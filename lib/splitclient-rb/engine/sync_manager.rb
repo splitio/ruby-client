@@ -47,13 +47,13 @@ module SplitIoClient
           connected = false
 
           if @config.streaming_enabled
-            log_if_debug('Starting Streaming mode ...')
+            @config.logger.debug('Starting Streaming mode ...') if @config.debug_enabled
             start_push_status_monitor
             connected = @push_manager.start_sse
           end
 
           unless connected
-            log_if_debug('Starting Polling mode ...')
+            @config.logger.debug('Starting Polling mode ...') if @config.debug_enabled
             @synchronizer.start_periodic_fetch
             record_telemetry(Telemetry::Domain::Constants::SYNC_MODE, SYNC_MODE_POLLING)
           end
@@ -92,7 +92,7 @@ module SplitIoClient
 
       def process_connected
         if @sse_connected.value
-          log_if_debug('Streaming already connected.')
+          @config.logger.debug('Streaming already connected.') if @config.debug_enabled
           return
         end
 
@@ -107,7 +107,7 @@ module SplitIoClient
 
       def process_forced_stop
         unless @sse_connected.value
-          log_if_debug('Streaming already disconnected.')
+          @config.logger.debug('Streaming already disconnected.') if @config.debug_enabled
           return
         end
 
@@ -120,7 +120,7 @@ module SplitIoClient
 
       def process_disconnect(reconnect)
         unless @sse_connected.value
-          log_if_debug('Streaming already disconnected.')
+          @config.logger.debug('Streaming already disconnected.') if @config.debug_enabled
           return
         end
 
@@ -144,14 +144,14 @@ module SplitIoClient
 
       def start_push_status_monitor
         @config.threads[:push_status_handler] = Thread.new do
-          log_if_debug('Starting push status handler ...')
+          @config.logger.debug('Starting push status handler ...') if @config.debug_enabled
           incoming_push_status_handler
         end
       end
 
       def incoming_push_status_handler
         while (status = @status_queue.pop)
-          log_if_debug("Push status handler dequeue #{status}")
+          @config.logger.debug("Push status handler dequeue #{status}") if @config.debug_enabled
 
           case status
           when Constants::PUSH_CONNECTED
