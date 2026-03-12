@@ -129,9 +129,6 @@ describe SplitIoClient::SplitFactory do
       expect(factory.instance_variable_get(:@config).valid_mode).to be false
       expect(factory.manager.split('test_split'))
         .to be nil
-
-      puts '###### log'
-      puts log.string
     end
   end
 
