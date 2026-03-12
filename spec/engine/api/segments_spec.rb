@@ -11,12 +11,13 @@ describe SplitIoClient::Api::Segments do
     )
   end
   let(:log) { StringIO.new }
+  let(:events_queue) { Queue.new }
   let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
   let(:segments_api) { described_class.new('', segments_repository, config, telemetry_runtime_producer) }
   let(:adapter) do
     SplitIoClient::Cache::Adapters::MemoryAdapter.new(SplitIoClient::Cache::Adapters::MemoryAdapters::MapAdapter.new)
   end
-  let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
+  let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config, events_queue) }
   let(:segments) do
     File.read(File.expand_path(File.join(File.dirname(__FILE__), '../../test_data/segments/segments.json')))
   end

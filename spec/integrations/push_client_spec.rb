@@ -39,6 +39,9 @@ describe SplitIoClient do
   let(:auth_body_response) do
     File.read(File.join(SplitIoClient.root, 'spec/test_data/integrations/auth_body_response.json'))
   end
+  let(:metadata) { nil }
+  let(:event_ready) { false }
+  let(:sdk_update) { false }
 
   before do
     stub_request(:any, /https:\/\/events.*/).to_return(status: 200, body: '')
@@ -155,21 +158,25 @@ describe SplitIoClient do
       stub_request(:get, auth_service_url + "?s=1.3").to_return(status: 200, body: auth_body_response)
 
       mock_server do |server|
-
+        log = StringIO.new
         streaming_service_url = server.base_uri
         factory = SplitIoClient::SplitFactory.new(
           'test_api_key',
           streaming_service_url: streaming_service_url,
-          auth_service_url: auth_service_url
+          auth_service_url: auth_service_url,
+          logger: Logger.new(log),
+          debug_enabled: true
         )
 
+        reset_flags
         client = factory.client
+        client.register(SplitIoClient::Engine::Models::SdkEvent::SDK_READY, method(:ready_call_back))
+        client.register(SplitIoClient::Engine::Models::SdkEvent::SDK_UPDATE, method(:update_call_back))
         client.block_until_ready
 
         server.setup_response('/') do |_, res|
           send_content(res, event_split_iff_update_no_compression)
         end
-
         treatment = 'control'
         for i in 1..10 do
           sleep(1)
@@ -177,7 +184,25 @@ describe SplitIoClient do
           break if treatment != 'control'
         end
 
+        expect(@metadata.length).to eq(2)
+        check1 = false
+        check2 = false
+        @metadata.each do |meta|
+          if meta.type == SplitIoClient::Engine::Models::SdkEventType::FLAG_UPDATE
+            expect(meta.names).to eq(['bilal_split'])
+            check1 = true
+          end
+          if meta.type == SplitIoClient::Engine::Models::SdkEventType::SEGMENTS_UPDATE
+            expect(meta.names).to eq([])
+            check2 = true
+          end
+        end
+        expect(check1).to be(true)
+        expect(check2).to be(true)
+        expect(@event_ready).to be(true)
+        expect(@sdk_update).to eq(true)
         expect(treatment).to eq('off')
+
         client.destroy
       end
     end
@@ -319,20 +344,35 @@ describe SplitIoClient do
         stub_request(:get, auth_service_url + "?s=1.3").to_return(status: 200, body: auth_body_response)
 
         streaming_service_url = server.base_uri
+        log = StringIO.new
         factory = SplitIoClient::SplitFactory.new(
           'test_api_key',
           streaming_enabled: true,
           streaming_service_url: streaming_service_url,
-          auth_service_url: auth_service_url
+          auth_service_url: auth_service_url,
+          logger: Logger.new(log),
+          debug_enabled: true
         )
 
+        reset_flags
         client = factory.client
+        client.register(SplitIoClient::Engine::Models::SdkEvent::SDK_UPDATE, method(:update_call_back))
         client.block_until_ready(1)
         sleep(2)
         expect(client.get_treatment('admin', 'push_test')).to eq('on')
         expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')).to have_been_made.times(1)
         expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1585948850109&rbSince=-1')).to have_been_made.times(1)
         expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1585948850110&rbSince=-1')).to have_been_made.times(0)
+
+        check1 = false
+        @metadata.each do |meta|
+          if meta.type == SplitIoClient::Engine::Models::SdkEventType::FLAG_UPDATE
+            expect(meta.names.include?('push_test')).to eq(true)
+            check1 = true
+          end
+        end
+        expect(check1).to eq(true)
+
         client.destroy
       end
     end
@@ -571,5 +611,20 @@ describe SplitIoClient do
   def mock_segment_changes(segment_name, segment_json, since)
     stub_request(:get, "https://sdk.split.io/api/segmentChanges/#{segment_name}?since=#{since}")
       .to_return(status: 200, body: segment_json)
+  end
+
+  def ready_call_back(metadata)
+    @event_ready = true
+  end
+
+  def update_call_back(metadata)
+    @sdk_update = true
+    @metadata.push(metadata)
+  end
+
+  def reset_flags
+    @event_ready = false
+    @sdk_update = false
+    @metadata = []
   end
 end

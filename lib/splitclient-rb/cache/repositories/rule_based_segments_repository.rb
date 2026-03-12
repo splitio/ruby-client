@@ -28,7 +28,7 @@ module SplitIoClient
         RB_SEGMENTS_PREFIX = '.rbsegment.'
         REGISTERED_PREFIX = '.segments.registered'
 
-        def initialize(config)
+        def initialize(config, internal_events_queue)
           super(config)
           @adapter = case @config.cache_adapter.class.to_s
           when 'SplitIoClient::Cache::Adapters::RedisAdapter'
@@ -40,12 +40,25 @@ module SplitIoClient
             @adapter.set_string(namespace_key(TILL_PREFIX), '-1')
             @adapter.initialize_map(namespace_key(REGISTERED_PREFIX))
           end
+          @internal_events_queue = internal_events_queue
         end
 
         def update(to_add, to_delete, new_change_number)
           to_add.each{ |rule_based_segment| add_rule_based_segment(rule_based_segment) }
           to_delete.each{ |rule_based_segment| remove_rule_based_segment(rule_based_segment) }
           set_change_number(new_change_number)
+
+          if to_add.length > 0 || to_delete.length > 0
+            @internal_events_queue.push(
+              SplitIoClient::Engine::Models::SdkInternalEventNotification.new(
+                SplitIoClient::Engine::Models::SdkInternalEvent::RB_SEGMENTS_UPDATED, 
+                SplitIoClient::Engine::Models::EventsMetadata.new(
+                  SplitIoClient::Engine::Models::SdkEventType::SEGMENTS_UPDATE,
+                  []
+                )
+              )
+            )
+          end
         end
 
         def get_rule_based_segment(name)

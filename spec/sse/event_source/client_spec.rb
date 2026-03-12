@@ -8,7 +8,8 @@ describe SplitIoClient::SSE::EventSource::Client do
   subject { SplitIoClient::SSE::EventSource::Client }
 
   let(:log) { StringIO.new }
-  let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log)) }
+  let(:events_queue) { Queue.new }
+  let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log), debug_enabled: true) }
   let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
   let(:telemetry_runtime_consumer) { SplitIoClient::Telemetry::RuntimeConsumer.new(config) }
   let(:api_token) { 'api-token-test' }
@@ -18,11 +19,11 @@ describe SplitIoClient::SSE::EventSource::Client do
   let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([])}
   let(:repositories) do
     {
-      splits: SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter),
-      segments: SplitIoClient::Cache::Repositories::SegmentsRepository.new(config),
+      splits: SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter, events_queue),
+      segments: SplitIoClient::Cache::Repositories::SegmentsRepository.new(config, events_queue),
       impressions: SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config),
       events: SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key, telemetry_runtime_producer),
-      rule_based_segments: SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config) 
+      rule_based_segments: SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config, events_queue) 
     }
   end
   let(:parameters) do
@@ -331,7 +332,7 @@ describe SplitIoClient::SSE::EventSource::Client do
 
     it 'test retry with IO::WaitReadable exceptions' do
       log2 = StringIO.new
-      config2 = SplitIoClient::SplitConfig.new(logger: Logger.new(log2))
+      config2 = SplitIoClient::SplitConfig.new(logger: Logger.new(log2), debug_enabled: true)
 
       mock_server do |server|
         server.setup_response('/') do |_, res|

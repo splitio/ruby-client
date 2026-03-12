@@ -3,6 +3,8 @@ require 'spec_helper'
 require 'set'
 
 describe SplitIoClient::Helpers::RepositoryHelper do
+  let(:events_queue) { Queue.new }
+
   context 'test repository helper' do
     it 'with flag set filter' do
       config = SplitIoClient::SplitConfig.new(cache_adapter: :memory)
@@ -11,7 +13,8 @@ describe SplitIoClient::Helpers::RepositoryHelper do
       feature_flag_repository = SplitIoClient::Cache::Repositories::SplitsRepository.new(
         config,
         flag_sets_repository,
-        flag_set_filter)
+        flag_set_filter,
+        events_queue)
 
       SplitIoClient::Helpers::RepositoryHelper.update_feature_flag_repository(feature_flag_repository, [{:name => 'split1', :status =>  'ACTIVE', conditions: [], :sets =>  []}], -1, config, false)
       expect(feature_flag_repository.get_split('split1').nil?).to eq(true)
@@ -33,7 +36,8 @@ describe SplitIoClient::Helpers::RepositoryHelper do
       feature_flag_repository = SplitIoClient::Cache::Repositories::SplitsRepository.new(
         config,
         flag_sets_repository,
-        flag_set_filter)
+        flag_set_filter,
+        events_queue)
 
       SplitIoClient::Helpers::RepositoryHelper.update_feature_flag_repository(feature_flag_repository, [{:name => 'split1', :status =>  'ACTIVE', conditions: [], :sets =>  []}], -1, config, false)
       expect(feature_flag_repository.get_split('split1').nil?).to eq(false)
@@ -55,7 +59,8 @@ describe SplitIoClient::Helpers::RepositoryHelper do
       feature_flag_repository = SplitIoClient::Cache::Repositories::SplitsRepository.new(
         config,
         flag_sets_repository,
-        flag_set_filter)
+        flag_set_filter,
+        events_queue)
 
       SplitIoClient::Helpers::RepositoryHelper.update_feature_flag_repository(feature_flag_repository, [{:name => 'split1', :status =>  'ACTIVE', conditions: [], :sets =>  []}], -1, config, false)
       expect(feature_flag_repository.get_split('split1')[:impressionsDisabled]).to eq(false)
@@ -74,7 +79,8 @@ describe SplitIoClient::Helpers::RepositoryHelper do
       feature_flag_repository = SplitIoClient::Cache::Repositories::SplitsRepository.new(
         config,
         flag_sets_repository,
-        flag_set_filter)
+        flag_set_filter,
+        events_queue)
 
       SplitIoClient::Helpers::RepositoryHelper.update_feature_flag_repository(feature_flag_repository, [{:name => 'split1', :status =>  'ACTIVE', conditions: [], :sets =>  []}], -1, config, false)
       expect(feature_flag_repository.get_split('split1').nil?).to eq(false)
@@ -91,7 +97,8 @@ describe SplitIoClient::Helpers::RepositoryHelper do
       feature_flag_repository = SplitIoClient::Cache::Repositories::SplitsRepository.new(
         config,
         flag_sets_repository,
-        flag_set_filter)
+        flag_set_filter,
+        events_queue)
 
       SplitIoClient::Helpers::RepositoryHelper.update_feature_flag_repository(feature_flag_repository, [{:name => 'split1', :status =>  'ACTIVE', conditions: [], :sets =>  []}], -1, config, false)
       expect(feature_flag_repository.get_split('split1')[:prerequisites]).to eq([])

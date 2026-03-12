@@ -6,15 +6,16 @@ describe SplitIoClient::Engine::StatusManager do
   subject { SplitIoClient::Engine::StatusManager }
 
   let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(StringIO.new)) }
+  let(:queue) {Queue.new}
 
   it 'check if sdk is ready - should return false' do
-    status_manager = subject.new(config)
+    status_manager = subject.new(config, queue)
 
     expect(status_manager.ready?).to eq(false)
   end
 
   it 'check if sdk is ready - should return true' do
-    status_manager = subject.new(config)
+    status_manager = subject.new(config, queue)
 
     expect(status_manager.ready?).to eq(false)
 
@@ -23,11 +24,23 @@ describe SplitIoClient::Engine::StatusManager do
   end
 
   it 'wait until ready - should return false' do
-    status_manager = subject.new(config)
+    status_manager = subject.new(config, queue)
 
     expect { status_manager.wait_until_ready(0.5) }.to raise_error(SplitIoClient::SplitIoError, 'SDK start up timeout expired')
 
     status_manager.ready!
     expect { status_manager.wait_until_ready(0) }.not_to raise_error
+  end
+
+  it 'check if sdk is ready - should fire ready event' do
+    status_manager = subject.new(config, queue)
+
+    expect(status_manager.ready?).to eq(false)
+
+    status_manager.ready!
+    expect(status_manager.ready?).to eq(true)
+    event = queue.pop
+    expect(event.internal_event).to be(SplitIoClient::Engine::Models::SdkInternalEvent::SDK_READY)
+    expect(event.metadata).to be(nil) 
   end
 end

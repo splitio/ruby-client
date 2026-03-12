@@ -4,10 +4,11 @@ require 'spec_helper'
 
 describe SplitIoClient::Cache::Repositories::SegmentsRepository do
   context 'memory adapter' do
-    let(:repository) { described_class.new(@default_config) }
+    let(:queue) {Queue.new}
+    let(:repository) { described_class.new(@default_config, queue) }
     let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new([]) }
     let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([]) }
-    let(:split_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(@default_config, flag_sets_repository, flag_set_filter) }
+    let(:split_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(@default_config, flag_sets_repository, flag_set_filter, queue) }
 
     it 'removes keys' do
       repository.add_to_segment(name: 'foo', added: [1, 2, 3], removed: [])
@@ -27,10 +28,21 @@ describe SplitIoClient::Cache::Repositories::SegmentsRepository do
       expect(repository.segments_count).to be(3)
       expect(repository.segment_keys_count).to be(7)
     end
+
+    it 'push to internal event queue' do
+      queue.clear()
+
+      repository.add_to_segment(name: 'foo', added: [1, 2, 3], removed: [])
+      event = queue.pop
+      expect(event.internal_event).to be(SplitIoClient::Engine::Models::SdkInternalEvent::SEGMENTS_UPDATED)
+      expect(event.metadata.type).to be(SplitIoClient::Engine::Models::SdkEventType::SEGMENTS_UPDATE)
+      expect(event.metadata.names).to eq([])
+    end
   end
 
   context 'redis adapter' do
-    let(:repository) { described_class.new(SplitIoClient::SplitConfig.new(cache_adapter: :redis)) }
+    let(:queue) {Queue.new}
+    let(:repository) { described_class.new(SplitIoClient::SplitConfig.new(cache_adapter: :redis), queue) }
 
     it 'removes keys' do
       repository.add_to_segment(name: 'foo', added: [1, 2, 3], removed: [])

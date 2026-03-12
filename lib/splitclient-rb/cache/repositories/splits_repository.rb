@@ -35,7 +35,7 @@ module SplitIoClient
         SPLIT_PREFIX = '.split.'
         READY_PREFIX = '.splits.ready'
 
-        def initialize(config, flag_sets_repository, flag_set_filter)
+        def initialize(config, flag_sets_repository, flag_set_filter, internal_events_queue)
           super(config)
           @tt_cache = {}
           @adapter = case @config.cache_adapter.class.to_s
@@ -46,6 +46,7 @@ module SplitIoClient
           end
           @flag_sets = flag_sets_repository
           @flag_set_filter = flag_set_filter
+          @internal_events_queue = internal_events_queue
           initialize_keys
         end
 
@@ -53,6 +54,18 @@ module SplitIoClient
           to_add.each{ |feature_flag| add_feature_flag(feature_flag) }
           to_delete.each{ |feature_flag| remove_feature_flag(feature_flag) }
           set_change_number(new_change_number)
+
+          if to_add.length > 0 || to_delete.length > 0
+            @internal_events_queue.push(
+              SplitIoClient::Engine::Models::SdkInternalEventNotification.new(
+                SplitIoClient::Engine::Models::SdkInternalEvent::FLAGS_UPDATED, 
+                SplitIoClient::Engine::Models::EventsMetadata.new(
+                  SplitIoClient::Engine::Models::SdkEventType::FLAG_UPDATE,
+                  to_add.map {|flag| flag[:name]} | to_delete.map {|flag| flag[:name]}
+                )
+              )
+            )
+          end
         end
 
         def get_split(name)
@@ -140,6 +153,15 @@ module SplitIoClient
           split[:changeNumber] = change_number
 
           @adapter.set_string(namespace_key(".split.#{split_name}"), split.to_json)
+          @internal_events_queue.push(
+            SplitIoClient::Engine::Models::SdkInternalEventNotification.new(
+              SplitIoClient::Engine::Models::SdkInternalEvent::FLAG_KILLED_NOTIFICATION, 
+              SplitIoClient::Engine::Models::EventsMetadata.new(
+                SplitIoClient::Engine::Models::SdkEventType::FLAG_UPDATE,
+                [split_name]
+              )
+            )
+          )
         end
 
         def splits_count

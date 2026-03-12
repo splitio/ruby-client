@@ -14,13 +14,13 @@ module SplitIoClient
 
         def add_to_queue(change_number, segment_name)
           item = { change_number: change_number, segment_name: segment_name }
-          @config.logger.debug("SegmentsWorker add to queue #{item}")
+          @config.logger.debug("SegmentsWorker add to queue #{item}") if @config.debug_enabled
           @queue.push(item)
         end
 
         def start
           if @running.value
-            @config.logger.debug('segments worker already running.')
+            @config.logger.debug('segments worker already running.') if @config.debug_enabled
             return
           end
 
@@ -30,7 +30,7 @@ module SplitIoClient
 
         def stop
           unless @running.value
-            @config.logger.debug('segments worker not running.')
+            @config.logger.debug('segments worker not running.') if @config.debug_enabled
             return
           end
 
@@ -44,7 +44,7 @@ module SplitIoClient
           while (item = @queue.pop)
             segment_name = item[:segment_name]
             cn = item[:change_number]
-            @config.logger.debug("SegmentsWorker change_number dequeue #{segment_name}, #{cn}")
+            @config.logger.debug("SegmentsWorker change_number dequeue #{segment_name}, #{cn}") if @config.debug_enabled
 
             @synchronizer.fetch_segment(segment_name, cn)
           end

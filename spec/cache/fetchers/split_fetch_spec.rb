@@ -23,10 +23,11 @@ describe SplitIoClient::Cache::Fetchers::SplitFetcher do
         cache_adapter: :memory
       )
     end
+    let(:events_queue) { Queue.new }
     let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new([]) }
     let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([]) }
-    let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
-    let(:rule_based_segments_repository) { SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config) }
+    let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter, events_queue) }
+    let(:rule_based_segments_repository) { SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config, events_queue) }
     let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
     let(:store) { described_class.new(splits_repository, rule_based_segments_repository, '', config, telemetry_runtime_producer) }
 
@@ -77,10 +78,11 @@ describe SplitIoClient::Cache::Fetchers::SplitFetcher do
         flag_sets_filter: ['set_2']
       )
     end
+    let(:events_queue) { Queue.new }
     let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new(['set_2']) }
     let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new(['set_2']) }
-    let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
-    let(:rule_based_segments_repository) { SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config) }
+    let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter, events_queue) }
+    let(:rule_based_segments_repository) { SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config, events_queue) }
     let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
     let(:store) { described_class.new(splits_repository, rule_based_segments_repository, '', config, telemetry_runtime_producer) }
 
@@ -131,10 +133,11 @@ describe SplitIoClient::Cache::Fetchers::SplitFetcher do
         cache_adapter: :redis
       )
     end
+    let(:events_queue) { Queue.new }
     let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::RedisFlagSetsRepository.new(config) }
     let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([]) }
-    let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
-    let(:rule_based_segments_repository) { SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config) }
+    let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter, events_queue) }
+    let(:rule_based_segments_repository) { SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config, events_queue) }
     let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
     let(:store) { described_class.new(splits_repository, rule_based_segments_repository, '', config, telemetry_runtime_producer) }
 
