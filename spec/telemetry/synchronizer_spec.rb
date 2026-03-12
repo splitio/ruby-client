@@ -30,14 +30,15 @@ describe SplitIoClient::Telemetry::Synchronizer do
   end
 
   context 'Memory' do
+    let(:events_queue) { Queue.new }
     let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log)) }
     let(:evaluation_consumer) { SplitIoClient::Telemetry::EvaluationConsumer.new(config) }
     let(:init_consumer) { SplitIoClient::Telemetry::InitConsumer.new(config) }
     let(:runtime_consumer) { SplitIoClient::Telemetry::RuntimeConsumer.new(config) }
     let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new([])}
     let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([])}
-    let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
-    let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
+    let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter, events_queue) }
+    let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config, events_queue) }
     let(:api_key) { 'Synchronizer-key' }
     let(:runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
     let(:evaluation_producer) { SplitIoClient::Telemetry::EvaluationProducer.new(config) }

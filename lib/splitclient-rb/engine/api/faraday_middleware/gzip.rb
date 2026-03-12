@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'faraday'
+require 'stringio'
 
 module SplitIoClient
   module FaradayMiddleware

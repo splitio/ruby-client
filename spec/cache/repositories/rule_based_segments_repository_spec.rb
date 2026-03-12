@@ -6,7 +6,8 @@ require 'set'
 describe SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository do
   RSpec.shared_examples 'RuleBasedSegments Repository' do |cache_adapter|
     let(:config) { SplitIoClient::SplitConfig.new(cache_adapter: cache_adapter) }
-    let(:repository) { described_class.new(config) }
+    let(:queue) {Queue.new}
+    let(:repository) { described_class.new(config, queue) }
 
     before :all do
       redis = Redis.new
@@ -101,6 +102,33 @@ describe SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository do
 
       repository.update([rule_based_segment2], [], -1)
       expect(repository.get_rule_based_segment('corge2')[:conditions]).to eq SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository::DEFAULT_CONDITIONS_TEMPLATE
+    end
+
+    it 'push to internal event queue' do
+      queue.clear()
+
+      repository.update([{name: 'flag1', trafficTypeName: 'tt_name_1', conditions: []},
+        {name: 'flag2', trafficTypeName: 'tt_name_1', conditions: []}], [], -1)
+      event = queue.pop
+      expect(event.internal_event).to be(SplitIoClient::Engine::Models::SdkInternalEvent::RB_SEGMENTS_UPDATED)
+      expect(event.metadata.type).to be(SplitIoClient::Engine::Models::SdkEventType::SEGMENTS_UPDATE)
+      expect(event.metadata.names).to eq([])
+
+      repository.update([{name: 'flag1', trafficTypeName: 'tt_name_1', killed: false, default_treatment: 'on', changeNumber: 1, conditions: []}],
+        [{name: 'flag2', trafficTypeName: 'tt_name_1', conditions: []}], -1)
+      event = queue.pop
+      expect(event.internal_event).to be(SplitIoClient::Engine::Models::SdkInternalEvent::RB_SEGMENTS_UPDATED)
+      expect(event.metadata.type).to be(SplitIoClient::Engine::Models::SdkEventType::SEGMENTS_UPDATE)
+      expect(event.metadata.names).to eq([])
+
+      repository.update([], [], 123)
+      expect(queue.empty?).to eq(true)
+
+      repository.update([], [{name: 'flag1', trafficTypeName: 'tt_name_1', killed: false, default_treatment: 'on', changeNumber: 1, conditions: []}], -1)
+      event = queue.pop
+      expect(event.internal_event).to be(SplitIoClient::Engine::Models::SdkInternalEvent::RB_SEGMENTS_UPDATED)
+      expect(event.metadata.type).to be(SplitIoClient::Engine::Models::SdkEventType::SEGMENTS_UPDATE)
+      expect(event.metadata.names).to eq([])
     end
   end
 

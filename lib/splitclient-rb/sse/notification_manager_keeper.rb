@@ -42,12 +42,12 @@ module SplitIoClient
           @telemetry_runtime_producer.record_streaming_event(Telemetry::Domain::Constants::STREAMING_STATUS, DISABLED)
           push_status(Constants::PUSH_SUBSYSTEM_OFF)
         else
-          @config.logger.error("Incorrect event type: #{incoming_notification}")
+          @config.logger.error("Incorrect event type: #{incoming_notification}") if @config.debug_enabled
         end
       end
 
       def process_event_occupancy(channel, publishers)
-        @config.logger.debug("Processed occupancy event with #{publishers} publishers. Channel: #{channel}")
+        @config.logger.debug("Processed occupancy event with #{publishers} publishers. Channel: #{channel}") if @config.debug_enabled
 
         update_publishers(channel, publishers)
 
@@ -76,7 +76,7 @@ module SplitIoClient
       end
 
       def push_status(status)
-        @config.logger.debug("Pushing occupancy status: #{status}")
+        @config.logger.debug("Pushing occupancy status: #{status}") if @config.debug_enabled
         @status_queue.push(status)
       end
     end
