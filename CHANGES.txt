@@ -1,5 +1,17 @@
 CHANGES
 
+8.11.0 (Mar, 12, 2026)
+- Added the ability to listen to different events triggered by the SDK. Read more in our docs.
+   - SDK_UPDATE notify when a flag or user segment has changed
+   - SDK_READY notify when the SDK is ready to evaluate
+
+8.10.1 (Jan 28, 2025)
+- Fixed rule-based segment matcher to exit when a conition is met.
+- Fixed impressions properties format in redis mode. 
+
+8.10.0 (Nov 28, 2025)
+- Updated socketry gem used in streaming feature with built-in socket lib.  
+
 8.9.0 (Oct 8, 2025)
 - Added new configuration for Fallback Treatments, which allows setting a treatment value and optional config to be returned in place of "control", either globally or by flag. Read more in our docs.
 

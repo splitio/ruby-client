@@ -2,12 +2,14 @@
 
 require 'spec_helper'
 require 'http_server_mock'
+require 'rspec/mocks'
 
 describe SplitIoClient::SSE::EventSource::Client do
   subject { SplitIoClient::SSE::EventSource::Client }
 
   let(:log) { StringIO.new }
-  let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log)) }
+  let(:events_queue) { Queue.new }
+  let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log), debug_enabled: true) }
   let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
   let(:telemetry_runtime_consumer) { SplitIoClient::Telemetry::RuntimeConsumer.new(config) }
   let(:api_token) { 'api-token-test' }
@@ -17,11 +19,11 @@ describe SplitIoClient::SSE::EventSource::Client do
   let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([])}
   let(:repositories) do
     {
-      splits: SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter),
-      segments: SplitIoClient::Cache::Repositories::SegmentsRepository.new(config),
+      splits: SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter, events_queue),
+      segments: SplitIoClient::Cache::Repositories::SegmentsRepository.new(config, events_queue),
       impressions: SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config),
       events: SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key, telemetry_runtime_producer),
-      rule_based_segments: SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config) 
+      rule_based_segments: SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config, events_queue) 
     }
   end
   let(:parameters) do
@@ -221,6 +223,36 @@ describe SplitIoClient::SSE::EventSource::Client do
       end
     end
 
+    it 'client timeout and reconnect' do
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')
+        .with(headers: { 'Authorization' => 'Bearer client-spec-key' })
+        .to_return(status: 200, body: '{"ff":{"d":[],"s":-1,"t":5564531221}, "rbs":{"d":[],"s":-1,"t":-1}}')
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=5564531221&rbSince=-1')
+        .with(headers: { 'Authorization' => 'Bearer client-spec-key' })
+        .to_return(status: 200, body: '{"ff":{"d":[],"s":5564531221,"t":5564531221}, "rbs":{"d":[],"s":-1,"t":-1}}')
+
+      mock_server do |server|
+        start_workers
+        server.setup_response('/') do |_, res|
+          send_stream_content(res, event_split_update)
+        end
+
+        sse_client = subject.new(config, api_token, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor, push_status_queue, read_timeout: 0.1)
+        connected = sse_client.start(server.base_uri)
+        sleep 1
+        expect(connected).to eq(true)
+        expect(sse_client.connected?).to eq(true)
+        expect(push_status_queue.pop(true)).to eq(SplitIoClient::Constants::PUSH_CONNECTED)
+        sleep 3
+        expect(log.string).to include 'SSE read operation timed out, no data available'
+        expect(sse_client.connected?).to eq(true)
+        sse_client.close
+        expect(sse_client.connected?).to eq(false)
+
+        stop_workers
+      end
+    end
+
     it 'first event - when server return 400' do
       mock_server do |server|
         server.setup_response('/') do |_, res|
@@ -232,6 +264,95 @@ describe SplitIoClient::SSE::EventSource::Client do
         connected = sse_client.start(server.base_uri)
         expect(connected).to eq(false)
         expect { push_status_queue.pop(true) }.to raise_error(ThreadError)
+
+        stop_workers
+      end
+    end
+
+    it 'test exceptions' do
+      mock_server do |server|
+        server.setup_response('/') do |_, res|
+          send_stream_content(res, event_split_update)
+        end
+        start_workers
+
+        sse_client = subject.new(config, api_token, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor, push_status_queue)
+
+        sse_client.instance_variable_set(:@uri, URI(server.base_uri))
+        latch = Concurrent::CountDownLatch.new(1)
+
+        allow(sse_client).to receive(:read_first_event).and_raise(Errno::ETIMEDOUT)
+        sse_client.send(:connect_stream, latch)
+        expect(log.string).to include 'SSE read operation timed out!'
+
+        allow(sse_client).to receive(:read_first_event).and_raise(EOFError)
+        expect { sse_client.send(:connect_stream, latch) }.to raise_error(RuntimeError)
+        expect(log.string).to include 'SSE read operation EOF Exception!'
+
+        allow(sse_client).to receive(:read_first_event).and_raise(Errno::EBADF)
+        sse_client.send(:connect_stream, latch)
+        expect(log.string).to include 'SSE read operation EBADF or IOError'
+
+        allow(sse_client).to receive(:read_first_event).and_raise(IOError)
+        sse_client.send(:connect_stream, latch)
+        expect(log.string).to include 'SSE read operation EBADF or IOError'
+
+        allow(sse_client).to receive(:read_first_event).and_raise(StandardError)
+        sse_client.send(:connect_stream, latch)
+        expect(log.string).to include 'SSE read operation StandardError:'
+
+        stop_workers
+      end
+    end
+
+    it 'test retry with EAGAIN exceptions' do
+      mock_server do |server|
+        server.setup_response('/') do |_, res|
+          send_stream_content(res, event_occupancy)
+        end
+        start_workers
+
+        sse_client = subject.new(config, api_token, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor, push_status_queue)
+
+        sse_client.instance_variable_set(:@uri, URI(server.base_uri))
+        latch = Concurrent::CountDownLatch.new(1)
+
+        allow(sse_client).to receive(:read_first_event).and_raise(Errno::EAGAIN)
+        sleep(1)
+        thr1 = Thread.new do
+          sse_client.send(:connect_stream, latch)
+        end        
+        sleep(1)
+        allow(sse_client).to receive(:read_first_event).and_return(true)
+        expect(log.string).to include 'SSE client transient error'
+
+        stop_workers
+      end
+    end
+
+    it 'test retry with IO::WaitReadable exceptions' do
+      log2 = StringIO.new
+      config2 = SplitIoClient::SplitConfig.new(logger: Logger.new(log2), debug_enabled: true)
+
+      mock_server do |server|
+        server.setup_response('/') do |_, res|
+          send_stream_content(res, event_occupancy)
+        end
+        start_workers
+
+        sse_client2 = subject.new(config2, api_token, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor, push_status_queue)
+
+        sse_client2.instance_variable_set(:@uri, URI(server.base_uri))
+        latch = Concurrent::CountDownLatch.new(1)
+
+        allow(sse_client2).to receive(:read_first_event).and_raise(IO::EWOULDBLOCKWaitReadable)
+        sleep(1)
+        thr2 = Thread.new do
+          sse_client2.send(:connect_stream, latch)
+        end        
+        sleep(1)
+        allow(sse_client2).to receive(:read_first_event).and_return(true)
+        expect(log2.string).to include 'SSE client IO::WaitReadable transient error'
 
         stop_workers
       end

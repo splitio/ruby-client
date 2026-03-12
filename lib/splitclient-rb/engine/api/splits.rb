@@ -24,7 +24,7 @@ module SplitIoClient
         
         if check_last_proxy_check_timestamp
             @spec_version = SplitIoClient::Spec::FeatureFlags::SPEC_VERSION
-            @config.logger.debug("Switching to new Feature flag spec #{@spec_version} and fetching.")
+            @config.logger.debug("Switching to new Feature flag spec #{@spec_version} and fetching.") if @config.debug_enabled
             @old_spec_since = since
             since = -1
             since_rbs = -1
@@ -41,7 +41,7 @@ module SplitIoClient
 
         params[:sets] = @flag_sets_filter.join(",") unless @flag_sets_filter.empty?
         params[:till] = fetch_options[:till] unless fetch_options[:till].nil?
-        @config.logger.debug("Fetching from splitChanges with #{params}: ")
+        @config.logger.debug("Fetching from splitChanges with #{params}: ") if @config.debug_enabled
         response = get_api("#{@config.base_uri}/splitChanges", @api_key, params, fetch_options[:cache_control_headers])
         if response.status == 414
           @config.logger.error("Error fetching feature flags; the amount of flag sets provided are too big, causing uri length error.")

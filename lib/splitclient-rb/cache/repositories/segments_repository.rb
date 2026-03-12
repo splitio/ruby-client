@@ -6,7 +6,7 @@ module SplitIoClient
 
         attr_reader :adapter
 
-        def initialize(config)
+        def initialize(config, internal_events_queue)
           super(config)
           @adapter = case @config.cache_adapter.class.to_s
           when 'SplitIoClient::Cache::Adapters::RedisAdapter'
@@ -15,6 +15,7 @@ module SplitIoClient
             @config.cache_adapter
           end
           @adapter.set_bool(namespace_key('.ready'), false) unless @config.mode.equal?(:consumer)
+          @internal_events_queue = internal_events_queue
         end
 
         # Receives segment data, adds and removes segements from the store
@@ -22,9 +23,19 @@ module SplitIoClient
           name = segment[:name]
 
           @adapter.initialize_set(segment_data(name)) unless @adapter.exists?(segment_data(name))
-
           add_keys(name, segment[:added])
           remove_keys(name, segment[:removed])
+          if segment[:added].length > 0 || segment[:removed].length > 0
+            @internal_events_queue.push(
+              SplitIoClient::Engine::Models::SdkInternalEventNotification.new(
+                SplitIoClient::Engine::Models::SdkInternalEvent::SEGMENTS_UPDATED, 
+                SplitIoClient::Engine::Models::EventsMetadata.new(
+                  SplitIoClient::Engine::Models::SdkEventType::SEGMENTS_UPDATE,
+                  []
+                )
+              )
+            )
+          end
         end
 
         def get_segment_keys(name)

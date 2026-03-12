@@ -8,11 +8,12 @@ describe SplitIoClient::SSE::SSEHandler do
 
   let(:api_key) { 'SSEHandler-key' }
   let(:log) { StringIO.new }
+  let(:events_queue) { Queue.new }
   let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log)) }
   let(:flag_sets_repository) {SplitIoClient::Cache::Repositories::MemoryFlagSetsRepository.new([])}
   let(:flag_set_filter) {SplitIoClient::Cache::Filter::FlagSetsFilter.new([])}
-  let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter) }
-  let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config) }
+  let(:splits_repository) { SplitIoClient::Cache::Repositories::SplitsRepository.new(config, flag_sets_repository, flag_set_filter, events_queue) }
+  let(:segments_repository) { SplitIoClient::Cache::Repositories::SegmentsRepository.new(config, events_queue) }
   let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
   let(:push_status_queue) { Queue.new }
   let(:notification_manager_keeper) { SplitIoClient::SSE::NotificationManagerKeeper.new(config, telemetry_runtime_producer, push_status_queue) }
@@ -22,7 +23,7 @@ describe SplitIoClient::SSE::SSEHandler do
       segments: segments_repository,
       impressions: SplitIoClient::Cache::Repositories::ImpressionsRepository.new(config),
       events: SplitIoClient::Cache::Repositories::EventsRepository.new(config, api_key, telemetry_runtime_producer),
-      rule_based_segments: SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config) 
+      rule_based_segments: SplitIoClient::Cache::Repositories::RuleBasedSegmentsRepository.new(config, events_queue) 
     }
   end
   let(:parameters) do
@@ -48,7 +49,6 @@ describe SplitIoClient::SSE::SSEHandler do
 
       config.streaming_service_url = server.base_uri
       sse_handler = subject.new(config, splits_worker, segments_worker, sse_client)
-
       connected = sse_handler.start('token-test', 'channel-test')
       expect(connected).to eq(true)
       expect(sse_handler.connected?).to eq(true)
