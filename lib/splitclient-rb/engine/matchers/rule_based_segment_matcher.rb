@@ -40,7 +40,7 @@ module SplitIoClient
         break if matched
       end
 
-      @logger.debug("[InRuleSegmentMatcher] #{@segment_name} is in rule based segment -> #{matched}")
+      @config.logger.debug("[InRuleSegmentMatcher] #{@segment_name} is in rule based segment -> #{matched}") if @config.debug_enabled
       matched
     end
 
