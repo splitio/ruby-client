@@ -357,6 +357,30 @@ describe SplitIoClient::SSE::EventSource::Client do
         stop_workers
       end
     end
+
+    it 'test retry with first event error' do
+      log2 = StringIO.new
+      config2 = SplitIoClient::SplitConfig.new(logger: Logger.new(log2), debug_enabled: true)
+
+      mock_server do |server|
+        server.setup_response('/') do |_, res|
+          send_stream_content(res, event_occupancy, 500)
+        end
+        start_workers
+
+        sse_client2 = subject.new(config2, api_token, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor, push_status_queue)
+
+        sse_client2.instance_variable_set(:@uri, URI(server.base_uri))
+        latch = Concurrent::CountDownLatch.new(1)
+
+        thr2 = Thread.new do
+          res = sse_client2.send(:connect_stream, latch)
+          expect(res).to eq(SplitIoClient::Constants::PUSH_RETRYABLE_ERROR)
+        end        
+
+        stop_workers
+      end
+    end
   end
 
   private

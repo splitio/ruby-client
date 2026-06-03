@@ -86,7 +86,7 @@ module SplitIoClient
         end
 
         def connect_stream(latch)
-          return Constants::PUSH_NONRETRYABLE_ERROR unless socket_write(latch)
+          return Constants::PUSH_RETRYABLE_ERROR unless socket_write(latch)
           while connected? || @first_event.value
             begin 
               if IO.select([@socket], nil, nil, @read_timeout)
