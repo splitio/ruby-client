@@ -6,14 +6,8 @@ module SplitIoClient
       SYNC_MODE_STREAMING = 0
       SYNC_MODE_POLLING = 1
 
-      def initialize(config,
-                     synchronizer,
-                     telemetry_runtime_producer,
-                     telemetry_synchronizer,
-                     status_manager,
-                     sse_handler,
-                     push_manager,
-                     status_queue)
+      def initialize(config, synchronizer, telemetry_runtime_producer, telemetry_synchronizer,
+                     status_manager, sse_handler, push_manager, status_queue)
         @config = config
         @synchronizer = synchronizer
         @telemetry_runtime_producer = telemetry_runtime_producer
