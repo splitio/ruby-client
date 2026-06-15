@@ -47,7 +47,7 @@ module SplitIoClient
           @connected.make_false
           @socket.sync_close = true if @socket.is_a? OpenSSL::SSL::SSLSocket
           @socket.close
-          @config.logger.debug("SSEClient socket state #{@socket.state}") if @socket.is_a? OpenSSL::SSL::SSLSocket && @config.debug_enabled
+          @config.logger.debug("SSEClient socket state #{@socket.state}") if @socket.is_a?(OpenSSL::SSL::SSLSocket) && @config.debug_enabled
         rescue StandardError => e
           @config.logger.error("SSEClient close Error: #{e.inspect}")
         end
