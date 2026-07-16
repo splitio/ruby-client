@@ -17,7 +17,7 @@ module SplitIoClient
         @push_manager = push_manager
         @status_queue = status_queue
         @sse_connected = Concurrent::AtomicBoolean.new(false)
-        @back_off = Engine::BackOff.new(5, 3)
+        @back_off = Engine::BackOff.new(1, 3)
       end
 
       def start
