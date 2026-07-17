@@ -47,7 +47,7 @@ module SplitIoClient
           @connected.make_false
           @socket.sync_close = true if @socket.is_a? OpenSSL::SSL::SSLSocket
           @socket.close
-          @config.logger.debug("SSEClient socket state #{@socket.state}") if @socket.is_a? OpenSSL::SSL::SSLSocket && @config.debug_enabled
+          @config.logger.debug("SSEClient socket state #{@socket.state}") if @socket.is_a?(OpenSSL::SSL::SSLSocket) && @config.debug_enabled
         rescue StandardError => e
           @config.logger.error("SSEClient close Error: #{e.inspect}")
         end
@@ -86,7 +86,7 @@ module SplitIoClient
         end
 
         def connect_stream(latch)
-          return Constants::PUSH_NONRETRYABLE_ERROR unless socket_write(latch)
+          return Constants::PUSH_RETRYABLE_ERROR unless socket_write(latch)
           while connected? || @first_event.value
             begin 
               if IO.select([@socket], nil, nil, @read_timeout)

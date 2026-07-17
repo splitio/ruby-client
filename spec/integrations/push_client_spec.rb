@@ -84,6 +84,38 @@ describe SplitIoClient do
       end
     end
 
+    it 'Retry streaming connection' do
+      mock_splits_request(splits, -1)
+      mock_splits_request(splits2, 1_585_948_850_109)
+      mock_splits_request(splits3, 1_585_948_850_110)
+      mock_segment_changes('segment3', segment3, '-1')
+
+      mock_server do |server|
+        server.setup_response('/') do |_, res|
+          send_content(res, event_split_kill_must_not_fetch, 500)
+        end
+
+        stub_request(:get, auth_service_url + "?s=1.3").to_return(status: 200, body: auth_body_response)
+
+        streaming_service_url = server.base_uri
+        factory = SplitIoClient::SplitFactory.new(
+          'test_api_key',
+          streaming_enabled: true,
+          streaming_service_url: streaming_service_url,
+          auth_service_url: auth_service_url
+        )
+
+        client = factory.client
+        client.block_until_ready(1)
+        server.setup_response('/') do |_, res|
+          send_content(res, event_split_update_must_fetch)
+        end
+        sleep(2)
+        expect(client.get_treatment('admin', 'push_test')).to eq('after_fetch')
+        client.destroy
+      end
+    end
+
     it 'processing split update event without fetch' do
       mock_splits_request(splits, -1)
       mock_splits_request(splits2, 1_585_948_850_109)
@@ -587,14 +619,14 @@ describe SplitIoClient do
         expect(client.get_treatment('admin', 'push_test')).to eq('after_fetch')
         client.destroy
       end
-    end
+    end    
   end
 
   private
 
-  def send_content(res, content)
+  def send_content(res, content, status=200)
     res.content_type = 'text/event-stream'
-    res.status = 200
+    res.status = status
     res.chunked = true
     rd, wr = IO.pipe
     wr.write(content)

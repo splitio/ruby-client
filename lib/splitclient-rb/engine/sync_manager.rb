@@ -6,14 +6,8 @@ module SplitIoClient
       SYNC_MODE_STREAMING = 0
       SYNC_MODE_POLLING = 1
 
-      def initialize(config,
-                     synchronizer,
-                     telemetry_runtime_producer,
-                     telemetry_synchronizer,
-                     status_manager,
-                     sse_handler,
-                     push_manager,
-                     status_queue)
+      def initialize(config, synchronizer, telemetry_runtime_producer, telemetry_synchronizer,
+                     status_manager, sse_handler, push_manager, status_queue)
         @config = config
         @synchronizer = synchronizer
         @telemetry_runtime_producer = telemetry_runtime_producer
@@ -23,6 +17,7 @@ module SplitIoClient
         @push_manager = push_manager
         @status_queue = status_queue
         @sse_connected = Concurrent::AtomicBoolean.new(false)
+        @back_off = Engine::BackOff.new(1, 3)
       end
 
       def start
@@ -119,7 +114,7 @@ module SplitIoClient
       end
 
       def process_disconnect(reconnect)
-        unless @sse_connected.value
+        unless @sse_connected.value || reconnect
           @config.logger.debug('Streaming already disconnected.') if @config.debug_enabled
           return
         end
@@ -130,6 +125,9 @@ module SplitIoClient
         record_telemetry(Telemetry::Domain::Constants::SYNC_MODE, SYNC_MODE_POLLING)
 
         if reconnect
+          wait_interval = @back_off.interval
+          @config.logger.debug("Retrying streaming connection in: #{wait_interval} seconds")
+          sleep(wait_interval)
           @push_manager.stop_sse
           @synchronizer.sync_all
           @push_manager.start_sse
@@ -155,6 +153,7 @@ module SplitIoClient
 
           case status
           when Constants::PUSH_CONNECTED
+            @back_off.reset
             process_connected
           when Constants::PUSH_RETRYABLE_ERROR
             process_disconnect(true)
