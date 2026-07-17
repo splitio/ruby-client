@@ -10,7 +10,7 @@ module SplitIoClient
     module EventSource
       class Client
         DEFAULT_READ_TIMEOUT = 70
-        CONNECT_TIMEOUT = 30_000
+        CONNECT_TIMEOUT = 30
         OK_CODE = 200
         KEEP_ALIVE_RESPONSE = "c\r\n:keepalive\n\n\r\n".freeze
         ERROR_EVENT_TYPE = 'error'.freeze
@@ -94,7 +94,10 @@ module SplitIoClient
                   partial_data = @socket.readpartial(10_000)
                   read_first_event(partial_data, latch)
 
-                  raise 'eof exception' if partial_data == :eof
+                  if partial_data == :eof
+                    @config.logger.error("SSE recived EOF unexpectedly")
+                    return Constants::PUSH_RETRYABLE_ERROR
+                  end
                 rescue IO::WaitReadable => e
                   @config.logger.debug("SSE client IO::WaitReadable transient error: #{e.inspect}") if @config.debug_enabled
                   IO.select([@socket], nil, nil, @read_timeout)
@@ -108,7 +111,7 @@ module SplitIoClient
                   return Constants::PUSH_RETRYABLE_ERROR
                 rescue EOFError => e
                   @config.logger.error("SSE read operation EOF Exception!: #{e.inspect}")
-                  raise 'eof exception'
+                  return Constants::PUSH_RETRYABLE_ERROR
                 rescue Errno::EBADF, IOError => e
                   @config.logger.error("SSE read operation EBADF or IOError: #{e.inspect}")
                   return Constants::PUSH_RETRYABLE_ERROR
@@ -126,8 +129,6 @@ module SplitIoClient
             rescue Errno::EBADF
               @config.logger.debug("SSE socket is not connected (Errno::EBADF)") if @config.debug_enabled
               break
-            rescue RuntimeError
-              raise 'eof exception'
             rescue Exception => e
               @config.logger.debug("SSE socket is not connected: #{e.inspect}") if @config.debug_enabled
               break

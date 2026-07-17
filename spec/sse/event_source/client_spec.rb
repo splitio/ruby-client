@@ -285,10 +285,6 @@ describe SplitIoClient::SSE::EventSource::Client do
         sse_client.send(:connect_stream, latch)
         expect(log.string).to include 'SSE read operation timed out!'
 
-        allow(sse_client).to receive(:read_first_event).and_raise(EOFError)
-        expect { sse_client.send(:connect_stream, latch) }.to raise_error(RuntimeError)
-        expect(log.string).to include 'SSE read operation EOF Exception!'
-
         allow(sse_client).to receive(:read_first_event).and_raise(Errno::EBADF)
         sse_client.send(:connect_stream, latch)
         expect(log.string).to include 'SSE read operation EBADF or IOError'
@@ -300,6 +296,31 @@ describe SplitIoClient::SSE::EventSource::Client do
         allow(sse_client).to receive(:read_first_event).and_raise(StandardError)
         sse_client.send(:connect_stream, latch)
         expect(log.string).to include 'SSE read operation StandardError:'
+
+        stop_workers
+      end
+    end
+
+    it 'test retry with EofError exceptions' do
+      mock_server do |server|
+        server.setup_response('/') do |_, res|
+          send_stream_content(res, event_occupancy)
+        end
+        start_workers
+
+        sse_client = subject.new(config, api_token, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor, push_status_queue)
+
+        sse_client.instance_variable_set(:@uri, URI(server.base_uri))
+        latch = Concurrent::CountDownLatch.new(1)
+
+        allow(sse_client).to receive(:read_first_event).and_raise(EOFError)
+        sleep(1)
+        thr1 = Thread.new do
+          sse_client.send(:connect_stream, latch)
+        end        
+        sleep(1)
+        allow(sse_client).to receive(:read_first_event).and_return(true)
+        expect(log.string).to include 'SSE read operation EOF Exception'
 
         stop_workers
       end
