@@ -94,7 +94,7 @@ module SplitIoClient
                   partial_data = @socket.readpartial(10_000)
                   read_first_event(partial_data, latch)
 
-                  raise 'eof exception' if partial_data == :eof
+                  return Constants::PUSH_RETRYABLE_ERROR if partial_data == :eof
                 rescue IO::WaitReadable => e
                   @config.logger.debug("SSE client IO::WaitReadable transient error: #{e.inspect}") if @config.debug_enabled
                   IO.select([@socket], nil, nil, @read_timeout)
@@ -126,8 +126,6 @@ module SplitIoClient
             rescue Errno::EBADF
               @config.logger.debug("SSE socket is not connected (Errno::EBADF)") if @config.debug_enabled
               break
-            rescue RuntimeError
-              raise 'eof exception'
             rescue Exception => e
               @config.logger.debug("SSE socket is not connected: #{e.inspect}") if @config.debug_enabled
               break
