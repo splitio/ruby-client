@@ -10,7 +10,7 @@ module SplitIoClient
     module EventSource
       class Client
         DEFAULT_READ_TIMEOUT = 70
-        CONNECT_TIMEOUT = 30_000
+        CONNECT_TIMEOUT = 30
         OK_CODE = 200
         KEEP_ALIVE_RESPONSE = "c\r\n:keepalive\n\n\r\n".freeze
         ERROR_EVENT_TYPE = 'error'.freeze
@@ -108,7 +108,7 @@ module SplitIoClient
                   return Constants::PUSH_RETRYABLE_ERROR
                 rescue EOFError => e
                   @config.logger.error("SSE read operation EOF Exception!: #{e.inspect}")
-                  raise 'eof exception'
+                  return Constants::PUSH_RETRYABLE_ERROR
                 rescue Errno::EBADF, IOError => e
                   @config.logger.error("SSE read operation EBADF or IOError: #{e.inspect}")
                   return Constants::PUSH_RETRYABLE_ERROR
