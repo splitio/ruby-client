@@ -96,7 +96,8 @@ module SplitIoClient
 
                   if partial_data == :eof
                     @config.logger.error("SSE recived EOF unexpectedly")
-                    return Constants::PUSH_RETRYABLE_ERROR 
+                    return Constants::PUSH_RETRYABLE_ERROR
+                  end
                 rescue IO::WaitReadable => e
                   @config.logger.debug("SSE client IO::WaitReadable transient error: #{e.inspect}") if @config.debug_enabled
                   IO.select([@socket], nil, nil, @read_timeout)
