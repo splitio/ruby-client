@@ -91,11 +91,6 @@ module SplitIoClient
                 begin
                   partial_data = @socket.readpartial(10_000)
                   read_first_event(partial_data, latch)
-
-                  if partial_data == :eof
-                    @config.logger.error("SSE recived EOF unexpectedly, disconnecting")
-                    return Constants::PUSH_NONRETRYABLE_ERROR
-                  end
                 rescue IO::WaitReadable => e
                   @config.logger.debug("SSE client IO::WaitReadable transient error: #{e.inspect}") if @config.debug_enabled
                   IO.select([@socket], nil, nil, @read_timeout)
@@ -108,8 +103,8 @@ module SplitIoClient
                   @config.logger.error("SSE read operation timed out!: #{e.inspect}")
                   return Constants::PUSH_RETRYABLE_ERROR
                 rescue EOFError => e
-                  @config.logger.error("SSE read operation EOF Exception!: #{e.inspect}")
-                  return Constants::PUSH_NONRETRYABLE_ERROR
+                  @config.logger.error("SSE read operation EOF, server closed the connection, will reconnect: #{e.inspect}")
+                  return Constants::PUSH_RETRYABLE_ERROR
                 rescue Errno::EBADF, IOError => e
                   @config.logger.error("SSE read operation EBADF or IOError: #{e.inspect}")
                   return Constants::PUSH_RETRYABLE_ERROR

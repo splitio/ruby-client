@@ -328,10 +328,10 @@ describe SplitIoClient::SSE::EventSource::Client do
 
         thr1 = Thread.new do
           res = sse_client.send(:connect_stream, latch)
-          expect(res).to eq(SplitIoClient::Constants::PUSH_NONRETRYABLE_ERROR)
-        end        
+          expect(res).to eq(SplitIoClient::Constants::PUSH_RETRYABLE_ERROR)
+        end
         sleep(1)
-        expect(log.string).to include 'SSE read operation EOF Exception'
+        expect(log.string).to include 'SSE read operation EOF, server closed the connection, will reconnect'
 
         stop_workers
       end
