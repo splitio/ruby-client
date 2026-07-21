@@ -37,17 +37,15 @@ module SplitIoClient
         end
 
         def close(status = nil)
-          unless connected?
-            @config.logger.debug('SSEClient already disconected.') if @config.debug_enabled
-            return
-          end
-          @config.logger.debug("Closing SSEClient socket") if @config.debug_enabled
+          return if @socket.nil?
 
+          @config.logger.debug("Closing SSEClient socket") if @config.debug_enabled
           push_status(status)
           @connected.make_false
           @socket.sync_close = true if @socket.is_a? OpenSSL::SSL::SSLSocket
           @socket.close
           @config.logger.debug("SSEClient socket state #{@socket.state}") if @socket.is_a?(OpenSSL::SSL::SSLSocket) && @config.debug_enabled
+          @socket = nil
         rescue StandardError => e
           @config.logger.error("SSEClient close Error: #{e.inspect}")
         end
@@ -95,8 +93,8 @@ module SplitIoClient
                   read_first_event(partial_data, latch)
 
                   if partial_data == :eof
-                    @config.logger.error("SSE recived EOF unexpectedly")
-                    return Constants::PUSH_RETRYABLE_ERROR
+                    @config.logger.error("SSE recived EOF unexpectedly") if @config.debug_enabled
+                    return Constants::PUSH_NONRETRYABLE_ERROR
                   end
                 rescue IO::WaitReadable => e
                   @config.logger.debug("SSE client IO::WaitReadable transient error: #{e.inspect}") if @config.debug_enabled
@@ -111,7 +109,7 @@ module SplitIoClient
                   return Constants::PUSH_RETRYABLE_ERROR
                 rescue EOFError => e
                   @config.logger.error("SSE read operation EOF Exception!: #{e.inspect}")
-                  return Constants::PUSH_RETRYABLE_ERROR
+                  return Constants::PUSH_NONRETRYABLE_ERROR
                 rescue Errno::EBADF, IOError => e
                   @config.logger.error("SSE read operation EBADF or IOError: #{e.inspect}")
                   return Constants::PUSH_RETRYABLE_ERROR

@@ -217,7 +217,13 @@ describe SplitIoClient::SSE::EventSource::Client do
 
         expect(connected).to eq(false)
         expect(sse_client.connected?).to eq(false)
-        expect { push_status_queue.pop(true) }.to raise_error(ThreadError)
+
+        latch = Concurrent::CountDownLatch.new(1)
+
+        thr2 = Thread.new do
+          res = sse_client.send(:connect_stream, latch)
+          expect(res).to eq(SplitIoClient::Constants::PUSH_NONRETRYABLE_ERROR)
+        end        
 
         stop_workers
       end
@@ -261,9 +267,13 @@ describe SplitIoClient::SSE::EventSource::Client do
         start_workers
         sse_client = subject.new(config, api_token, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor, push_status_queue)
 
-        connected = sse_client.start(server.base_uri)
-        expect(connected).to eq(false)
-        expect { push_status_queue.pop(true) }.to raise_error(ThreadError)
+        sse_client.instance_variable_set(:@uri, URI(server.base_uri))
+        latch = Concurrent::CountDownLatch.new(1)
+
+        thr2 = Thread.new do
+          res = sse_client.send(:connect_stream, latch)
+          expect(res).to eq(SplitIoClient::Constants::PUSH_NONRETRYABLE_ERROR)
+        end        
 
         stop_workers
       end
@@ -315,11 +325,12 @@ describe SplitIoClient::SSE::EventSource::Client do
 
         allow(sse_client).to receive(:read_first_event).and_raise(EOFError)
         sleep(1)
+
         thr1 = Thread.new do
-          sse_client.send(:connect_stream, latch)
+          res = sse_client.send(:connect_stream, latch)
+          expect(res).to eq(SplitIoClient::Constants::PUSH_NONRETRYABLE_ERROR)
         end        
         sleep(1)
-        allow(sse_client).to receive(:read_first_event).and_return(true)
         expect(log.string).to include 'SSE read operation EOF Exception'
 
         stop_workers
