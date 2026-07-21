@@ -93,7 +93,7 @@ module SplitIoClient
                   read_first_event(partial_data, latch)
 
                   if partial_data == :eof
-                    @config.logger.error("SSE recived EOF unexpectedly") if @config.debug_enabled
+                    @config.logger.error("SSE recived EOF unexpectedly, disconnecting")
                     return Constants::PUSH_NONRETRYABLE_ERROR
                   end
                 rescue IO::WaitReadable => e
