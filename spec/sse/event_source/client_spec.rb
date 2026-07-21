@@ -219,11 +219,8 @@ describe SplitIoClient::SSE::EventSource::Client do
         expect(sse_client.connected?).to eq(false)
 
         latch = Concurrent::CountDownLatch.new(1)
-
-        thr2 = Thread.new do
-          res = sse_client.send(:connect_stream, latch)
-          expect(res).to eq(SplitIoClient::Constants::PUSH_NONRETRYABLE_ERROR)
-        end        
+        res = sse_client.send(:connect_stream, latch)
+        expect(res).to eq(nil)
 
         stop_workers
       end
@@ -269,11 +266,8 @@ describe SplitIoClient::SSE::EventSource::Client do
 
         sse_client.instance_variable_set(:@uri, URI(server.base_uri))
         latch = Concurrent::CountDownLatch.new(1)
-
-        thr2 = Thread.new do
-          res = sse_client.send(:connect_stream, latch)
-          expect(res).to eq(SplitIoClient::Constants::PUSH_NONRETRYABLE_ERROR)
-        end        
+        res = sse_client.send(:connect_stream, latch)
+        expect(res).to eq(nil)
 
         stop_workers
       end
@@ -326,11 +320,10 @@ describe SplitIoClient::SSE::EventSource::Client do
         allow(sse_client).to receive(:read_first_event).and_raise(EOFError)
         sleep(1)
 
-        thr1 = Thread.new do
-          res = sse_client.send(:connect_stream, latch)
-          expect(res).to eq(SplitIoClient::Constants::PUSH_RETRYABLE_ERROR)
-        end
+        res = sse_client.send(:connect_stream, latch)
+        expect(res).to eq(SplitIoClient::Constants::PUSH_RETRYABLE_ERROR)
         sleep(1)
+
         expect(log.string).to include 'SSE read operation EOF, server closed the connection, will reconnect'
 
         stop_workers
@@ -351,9 +344,7 @@ describe SplitIoClient::SSE::EventSource::Client do
 
         allow(sse_client).to receive(:read_first_event).and_raise(Errno::EAGAIN)
         sleep(1)
-        thr1 = Thread.new do
-          sse_client.send(:connect_stream, latch)
-        end        
+        sse_client.send(:connect_stream, latch)
         sleep(1)
         allow(sse_client).to receive(:read_first_event).and_return(true)
         expect(log.string).to include 'SSE client transient error'
@@ -379,10 +370,10 @@ describe SplitIoClient::SSE::EventSource::Client do
 
         allow(sse_client2).to receive(:read_first_event).and_raise(IO::EWOULDBLOCKWaitReadable)
         sleep(1)
-        thr2 = Thread.new do
-          sse_client2.send(:connect_stream, latch)
-        end        
+
+        sse_client2.send(:connect_stream, latch)
         sleep(1)
+
         allow(sse_client2).to receive(:read_first_event).and_return(true)
         expect(log2.string).to include 'SSE client IO::WaitReadable transient error'
 
@@ -405,10 +396,8 @@ describe SplitIoClient::SSE::EventSource::Client do
         sse_client2.instance_variable_set(:@uri, URI(server.base_uri))
         latch = Concurrent::CountDownLatch.new(1)
 
-        thr2 = Thread.new do
-          res = sse_client2.send(:connect_stream, latch)
-          expect(res).to eq(SplitIoClient::Constants::PUSH_RETRYABLE_ERROR)
-        end        
+        res = sse_client2.send(:connect_stream, latch)
+        expect(res).to eq(nil)
 
         stop_workers
       end

@@ -78,7 +78,7 @@ module SplitIoClient
           @config.threads[:connect_stream] = Thread.new do
             @config.logger.info('Starting connect_stream thread ...')
             new_status = connect_stream(latch)
-            push_status(new_status)
+            push_status(new_status) unless new_status.nil?
             @config.logger.info('connect_stream thread finished.')
           end
         end

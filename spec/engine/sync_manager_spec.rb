@@ -135,6 +135,28 @@ describe SplitIoClient::Engine::SyncManager do
     end
   end
 
+  it 'start sync manager receiving 400 error, must switch to polling' do
+    mock_server do |server|
+      server.setup_response('/') do |_, res|
+        send_content(res, event_control, 400)
+      end
+
+      config.streaming_service_url = server.base_uri
+
+      sync_manager = subject.new(config, synchronizer, telemetry_runtime_producer, telemetry_synchronizer, status_manager, sse_handler, push_manager, push_status_queue)
+      sync_manager.start
+
+      sleep(2)
+      config.threads.select { |name, _| name.to_s.end_with? 'worker' }.values.each do |thread|
+        expect(thread.status).to eq(false) # Status fasle: when this thread is terminated normally as expected
+      end
+
+      sse_handler = sync_manager.instance_variable_get(:@sse_handler)
+      expect(sse_handler.connected?).to eq(false)
+      config.threads.values.each { |thread| Thread.kill(thread) }
+    end
+  end
+
   private
 
   def mock_split_changes_with_since(splits_json, since)
@@ -147,9 +169,9 @@ describe SplitIoClient::Engine::SyncManager do
       .to_return(status: 200, body: segment_json)
   end
 
-  def send_content(res, content)
+  def send_content(res, content, status = 200)
     res.content_type = 'text/event-stream'
-    res.status = 200
+    res.status = status
     res.chunked = true
     rd, wr = IO.pipe
     wr.write(content)
