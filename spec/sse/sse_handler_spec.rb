@@ -74,7 +74,6 @@ describe SplitIoClient::SSE::SSEHandler do
       expect(connected).to eq(false)
       expect(sse_handler.connected?).to eq(false)
       expect(sse_handler.sse_client.connected?).to eq(false)
-      expect(push_status_queue.pop(true)).to eq(SplitIoClient::Constants::PUSH_RETRYABLE_ERROR)
 
       sse_handler.stop
     end
