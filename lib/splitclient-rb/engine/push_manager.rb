@@ -22,7 +22,7 @@ module SplitIoClient
         end
 
         unless @sse_handler.start(response[:token], response[:channels])
-          @config.logger.debug("Streaming server returned error") if @config.debug_enabled
+          @config.logger.debug('Streaming server returned error') if @config.debug_enabled
           stop_sse
           return false
         end
