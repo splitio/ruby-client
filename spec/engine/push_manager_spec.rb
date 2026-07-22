@@ -56,6 +56,7 @@ describe SplitIoClient::Engine::PushManager do
         expect(a_request(:get, config.auth_service_url + "?s=1.3")).to have_been_made.times(1)
 
         sleep(1.5)
+        expect(config.threads.has_key?(:schedule_next_token_refresh)).to eq(true)
         expect(connected).to eq(true)
         expect(sse_handler.connected?).to eq(true)
         expect(push_status_queue.pop(true)).to eq(SplitIoClient::Constants::PUSH_CONNECTED)
@@ -93,6 +94,29 @@ describe SplitIoClient::Engine::PushManager do
       expect(connected).to eq(false)
       expect(sse_handler.connected?).to eq(false)
     end
+
+    it 'must not retry if server return 400' do
+      mock_server do |server|
+        server.setup_response('/') do |_, res|
+          send_mock_content(res, 'content', 400)
+        end
+
+        stub_request(:get, config.auth_service_url + "?s=1.3").to_return(status: 200, body: body_response)
+        config.streaming_service_url = server.base_uri
+
+        sse_handler = SplitIoClient::SSE::SSEHandler.new(config, splits_worker, segments_worker, sse_client)
+        push_manager = subject.new(config, sse_handler, api_key, runtime_producer)
+        connected = push_manager.start_sse
+
+        expect(a_request(:get, config.auth_service_url + "?s=1.3")).to have_been_made.times(1)
+
+        sleep(1.5)
+        expect(config.threads.has_key?(:schedule_next_token_refresh)).to eq(false)
+        expect(connected).to eq(false)
+        expect(sse_handler.connected?).to eq(false)
+
+      end
+    end
   end
 
   context 'stop_sse' do
@@ -125,9 +149,9 @@ describe SplitIoClient::Engine::PushManager do
   end
 end
 
-def send_mock_content(res, content)
+def send_mock_content(res, content, status = 200)
   res.content_type = 'text/event-stream'
-  res.status = 200
+  res.status = status
   res.chunked = true
   rd, wr = IO.pipe
   wr.write(content)
