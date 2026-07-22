@@ -94,6 +94,7 @@ describe SplitIoClient::Engine::SyncManager do
   end
 
   it 'start sync manager with wrong sse host url and non connect to server, must start polling.' do
+    ENV['SPLITCLIENT_ENV'] = "prod"
     mock_server do |server|
       server.setup_response('/') do |_, res|
         send_content(res, 'content')
@@ -108,7 +109,7 @@ describe SplitIoClient::Engine::SyncManager do
       sleep(2)
       expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')).to have_been_made.once
 
-      expect(config.threads.size).to eq(8)
+      expect(config.threads.size).to eq(9)
       config.threads.values.each { |thread| Thread.kill(thread) }
     end
   end
