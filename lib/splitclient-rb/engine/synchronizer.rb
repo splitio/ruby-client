@@ -55,8 +55,8 @@ module SplitIoClient
       end
 
       def start_periodic_fetch
-        @split_fetcher.call
-        @segment_fetcher.call
+        @split_fetcher.call unless Helpers::ThreadHelper.alive?(:split_fetcher, @config)
+        @segment_fetcher.call unless Helpers::ThreadHelper.alive?(:segment_fetcher, @config)
       end
 
       def stop_periodic_fetch

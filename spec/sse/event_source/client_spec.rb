@@ -220,7 +220,7 @@ describe SplitIoClient::SSE::EventSource::Client do
 
         latch = Concurrent::CountDownLatch.new(1)
         res = sse_client.send(:connect_stream, latch)
-        expect(res).to eq(nil)
+        expect(res).to eq(SplitIoClient::Constants::PUSH_NONRETRYABLE_ERROR)
 
         stop_workers
       end
@@ -267,7 +267,7 @@ describe SplitIoClient::SSE::EventSource::Client do
         sse_client.instance_variable_set(:@uri, URI(server.base_uri))
         latch = Concurrent::CountDownLatch.new(1)
         res = sse_client.send(:connect_stream, latch)
-        expect(res).to eq(nil)
+        expect(res).to eq(SplitIoClient::Constants::PUSH_NONRETRYABLE_ERROR)
 
         stop_workers
       end
@@ -397,7 +397,7 @@ describe SplitIoClient::SSE::EventSource::Client do
         latch = Concurrent::CountDownLatch.new(1)
 
         res = sse_client2.send(:connect_stream, latch)
-        expect(res).to eq(nil)
+        expect(res).to eq(SplitIoClient::Constants::PUSH_RETRYABLE_ERROR)
 
         stop_workers
       end

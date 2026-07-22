@@ -90,7 +90,9 @@ module SplitIoClient
               if IO.select([@socket], nil, nil, @read_timeout)
                 begin
                   partial_data = @socket.readpartial(10_000)
-                  read_first_event(partial_data, latch)
+
+                  first_event_status = read_first_event(partial_data, latch)
+                  return first_event_status unless first_event_status.nil?
                 rescue IO::WaitReadable => e
                   @config.logger.debug("SSE client IO::WaitReadable transient error: #{e.inspect}") if @config.debug_enabled
                   IO.select([@socket], nil, nil, @read_timeout)
@@ -119,12 +121,9 @@ module SplitIoClient
                 @config.logger.error("SSE read operation timed out, no data available.")
                 return Constants::PUSH_RETRYABLE_ERROR
               end
-            rescue Errno::EBADF
-              @config.logger.debug("SSE socket is not connected (Errno::EBADF)") if @config.debug_enabled
-              break
             rescue Exception => e
               @config.logger.debug("SSE socket is not connected: #{e.inspect}") if @config.debug_enabled
-              break
+              return Constants::PUSH_RETRYABLE_ERROR
             end
 
             process_data(partial_data)
@@ -151,19 +150,20 @@ module SplitIoClient
           response_code = @event_parser.first_event(data)
           @config.logger.debug("SSE client first event code: #{response_code}") if @config.debug_enabled
 
-          error_event = false
-          events = @event_parser.parse(data)
-          events.each { |e| error_event = true if e.event_type == ERROR_EVENT_TYPE }
           @first_event.make_false
 
-          if response_code == OK_CODE && !error_event
-            @connected.make_true
-            @config.logger.debug("SSE client first event Connected is true") if @config.debug_enabled
-            @telemetry_runtime_producer.record_streaming_event(Telemetry::Domain::Constants::SSE_CONNECTION_ESTABLISHED, nil)
-            push_status(Constants::PUSH_CONNECTED)
+          if response_code != OK_CODE
+            @config.logger.error("SSE first event failed, code: #{response_code}")
+            latch.count_down
+            return Constants::PUSH_RETRYABLE_ERROR
           end
 
+          @connected.make_true
+          @config.logger.debug("SSE client first event Connected is true") if @config.debug_enabled
+          @telemetry_runtime_producer.record_streaming_event(Telemetry::Domain::Constants::SSE_CONNECTION_ESTABLISHED, nil)
+          push_status(Constants::PUSH_CONNECTED)
           latch.count_down
+          return nil
         end
 
         def socket_connect
