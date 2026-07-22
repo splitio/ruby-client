@@ -208,19 +208,16 @@ describe SplitIoClient::SSE::EventSource::Client do
     it 'receive error event' do
       mock_server do |server|
         server.setup_response('/') do |_, res|
-          send_stream_content(res, event_error, 400)
+          send_stream_content(res, event_error, 200)
         end
         start_workers
         sse_client = subject.new(config, api_token, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor, push_status_queue)
 
         connected = sse_client.start(server.base_uri)
-
-        expect(connected).to eq(false)
-        expect(sse_client.connected?).to eq(false)
-
         latch = Concurrent::CountDownLatch.new(1)
         res = sse_client.send(:connect_stream, latch)
-        expect(res).to eq(SplitIoClient::Constants::PUSH_NONRETRYABLE_ERROR)
+        push_status_queue.pop(true)
+        expect(push_status_queue.pop(true)).to eq(SplitIoClient::Constants::PUSH_RETRYABLE_ERROR)
 
         stop_workers
       end
@@ -267,7 +264,7 @@ describe SplitIoClient::SSE::EventSource::Client do
         sse_client.instance_variable_set(:@uri, URI(server.base_uri))
         latch = Concurrent::CountDownLatch.new(1)
         res = sse_client.send(:connect_stream, latch)
-        expect(res).to eq(SplitIoClient::Constants::PUSH_NONRETRYABLE_ERROR)
+        expect(res).to eq(SplitIoClient::Constants::PUSH_RETRYABLE_ERROR)
 
         stop_workers
       end

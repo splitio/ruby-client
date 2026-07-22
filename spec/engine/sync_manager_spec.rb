@@ -112,6 +112,7 @@ describe SplitIoClient::Engine::SyncManager do
       expect(config.threads.size).to eq(9)
       config.threads.values.each { |thread| Thread.kill(thread) }
     end
+    ENV['SPLITCLIENT_ENV'] = "test"
   end
 
   it 'start sync manager receiving control message, must switch to polling' do
