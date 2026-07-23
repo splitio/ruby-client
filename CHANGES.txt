@@ -1,7 +1,7 @@
 CHANGES
 
 8.11.1 (Jul, 23, 2026)
-- Added a retry mechanism if initial connection to streaming server failed, and enforced retry mechanism when socket exceptions are caught during streaming.
+- Added a retry mechanism in case the initial SSE socket connection failed, and extended the list of retryable errors when socket exceptions are caught during streaming.
 - Fixed debug logging in rule-based segment matcher class when debug_enabled parameter is not set in configuration .
 - Fixed a debug log that caused exception when streaming socket closes.
 
