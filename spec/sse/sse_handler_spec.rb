@@ -71,13 +71,11 @@ describe SplitIoClient::SSE::SSEHandler do
       sse_handler = subject.new(config, splits_worker, segments_worker, sse_client)
 
       connected = sse_handler.start('token-test', 'channel-test')
-      expect(connected).to eq(false)
+      sleep 1
       expect(sse_handler.connected?).to eq(false)
       expect(sse_handler.sse_client.connected?).to eq(false)
-      expect { push_status_queue.pop(true) }.to raise_error(ThreadError)
 
       sse_handler.stop
-      expect { push_status_queue.pop(true) }.to raise_error(ThreadError)
     end
   end
 

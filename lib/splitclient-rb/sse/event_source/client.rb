@@ -10,7 +10,7 @@ module SplitIoClient
     module EventSource
       class Client
         DEFAULT_READ_TIMEOUT = 70
-        CONNECT_TIMEOUT = 30_000
+        CONNECT_TIMEOUT = 30
         OK_CODE = 200
         KEEP_ALIVE_RESPONSE = "c\r\n:keepalive\n\n\r\n".freeze
         ERROR_EVENT_TYPE = 'error'.freeze
@@ -37,17 +37,15 @@ module SplitIoClient
         end
 
         def close(status = nil)
-          unless connected?
-            @config.logger.debug('SSEClient already disconected.') if @config.debug_enabled
-            return
-          end
-          @config.logger.debug("Closing SSEClient socket") if @config.debug_enabled
+          return if @socket.nil?
 
+          @config.logger.debug("Closing SSEClient socket") if @config.debug_enabled
           push_status(status)
           @connected.make_false
           @socket.sync_close = true if @socket.is_a? OpenSSL::SSL::SSLSocket
           @socket.close
-          @config.logger.debug("SSEClient socket state #{@socket.state}") if @socket.is_a? OpenSSL::SSL::SSLSocket && @config.debug_enabled
+          @config.logger.debug("SSEClient socket state #{@socket.state}") if @socket.is_a?(OpenSSL::SSL::SSLSocket) && @config.debug_enabled
+          @socket = nil
         rescue StandardError => e
           @config.logger.error("SSEClient close Error: #{e.inspect}")
         end
@@ -80,21 +78,21 @@ module SplitIoClient
           @config.threads[:connect_stream] = Thread.new do
             @config.logger.info('Starting connect_stream thread ...')
             new_status = connect_stream(latch)
-            push_status(new_status)
+            push_status(new_status) unless new_status.nil?
             @config.logger.info('connect_stream thread finished.')
           end
         end
 
         def connect_stream(latch)
-          return Constants::PUSH_NONRETRYABLE_ERROR unless socket_write(latch)
+          return Constants::PUSH_RETRYABLE_ERROR unless socket_write(latch)
           while connected? || @first_event.value
             begin 
               if IO.select([@socket], nil, nil, @read_timeout)
                 begin
                   partial_data = @socket.readpartial(10_000)
-                  read_first_event(partial_data, latch)
 
-                  raise 'eof exception' if partial_data == :eof
+                  first_event_status = read_first_event(partial_data, latch)
+                  return first_event_status unless first_event_status.nil?
                 rescue IO::WaitReadable => e
                   @config.logger.debug("SSE client IO::WaitReadable transient error: #{e.inspect}") if @config.debug_enabled
                   IO.select([@socket], nil, nil, @read_timeout)
@@ -107,8 +105,8 @@ module SplitIoClient
                   @config.logger.error("SSE read operation timed out!: #{e.inspect}")
                   return Constants::PUSH_RETRYABLE_ERROR
                 rescue EOFError => e
-                  @config.logger.error("SSE read operation EOF Exception!: #{e.inspect}")
-                  raise 'eof exception'
+                  @config.logger.error("SSE read operation EOF, server closed the connection, will reconnect: #{e.inspect}")
+                  return Constants::PUSH_RETRYABLE_ERROR
                 rescue Errno::EBADF, IOError => e
                   @config.logger.error("SSE read operation EBADF or IOError: #{e.inspect}")
                   return Constants::PUSH_RETRYABLE_ERROR
@@ -123,14 +121,9 @@ module SplitIoClient
                 @config.logger.error("SSE read operation timed out, no data available.")
                 return Constants::PUSH_RETRYABLE_ERROR
               end
-            rescue Errno::EBADF
-              @config.logger.debug("SSE socket is not connected (Errno::EBADF)") if @config.debug_enabled
-              break
-            rescue RuntimeError
-              raise 'eof exception'
             rescue Exception => e
               @config.logger.debug("SSE socket is not connected: #{e.inspect}") if @config.debug_enabled
-              break
+              return Constants::PUSH_RETRYABLE_ERROR
             end
 
             process_data(partial_data)
@@ -157,19 +150,20 @@ module SplitIoClient
           response_code = @event_parser.first_event(data)
           @config.logger.debug("SSE client first event code: #{response_code}") if @config.debug_enabled
 
-          error_event = false
-          events = @event_parser.parse(data)
-          events.each { |e| error_event = true if e.event_type == ERROR_EVENT_TYPE }
           @first_event.make_false
 
-          if response_code == OK_CODE && !error_event
-            @connected.make_true
-            @config.logger.debug("SSE client first event Connected is true") if @config.debug_enabled
-            @telemetry_runtime_producer.record_streaming_event(Telemetry::Domain::Constants::SSE_CONNECTION_ESTABLISHED, nil)
-            push_status(Constants::PUSH_CONNECTED)
+          if response_code != OK_CODE
+            @config.logger.error("SSE first event failed, code: #{response_code}")
+            latch.count_down
+            return Constants::PUSH_RETRYABLE_ERROR
           end
 
+          @connected.make_true
+          @config.logger.debug("SSE client first event Connected is true") if @config.debug_enabled
+          @telemetry_runtime_producer.record_streaming_event(Telemetry::Domain::Constants::SSE_CONNECTION_ESTABLISHED, nil)
+          push_status(Constants::PUSH_CONNECTED)
           latch.count_down
+          return nil
         end
 
         def socket_connect
