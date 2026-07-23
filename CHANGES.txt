@@ -1,5 +1,10 @@
 CHANGES
 
+8.11.1 (Jul, 23, 2026)
+- Added a retry mechanism if initial connection to streaming server failed, and enforced retry mechanism when socket exceptions are caught during streaming.
+- Fixed debug logging in rule-based segment matcher class when debug_enabled parameter is not set in configuration .
+- Fixed a debug log that caused exception when streaming socket closes.
+
 8.11.0 (Mar, 12, 2026)
 - Added the ability to listen to different events triggered by the SDK. Read more in our docs.
    - SDK_UPDATE notify when a flag or user segment has changed
