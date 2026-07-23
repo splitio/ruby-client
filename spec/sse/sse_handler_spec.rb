@@ -71,6 +71,7 @@ describe SplitIoClient::SSE::SSEHandler do
       sse_handler = subject.new(config, splits_worker, segments_worker, sse_client)
 
       connected = sse_handler.start('token-test', 'channel-test')
+      sleep 1
       expect(connected).to eq(false)
       expect(sse_handler.connected?).to eq(false)
       expect(sse_handler.sse_client.connected?).to eq(false)
