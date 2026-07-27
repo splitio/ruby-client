@@ -34,98 +34,47 @@ pipeline:
           execution:
             steps:
               - step:
-                  type: Run
-                  name: Set up Java 17
-                  identifier: Set_up_Java_17
+                  type: Background
+                  name: Redis
+                  identifier: Redis
                   spec:
+                    connectorRef: account.harnessImage
+                    image: redis:latest
                     shell: Sh
-                    command: |-
-                      apt-get update -qq
-                      apt-get install -y openjdk-17-jdk
-                      java -version
-              - step:
-                  type: Run
-                  name: Install Ruby
-                  identifier: Install_Ruby
-                  spec:
-                    shell: Sh
-                    command: |-
-                      curl -sSL https://rvm.io/mpapis.asc | gpg --import -
-                      curl -sSL https://rvm.io/pkuczynski.asc | gpg --import -
-                      curl -sSL https://get.rvm.io | bash -s stable
-                      source /etc/profile.d/rvm.sh || source ~/.rvm/scripts/rvm
-                      rvm install <+matrix.rubyVersion>
-                      rvm use <+matrix.rubyVersion> --default
-                      ruby --version
-              - step:
-                  type: Run
-                  name: SonarQube Begin Analysis
-                  identifier: SonarQube_Begin_Analysis
-                  when:
-                    stageStatus: Success
-                    condition: <+matrix.rubyVersion> == "3.2.2"
-                  spec:
-                    shell: Sh
-                    command: |-
-                      export SONAR_SCANNER_VERSION=5.0.1.3006
-                      curl -sSLo sonar-scanner.zip \
-                        "https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux.zip"
-                      unzip -q sonar-scanner.zip
-                      export PATH="$PWD/sonar-scanner-${SONAR_SCANNER_VERSION}-linux/bin:$PATH"
-                      sonar-scanner \
-                        -Dsonar.projectKey=ruby-client \
-                        -Dsonar.sources=. \
-                        -Dsonar.host.url=https://sonar.harness.io \
-                        -Dsonar.token=<+secrets.getValue("sonarqube-token")> \
-                        -Dsonar.ruby.coverage.reportPaths=coverage/.resultset.sonarqube.json \
-                        -Dsonar.coverage.exclusions="spec/**,**/vendor/**" \
-                        -Dsonar.exclusions="**/vendor/**,**/.git/**" \
-                        -Dsonar.analysis.mode=preview 2>/dev/null || \
-                      sonar-scanner \
-                        -Dsonar.projectKey=ruby-client \
-                        -Dsonar.sources=. \
-                        -Dsonar.host.url=https://sonar.harness.io \
-                        -Dsonar.token=<+secrets.getValue("sonarqube-token")>
+                    portBindings:
+                      "6379": "6379"
               - step:
                   type: Run
                   name: Install Dependencies
                   identifier: Install_Dependencies
                   spec:
+                    connectorRef: account.harnessImage
+                    image: ruby:<+matrix.rubyVersion>
                     shell: Sh
                     command: |-
-                      source /etc/profile.d/rvm.sh || source ~/.rvm/scripts/rvm
-                      rvm use <+matrix.rubyVersion>
                       gem install bundler
                       bundle install
-              - step:
-                  type: Run
-                  name: Start Redis
-                  identifier: Start_Redis
-                  spec:
-                    shell: Sh
-                    command: |-
-                      apt-get install -y redis-server
-                      redis-server --daemonize yes --port 6379
-                      redis-cli ping
               - step:
                   type: Run
                   name: Run Tests
                   identifier: Run_Tests
                   spec:
+                    connectorRef: account.harnessImage
+                    image: ruby:<+matrix.rubyVersion>
                     shell: Sh
-                    command: |-
-                      source /etc/profile.d/rvm.sh || source ~/.rvm/scripts/rvm
-                      rvm use <+matrix.rubyVersion>
-                      bundle exec rake
+                    command: bundle exec rake
               - step:
                   type: Run
                   name: Fix Coverage Paths
                   identifier: Fix_Coverage_Paths
+                  when:
+                    stageStatus: Success
+                    condition: <+matrix.rubyVersion> == "3.2.2"
                   spec:
+                    connectorRef: account.harnessImage
+                    image: ruby:<+matrix.rubyVersion>
                     shell: Sh
                     command: |-
-                      source /etc/profile.d/rvm.sh || source ~/.rvm/scripts/rvm
-                      rvm use <+matrix.rubyVersion>
                       cd coverage
                       sed -i "s@${HARNESS_WORKSPACE}@/harness/workspace/@g" .resultset.json
                       ruby -rjson -e '
@@ -135,22 +84,24 @@ pipeline:
                       ' > .resultset.sonarqube.json
               - step:
                   type: Run
-                  name: SonarQube End Analysis
-                  identifier: SonarQube_End_Analysis
+                  name: SonarQube Scan
+                  identifier: SonarQube_Scan
                   when:
                     stageStatus: Success
                     condition: <+matrix.rubyVersion> == "3.2.2"
                   spec:
+                    connectorRef: account.harnessImage
+                    image: sonarsource/sonar-scanner-cli:latest
                     shell: Sh
                     command: |-
-                      export SONAR_SCANNER_VERSION=5.0.1.3006
-                      export PATH="$PWD/sonar-scanner-${SONAR_SCANNER_VERSION}-linux/bin:$PATH"
                       sonar-scanner \
                         -Dsonar.projectKey=ruby-client \
                         -Dsonar.sources=. \
                         -Dsonar.host.url=https://sonar.harness.io \
                         -Dsonar.token=<+secrets.getValue("sonarqube-token")> \
-                        -Dsonar.ruby.coverage.reportPaths=coverage/.resultset.sonarqube.json
+                        -Dsonar.ruby.coverage.reportPaths=coverage/.resultset.sonarqube.json \
+                        -Dsonar.coverage.exclusions="spec/**,**/vendor/**" \
+                        -Dsonar.exclusions="**/vendor/**,**/.git/**"
               - step:
                   type: Run
                   name: Post Quality Gate
@@ -159,6 +110,8 @@ pipeline:
                     stageStatus: Success
                     condition: <+matrix.rubyVersion> == "3.2.2"
                   spec:
+                    connectorRef: account.harnessImage
+                    image: ruby:<+matrix.rubyVersion>
                     shell: Bash
                     command: |-
                       #!/bin/bash
@@ -171,23 +124,21 @@ pipeline:
                       GITHUB_REPO="ruby-client"
                       COMMIT_SHA="<+codebase.commitSha>"
 
-                      # Get quality gate status
                       STATUS_JSON=$(curl -sf \
                         -H "Authorization: Bearer ${SONAR_TOKEN}" \
                         "${SONAR_URL}/api/qualitygates/project_status?projectKey=${SONAR_PROJECT_KEY}")
 
-                      QG_STATUS=$(echo "$STATUS_JSON" | python3 -c "import sys,json; print(json.load(sys.stdin)['projectStatus']['status'])")
+                      QG_STATUS=$(echo "$STATUS_JSON" | ruby -rjson -e 'puts JSON.load($stdin.read)["projectStatus"]["status"]')
 
                       case "$QG_STATUS" in
-                        OK)   GH_STATE="success"; DESCRIPTION="Quality gate passed" ;;
+                        OK)    GH_STATE="success"; DESCRIPTION="Quality gate passed" ;;
                         ERROR) GH_STATE="failure"; DESCRIPTION="Quality gate failed" ;;
-                        WARN) GH_STATE="success"; DESCRIPTION="Quality gate passed with warnings" ;;
-                        *)    GH_STATE="pending"; DESCRIPTION="Quality gate status unknown" ;;
+                        WARN)  GH_STATE="success"; DESCRIPTION="Quality gate passed with warnings" ;;
+                        *)     GH_STATE="pending"; DESCRIPTION="Quality gate status unknown" ;;
                       esac
 
                       TARGET_URL="${SONAR_URL}/dashboard?id=${SONAR_PROJECT_KEY}"
 
-                      # Post status to GitHub
                       curl -sf -X POST \
                         -H "Authorization: token ${GITHUB_TOKEN}" \
                         -H "Accept: application/vnd.github.v3+json" \
