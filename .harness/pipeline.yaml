@@ -121,6 +121,8 @@ pipeline:
                   spec:
                     shell: Sh
                     command: |-
+                      source /etc/profile.d/rvm.sh || source ~/.rvm/scripts/rvm
+                      rvm use <+matrix.rubyVersion>
                       cd coverage
                       sed -i "s@${HARNESS_WORKSPACE}@/harness/workspace/@g" .resultset.json
                       ruby -rjson -e '
@@ -154,7 +156,7 @@ pipeline:
                     stageStatus: Success
                     condition: <+matrix.rubyVersion> == "3.2.2"
                   spec:
-                    shell: Sh
+                    shell: Bash
                     command: |-
                       #!/bin/bash
                       set -e
