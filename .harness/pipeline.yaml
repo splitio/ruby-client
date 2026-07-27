@@ -9,7 +9,10 @@ pipeline:
       codebase:
         connectorRef: fmegithubharnessgitops
         repoName: ruby-client
-        build: <+input>
+        build:
+          type: branch
+          spec:
+            branch: <+input>
   stages:
     - stage:
         name: Build and Test
