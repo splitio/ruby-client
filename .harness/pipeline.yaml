@@ -52,8 +52,9 @@ pipeline:
                     image: ruby:<+matrix.rubyVersion>
                     shell: Sh
                     command: |-
-                      gem install bundler
-                      bundle install
+                      gem update --system --no-document
+                      gem install bundler:2.4.19 --no-document
+                      bundle install --jobs 4 --retry 3
               - step:
                   type: Run
                   name: Run Tests
