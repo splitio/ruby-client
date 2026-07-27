@@ -147,7 +147,8 @@ pipeline:
                         "https://api.github.com/repos/splitio/${GITHUB_REPO}/statuses/${COMMIT_SHA}"
 
                       echo "Posted SonarQube quality gate status: ${GH_STATE}"
-        matrix:
-          rubyVersion:
-            - "2.5.0"
-            - "3.2.2"
+        strategy:
+          matrix:
+            rubyVersion:
+              - "2.5.0"
+              - "3.2.2"
