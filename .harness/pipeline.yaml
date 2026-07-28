@@ -57,6 +57,18 @@ pipeline:
                       redis-cli ping
               - step:
                   type: Run
+                  name: Wait for Redis
+                  identifier: Wait_for_Redis
+                  spec:
+                    shell: Sh
+                    command: |-
+                      for i in $(seq 1 15); do
+                        redis-cli ping && break
+                        echo "Waiting for Redis... attempt $i"
+                        sleep 1
+                      done
+              - step:
+                  type: Run
                   name: Install Dependencies
                   identifier: Install_Dependencies
                   spec:
