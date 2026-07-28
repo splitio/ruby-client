@@ -125,7 +125,8 @@ pipeline:
                       apt-get install -y openjdk-17-jdk -qq
                       sonar-scanner \
                         -Dsonar.projectKey=ruby-client \
-                        -Dsonar.sources=. \
+                        -Dsonar.sources=lib \
+                        -Dsonar.tests=spec \
                         -Dsonar.host.url=https://sonar.harness.io \
                         -Dsonar.token=<+secrets.getValue("sonarqube-token")> \
                         -Dsonar.ruby.coverage.reportPaths=coverage/.resultset.sonarqube.json \
