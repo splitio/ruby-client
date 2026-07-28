@@ -56,3 +56,5 @@ dump.rdb
 release.sh
 
 .scannerwork
+docs
+examples
