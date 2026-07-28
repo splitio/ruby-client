@@ -1,0 +1,182 @@
+pipeline:
+  name: ruby-client-repo
+  identifier: rubyclientrepo
+  projectIdentifier: Harness_Split
+  orgIdentifier: PROD
+  tags: {}
+  properties:
+    ci:
+      codebase:
+        connectorRef: fmegithubharnessgitops
+        repoName: ruby-client
+        build:
+          type: branch
+          spec:
+            branch: <+input>
+  stages:
+    - stage:
+        name: Build and Test
+        identifier: Build_and_Test
+        description: ""
+        type: CI
+        spec:
+          cloneCodebase: true
+          caching:
+            enabled: true
+            override: true
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Cloud
+            spec:
+              size: flex
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: Install Ruby
+                  identifier: Install_Ruby
+                  spec:
+                    shell: Bash
+                    command: |-
+                      curl https://mise.run | sh
+                      export PATH="$HOME/.local/bin:$PATH"
+                      mise use --global ruby@<+matrix.rubyVersion>
+                      ruby --version
+                      gem --version
+              - step:
+                  type: Run
+                  name: Start Redis
+                  identifier: Start_Redis
+                  spec:
+                    shell: Sh
+                    command: |-
+                      apt-get install -y redis-server -qq
+                      redis-server --daemonize yes --port 6379
+                      redis-cli ping
+              - step:
+                  type: Run
+                  name: Wait for Redis
+                  identifier: Wait_for_Redis
+                  spec:
+                    shell: Sh
+                    command: |-
+                      for i in $(seq 1 15); do
+                        redis-cli ping && break
+                        echo "Waiting for Redis... attempt $i"
+                        sleep 1
+                      done
+              - step:
+                  type: Run
+                  name: Install Dependencies
+                  identifier: Install_Dependencies
+                  spec:
+                    shell: Bash
+                    command: |-
+                      export PATH="$HOME/.local/bin:$PATH"
+                      eval "$(mise activate bash)"
+                      gem install bundler:2.4.19 --no-document
+                      bundle install --jobs 4 --retry 3
+              - step:
+                  type: Run
+                  name: Run Tests
+                  identifier: Run_Tests
+                  spec:
+                    shell: Bash
+                    command: |-
+                      export PATH="$HOME/.local/bin:$PATH"
+                      eval "$(mise activate bash)"
+                      bundle exec rake
+              - step:
+                  type: Run
+                  name: Fix Coverage Paths
+                  identifier: Fix_Coverage_Paths
+                  when:
+                    stageStatus: Success
+                    condition: <+matrix.rubyVersion> == "3.2.2"
+                  spec:
+                    shell: Bash
+                    command: |-
+                      export PATH="$HOME/.local/bin:$PATH"
+                      eval "$(mise activate bash)"
+                      cd coverage
+                      sed -i "s@${HARNESS_WORKSPACE}@/harness/workspace/@g" .resultset.json
+                      ruby -rjson -e '
+                        sqube = JSON.load(File.read(".resultset.json"))["RSpec"]["coverage"].transform_values {|lines| lines["lines"]}
+                        total = { "RSpec" => { "coverage" => sqube, "timestamp" => Time.now.to_i }}
+                        puts JSON.dump(total)
+                      ' > .resultset.sonarqube.json
+              - step:
+                  type: Run
+                  name: SonarQube Scan
+                  identifier: SonarQube_Scan
+                  when:
+                    stageStatus: Success
+                    condition: <+matrix.rubyVersion> == "3.2.2"
+                  spec:
+                    shell: Sh
+                    command: |-
+                      export SONAR_SCANNER_VERSION=5.0.1.3006
+                      curl -sSLo sonar-scanner.zip \
+                        "https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux.zip"
+                      unzip -q sonar-scanner.zip
+                      export PATH="$PWD/sonar-scanner-${SONAR_SCANNER_VERSION}-linux/bin:$PATH"
+                      apt-get install -y openjdk-17-jdk -qq
+                      sonar-scanner \
+                        -Dsonar.projectKey=ruby-client \
+                        -Dsonar.sources=lib \
+                        -Dsonar.tests=spec \
+                        -Dsonar.host.url=https://sonar.harness.io \
+                        -Dsonar.token=<+secrets.getValue("sonarqube-token")> \
+                        -Dsonar.ruby.coverage.reportPaths=coverage/.resultset.sonarqube.json \
+                        -Dsonar.coverage.exclusions="spec/**,**/vendor/**" \
+                        -Dsonar.exclusions="**/vendor/**,**/.git/**"
+              - step:
+                  type: Run
+                  name: Post Quality Gate
+                  identifier: Post_Quality_Gate
+                  when:
+                    stageStatus: Success
+                    condition: <+matrix.rubyVersion> == "3.2.2"
+                  spec:
+                    shell: Bash
+                    command: |-
+                      #!/bin/bash
+                      set -e
+
+                      SONAR_TOKEN="<+secrets.getValue("sonarqube-token")>"
+                      SONAR_URL="https://sonar.harness.io"
+                      SONAR_PROJECT_KEY="ruby-client"
+                      GITHUB_TOKEN="<+secrets.getValue("github-devops-token")>"
+                      GITHUB_REPO="ruby-client"
+                      COMMIT_SHA="<+codebase.commitSha>"
+
+                      STATUS_JSON=$(curl -sf \
+                        -H "Authorization: Bearer ${SONAR_TOKEN}" \
+                        "${SONAR_URL}/api/qualitygates/project_status?projectKey=${SONAR_PROJECT_KEY}")
+
+                      QG_STATUS=$(echo "$STATUS_JSON" | python3 -c "import sys,json; print(json.load(sys.stdin)['projectStatus']['status'])")
+
+                      case "$QG_STATUS" in
+                        OK)    GH_STATE="success"; DESCRIPTION="Quality gate passed" ;;
+                        ERROR) GH_STATE="failure"; DESCRIPTION="Quality gate failed" ;;
+                        WARN)  GH_STATE="success"; DESCRIPTION="Quality gate passed with warnings" ;;
+                        *)     GH_STATE="pending"; DESCRIPTION="Quality gate status unknown" ;;
+                      esac
+
+                      TARGET_URL="${SONAR_URL}/dashboard?id=${SONAR_PROJECT_KEY}"
+
+                      curl -sf -X POST \
+                        -H "Authorization: token ${GITHUB_TOKEN}" \
+                        -H "Accept: application/vnd.github.v3+json" \
+                        -H "Content-Type: application/json" \
+                        -d "{\"state\":\"${GH_STATE}\",\"description\":\"${DESCRIPTION}\",\"context\":\"sonarqube/quality-gate\",\"target_url\":\"${TARGET_URL}\"}" \
+                        "https://api.github.com/repos/splitio/${GITHUB_REPO}/statuses/${COMMIT_SHA}"
+
+                      echo "Posted SonarQube quality gate status: ${GH_STATE}"
+        strategy:
+          matrix:
+            rubyVersion:
+              - "2.7.8"
+              - "3.2.2"

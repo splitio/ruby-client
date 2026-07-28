@@ -180,9 +180,11 @@ describe SplitIoClient do
     end
 
     it 'processing split iff update event' do
+      no_change_response = '{"ff":{"d":[],"s":1585948850110,"t":1585948850110},"rbs":{"d":[],"s":-1,"t":-1}}'
       mock_splits_request(splits, -1)
       mock_splits_request(splits2, '1585948850109')
-      mock_splits_request(splits3, '1585948850110')
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=1585948850110&rbSince=-1")
+        .to_return(status: 200, body: no_change_response)
       mock_segment_changes('segment3', segment3, '-1')
       stub_request(:post, 'https://telemetry.split.io/api/v1/metrics/config').to_return(status: 200, body: '')
       stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=1585948850111&rbSince=-1").to_return(status: 200, body: '')
