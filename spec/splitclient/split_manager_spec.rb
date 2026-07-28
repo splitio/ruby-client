@@ -85,7 +85,7 @@ describe SplitIoClient do
 
   context '#splits' do
     it 'returns empty array and logs error  when not ready' do
-      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=-1")
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1")
         .to_return(status: 200, body: "", headers: {})
 
       allow(subject).to receive(:ready?).and_return(false)
@@ -140,7 +140,7 @@ describe SplitIoClient do
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')
         .to_return(status: 200, body: splits4)
 
-      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since")
+      stub_request(:get, "https://sdk.split.io/api/splitChanges?s=1.3&since&rbSince=-1")
         .to_return(status: 200, body: "", headers: {})
     end
 
