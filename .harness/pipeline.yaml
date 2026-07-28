@@ -34,25 +34,36 @@ pipeline:
           execution:
             steps:
               - step:
-                  type: Background
-                  name: Redis
-                  identifier: Redis
+                  type: Run
+                  name: Install Ruby
+                  identifier: Install_Ruby
                   spec:
-                    connectorRef: account.harnessImage
-                    image: redis:latest
+                    shell: Bash
+                    command: |-
+                      curl https://mise.run | sh
+                      export PATH="$HOME/.local/bin:$PATH"
+                      mise use --global ruby@<+matrix.rubyVersion>
+                      ruby --version
+                      gem --version
+              - step:
+                  type: Run
+                  name: Start Redis
+                  identifier: Start_Redis
+                  spec:
                     shell: Sh
-                    portBindings:
-                      "6379": "6379"
+                    command: |-
+                      apt-get install -y redis-server -qq
+                      redis-server --daemonize yes --port 6379
+                      redis-cli ping
               - step:
                   type: Run
                   name: Install Dependencies
                   identifier: Install_Dependencies
                   spec:
-                    connectorRef: account.harnessImage
-                    image: ruby:<+matrix.rubyVersion>
-                    shell: Sh
+                    shell: Bash
                     command: |-
-                      gem update --system --no-document
+                      export PATH="$HOME/.local/bin:$PATH"
+                      eval "$(mise activate bash)"
                       gem install bundler:2.4.19 --no-document
                       bundle install --jobs 4 --retry 3
               - step:
@@ -60,10 +71,11 @@ pipeline:
                   name: Run Tests
                   identifier: Run_Tests
                   spec:
-                    connectorRef: account.harnessImage
-                    image: ruby:<+matrix.rubyVersion>
-                    shell: Sh
-                    command: bundle exec rake
+                    shell: Bash
+                    command: |-
+                      export PATH="$HOME/.local/bin:$PATH"
+                      eval "$(mise activate bash)"
+                      bundle exec rake
               - step:
                   type: Run
                   name: Fix Coverage Paths
@@ -72,10 +84,10 @@ pipeline:
                     stageStatus: Success
                     condition: <+matrix.rubyVersion> == "3.2.2"
                   spec:
-                    connectorRef: account.harnessImage
-                    image: ruby:<+matrix.rubyVersion>
-                    shell: Sh
+                    shell: Bash
                     command: |-
+                      export PATH="$HOME/.local/bin:$PATH"
+                      eval "$(mise activate bash)"
                       cd coverage
                       sed -i "s@${HARNESS_WORKSPACE}@/harness/workspace/@g" .resultset.json
                       ruby -rjson -e '
@@ -91,10 +103,14 @@ pipeline:
                     stageStatus: Success
                     condition: <+matrix.rubyVersion> == "3.2.2"
                   spec:
-                    connectorRef: account.harnessImage
-                    image: sonarsource/sonar-scanner-cli:latest
                     shell: Sh
                     command: |-
+                      export SONAR_SCANNER_VERSION=5.0.1.3006
+                      curl -sSLo sonar-scanner.zip \
+                        "https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux.zip"
+                      unzip -q sonar-scanner.zip
+                      export PATH="$PWD/sonar-scanner-${SONAR_SCANNER_VERSION}-linux/bin:$PATH"
+                      apt-get install -y openjdk-17-jdk -qq
                       sonar-scanner \
                         -Dsonar.projectKey=ruby-client \
                         -Dsonar.sources=. \
@@ -111,8 +127,6 @@ pipeline:
                     stageStatus: Success
                     condition: <+matrix.rubyVersion> == "3.2.2"
                   spec:
-                    connectorRef: account.harnessImage
-                    image: ruby:<+matrix.rubyVersion>
                     shell: Bash
                     command: |-
                       #!/bin/bash
@@ -129,7 +143,7 @@ pipeline:
                         -H "Authorization: Bearer ${SONAR_TOKEN}" \
                         "${SONAR_URL}/api/qualitygates/project_status?projectKey=${SONAR_PROJECT_KEY}")
 
-                      QG_STATUS=$(echo "$STATUS_JSON" | ruby -rjson -e 'puts JSON.load($stdin.read)["projectStatus"]["status"]')
+                      QG_STATUS=$(echo "$STATUS_JSON" | python3 -c "import sys,json; print(json.load(sys.stdin)['projectStatus']['status'])")
 
                       case "$QG_STATUS" in
                         OK)    GH_STATE="success"; DESCRIPTION="Quality gate passed" ;;
