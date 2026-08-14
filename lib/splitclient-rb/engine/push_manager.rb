@@ -10,9 +10,25 @@ module SplitIoClient
         @api_key = api_key
         @back_off = Engine::BackOff.new(@config.auth_retry_back_off_base, 1)
         @telemetry_runtime_producer = telemetry_runtime_producer
+        # Serializes start_sse: it is reachable from the push status handler thread and
+        # from the token refresh thread concurrently.
+        @start_sse_mutex = Mutex.new
       end
 
       def start_sse
+        @start_sse_mutex.synchronize { start_sse_unsynchronized }
+      end
+
+      def stop_sse
+        @sse_handler.stop
+        SplitIoClient::Helpers::ThreadHelper.stop(:schedule_next_token_refresh, @config)
+      rescue StandardError => e
+        @config.logger.error(e.inspect)
+      end
+
+      private
+
+      def start_sse_unsynchronized
         response = @auth_api_client.authenticate(@api_key)
         @config.logger.debug("Auth service response push_enabled: #{response[:push_enabled]}") if @config.debug_enabled
 
@@ -35,16 +51,11 @@ module SplitIoClient
         @config.logger.error("start_sse: #{e.inspect}")
       end
 
-      def stop_sse
-        @sse_handler.stop
-        SplitIoClient::Helpers::ThreadHelper.stop(:schedule_next_token_refresh, @config)
-      rescue StandardError => e
-        @config.logger.error(e.inspect)
-      end
-
-      private
-
       def schedule_next_token_refresh(time)
+        # Reap first: start_sse is reachable both from the push status handler thread and
+        # from refresh_token_task itself, so without this an orphaned timer thread can
+        # survive with no handle to cancel it and fire its own reconnect later.
+        SplitIoClient::Helpers::ThreadHelper.reap(:schedule_next_token_refresh, @config)
         @config.threads[:schedule_next_token_refresh] = Thread.new { refresh_token_task(time) }
       end
 

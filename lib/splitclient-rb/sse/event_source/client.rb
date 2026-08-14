@@ -32,20 +32,28 @@ module SplitIoClient
           @status_queue = status_queue
           @read_timeout = read_timeout
           @connected = Concurrent::AtomicBoolean.new(false)
-          @first_event = Concurrent::AtomicBoolean.new(true)
+          # Set while close is tearing a connection down on purpose, so the reader
+          # thread does not report the resulting socket error as a retryable failure.
+          @shutdown = Concurrent::AtomicBoolean.new(false)
+          # Incremented for every connection attempt. A reader thread whose generation
+          # is no longer current has been superseded and must exit without side effects.
+          @generation = Concurrent::AtomicFixnum.new(0)
           @socket = nil
         end
 
         def close(status = nil)
           return if @socket.nil?
 
-          @config.logger.debug("Closing SSEClient socket") if @config.debug_enabled
+          @config.logger.debug('Closing SSEClient socket') if @config.debug_enabled
+          @shutdown.make_true
           push_status(status)
           @connected.make_false
-          @socket.sync_close = true if @socket.is_a? OpenSSL::SSL::SSLSocket
-          @socket.close
-          @config.logger.debug("SSEClient socket state #{@socket.state}") if @socket.is_a?(OpenSSL::SSL::SSLSocket) && @config.debug_enabled
+
+          socket = @socket
           @socket = nil
+          socket.sync_close = true if socket.is_a? OpenSSL::SSL::SSLSocket
+          socket.close
+          @config.logger.debug("SSEClient socket state #{socket.state}") if socket.is_a?(OpenSSL::SSL::SSLSocket) && @config.debug_enabled
         rescue StandardError => e
           @config.logger.error("SSEClient close Error: #{e.inspect}")
         end
@@ -60,7 +68,10 @@ module SplitIoClient
           latch = Concurrent::CountDownLatch.new(1)
           connect_thread(latch)
 
-          return false unless latch.wait(CONNECT_TIMEOUT)
+          unless latch.wait(CONNECT_TIMEOUT)
+            @config.logger.warn("SSE connection attempt did not complete within #{CONNECT_TIMEOUT} seconds.")
+            return false
+          end
 
           connected?
         rescue StandardError => e
@@ -75,95 +86,143 @@ module SplitIoClient
         private
 
         def connect_thread(latch)
+          # Never orphan the previous reader thread: its handle lives in a single slot
+          # and would otherwise become unreachable, leaking the thread forever.
+          Helpers::ThreadHelper.reap(:connect_stream, @config)
+
+          generation = @generation.increment
+          @shutdown.make_false
+
           @config.threads[:connect_stream] = Thread.new do
             @config.logger.info('Starting connect_stream thread ...')
-            new_status = connect_stream(latch)
+            new_status = connect_stream(latch, generation)
             push_status(new_status) unless new_status.nil?
             @config.logger.info('connect_stream thread finished.')
           end
         end
 
-        def connect_stream(latch)
-          return Constants::PUSH_RETRYABLE_ERROR unless socket_write(latch)
-          while connected? || @first_event.value
-            begin 
-              if IO.select([@socket], nil, nil, @read_timeout)
-                begin
-                  partial_data = @socket.readpartial(10_000)
+        # Each reader thread owns the socket it opened. Nothing about the connection is
+        # shared with later attempts, so a superseded thread can neither read from nor
+        # steal bytes off a socket belonging to a newer connection.
+        def connect_stream(latch, generation = nil)
+          generation ||= @generation.value
+          socket = open_socket(latch)
+          return retryable_error(generation) if socket.nil?
 
-                  first_event_status = read_first_event(partial_data, latch)
-                  return first_event_status unless first_event_status.nil?
+          first_event = true
+
+          while current_generation?(generation)
+            begin
+              if IO.select([socket], nil, nil, @read_timeout)
+                begin
+                  partial_data = socket.readpartial(10_000)
+
+                  if first_event
+                    first_event = false
+                    first_event_status = read_first_event(partial_data, latch, generation)
+                    return first_event_status unless first_event_status.nil?
+                  end
                 rescue IO::WaitReadable => e
                   @config.logger.debug("SSE client IO::WaitReadable transient error: #{e.inspect}") if @config.debug_enabled
-                  IO.select([@socket], nil, nil, @read_timeout)
+                  IO.select([socket], nil, nil, @read_timeout)
                   retry
-                rescue  Errno::EAGAIN => e
+                rescue Errno::EAGAIN => e
                   @config.logger.debug("SSE client transient error: #{e.inspect}") if @config.debug_enabled
-                  IO.select([@socket], nil, nil, @read_timeout)
+                  IO.select([socket], nil, nil, @read_timeout)
                   retry
                 rescue Errno::ETIMEDOUT => e
                   @config.logger.error("SSE read operation timed out!: #{e.inspect}")
-                  return Constants::PUSH_RETRYABLE_ERROR
+                  return retryable_error(generation)
                 rescue EOFError => e
                   @config.logger.error("SSE read operation EOF, server closed the connection, will reconnect: #{e.inspect}")
-                  return Constants::PUSH_RETRYABLE_ERROR
+                  return retryable_error(generation)
                 rescue Errno::EBADF, IOError => e
                   @config.logger.error("SSE read operation EBADF or IOError: #{e.inspect}")
-                  return Constants::PUSH_RETRYABLE_ERROR
+                  return retryable_error(generation)
                 rescue StandardError => e
                   @config.logger.error("SSE read operation StandardError: #{e.inspect}")
                   return nil if ENV['SPLITCLIENT_ENV'] == 'test'
 
                   @config.logger.error("Error reading partial data: #{e.inspect}")
-                  return Constants::PUSH_RETRYABLE_ERROR
+                  return retryable_error(generation)
                 end
               else
-                @config.logger.error("SSE read operation timed out, no data available.")
-                return Constants::PUSH_RETRYABLE_ERROR
+                @config.logger.error('SSE read operation timed out, no data available.')
+                return retryable_error(generation)
               end
-            rescue Exception => e
-              @config.logger.debug("SSE socket is not connected: #{e.inspect}") if @config.debug_enabled
-              return Constants::PUSH_RETRYABLE_ERROR
+            # Was `rescue Exception` logging at debug level only. That combination hid
+            # the reason for ~14,880 of ~15,000 reconnects during the FME-18143 incident.
+            rescue StandardError => e
+              @config.logger.warn("SSE socket is not connected: #{e.inspect}")
+              return retryable_error(generation)
             end
 
             process_data(partial_data)
           end
-          @config.logger.info("SSE read operation exited: #{connected?}")
 
+          @config.logger.debug('connect_stream superseded by a newer connection, exiting.') if @config.debug_enabled
           nil
         end
 
-        def socket_write(latch)
-          @first_event.make_true
-          @socket = socket_connect
-          @socket.puts(build_request(@uri))
-          true
-        rescue StandardError => e
-          @config.logger.error("Error during connecting to #{@uri.host}. Error: #{e.inspect}")
-          latch.count_down
-          false
+        # Single decision point for "should this thread ask SyncManager to reconnect?".
+        # An intentional close, or a connection that has already been superseded, must
+        # stay silent -- reporting either as a retryable error is what turned one
+        # dropped connection into a self-sustaining reconnect storm.
+        def retryable_error(generation)
+          unless report_error?(generation)
+            @config.logger.debug('SSE connection ended intentionally, not requesting a reconnect.') if @config.debug_enabled
+            return nil
+          end
+
+          Constants::PUSH_RETRYABLE_ERROR
         end
 
-        def read_first_event(data, latch)
-          return unless @first_event.value
+        def report_error?(generation)
+          current_generation?(generation) && !@shutdown.value
+        end
 
+        def current_generation?(generation)
+          generation == @generation.value
+        end
+
+        def open_socket(latch)
+          socket = socket_connect
+          raise IOError, "unable to open socket to #{@uri.host}" if socket.nil?
+
+          @socket = socket
+          socket.puts(build_request(@uri))
+          socket
+        rescue StandardError => e
+          @config.logger.error("Error during connecting to #{@uri.host}. Error: #{e.inspect}")
+          close_quietly(socket)
+          @socket = nil if @socket.equal?(socket)
+          latch.count_down
+          nil
+        end
+
+        def read_first_event(data, latch, generation = nil)
+          generation ||= @generation.value
           response_code = @event_parser.first_event(data)
           @config.logger.debug("SSE client first event code: #{response_code}") if @config.debug_enabled
-
-          @first_event.make_false
 
           if response_code != OK_CODE
             @config.logger.error("SSE first event failed, code: #{response_code}")
             latch.count_down
-            return Constants::PUSH_RETRYABLE_ERROR
+            return retryable_error(generation)
           end
 
-          @connected.make_true
-          @config.logger.debug("SSE client first event Connected is true") if @config.debug_enabled
-          @telemetry_runtime_producer.record_streaming_event(Telemetry::Domain::Constants::SSE_CONNECTION_ESTABLISHED, nil)
-          push_status(Constants::PUSH_CONNECTED)
+          # Only the connection that is still current may announce itself as connected.
+          if current_generation?(generation)
+            @connected.make_true
+            @config.logger.debug('SSE client first event Connected is true') if @config.debug_enabled
+            @telemetry_runtime_producer.record_streaming_event(Telemetry::Domain::Constants::SSE_CONNECTION_ESTABLISHED, nil)
+            push_status(Constants::PUSH_CONNECTED)
+          elsif @config.debug_enabled
+            @config.logger.debug('Ignoring first event from a superseded SSE connection.')
+          end
+
           latch.count_down
-          return nil
+          nil
         end
 
         def socket_connect
@@ -184,14 +243,22 @@ module SplitIoClient
                 retry
               end
               return ssl_socket
-
-            rescue Exception => e
+            rescue StandardError => e
               @config.logger.error("socket connect error: #{e.inspect}")
+              # Without this the underlying descriptor is leaked on every failed
+              # attempt, which exhausts file descriptors during a reconnect storm.
+              close_quietly(tcp_socket)
               return nil
             end
           end
 
           tcp_socket
+        end
+
+        def close_quietly(socket)
+          socket.close unless socket.nil? || socket.closed?
+        rescue StandardError => e
+          @config.logger.debug("Error closing socket: #{e.inspect}") if @config.debug_enabled
         end
 
         def process_data(partial_data)
@@ -247,7 +314,7 @@ module SplitIoClient
 
         def push_status(status)
           return if status.nil?
-          
+
           @config.logger.debug("Pushing new sse status: #{status}") if @config.debug_enabled
           @status_queue.push(status)
         end

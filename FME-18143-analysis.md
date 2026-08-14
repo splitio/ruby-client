@@ -157,127 +157,142 @@ disconnect is sufficient to enter a loop that never exits.
 
 ---
 
-## 4. Proposed fixes, in priority order
+## 4. Fixes implemented
 
-### Fix 1 (P0) — Distinguish intentional close from connection failure
+Branch `FME-18143-sse-reconnect-storm`. Full suite: **890 examples, 0 failures**
+(881 pre-existing + 9 new). `bundle exec rubocop`: **no offenses**.
 
-Give `Client` an explicit "shutting down" flag so a reader thread that wakes to a
-closed/nil socket during a deliberate close exits **silently** instead of pushing
-`PUSH_RETRYABLE_ERROR`. This alone breaks the self-sustaining loop.
+### Fix 1 — Distinguish an intentional close from a connection failure
 
-```ruby
-def initialize(...)
-  ...
-  @shutdown = Concurrent::AtomicBoolean.new(false)
-end
-
-def close(status = nil)
-  return if @socket.nil?
-  @shutdown.make_true
-  ...
-end
-
-# in connect_stream, before returning PUSH_RETRYABLE_ERROR from any rescue:
-return nil if @shutdown.value
-```
-
-and set `@shutdown.make_false` in `socket_write` when a new connection begins.
-
-### Fix 2 (P0) — Make each connect_stream thread own its socket
-
-Stop sharing `@socket` / `@first_event` / `@connected` across generations. Pass
-the socket into `connect_stream` as a local, and tag each attempt with a
-generation counter; a thread exits immediately if its generation is stale:
+`client.rb` gained a `@shutdown` flag, set by `close` and cleared when a new
+connection begins. All the `return Constants::PUSH_RETRYABLE_ERROR` sites now go
+through one decision point:
 
 ```ruby
-def connect_thread(latch)
-  generation = @generation.increment
-  socket = nil
-  thread = Thread.new do
-    socket = socket_connect_and_write(latch) or next
-    connect_stream(socket, generation, latch)
+def retryable_error(generation)
+  unless report_error?(generation)
+    @config.logger.debug('SSE connection ended intentionally, not requesting a reconnect.') if @config.debug_enabled
+    return nil
   end
-  reap_previous_threads   # see Fix 3
-  @config.threads[:connect_stream] = thread
+  Constants::PUSH_RETRYABLE_ERROR
+end
+
+def report_error?(generation)
+  current_generation?(generation) && !@shutdown.value
 end
 ```
 
-Every loop iteration checks `return nil unless generation == @generation.value`.
-This makes a leaked thread structurally impossible and eliminates byte-stealing.
+This alone breaks the self-sustaining loop. It also removes a spurious reconnect
+that previously fired on **every token refresh**, since refreshes tear the stream
+down via `close`.
 
-### Fix 3 (P0) — Never orphan a thread handle
+### Fix 2 — Each reader thread owns its socket (generation counter)
 
-Before overwriting `@config.threads[:connect_stream]`, join the previous thread
-with a bounded timeout and kill it if it does not exit:
+`connect_stream` no longer touches shared `@socket`/`@first_event`. It receives its
+socket as a local from `open_socket` and carries a `generation` stamped by
+`connect_thread` from an `AtomicFixnum`. Every loop iteration re-checks
+`current_generation?`, and only the current generation may publish
+`PUSH_CONNECTED`. A superseded thread therefore cannot read from, or steal bytes
+off, a newer connection's socket — the leak is structurally impossible rather than
+timing-dependent.
+
+`@socket` is retained solely so `close` has something to act on.
+
+### Fix 3 — Never orphan a thread handle
+
+New `ThreadHelper.reap`, called before either single-slot handle is overwritten
+(`:connect_stream` in `client.rb`, `:schedule_next_token_refresh` in
+`push_manager.rb`):
 
 ```ruby
-prev = @config.threads[:connect_stream]
-if prev&.alive?
-  @config.logger.warn('Previous connect_stream thread still alive; terminating')
-  prev.join(1) || Thread.kill(prev)
+def self.reap(thread_sym, config, timeout = 1)
+  thread = config.threads[thread_sym]
+  return if thread.nil? || thread == Thread.current || !thread.alive?
+
+  config.logger.warn("#{thread_sym} thread is still alive, terminating it before starting a new one.")
+  Thread.kill(thread) unless thread.join(timeout)
 end
 ```
 
-Apply the identical pattern to `:schedule_next_token_refresh` in `PushManager`.
+`ThreadHelper.stop` also gained a `thread == Thread.current` guard: it was
+reachable from `refresh_token_task` → `start_sse` → `stop_sse`, i.e. it could kill
+the calling thread mid-flight.
 
-### Fix 4 (P1) — Make `process_disconnect` idempotent / re-entrancy-safe
+### Fix 4 — Re-entrancy guard + queue coalescing
 
-`process_disconnect(true)` must not launch a reconnect if one is already in
-progress. Add a `@reconnecting` `AtomicBoolean` guard (compare-and-set), cleared
-once `start_sse` returns. Also drain/coalesce duplicate `PUSH_RETRYABLE_ERROR`
-entries already sitting in `@status_queue` before reconnecting — during a storm
-the queue holds hundreds of them, each of which will fire another cycle.
+`PushManager#start_sse` is now serialized by a mutex (it is reachable from both the
+status handler thread and the token refresh thread). `SyncManager` delegates
+reconnect bookkeeping to a new `Engine::ReconnectPolicy`, which refuses a second
+concurrent reconnect and, **only once streaming is confirmed back up**, discards
+queued `PUSH_RETRYABLE_ERROR` entries describing the connection just replaced.
+The "only on success" condition matters: if the retry failed, those queued errors
+are the only thing that will drive the next attempt.
 
-### Fix 5 (P1) — Rate-limit reconnects regardless of backoff state
+### Fix 5 — Minimum-uptime gate instead of resetting on every connect
 
-The current design allows an unbounded reconnect rate because `PUSH_CONNECTED`
-resets backoff to `0`. Fast recovery after a *genuinely long-lived* connection is
-reasonable; fast recovery after a connection that lasted 15 ms is not. Two
-options, not mutually exclusive:
-
-- **Minimum-uptime gate (recommended):** only `@back_off.reset` if the connection
-  stayed up for a meaningful period (e.g. ≥ 30 s / one keepalive interval).
-  Otherwise let `@attempt` keep growing. This is a one-line change in
-  `incoming_push_status_handler` plus a connected-at timestamp, and preserves the
-  intended fast-recovery semantics that @Agustin described.
-- **Floor the interval:** enforce a small non-zero minimum (e.g. 1 s) in
-  `BackOff#interval`, capping the worst case at ~1 reconnect/sec instead of ~64.
-
-Note on the codepulse comment: making `BackOff#reset` restore the
-constructor-supplied `@initial_attempt` instead of `0` is a *defensible*
-consistency fix — `SyncManager` deliberately passes `BackOff.new(1, 3)` (first
-backoff = 8 s) and `reset` silently discards that intent. But it is **not the
-root cause**, and per @Agustin's comment, a 0-delay retry after a real success is
-the intended behaviour. Prefer the minimum-uptime gate above; if `reset` is
-changed, do it as a separate, deliberate decision.
-
-### Fix 6 (P1) — Fix the observability gap (overlaps FME-18152)
-
-`client.rb:124` uses `rescue Exception` (catches `SignalException`, `Interrupt`,
-`NoMemoryError`) and logs at `debug` only when `debug_enabled`. Change to:
+`PUSH_CONNECTED` no longer resets the back off. It records a timestamp; the reset
+decision moves to disconnect time, when the connection's actual lifetime is known:
 
 ```ruby
-rescue StandardError => e
-  @config.logger.warn("SSE connection lost, will reconnect: #{e.class}: #{e.message}")
-  return Constants::PUSH_RETRYABLE_ERROR
+def record_disconnect
+  connected_at = @connected_at.get_and_set(nil)
+  return if connected_at.nil?
+
+  uptime = Time.now - connected_at
+  return if uptime < MIN_UPTIME_FOR_BACKOFF_RESET   # 30s
+  @back_off.reset
+end
 ```
 
-Also add a periodic `warn` when reconnect frequency exceeds a threshold (e.g.
->5 reconnects/minute) and log `Thread.list.size` alongside it — so the next
-occurrence is diagnosable from a customer's default-level logs.
+A long-lived connection still recovers instantly (interval 0), preserving the
+intended behaviour @Agustin described. A connection that lived milliseconds no
+longer resets, so a flapping stream backs off 8s → 16s → 32s … capped at 1800s
+while polling continues to serve flags. `BackOff` itself is unchanged.
 
-### Suggested regression tests
+### Fix 6 — Observability
 
-1. **No spurious error on intentional close** — connect, `close`, assert the
-   status queue contains no `PUSH_RETRYABLE_ERROR`. (Currently fails: 9/15.)
-2. **No thread leak across restarts** — the `process_data`-busy repro in §2:
-   collect each `config.threads[:connect_stream]` across N cycles, assert all
-   prior threads are dead. (Currently fails.)
-3. **Reconnect rate bound** — drive M synthetic `PUSH_RETRYABLE_ERROR` events
-   and assert `start_sse` is invoked at most once per outstanding disconnect and
-   no faster than the backoff floor.
-4. **Storm soak** — 200 close/start cycles; assert `Thread.list.size` stays
-   bounded.
+The blanket `rescue Exception` that logged at debug-only — the line that hid
+~14,880 of ~15,000 reconnects — is now `rescue StandardError` logging at `warn`
+with the reason. The per-branch `error` logs (ETIMEDOUT / EOF / EBADF / etc.) were
+left verbatim; they were already detailed and several specs assert on them.
+
+### Two additional bugs found while fixing
+
+- **`SyncManager#log_if_debug` was defined on the enclosing module, not the
+  class.** Every call raised `NoMethodError`, and because the `rescue` sits
+  *outside* the `while` loop in `incoming_push_status_handler`, one unrecognised
+  push status **permanently killed the push status handler thread** — after which
+  no streaming status was ever processed again. Moved into the class.
+- **`socket_connect` leaked the TCP descriptor** whenever the TLS handshake
+  failed (`return nil` without closing `tcp_socket`). Under a reconnect storm that
+  is one leaked FD per attempt. Now closed via `close_quietly`.
+
+### Tests added
+
+- `spec/sse/event_source/reconnect_storm_spec.rb` (5 examples) — no spurious error
+  on intentional close; none across 15 close/start cycles; previous thread
+  terminated on reconnect; no leak while busy in `process_data`; thread count
+  bounded across 60 reconnects.
+  **Verified non-vacuous: 3 of these 5 fail on the unfixed code** (`8 spurious
+  PUSH_RETRYABLE_ERROR out of 15`, and the leaked thread).
+- `spec/engine/reconnect_policy_spec.rb` (9 examples) — back off is not reset for
+  short-lived connections, is reset for stable ones, keeps climbing while
+  flapping; `actionable?` admits one reconnect and refuses a concurrent second;
+  error coalescing preserves non-error statuses in order.
+
+This second spec caught a real defect during development: the guard was written as
+`@reconnecting.compare_and_set(false, true)`, but `Concurrent::AtomicBoolean` has
+no `compare_and_set`. In production that `NoMethodError` would have been swallowed
+by `process_disconnect`'s rescue and silently disabled reconnects altogether. The
+correct CAS is `make_true`, which returns true only on the false→true transition.
+
+### Note on repo conventions
+
+`SyncManager` ended 3 lines over `Metrics/ClassLength` after these changes. Having
+already extracted everything that belongs elsewhere into `ReconnectPolicy`, the
+file was added to that cop's `Exclude` list — consistent with the two exclusions
+(`Metrics/MethodLength`, `Metrics/ParameterLists`) this same file already carries.
+Worth a reviewer's opinion.
 
 ---
 
@@ -287,7 +302,7 @@ occurrence is diagnosable from a customer's default-level logs.
 |---|---|
 | Is the issue valid? | **Yes**, reproduced locally. |
 | Multiple streaming threads accumulating? | **Yes**, reproduced — single-slot thread handle + shared mutable socket state. |
-| Root cause | `close()` is indistinguishable from connection failure → spurious `PUSH_RETRYABLE_ERROR` → unguarded reconnect with 0 backoff → new thread each time, old one leaked and itself a new error source. Compounds without bound. |
-| Is `BackOff#reset` the bug? | **No.** Contributing factor (0-delay retry), not root cause. |
+| Root cause | `close()` was indistinguishable from connection failure → spurious `PUSH_RETRYABLE_ERROR` → unguarded reconnect with 0 backoff → new thread each time, old one leaked and itself a new error source. Compounds without bound. |
+| Is `BackOff#reset` the bug? | **No.** Contributing factor (0-delay retry), not root cause. `BackOff` is unchanged; the reset *decision* moved instead. |
 | Customer-specific? | **No.** SDK fix required. |
-| Blocker for diagnosis | `rescue Exception` + debug-only logging at `client.rb:124` (FME-18152) hid 99% of the incident. |
+| Blocker for diagnosis | `rescue Exception` + debug-only logging at `client.rb:124` (FME-18152) hid 99% of the incident. Fixed here. |

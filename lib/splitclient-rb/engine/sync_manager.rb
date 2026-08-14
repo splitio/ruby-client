@@ -17,7 +17,7 @@ module SplitIoClient
         @push_manager = push_manager
         @status_queue = status_queue
         @sse_connected = Concurrent::AtomicBoolean.new(false)
-        @back_off = Engine::BackOff.new(1, 3)
+        @reconnect_policy = Engine::ReconnectPolicy.new(config, status_queue)
       end
 
       def start
@@ -114,26 +114,33 @@ module SplitIoClient
       end
 
       def process_disconnect(reconnect)
-        unless @sse_connected.value || reconnect
-          @config.logger.debug('Streaming already disconnected.') if @config.debug_enabled
-          return
-        end
+        return unless @reconnect_policy.actionable?(@sse_connected.value, reconnect)
 
+        @reconnect_policy.record_disconnect
         @sse_connected.make_false
         @sse_handler.stop_workers
         @synchronizer.start_periodic_fetch
         record_telemetry(Telemetry::Domain::Constants::SYNC_MODE, SYNC_MODE_POLLING)
 
-        if reconnect
-          wait_interval = @back_off.interval
-          @config.logger.debug("Retrying streaming connection in: #{wait_interval} seconds")
-          sleep(wait_interval)
-          @push_manager.stop_sse
-          @synchronizer.sync_all
-          @push_manager.start_sse
-        end
+        reconnect_streaming if reconnect
       rescue StandardError => e
         @config.logger.error("process_disconnect error: #{e.inspect}")
+        @reconnect_policy.release if reconnect
+      end
+
+      def reconnect_streaming
+        wait_interval = @reconnect_policy.interval
+        log_if_debug("Retrying streaming connection in: #{wait_interval} seconds")
+        sleep(wait_interval)
+        @push_manager.stop_sse
+        @synchronizer.sync_all
+
+        # Only discard queued errors once streaming is actually back up. If the retry
+        # failed, those errors are still the only thing that will drive the next
+        # attempt, so they must be left alone.
+        @reconnect_policy.discard_stale_errors if @push_manager.start_sse
+      ensure
+        @reconnect_policy.release
       end
 
       def record_telemetry(type, data)
@@ -153,7 +160,10 @@ module SplitIoClient
 
           case status
           when Constants::PUSH_CONNECTED
-            @back_off.reset
+            # Deliberately not resetting the back off here. Whether this connection
+            # earns a reset depends on how long it survives, which is only known once
+            # it drops -- see ReconnectPolicy#record_disconnect.
+            @reconnect_policy.connected
             process_connected
           when Constants::PUSH_RETRYABLE_ERROR
             process_disconnect(true)
@@ -174,10 +184,12 @@ module SplitIoClient
       rescue StandardError => e
         @config.logger.error("Push status handler error: #{e.inspect}")
       end
-    end
 
-    def log_if_debug(msg)
-      @config.logger.debug(msg) if @config.debug_enabled
+      # Was defined on the enclosing module, so every call raised NoMethodError and
+      # killed the push status handler thread (its rescue sits outside the loop).
+      def log_if_debug(msg)
+        @config.logger.debug(msg) if @config.debug_enabled
+      end
     end
   end
 end
