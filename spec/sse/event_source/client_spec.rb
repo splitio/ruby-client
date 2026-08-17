@@ -49,6 +49,113 @@ describe SplitIoClient::SSE::EventSource::Client do
   let(:event_occupancy) { "d4\r\nevent: message\ndata: {\"id\":\"123\",\"timestamp\":1586803930362,\"encoding\":\"json\",\"channel\":\"[?occupancy=metrics.publishers]control_pri\",\"data\":\"{\\\"metrics\\\":{\\\"publishers\\\":2}}\",\"name\":\"[meta]occupancy\"}\n\n\r\n" }
   let(:event_error) { "d4\r\nevent: error\ndata: {\"message\":\"Token expired\",\"code\":40142,\"statusCode\":401,\"href\":\"https://help.ably.io/error/40142\"}" }
 
+  context 'check connect_stream thread leak via busy process_data' do
+    let(:log) { StringIO.new }
+    let(:events_queue) { Queue.new }
+    let(:config) { SplitIoClient::SplitConfig.new(logger: Logger.new(log), debug_enabled: false) }
+    let(:telemetry_runtime_producer) { SplitIoClient::Telemetry::RuntimeProducer.new(config) }
+    let(:api_token) { 'api-token-test' }
+    let(:event_parser) { SplitIoClient::SSE::EventSource::EventParser.new(config) }
+    let(:push_status_queue) { Queue.new }
+    let(:notification_manager_keeper) { SplitIoClient::SSE::NotificationManagerKeeper.new(config, telemetry_runtime_producer, push_status_queue) }
+
+    let(:keepalive) { "c\r\n:keepalive\n\n\r\n" }
+
+    it 'Avoid push retryable when normal shutdown is called' do
+      mock_server do |server|
+        server.setup_response('/') do |_, res|
+          res.content_type = 'text/event-stream'
+          res.status = 200
+          res.chunked = true
+          rd, wr = IO.pipe
+          wr.write(keepalive)
+          res.body = rd
+          Thread.new do
+            # keep dribbling data so a live reader always has something to consume
+            20.times { sleep 0.5; (wr.write(keepalive) rescue nil) }
+            wr.close rescue nil
+          end
+        end
+
+        sse_client = SplitIoClient::SSE::EventSource::Client.new(
+          config, api_token, telemetry_runtime_producer, event_parser,
+          notification_manager_keeper, double(process: true), push_status_queue
+        )
+
+        expect(sse_client.start(server.base_uri)).to eq(true)
+        thread_a = config.threads[:connect_stream]
+        expect(thread_a.alive?).to eq(true)
+
+        # close + restart
+        sse_client.close
+        expect(sse_client.start(server.base_uri)).to eq(true)
+        thread_b = config.threads[:connect_stream]
+        expect(thread_b).not_to eq(thread_a)
+
+        push_queue = []
+        begin
+          loop { push_queue << push_status_queue.pop(true) }
+        rescue ThreadError
+          # Queue is now empty
+        end
+
+        expect(thread_a.alive?).to eq(false), 'thread A leaked: it is still running on thread B\'s socket'
+        expect(push_queue).not_to include(SplitIoClient::Constants::PUSH_RETRYABLE_ERROR)
+
+        sse_client.close
+      end
+    end
+
+    it 'old thread survives and reads the new socket' do
+      mock_server do |server|
+        server.setup_response('/') do |_, res|
+          res.content_type = 'text/event-stream'
+          res.status = 200
+          res.chunked = true
+          rd, wr = IO.pipe
+          wr.write(keepalive)
+          res.body = rd
+          Thread.new do
+            # keep dribbling data so a live reader always has something to consume
+            20.times { sleep 0.5; (wr.write(keepalive) rescue nil) }
+            wr.close rescue nil
+          end
+        end
+
+        sse_client = SplitIoClient::SSE::EventSource::Client.new(
+          config, api_token, telemetry_runtime_producer, event_parser,
+          notification_manager_keeper, double(process: true), push_status_queue
+        )
+
+        # Make process_data slow, simulating the real SDK doing an HTTP splitChanges
+        # fetch inside the connect_stream thread.
+        in_process_data = Queue.new
+        sse_client.define_singleton_method(:process_data) do |_partial|
+          in_process_data.push(Thread.current)
+          sleep 2
+        end
+
+        expect(sse_client.start(server.base_uri)).to eq(true)
+        thread_a = config.threads[:connect_stream]
+
+        # wait until thread A is parked inside process_data
+        in_process_data.pop
+        expect(thread_a.alive?).to eq(true)
+
+        # storm pattern: close + immediate restart while A is busy
+        sse_client.close
+        expect(sse_client.start(server.base_uri)).to eq(true)
+        thread_b = config.threads[:connect_stream]
+        expect(thread_b).not_to eq(thread_a)
+        sleep 4 # A has long since returned from its 2s process_data
+
+        expect(thread_a.alive?).to eq(false), 'thread A leaked: it is still running on thread B\'s socket'
+
+        sse_client.close
+      end
+    end
+  end    
+
   context 'tests' do
     it 'receive split update event' do
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')

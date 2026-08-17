@@ -100,6 +100,17 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
 
       expect(a_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1506703262916&rbSince=-1')).to have_been_made.times(0)
     end
+  
+    it 'recover from possible fetch exception' do
+      allow(synchronizer).to receive(:fetch_splits).and_raise(StandardError)
+
+      worker = subject.new(synchronizer, config, splits_repository, telemetry_runtime_producer, segment_fetcher, rule_based_segments_repository)
+      worker.start
+      worker.add_to_queue(SplitIoClient::SSE::EventSource::StreamData.new("SPLIT_UPDATE", 123, JSON.parse('{"type":"SPLIT_UPDATE","changeNumber":1506703262918}'), 'test'))
+      sleep 1
+
+      expect(config.threads[:split_update_worker].status).not_to eq(nil)
+    end
   end
 
   context 'kill split notification' do
@@ -372,6 +383,20 @@ describe SplitIoClient::SSE::Workers::SplitsWorker do
       expect(segments_repository.used_segment_names[0]).to eq('demo')
       expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=-1')).to have_been_made.once
       expect(segments_repository.used_segment_names[1]).to eq('segment1')
+    end
+
+    it 'recover from possible segment fetch exception.' do
+      stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=1234&rbSince=-1').to_return(status: 200, body: '{"ff":{"d": [],"s": 1234,"t": 1234}, "rbs":{"d":[],"s":-1,"t":-1}}')
+      stub_request(:get, 'https://sdk.split.io/api/segmentChanges/maur-2?since=-1').to_return(status: 200, body: '{"name":"maur-2","added":["admin"],"removed":[],"since":-1,"till":-1}}')
+      allow(synchronizer).to receive(:fetch_segment).and_raise(StandardError)
+      worker = subject.new(synchronizer, config, splits_repository, telemetry_runtime_producer, segment_fetcher, rule_based_segments_repository)
+      worker.start
+
+      splits_repository.set_change_number(1234)
+      worker.add_to_queue(event_split_update_segments)
+      sleep 1
+
+      expect(config.threads[:split_update_worker].status).not_to eq(nil)
     end
   end
 

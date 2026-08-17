@@ -33,12 +33,15 @@ module SplitIoClient
           @read_timeout = read_timeout
           @connected = Concurrent::AtomicBoolean.new(false)
           @first_event = Concurrent::AtomicBoolean.new(true)
+          @shutdown = Concurrent::AtomicBoolean.new(false)
           @socket = nil
+          @connect_stream_thread = nil
         end
 
         def close(status = nil)
           return if @socket.nil?
 
+          @shutdown.make_true
           @config.logger.debug("Closing SSEClient socket") if @config.debug_enabled
           push_status(status)
           @connected.make_false
@@ -75,7 +78,9 @@ module SplitIoClient
         private
 
         def connect_thread(latch)
+          @connect_stream_thread.join if @connect_stream_thread
           @config.threads[:connect_stream] = Thread.new do
+            @connect_stream_thread = Thread.current
             @config.logger.info('Starting connect_stream thread ...')
             new_status = connect_stream(latch)
             push_status(new_status) unless new_status.nil?
@@ -84,7 +89,7 @@ module SplitIoClient
         end
 
         def connect_stream(latch)
-          return Constants::PUSH_RETRYABLE_ERROR unless socket_write(latch)
+          return return_retry_if_not_shutdown unless socket_write(latch)
           while connected? || @first_event.value
             begin 
               if IO.select([@socket], nil, nil, @read_timeout)
@@ -103,27 +108,27 @@ module SplitIoClient
                   retry
                 rescue Errno::ETIMEDOUT => e
                   @config.logger.error("SSE read operation timed out!: #{e.inspect}")
-                  return Constants::PUSH_RETRYABLE_ERROR
+                  return return_retry_if_not_shutdown
                 rescue EOFError => e
                   @config.logger.error("SSE read operation EOF, server closed the connection, will reconnect: #{e.inspect}")
-                  return Constants::PUSH_RETRYABLE_ERROR
+                  return return_retry_if_not_shutdown
                 rescue Errno::EBADF, IOError => e
                   @config.logger.error("SSE read operation EBADF or IOError: #{e.inspect}")
-                  return Constants::PUSH_RETRYABLE_ERROR
+                  return return_retry_if_not_shutdown
                 rescue StandardError => e
                   @config.logger.error("SSE read operation StandardError: #{e.inspect}")
                   return nil if ENV['SPLITCLIENT_ENV'] == 'test'
 
                   @config.logger.error("Error reading partial data: #{e.inspect}")
-                  return Constants::PUSH_RETRYABLE_ERROR
+                  return return_retry_if_not_shutdown
                 end
               else
                 @config.logger.error("SSE read operation timed out, no data available.")
-                return Constants::PUSH_RETRYABLE_ERROR
+                return return_retry_if_not_shutdown
               end
             rescue Exception => e
               @config.logger.debug("SSE socket is not connected: #{e.inspect}") if @config.debug_enabled
-              return Constants::PUSH_RETRYABLE_ERROR
+              return return_retry_if_not_shutdown
             end
 
             process_data(partial_data)
@@ -133,10 +138,17 @@ module SplitIoClient
           nil
         end
 
+        def return_retry_if_not_shutdown
+          return nil if @shutdown.value
+
+          Constants::PUSH_RETRYABLE_ERROR
+        end
+        
         def socket_write(latch)
           @first_event.make_true
           @socket = socket_connect
           @socket.puts(build_request(@uri))
+          @shutdown.make_false
           true
         rescue StandardError => e
           @config.logger.error("Error during connecting to #{@uri.host}. Error: #{e.inspect}")
@@ -155,7 +167,7 @@ module SplitIoClient
           if response_code != OK_CODE
             @config.logger.error("SSE first event failed, code: #{response_code}")
             latch.count_down
-            return Constants::PUSH_RETRYABLE_ERROR
+            return return_retry_if_not_shutdown
           end
 
           @connected.make_true

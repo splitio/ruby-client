@@ -58,10 +58,10 @@ module SplitIoClient
             case notification.data['type']
             when SSE::EventSource::EventTypes::SPLIT_UPDATE
               success = update_feature_flag(notification)
-              @synchronizer.fetch_splits(notification.data['changeNumber'], 0) unless success
+              fetch_splits(notification.data['changeNumber'], 0) unless success
             when SSE::EventSource::EventTypes::RB_SEGMENT_UPDATE
               success = update_rule_based_segment(notification)
-              @synchronizer.fetch_splits(0, notification.data['changeNumber']) unless success
+              fetch_splits(0, notification.data['changeNumber']) unless success
             when SSE::EventSource::EventTypes::SPLIT_KILL
               kill_feature_flag(notification)
             end
@@ -125,7 +125,7 @@ module SplitIoClient
           @feature_flags_repository.kill(notification.data['changeNumber'],
                                          notification.data['splitName'],
                                          notification.data['defaultTreatment'])
-          @synchronizer.fetch_splits(notification.data['changeNumber'], 0)
+          fetch_splits(notification.data['changeNumber'], 0)
         end
 
         def return_object_from_json(notification)
@@ -137,15 +137,29 @@ module SplitIoClient
           return if segment_names.nil?
 
           object_repository.set_segment_names(segment_names)
-          @segment_fetcher.fetch_segments_if_not_exists(segment_names)
+          begin
+            @segment_fetcher.fetch_segments_if_not_exists(segment_names)
+          rescue Exception => e
+            @config.logger.error('Error fetching segments ')
+            @config.logger.debug("Split Worker failed to fetch segment: #{e.inspect}") if @config.debug_enabled
+          end
         end
 
         def fetch_rule_based_segments_if_not_exists(segment_names, change_number)
           return false if segment_names.nil? || segment_names.empty? || @rule_based_segment_repository.contains?(segment_names.to_a)
 
-          @synchronizer.fetch_splits(0, change_number)
+          fetch_splits(0, change_number)
 
           true
+        end
+
+        def fetch_splits(cn, rbs_cn)
+          begin
+            @synchronizer.fetch_splits(cn, rbs_cn)
+          rescue Exception => e
+            @config.logger.error('Error fetching feature flags ')
+            @config.logger.debug("Split Worker failed to fetch feature flags: #{e.inspect}") if @config.debug_enabled
+          end
         end
       end
     end

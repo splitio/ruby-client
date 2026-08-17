@@ -100,6 +100,16 @@ describe SplitIoClient::SSE::Workers::SegmentsWorker do
     expect(a_request(:get, 'https://sdk.split.io/api/segmentChanges/segment1?since=1470947453877')).to have_been_made.times(1)
   end
 
+  it 'recover from possible fetch exception' do
+    allow(synchronizer).to receive(:fetch_segment).and_raise(StandardError)
+    worker = subject.new(synchronizer, config, segments_repository)
+    worker.start
+    worker.add_to_queue(1_506_703_262_918, 'segment1')
+
+    sleep 1
+    expect(config.threads[:segment_update_worker].status).not_to eq(nil)
+  end
+
   private
 
   def mock_split_changes(splits_json)

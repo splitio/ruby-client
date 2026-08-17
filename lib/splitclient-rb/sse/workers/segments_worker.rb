@@ -46,7 +46,12 @@ module SplitIoClient
             cn = item[:change_number]
             @config.logger.debug("SegmentsWorker change_number dequeue #{segment_name}, #{cn}") if @config.debug_enabled
 
-            @synchronizer.fetch_segment(segment_name, cn)
+            begin
+              @synchronizer.fetch_segment(segment_name, cn)
+            rescue Exception => e
+              @config.logger.error('Error fetching segments ')
+              @config.logger.debug("Segment Worker failed to fetch segment: #{e.inspect}") if @config.debug_enabled
+            end
           end
         end
 
