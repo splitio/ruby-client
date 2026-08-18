@@ -48,7 +48,7 @@ module SplitIoClient
 
             begin
               @synchronizer.fetch_segment(segment_name, cn)
-            rescue Exception => e
+            rescue StandardError => e
               @config.logger.error('Error fetching segments ')
               @config.logger.debug("Segment Worker failed to fetch segment: #{e.inspect}") if @config.debug_enabled
             end

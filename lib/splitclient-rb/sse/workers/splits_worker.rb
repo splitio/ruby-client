@@ -139,7 +139,7 @@ module SplitIoClient
           object_repository.set_segment_names(segment_names)
           begin
             @segment_fetcher.fetch_segments_if_not_exists(segment_names)
-          rescue Exception => e
+          rescue StandardError => e
             @config.logger.error('Error fetching segments ')
             @config.logger.debug("Split Worker failed to fetch segment: #{e.inspect}") if @config.debug_enabled
           end
@@ -153,13 +153,11 @@ module SplitIoClient
           true
         end
 
-        def fetch_splits(cn, rbs_cn)
-          begin
-            @synchronizer.fetch_splits(cn, rbs_cn)
-          rescue Exception => e
-            @config.logger.error('Error fetching feature flags ')
-            @config.logger.debug("Split Worker failed to fetch feature flags: #{e.inspect}") if @config.debug_enabled
-          end
+        def fetch_splits(change_number, rbs_change_number)
+          @synchronizer.fetch_splits(change_number, rbs_change_number)
+        rescue StandardError => e
+          @config.logger.error('Error fetching feature flags ')
+          @config.logger.debug("Split Worker failed to fetch feature flags: #{e.inspect}") if @config.debug_enabled
         end
       end
     end
