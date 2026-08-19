@@ -20,12 +20,23 @@ describe SplitIoClient::Engine::ReconnectPolicy do
     end
 
     it 'resets the back off for a connection that stayed up' do
+      base = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      allow(policy).to receive(:monotonic_now).and_return(base, base + described_class::MIN_UPTIME_FOR_BACKOFF_RESET + 1)
       policy.connected
-      allow(Time).to receive(:now).and_return(Time.now + described_class::MIN_UPTIME_FOR_BACKOFF_RESET + 1)
       policy.record_disconnect
 
       # After a reset the first interval is 0, preserving fast recovery for a real success.
       expect(policy.interval).to eq(0)
+    end
+
+    it 'does not reset the back off when the monotonic clock does not advance' do
+      base = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      allow(policy).to receive(:monotonic_now).and_return(base, base)
+      policy.connected
+      policy.record_disconnect
+
+      # Uptime is 0, so the back off keeps growing.
+      expect(policy.interval).to eq(8)
     end
 
     it 'keeps backing off across repeated short lived connections' do

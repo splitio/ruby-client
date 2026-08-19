@@ -16,7 +16,6 @@ Metrics/ClassLength:
   Max: 150
   Exclude:
     - lib/splitclient-rb/telemetry/memory/memory_synchronizer.rb
-    - lib/splitclient-rb/engine/sync_manager.rb
 
 Metrics/CyclomaticComplexity:
   Max: 11
@@ -26,7 +25,7 @@ Metrics/ParameterLists:
   Exclude:
     - lib/splitclient-rb/engine/sync_manager.rb
 
-Metrics/LineLength:
+Layout/LineLength:
   Max: 135
 
 Metrics/BlockLength:

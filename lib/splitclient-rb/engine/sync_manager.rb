@@ -110,7 +110,7 @@ module SplitIoClient
         @synchronizer.start_periodic_fetch
         record_telemetry(Telemetry::Domain::Constants::SYNC_MODE, SYNC_MODE_POLLING)
       rescue StandardError => e
-        @config.logger.error("process_connected error: #{e.inspect}")
+        @config.logger.error("process_forced_stop error: #{e.inspect}")
       end
 
       def process_disconnect(reconnect)
@@ -155,34 +155,32 @@ module SplitIoClient
       end
 
       def incoming_push_status_handler
+        # Rescue lives inside the loop: a bug in any handler (including one
+        # that lacks its own rescue) would otherwise exit the loop and
+        # permanently stop the SDK from reacting to push status changes.
         while (status = @status_queue.pop)
-          @config.logger.debug("Push status handler dequeue #{status}") if @config.debug_enabled
-
-          case status
-          when Constants::PUSH_CONNECTED
-            # Deliberately not resetting the back off here. Whether this connection
-            # earns a reset depends on how long it survives, which is only known once
-            # it drops -- see ReconnectPolicy#record_disconnect.
-            @reconnect_policy.connected
-            process_connected
-          when Constants::PUSH_RETRYABLE_ERROR
-            process_disconnect(true)
-          when Constants::PUSH_FORCED_STOP
-            process_forced_stop
-          when Constants::PUSH_NONRETRYABLE_ERROR
-            process_disconnect(false)
-          when Constants::PUSH_SUBSYSTEM_DOWN
-            process_subsystem_down
-          when Constants::PUSH_SUBSYSTEM_READY
-            process_subsystem_ready
-          when Constants::PUSH_SUBSYSTEM_OFF
-            process_push_shutdown
-          else
-            log_if_debug('Incorrect push status type.')
+          begin
+            @config.logger.debug("Push status handler dequeue #{status}") if @config.debug_enabled
+            case status
+            when Constants::PUSH_CONNECTED
+              # Deliberately not resetting the back off here. Whether this
+              # connection earns a reset depends on how long it survives,
+              # which is only known once it drops -- see
+              # ReconnectPolicy#record_disconnect.
+              @reconnect_policy.connected
+              process_connected
+            when Constants::PUSH_RETRYABLE_ERROR    then process_disconnect(true)
+            when Constants::PUSH_FORCED_STOP        then process_forced_stop
+            when Constants::PUSH_NONRETRYABLE_ERROR then process_disconnect(false)
+            when Constants::PUSH_SUBSYSTEM_DOWN     then process_subsystem_down
+            when Constants::PUSH_SUBSYSTEM_READY    then process_subsystem_ready
+            when Constants::PUSH_SUBSYSTEM_OFF      then process_push_shutdown
+            else log_if_debug('Incorrect push status type.')
+            end
+          rescue StandardError => e
+            @config.logger.error("Push status handler error for #{status}: #{e.inspect}")
           end
         end
-      rescue StandardError => e
-        @config.logger.error("Push status handler error: #{e.inspect}")
       end
 
       # Was defined on the enclosing module, so every call raised NoMethodError and

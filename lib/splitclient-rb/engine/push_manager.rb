@@ -49,6 +49,7 @@ module SplitIoClient
         true
       rescue StandardError => e
         @config.logger.error("start_sse: #{e.inspect}")
+        false
       end
 
       def schedule_next_token_refresh(time)

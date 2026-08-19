@@ -24,8 +24,11 @@ module SplitIoClient
         @reconnecting = Concurrent::AtomicBoolean.new(false)
       end
 
+      # Monotonic clock: a backwards wall-clock jump (NTP correction, container
+      # migration) must not make uptime go negative and permanently block the
+      # back off reset.
       def connected
-        @connected_at.set(Time.now)
+        @connected_at.set(monotonic_now)
       end
 
       # Whether a disconnect should be acted on at all. Returns false for a disconnect
@@ -60,7 +63,7 @@ module SplitIoClient
         connected_at = @connected_at.get_and_set(nil)
         return if connected_at.nil?
 
-        uptime = Time.now - connected_at
+        uptime = monotonic_now - connected_at
         return if uptime < MIN_UPTIME_FOR_BACKOFF_RESET
 
         log_debug("Streaming connection was up for #{uptime.round(1)}s, resetting back off.")
@@ -98,6 +101,10 @@ module SplitIoClient
 
       def log_debug(message)
         @config.logger.debug(message) if @config.debug_enabled
+      end
+
+      def monotonic_now
+        Process.clock_gettime(Process::CLOCK_MONOTONIC)
       end
     end
   end

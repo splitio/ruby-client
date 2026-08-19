@@ -39,18 +39,26 @@ module SplitIoClient
           # is no longer current has been superseded and must exit without side effects.
           @generation = Concurrent::AtomicFixnum.new(0)
           @socket = nil
+          # Serialises concurrent close calls so the second caller does not
+          # re-push the status or double-close a socket the first caller
+          # already claimed.
+          @close_mutex = Mutex.new
         end
 
         def close(status = nil)
-          return if @socket.nil?
+          socket = nil
+          @close_mutex.synchronize do
+            return if @socket.nil?
 
-          @config.logger.debug('Closing SSEClient socket') if @config.debug_enabled
-          @shutdown.make_true
-          push_status(status)
-          @connected.make_false
+            @config.logger.debug('Closing SSEClient socket') if @config.debug_enabled
+            @shutdown.make_true
+            push_status(status)
+            @connected.make_false
 
-          socket = @socket
-          @socket = nil
+            socket = @socket
+            @socket = nil
+          end
+
           socket.sync_close = true if socket.is_a? OpenSSL::SSL::SSLSocket
           socket.close
           @config.logger.debug("SSEClient socket state #{socket.state}") if socket.is_a?(OpenSSL::SSL::SSLSocket) && @config.debug_enabled
