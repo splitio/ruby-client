@@ -1,5 +1,8 @@
 CHANGES
 
+8.11.2 (Aug, 25, 2026)
+- Fixed a Streaming client thread leak that may occurs when SDK retries after failed initialization of Streaming connection.
+
 8.11.1 (Jul, 23, 2026)
 - Added a retry mechanism in case the initial SSE socket connection failed, and extended the list of retryable errors when socket exceptions are caught during streaming.
 - Fixed debug logging in rule-based segment matcher class when debug_enabled parameter is not set in configuration .
