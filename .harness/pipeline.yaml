@@ -122,7 +122,7 @@ pipeline:
                       log:
                         level: debug
                       args:
-                        cli: "-Dsonar.ruby.coverage.reportPaths=/harness/coverage/coverage.json"
+                        cli: "-Dsonar.ruby.coverage.reportPaths=/harness/coverage/coverage.json -Dsonar.coverageReportPaths=/harness/coverage/coverage.json"
                     auth:
                       access_token: <+secrets.getValue("sonarqube-token")>
                       domain: https://sonar.harness.io
