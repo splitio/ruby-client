@@ -125,6 +125,8 @@ pipeline:
                       access_token: <+secrets.getValue("sonarqube-token")>
                       domain: https://sonar.harness.io
                       ssl: true
+                    tool:
+                      project_key: ruby-client
               - step:
                   type: Run
                   name: Post Quality Gate
