@@ -121,6 +121,8 @@ pipeline:
                     advanced:
                       log:
                         level: debug
+                    settings:
+                      sonar.coverageReportPaths: /harness/coverage/coverage.json
                     auth:
                       access_token: <+secrets.getValue("sonarqube-token")>
                       domain: https://sonar.harness.io
