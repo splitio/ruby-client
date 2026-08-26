@@ -120,7 +120,7 @@ pipeline:
                       detection: auto
                     advanced:
                       log:
-                        level: info
+                        level: debug
                     auth:
                       access_token: <+secrets.getValue("sonarqube-token")>
                       domain: https://sonar.harness.io
