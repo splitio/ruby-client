@@ -127,7 +127,7 @@ pipeline:
                           -Dsonar.tests=spec \
                           -Dsonar.host.url=https://sonar.harness.io \
                           -Dsonar.token=<+secrets.getValue("sonarqube-token")> \
-                          -Dsonar.ruby.coverage.reportPaths=coverage/.resultset.sonarqube.json  \
+                          -Dsonar.ruby.coverage.reportPaths=/harness/coverage/.resultset.sonarqube.json  \
                           -Dsonar.coverage.exclusions="spec/**,**/vendor/**" \
                           -Dsonar.exclusions="**/vendor/**,**/.git/**" \
                           -Dsonar.verbose=true
