@@ -102,7 +102,6 @@ pipeline:
                       export PATH="$HOME/.local/bin:$PATH"
                       eval "$(mise activate bash)"
                       cd coverage
-                      #sed -i "s@${HARNESS_WORKSPACE}@/harness/workspace/@g" .resultset.json
                       ruby -rjson -e '
                         sqube = JSON.load(File.read(".resultset.json"))["RSpec"]["coverage"].transform_values {|lines| lines["lines"]}
                         total = { "RSpec" => { "coverage" => sqube, "timestamp" => Time.now.to_i }}
