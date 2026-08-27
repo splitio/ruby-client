@@ -109,26 +109,28 @@ pipeline:
                         puts JSON.dump(total)
                       ' > .resultset.sonarqube.json
               - step:
-                  type: Sonarqube
-                  name: Sonarqube_1
-                  identifier: Sonarqube_1
+                  type: Run
+                  name: Sonarqube_scan
+                  identifier: Sonarqube_scan
                   spec:
-                    mode: orchestration
-                    config: default
-                    target:
-                      type: repository
-                      detection: auto
-                    advanced:
-                      log:
-                        level: debug
-                      args:
-                        cli: "-Dsonar.ruby.coverage.reportPaths=/harness/coverage/coverage.json -Dsonar.coverageReportPaths=/harness/coverage/coverage.json"
-                    auth:
-                      access_token: <+secrets.getValue("sonarqube-token")>
-                      domain: https://sonar.harness.io
-                      ssl: true
-                    tool:
-                      project_key: ruby-client
+                    shell: Sh
+                    command: |-
+                      export SONAR_SCANNER_VERSION=5.0.1.3006
+                      curl -sSLo sonar-scanner.zip \
+                      "https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux.zip"
+                      unzip -q sonar-scanner.zip
+                      export PATH="$PWD/sonar-scanner-${SONAR_SCANNER_VERSION}-linux/bin:$PATH"
+                      apt-get install -y openjdk-17-jdk -qq
+                      sonar-scanner \
+                          -Dsonar.projectKey=ruby-client \
+                          -Dsonar.sources=lib \
+                          -Dsonar.tests=spec \
+                          -Dsonar.host.url=https://sonar.harness.io \
+                          -Dsonar.token=<+secrets.getValue("sonarqube-token")> \
+                          -Dsonar.ruby.coverage.reportPaths=/harness/coverage/coverage.json \
+                          -Dsonar.coverage.exclusions="spec/**,**/vendor/**" \
+                          -Dsonar.exclusions="**/vendor/**,**/.git/**" \
+                          -Dsonar.verbose=true
               - step:
                   type: Run
                   name: Post Quality Gate
