@@ -1,5 +1,8 @@
 CHANGES
 
+8.11.3 (XX, XX, 2026)
+- Updated concurrent-ruby version to higher than 1.0.4, this removed thread_safe, which was merged into  concurrent-ruby.
+
 8.11.2 (Aug, 25, 2026)
 - Fixed a Streaming client thread leak that may occurs when SDK retries after failed initialization of Streaming connection.
 
