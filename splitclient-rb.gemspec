@@ -51,7 +51,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'webrick', '~> 1.8.2'
 
   spec.add_runtime_dependency 'bitarray', '~> 1.3'
-  spec.add_runtime_dependency 'concurrent-ruby', '~> 1.0'
+  spec.add_runtime_dependency 'concurrent-ruby', '~> 1.0', '> 1.0.5'
   spec.add_runtime_dependency 'faraday', '>= 1.1', '< 3.0'
   spec.add_runtime_dependency 'faraday-net_http_persistent', '>= 1.0', '< 3.0'
   spec.add_runtime_dependency 'json', '>= 1.8', '< 3.0'
@@ -59,5 +59,4 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'lru_redux', '~> 1.1'
   spec.add_runtime_dependency 'net-http-persistent', '>= 2.9', '< 5.0'
   spec.add_runtime_dependency 'redis', '>= 4.0.0', '< 6.0'
-  spec.add_runtime_dependency 'thread_safe', '~> 0.3'
 end
