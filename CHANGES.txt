@@ -1,6 +1,6 @@
 CHANGES
 
-8.11.3 (XX, XX, 2026)
+8.11.3 (Sep, 3, 2026)
 - Updated concurrent-ruby version to higher than 1.0.4, this removed thread_safe, which was merged into  concurrent-ruby.
 
 8.11.2 (Aug, 25, 2026)
