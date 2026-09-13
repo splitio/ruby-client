@@ -50,6 +50,10 @@ module SplitIoClient
           @adapter.get_set(namespace_key('.segments.registered'))
         end
 
+        def remove_registered_segment(name)
+          @adapter.delete_from_set(namespace_key('.segments.registered'), name)
+        end
+
         def set_change_number(name, last_change)
           @adapter.set_string(namespace_key(".segment.#{name}.till"), last_change)
         end

@@ -19,6 +19,12 @@ module SplitIoClient
 
           loop do
             segment = fetch_segment_changes(name, since, fetch_options)
+
+            if segment.nil?
+              @segments_repository.remove_registered_segment(name)
+              break
+            end
+
             @segments_repository.add_to_segment(segment)
 
             @config.split_logger.log_if_debug("Segment #{name} fetched before: #{since}, \
@@ -64,6 +70,9 @@ module SplitIoClient
           @config.logger.error('Factory Instantiation: You passed a browser type api_key, ' \
             'please grab an api key from the Split console that is of type sdk')
           @config.valid_mode =  false
+        elsif response.status == 404
+          @config.logger.warn("Segment '#{name}' not found (404). The segment may have been removed from the Split environment.")
+          nil
         else
           @telemetry_runtime_producer.record_sync_error(Telemetry::Domain::Constants::SEGMENT_SYNC, response.status)
 
