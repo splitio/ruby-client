@@ -50,6 +50,29 @@ describe SplitIoClient::SSE::EventSource::Client do
   let(:event_error) { "d4\r\nevent: error\ndata: {\"message\":\"Token expired\",\"code\":40142,\"statusCode\":401,\"href\":\"https://help.ably.io/error/40142\"}" }
 
   context 'tests' do
+    it 'tracks stream activity until the client closes' do
+      sse_client = subject.new(config, api_token, telemetry_runtime_producer, event_parser, notification_manager_keeper, notification_processor, push_status_queue)
+
+      expect(sse_client.last_activity_at).to be_nil
+      expect(sse_client.seconds_since_last_activity).to be_nil
+
+      mock_server do |server|
+        server.setup_response('/') do |_, res|
+          send_stream_content(res, "c\r\n:keepalive\n\n\r\n")
+        end
+
+        expect(sse_client.start(server.base_uri)).to eq(true)
+        expect(sse_client.last_activity_at).to be_a(Float)
+        expect(sse_client.seconds_since_last_activity).to be >= 0
+        expect(sse_client.seconds_since_last_activity).to be < 5
+
+        sse_client.close
+
+        expect(sse_client.last_activity_at).to be_nil
+        expect(sse_client.seconds_since_last_activity).to be_nil
+      end
+    end
+
     it 'receive split update event' do
       stub_request(:get, 'https://sdk.split.io/api/splitChanges?s=1.3&since=-1&rbSince=-1')
         .with(headers: { 'Authorization' => 'Bearer client-spec-key' })

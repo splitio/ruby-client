@@ -1,5 +1,8 @@
 CHANGES
 
+8.12.0 (unreleased)
+- Added SSE::EventSource::Client#last_activity_at / #seconds_since_last_activity (and SSEHandler delegates) exposing the monotonic time of the last bytes read from the streaming connection, keepalives included, so applications can monitor stream liveness.
+
 8.11.3 (Sep, 3, 2026)
 - Updated concurrent-ruby version to higher than 1.0.4, this removed thread_safe, which was merged into  concurrent-ruby.
 

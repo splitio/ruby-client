@@ -30,6 +30,14 @@ module SplitIoClient
         @sse_client&.connected? || false
       end
 
+      def last_activity_at
+        @sse_client&.last_activity_at
+      end
+
+      def seconds_since_last_activity
+        @sse_client&.seconds_since_last_activity
+      end
+
       def start_workers
         @splits_worker.start
         @segments_worker.start
