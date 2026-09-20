@@ -79,6 +79,17 @@ describe SplitIoClient::SSE::SSEHandler do
     end
   end
 
+  it 'delegates stream activity accessors' do
+    sse_handler = subject.new(config, splits_worker, segments_worker, sse_client)
+    timestamp = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+
+    allow(sse_client).to receive(:last_activity_at).and_return(timestamp)
+    allow(sse_client).to receive(:seconds_since_last_activity).and_return(1.5)
+
+    expect(sse_handler.last_activity_at).to eq(timestamp)
+    expect(sse_handler.seconds_since_last_activity).to eq(1.5)
+  end
+
   private
 
   def send_content(res, content)

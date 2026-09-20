@@ -32,6 +32,7 @@ module SplitIoClient
           @status_queue = status_queue
           @read_timeout = read_timeout
           @connected = Concurrent::AtomicBoolean.new(false)
+          @last_activity_at = Concurrent::AtomicReference.new(nil)
           # Set while close is tearing a connection down on purpose, so the reader
           # thread does not report the resulting socket error as a retryable failure.
           @shutdown = Concurrent::AtomicBoolean.new(false)
@@ -54,6 +55,7 @@ module SplitIoClient
             @shutdown.make_true
             push_status(status)
             @connected.make_false
+            @last_activity_at.set(nil)
 
             socket = @socket
             @socket = nil
@@ -91,7 +93,23 @@ module SplitIoClient
           @connected.value
         end
 
+        # Monotonic timestamp (Process::CLOCK_MONOTONIC seconds) of the last bytes read
+        # from the stream, including :keepalive comments. nil when not connected.
+        def last_activity_at
+          @last_activity_at.get
+        end
+
+        # Seconds since the last bytes were read from the stream, nil when not connected.
+        def seconds_since_last_activity
+          at = last_activity_at
+          at.nil? ? nil : monotonic_now - at
+        end
+
         private
+
+        def monotonic_now
+          Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        end
 
         def connect_thread(latch)
           # Never orphan the previous reader thread: its handle lives in a single slot
@@ -124,6 +142,7 @@ module SplitIoClient
               if IO.select([socket], nil, nil, @read_timeout)
                 begin
                   partial_data = socket.readpartial(10_000)
+                  @last_activity_at.set(monotonic_now)
 
                   if first_event
                     first_event = false
