@@ -21,6 +21,8 @@ pipeline:
         type: CI
         spec:
           cloneCodebase: true
+          envVariables:
+            CI_ENABLE_HCLI_FOR_TESTS: "true"
           caching:
             enabled: true
             override: true
@@ -107,6 +109,42 @@ pipeline:
                         total = { "RSpec" => { "coverage" => sqube, "timestamp" => Time.now.to_i }}
                         puts JSON.dump(total)
                       ' > .resultset.sonarqube.json
+                      ruby -rjson -e '
+                        data = JSON.load(File.read(".resultset.json"))
+                        cov = data["RSpec"]["coverage"]
+                        File.open("lcov.info", "w") do |out|
+                          cov.each do |path, info|
+                            lines = info.is_a?(Hash) ? info["lines"] : info
+                            next unless lines
+                            rel = path.sub(%r{^/harness/}, "")
+                            out.puts "SF:#{rel}"
+                            lines.each_with_index do |hits, idx|
+                              next if hits.nil?
+                              out.puts "DA:#{idx + 1},#{hits}"
+                            end
+                            out.puts "end_of_record"
+                          end
+                        end
+                      '
+                      test -s lcov.info
+              - step:
+                  name: harnessCoverage
+                  identifier: harnessCoverage
+                  when:
+                    stageStatus: Success
+                    condition: <+matrix.rubyVersion> == "3.2.2"
+                  template:
+                    templateRef: account.codeCoverage
+                    versionLabel: v1
+                    templateInputs:
+                      type: Run
+                      spec:
+                        envVariables:
+                          patch_coverage_percent: "80"
+                          file_path: "coverage/lcov.info"
+                          overall_coverage_percent: ""
+                          ignore_failure: "true"
+                          exclude: "**/spec/**,**/vendor/**"
               - step:
                   type: Run
                   name: Sonarqube_scan
