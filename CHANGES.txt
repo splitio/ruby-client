@@ -1,5 +1,8 @@
 CHANGES
 
+Unreleased
+- Made redis an optional dependency. Applications using consumer mode with the Redis cache adapter must add redis to their Gemfile.
+
 8.11.3 (Sep, 3, 2026)
 - Updated concurrent-ruby version to higher than 1.0.4, this removed thread_safe, which was merged into  concurrent-ruby.
 

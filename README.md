@@ -43,6 +43,8 @@ end
 ```
 For multi-process environments you also need to setup Split Synchronizer. See [Sharing state: Redis integration](https://help.split.io/hc/en-us/articles/360020673251-Ruby-SDK#sharing-state-redis-integration)
 
+Consumer mode (`cache_adapter: :redis`) requires adding `gem 'redis'` to your application's Gemfile. Redis is optional and is not required when using the default memory cache adapter.
+
 Please refer to [our official docs](https://help.split.io/hc/en-us/articles/360020673251-Ruby-SDK) to learn about all the functionality provided by our SDK and the configuration options available for tailoring it to your current application setup.
 
 ## Submitting issues
