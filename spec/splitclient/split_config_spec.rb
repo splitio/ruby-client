@@ -17,6 +17,25 @@ describe SplitIoClient do
   end
 
   describe 'split config object values' do
+    context 'when the redis gem is not installed' do
+      before do
+        allow(SplitIoClient::SplitConfig).to receive(:require).and_call_original
+        allow(SplitIoClient::SplitConfig).to receive(:require).with('redis').and_raise(LoadError)
+      end
+
+      it 'uses the default memory adapter without loading redis' do
+        configs = SplitIoClient::SplitConfig.new
+
+        expect(configs.cache_adapter).to be_a(SplitIoClient::Cache::Adapters::MemoryAdapter)
+        expect(SplitIoClient::SplitConfig).not_to have_received(:require).with('redis')
+      end
+
+      it 'explains how to enable the Redis cache adapter' do
+        expect { SplitIoClient::SplitConfig.new(cache_adapter: :redis) }
+          .to raise_error(StandardError, 'To use Redis as a cache adapter you must include it in your Gemfile')
+      end
+    end
+
     it 'sets the correct default values when no custom option is provided' do
       configs = SplitIoClient::SplitConfig.new
       default_ip = SplitIoClient::SplitConfig.default_ip_addresses_enabled
