@@ -2,6 +2,7 @@ CHANGES
 
 Unreleased
 - Allowed redis 6 as a runtime dependency.
+- Defaulted the Redis protocol to RESP2 when using redis-rb 6 or newer, to avoid a RESP3 fallback warning with Redis servers older than 6.0. Set the protocol option in redis_url (hash form) to override it.
 
 8.11.3 (Sep, 3, 2026)
 - Updated concurrent-ruby version to higher than 1.0.4, this removed thread_safe, which was merged into  concurrent-ruby.

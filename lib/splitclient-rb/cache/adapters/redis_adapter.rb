@@ -12,7 +12,12 @@ module SplitIoClient
         attr_reader :redis
 
         def initialize(redis_url)
-          connection = redis_url.is_a?(Hash) ? redis_url : { url: redis_url }
+          connection = redis_url.is_a?(Hash) ? redis_url.dup : { url: redis_url }
+
+          # redis-rb 6 defaults to RESP3 and prints a warning on every connection when the
+          # Redis server is older than 6.0 (it falls back to RESP2). Keep the protocol the
+          # SDK was built against unless the user chose one explicitly.
+          connection[:protocol] ||= 2 if redis_rb_6_or_newer?
 
           @redis = Redis.new(connection)
         end
@@ -171,6 +176,12 @@ module SplitIoClient
 
         def expire(key, seconds)
           @redis.expire(key, seconds)
+        end
+
+        private
+
+        def redis_rb_6_or_newer?
+          Gem::Version.new(Redis::VERSION) >= Gem::Version.new('6.0.0')
         end
       end
     end
